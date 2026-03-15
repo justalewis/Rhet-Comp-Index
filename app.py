@@ -37,6 +37,9 @@ from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILAB
 log = logging.getLogger(__name__)
 app = Flask(__name__)
 
+# Initialise DB at import time so gunicorn workers find the schema on startup.
+init_db()
+
 
 # ── Template helpers ───────────────────────────────────────────────────────────
 

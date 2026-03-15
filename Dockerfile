@@ -33,4 +33,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Use gunicorn for production; 1 worker keeps SQLite writes safe
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "--capture-output", "--log-level", "info", "app:app"]
