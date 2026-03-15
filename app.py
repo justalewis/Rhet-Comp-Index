@@ -16,6 +16,7 @@ Routes:
   GET  /new                     — articles fetched in last 7 days
 """
 
+import os
 import re
 import threading
 import logging
@@ -517,4 +518,6 @@ def new_articles():
 
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_ENV") != "production"
+    app.run(host="0.0.0.0", port=port, debug=debug)
