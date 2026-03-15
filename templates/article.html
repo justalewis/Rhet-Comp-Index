@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ article.title }} — Rhetoric &amp; Composition</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1>Rhetoric &amp; Composition<br>
+        <span class="subtitle">Current Scholarship</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+
+      <!-- ── Feature navigation ─────────────────────────── -->
+      <div class="feature-nav">
+        <a href="/new" class="feature-nav-link">
+          <span class="feature-nav-icon">★</span>
+          What's New
+          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+        </a>
+        <a href="/explore" class="feature-nav-link">
+          <span class="feature-nav-icon">◎</span>
+          Explore
+        </a>
+        <a href="/authors" class="feature-nav-link">
+          <span class="feature-nav-icon">◈</span>
+          Authors
+        </a>
+      </div>
+
+      <a href="/" class="journal-link">
+        <span class="jname">All journals</span>
+      </a>
+
+      <div class="nav-section-head">Print Journals</div>
+      {% for j in print_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section-head">Web Journals</div>
+      {% for j in web_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        <span class="jmeta">
+          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
+          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
+          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+
+      {% if unavailable %}
+      <div class="nav-section-head unavailable-head">Unavailable</div>
+      {% for j in unavailable %}
+      <span class="journal-link unavailable" title="{{ j.note }}">
+        <span class="jname">{{ j.name }}</span>
+      </span>
+      {% endfor %}
+      {% endif %}
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to index</a>
+    </div>
+
+  </aside>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content detail-page">
+
+    <div class="detail-header">
+      <div class="article-meta-top">
+        <span class="article-journal">{{ article.journal }}</span>
+        {% if article.pub_date %}
+        <span class="article-date">{{ article.pub_date | display_date }}</span>
+        {% endif %}
+        {% if article.source == 'scrape' %}
+        <span class="src-badge scrape">web</span>
+        {% elif article.source == 'rss' %}
+        <span class="src-badge rss">RSS</span>
+        {% endif %}
+        {% if article.oa_url %}
+        <a class="oa-badge" href="{{ article.oa_url }}" target="_blank" rel="noopener">OA PDF</a>
+        {% endif %}
+      </div>
+
+      <h2 class="detail-title">
+        <a href="{{ article.url }}" target="_blank" rel="noopener">{{ article.title }}</a>
+      </h2>
+
+      {% if article.authors %}
+      <div class="detail-authors">
+        {% for author in article.authors.split(';') %}
+        {% set a = author.strip() %}
+        {% if a %}
+        <a href="/author/{{ a | urlencode }}" class="author-link">{{ a }}</a>{% if not loop.last %}; {% endif %}
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div><!-- /detail-header -->
+
+    <div class="detail-meta">
+
+      {% if article.abstract %}
+      <div class="detail-abstract">
+        <h3 class="detail-section-head">Abstract</h3>
+        <p class="abstract-text">{{ article.abstract }}</p>
+      </div>
+      {% endif %}
+
+      <dl class="detail-fields">
+
+        <dt>Journal</dt>
+        <dd><a href="/?journal={{ article.journal | urlencode }}">{{ article.journal }}</a></dd>
+
+        {% if article.pub_date %}
+        <dt>Published</dt>
+        <dd>{{ article.pub_date }}</dd>
+        {% endif %}
+
+        {% if article.doi %}
+        <dt>DOI</dt>
+        <dd><a href="{{ article.url }}" target="_blank" rel="noopener">{{ article.doi }}</a></dd>
+        {% endif %}
+
+        {% if article.oa_url %}
+        <dt>Open Access</dt>
+        <dd><a href="{{ article.oa_url }}" target="_blank" rel="noopener" class="oa-badge">OA PDF</a></dd>
+        {% endif %}
+
+        {% if article.citation_count is not none %}
+        <dt>Citations</dt>
+        <dd>
+          {% if article.citation_count and article.citation_count > 0 %}
+            {{ article.citation_count }} citation{% if article.citation_count != 1 %}s{% endif %}
+            {% if article.ss_id %}
+            — <a href="https://www.semanticscholar.org/paper/{{ article.ss_id }}" target="_blank" rel="noopener">Semantic Scholar</a>
+            {% endif %}
+          {% else %}
+            0 citations recorded
+          {% endif %}
+        </dd>
+        {% endif %}
+
+        {% if article.keywords %}
+        <dt>Subjects</dt>
+        <dd>{{ article.keywords }}</dd>
+        {% endif %}
+
+        {% if article.tags %}
+        <dt>Topics</dt>
+        <dd>
+          <div class="article-tags" style="display:inline-flex;margin-top:0;">
+            {% for t in article.tags.strip('|').split('|') %}
+            {% if t.strip() %}
+            <a class="article-tag" href="/?tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </dd>
+        {% endif %}
+
+      </dl>
+
+    </div><!-- /detail-meta -->
+
+    {% if related %}
+    <div class="related-section">
+      <h3 class="detail-section-head">Related Articles</h3>
+      <ol class="related-list">
+        {% for r in related %}
+        <li class="related-item">
+          <div class="article-meta-top">
+            <span class="article-journal">{{ r.journal }}</span>
+            {% if r.pub_date %}<span class="article-date">{{ r.pub_date | display_date }}</span>{% endif %}
+          </div>
+          <div class="article-title-row">
+            <a class="article-title" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a>
+            <a class="article-detail-link" href="/article/{{ r.id }}" title="Article details">&#9654;</a>
+          </div>
+          {% if r.authors %}
+          <div class="article-authors">{{ r.authors }}</div>
+          {% endif %}
+          {% if r.tags %}
+          <div class="article-tags">
+            {% for t in r.tags.strip('|').split('|') %}
+            {% if t.strip() %}
+            <a class="article-tag" href="/?tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+
+  </main>
+
+</div>
+
+</body>
+</html>

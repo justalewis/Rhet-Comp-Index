@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore — Rhetoric &amp; Composition</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1>Rhetoric &amp; Composition<br>
+        <span class="subtitle">Current Scholarship</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+
+      <div class="feature-nav">
+        <a href="/new" class="feature-nav-link">
+          <span class="feature-nav-icon">★</span>
+          What's New
+          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+        </a>
+        <a href="/explore" class="feature-nav-link active-feature-link">
+          <span class="feature-nav-icon">◎</span>
+          Explore
+        </a>
+        <a href="/authors" class="feature-nav-link">
+          <span class="feature-nav-icon">◈</span>
+          Authors
+        </a>
+      </div>
+
+      <a href="/" class="journal-link">
+        <span class="jname">All journals</span>
+      </a>
+
+      <div class="nav-section-head">Print Journals</div>
+      {% for j in print_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section-head">Web Journals</div>
+      {% for j in web_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        <span class="jmeta">
+          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
+          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
+          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+
+      {% if unavailable %}
+      <div class="nav-section-head unavailable-head">Unavailable</div>
+      {% for j in unavailable %}
+      <span class="journal-link unavailable" title="{{ j.note }}">
+        <span class="jname">{{ j.name }}</span>
+      </span>
+      {% endfor %}
+      {% endif %}
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to index</a>
+    </div>
+
+  </aside>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="content-header">
+      <h2>Explore</h2>
+      <span class="result-count">Data visualisations</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="explore-tabs">
+      <button class="explore-tab active" onclick="showTab('timeline', this)">Timeline</button>
+      <button class="explore-tab" onclick="showTab('topics', this)">Topics</button>
+      <button class="explore-tab" onclick="showTab('network', this)">Author Network</button>
+    </div>
+
+    <!-- ── Timeline tab ──────────────────────────────────────── -->
+    <div id="tab-timeline" class="tab-panel">
+      <div class="chart-toolbar">
+        <button id="toggle-journals-btn" class="filter-apply-btn" onclick="toggleJournals()">
+          Show top 8 journals only
+        </button>
+        <span class="filter-label" style="margin-left:1rem;">Publications per year by journal</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="timeline-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- ── Topics tab ────────────────────────────────────────── -->
+    <div id="tab-topics" class="tab-panel" style="display:none;">
+      <p class="explore-hint">Tag co-occurrence — how often topic pairs appear together. Hover cells for counts.</p>
+      <div class="heatmap-container" id="heatmap-container">
+        <div class="loading-msg">Loading tag data…</div>
+      </div>
+    </div>
+
+    <!-- ── Author Network tab ────────────────────────────────── -->
+    <div id="tab-network" class="tab-panel" style="display:none;">
+      <p class="explore-hint">Co-authorship network — authors with 3+ papers. Node size = paper count. Click a node to view author page.</p>
+      <div class="network-container" id="network-container">
+        <div class="loading-msg">Loading author data…</div>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- Chart.js for timeline -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<!-- D3 for heatmap + network -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────────
+let topicsLoaded  = false;
+let networkLoaded = false;
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.explore-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  btn.classList.add('active');
+
+  if (name === 'topics' && !topicsLoaded) {
+    topicsLoaded = true;
+    loadHeatmap();
+  }
+  if (name === 'network' && !networkLoaded) {
+    networkLoaded = true;
+    loadNetwork();
+  }
+}
+
+// ── Warm palette for journals ─────────────────────────────────────────────────
+const PALETTE = [
+  '#5a3e28','#8b6045','#b38a6a','#c9a882','#d4bc99',
+  '#3a5a28','#456b40','#6b8f60','#8aac82','#b2ccaa',
+  '#28445a','#405c78','#608aac','#82aacc','#aaccdd',
+  '#5a2840','#7a4560','#ac6882','#cc8aaa','#ddaac4',
+  '#5a5828','#787845','#aaaa60','#c8c880','#e0e0a8',
+];
+
+function journalColor(i) {
+  return PALETTE[i % PALETTE.length];
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+let timelineChart = null;
+let allSeries = [];
+let allYears  = [];
+let showingTop8 = false;
+
+async function loadTimeline() {
+  const resp = await fetch('/api/stats/timeline');
+  const data = await resp.json();
+  allYears  = data.years;
+  allSeries = data.series;
+  renderTimeline(allSeries);
+}
+
+function renderTimeline(series) {
+  const ctx = document.getElementById('timeline-chart').getContext('2d');
+
+  const datasets = series.map((s, i) => ({
+    label: s.journal,
+    data:  s.counts,
+    backgroundColor: journalColor(i),
+    borderWidth: 0,
+  }));
+
+  if (timelineChart) timelineChart.destroy();
+
+  timelineChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: allYears, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'system-ui, sans-serif', size: 11 },
+            boxWidth: 12,
+            padding: 8,
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } },
+        },
+        y: {
+          stacked: true,
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } },
+        }
+      }
+    }
+  });
+}
+
+function toggleJournals() {
+  showingTop8 = !showingTop8;
+  const btn = document.getElementById('toggle-journals-btn');
+  if (showingTop8) {
+    // Calculate top 8 by total count
+    const totals = allSeries.map(s => ({ s, total: s.counts.reduce((a,b) => a+b, 0) }));
+    totals.sort((a, b) => b.total - a.total);
+    renderTimeline(totals.slice(0, 8).map(t => t.s));
+    btn.textContent = 'Show all journals';
+  } else {
+    renderTimeline(allSeries);
+    btn.textContent = 'Show top 8 journals only';
+  }
+}
+
+// Load timeline immediately
+loadTimeline();
+
+
+// ── Tag co-occurrence heatmap ─────────────────────────────────────────────────
+async function loadHeatmap() {
+  const resp = await fetch('/api/stats/tag-cooccurrence');
+  const data = await resp.json();
+
+  const container = document.getElementById('heatmap-container');
+  container.innerHTML = '';
+
+  const tags   = data.tags;
+  const matrix = data.matrix;
+  const n      = tags.length;
+
+  if (n === 0) {
+    container.innerHTML = '<p class="explore-hint">No tag data available.</p>';
+    return;
+  }
+
+  // Only show top 30 tags (matrix can be huge otherwise)
+  const maxTags = Math.min(n, 30);
+  const shownTags   = tags.slice(0, maxTags);
+  const shownMatrix = matrix.slice(0, maxTags).map(row => row.slice(0, maxTags));
+
+  const margin = { top: 10, right: 10, bottom: 140, left: 140 };
+  const cellSize = 18;
+  const width  = cellSize * maxTags;
+  const height = cellSize * maxTags;
+
+  const maxVal = Math.max(...shownMatrix.flat().filter(v => v > 0));
+  const colorScale = d3.scaleSequential()
+    .domain([0, Math.log1p(maxVal)])
+    .interpolator(d3.interpolate('#f2f0eb', '#5a3e28'));
+
+  const svg = d3.select('#heatmap-container')
+    .append('svg')
+    .attr('width',  width  + margin.left + margin.right)
+    .attr('height', height + margin.top  + margin.bottom)
+    .append('g')
+    .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // X axis labels (rotated)
+  svg.append('g')
+    .selectAll('text')
+    .data(shownTags)
+    .enter().append('text')
+      .attr('x', (d, i) => i * cellSize + cellSize / 2)
+      .attr('y', height + 8)
+      .attr('text-anchor', 'start')
+      .attr('transform', (d, i) => `rotate(45,${i * cellSize + cellSize / 2},${height + 8})`)
+      .style('font-family', 'system-ui, sans-serif')
+      .style('font-size', '10px')
+      .style('fill', '#6b6760')
+      .text(d => d.length > 18 ? d.slice(0, 16) + '…' : d);
+
+  // Y axis labels
+  svg.append('g')
+    .selectAll('text')
+    .data(shownTags)
+    .enter().append('text')
+      .attr('x', -6)
+      .attr('y', (d, i) => i * cellSize + cellSize / 2 + 4)
+      .attr('text-anchor', 'end')
+      .style('font-family', 'system-ui, sans-serif')
+      .style('font-size', '10px')
+      .style('fill', '#6b6760')
+      .text(d => d.length > 20 ? d.slice(0, 18) + '…' : d);
+
+  // Tooltip
+  const tooltip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip')
+    .style('display', 'none');
+
+  // Cells
+  shownMatrix.forEach((row, i) => {
+    row.forEach((val, j) => {
+      svg.append('rect')
+        .attr('x', j * cellSize)
+        .attr('y', i * cellSize)
+        .attr('width',  cellSize - 1)
+        .attr('height', cellSize - 1)
+        .attr('rx', 1)
+        .style('fill', val > 0 ? colorScale(Math.log1p(val)) : '#f2f0eb')
+        .style('cursor', val > 0 ? 'pointer' : 'default')
+        .on('mouseover', function(event) {
+          if (val > 0) {
+            tooltip
+              .style('display', 'block')
+              .html(`<strong>${shownTags[i]}</strong> &amp; <strong>${shownTags[j]}</strong><br>${val} article${val !== 1 ? 's' : ''}`);
+          }
+        })
+        .on('mousemove', function(event) {
+          tooltip
+            .style('left', (event.pageX + 12) + 'px')
+            .style('top',  (event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+          tooltip.style('display', 'none');
+        });
+    });
+  });
+}
+
+
+// ── Author co-authorship network ──────────────────────────────────────────────
+async function loadNetwork() {
+  const resp = await fetch('/api/stats/author-network');
+  const data = await resp.json();
+
+  const container = document.getElementById('network-container');
+  container.innerHTML = '';
+
+  const nodes = data.nodes;
+  const links = data.links;
+
+  if (!nodes || nodes.length === 0) {
+    container.innerHTML = '<p class="explore-hint">Not enough co-authorship data yet (need authors with 3+ papers).</p>';
+    return;
+  }
+
+  const W = container.clientWidth || 720;
+  const H = 520;
+
+  const countExtent = d3.extent(nodes, d => d.count);
+  const rScale = d3.scaleSqrt().domain(countExtent).range([4, 16]);
+
+  const linkExtent = links.length > 0 ? d3.extent(links, d => d.value) : [1, 1];
+  const lwScale = d3.scaleLinear().domain(linkExtent).range([0.5, 3]);
+
+  const svg = d3.select('#network-container')
+    .append('svg')
+    .attr('width', W)
+    .attr('height', H)
+    .call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    }));
+
+  const g = svg.append('g');
+
+  // Build a node-id lookup
+  const nodeById = {};
+  nodes.forEach(n => { nodeById[n.id] = n; });
+
+  const simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links)
+      .id(d => d.id)
+      .distance(d => 60 / (d.value || 1) + 40)
+    )
+    .force('charge', d3.forceManyBody().strength(-120))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => rScale(d.count) + 3));
+
+  const link = g.append('g')
+    .selectAll('line')
+    .data(links)
+    .enter().append('line')
+      .style('stroke', '#ccc7bb')
+      .style('stroke-opacity', 0.6)
+      .style('stroke-width', d => lwScale(d.value));
+
+  const nodeGroup = g.append('g')
+    .selectAll('g')
+    .data(nodes)
+    .enter().append('g')
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+        .on('end',  (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null; d.fy = null;
+        })
+      )
+      .on('click', (event, d) => {
+        window.location = '/author/' + encodeURIComponent(d.id);
+      });
+
+  nodeGroup.append('circle')
+    .attr('r', d => rScale(d.count))
+    .style('fill', d => {
+      // Color by first letter of last name to give some variety
+      const idx = (d.id.charCodeAt(d.id.lastIndexOf(' ') + 1) || 0) % PALETTE.length;
+      return PALETTE[idx];
+    })
+    .style('fill-opacity', 0.85)
+    .style('stroke', '#fff')
+    .style('stroke-width', 1.5);
+
+  // Labels for nodes with count >= 5
+  nodeGroup.filter(d => d.count >= 5)
+    .append('text')
+      .text(d => {
+        const parts = d.id.split(' ');
+        return parts[parts.length - 1]; // last name only
+      })
+      .attr('dy', d => rScale(d.count) + 10)
+      .attr('text-anchor', 'middle')
+      .style('font-family', 'system-ui, sans-serif')
+      .style('font-size', '9px')
+      .style('fill', '#6b6760')
+      .style('pointer-events', 'none');
+
+  // Tooltip
+  const tooltip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip')
+    .style('display', 'none');
+
+  nodeGroup
+    .on('mouseover', function(event, d) {
+      tooltip
+        .style('display', 'block')
+        .html(`<strong>${d.id}</strong><br>${d.count} paper${d.count !== 1 ? 's' : ''}`);
+    })
+    .on('mousemove', function(event) {
+      tooltip
+        .style('left', (event.pageX + 12) + 'px')
+        .style('top',  (event.pageY - 28) + 'px');
+    })
+    .on('mouseout', function() {
+      tooltip.style('display', 'none');
+    });
+
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+
+    nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+</script>
+
+</body>
+</html>

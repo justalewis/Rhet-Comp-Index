@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rhetoric &amp; Composition — Current Scholarship</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1>Rhetoric &amp; Composition<br>
+        <span class="subtitle">Current Scholarship</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+
+      <!-- ── Feature navigation ─────────────────────────── -->
+      <div class="feature-nav">
+        <a href="/new" class="feature-nav-link">
+          <span class="feature-nav-icon">★</span>
+          What's New
+          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+        </a>
+        <a href="/explore" class="feature-nav-link">
+          <span class="feature-nav-icon">◎</span>
+          Explore
+        </a>
+        <a href="/authors" class="feature-nav-link">
+          <span class="feature-nav-icon">◈</span>
+          Authors
+        </a>
+      </div>
+
+      <!-- All journals -->
+      <a href="/"
+         class="journal-link {% if not selected_journal and not selected_source %}active{% endif %}">
+        <span class="jname">All journals</span>
+        <span class="jcount">{{ total if not selected_journal and not selected_source and not active_q and not active_tag and not active_year_from and not active_year_to else '' }}</span>
+      </a>
+
+      <!-- ── Print journals ─────────────────────────────── -->
+      <div class="nav-section-head">Print Journals</div>
+
+      {% for j in print_journals %}
+      <a href="/?journal={{ j.name | urlencode }}"
+         class="journal-link {% if selected_journal == j.name %}active{% endif %}">
+        <span class="jname">{{ j.name }}</span>
+        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+      </a>
+      {% endfor %}
+
+      <!-- ── Web-native journals ────────────────────────── -->
+      <div class="nav-section-head">Web Journals</div>
+
+      {% for j in web_journals %}
+      <a href="/?journal={{ j.name | urlencode }}"
+         class="journal-link {% if selected_journal == j.name %}active{% endif %}">
+        <span class="jname">{{ j.name }}</span>
+        <span class="jmeta">
+          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
+          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
+          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+
+      <!-- ── Unavailable ───────────────────────────────── -->
+      {% if unavailable %}
+      <div class="nav-section-head unavailable-head">Unavailable</div>
+      {% for j in unavailable %}
+      <span class="journal-link unavailable" title="{{ j.note }}">
+        <span class="jname">{{ j.name }}</span>
+      </span>
+      {% endfor %}
+      {% endif %}
+
+    </nav><!-- /journal-nav -->
+
+    <div class="sidebar-footer">
+      <button id="fetch-btn" class="fetch-btn" onclick="triggerFetch()">
+        Refresh all sources
+      </button>
+      <p class="fetch-note">CrossRef · RSS feeds · Web scraping</p>
+    </div>
+
+  </aside><!-- /sidebar -->
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- Content header -->
+    <div class="content-header">
+      {% if selected_journal %}
+        <h2>{{ selected_journal }}</h2>
+      {% elif selected_source == 'crossref' %}
+        <h2>Print Journals</h2>
+      {% elif selected_source == 'rss' %}
+        <h2>Web Journals — RSS</h2>
+      {% elif selected_source == 'scrape' %}
+        <h2>Web Journals — Scraped</h2>
+      {% else %}
+        <h2>All Journals</h2>
+      {% endif %}
+      <span class="result-count">{{ total }} article{% if total != 1 %}s{% endif %}</span>
+    </div>
+
+    <!-- ── Search & filter bar ──────────────────────────── -->
+    <div class="filter-section">
+      <form class="filter-form" method="get" action="/" autocomplete="off">
+
+        <!-- Preserve journal / source selections when searching -->
+        {% if selected_journal %}
+        <input type="hidden" name="journal" value="{{ selected_journal }}">
+        {% endif %}
+        {% if selected_source %}
+        <input type="hidden" name="source" value="{{ selected_source }}">
+        {% endif %}
+
+        <!-- Full-text search bar -->
+        <div class="search-row">
+          <input class="search-input"
+                 type="text"
+                 name="q"
+                 value="{{ active_q }}"
+                 placeholder="Search titles, authors, abstracts…"
+                 spellcheck="false">
+          <button class="search-btn" type="submit">Search</button>
+        </div>
+
+        <!-- Secondary filters: year range + topic tag -->
+        <div class="filter-row">
+
+          <span class="filter-label">Year:</span>
+          <select name="year_from" class="filter-select">
+            <option value="">From…</option>
+            {% if min_year %}
+            {% for y in range(max_year, min_year - 1, -1) %}
+            <option value="{{ y }}"
+              {% if active_year_from == y | string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+
+          <span class="filter-dash">–</span>
+
+          <select name="year_to" class="filter-select">
+            <option value="">To…</option>
+            {% if max_year %}
+            {% for y in range(max_year, min_year - 1, -1) %}
+            <option value="{{ y }}"
+              {% if active_year_to == y | string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+
+          {% if all_tags %}
+          <span class="filter-label filter-label-spaced">Topic:</span>
+          <select name="tag" class="filter-select filter-select-tag">
+            <option value="">All topics…</option>
+            {% for tag_name, tag_count in all_tags %}
+            <option value="{{ tag_name }}"
+              {% if active_tag == tag_name %}selected{% endif %}>
+              {{ tag_name }} ({{ tag_count }})
+            </option>
+            {% endfor %}
+          </select>
+          {% endif %}
+
+          <button class="filter-apply-btn" type="submit">Apply</button>
+
+          {% if active_q or active_year_from or active_year_to or active_tag %}
+          <a class="filter-clear"
+             href="/?{% if selected_journal %}journal={{ selected_journal | urlencode }}{% endif %}">
+            Clear
+          </a>
+          {% endif %}
+
+        </div><!-- /filter-row -->
+
+        <!-- Export buttons -->
+        <div class="export-row">
+          <span class="filter-label">Export:</span>
+          <button type="submit" formaction="/export" name="format" value="bibtex" class="export-btn">BibTeX</button>
+          <button type="submit" formaction="/export" name="format" value="ris" class="export-btn">RIS</button>
+        </div>
+
+      </form>
+
+      <!-- Active filter pills -->
+      {% set has_filters = active_q or active_year_from or active_year_to or active_tag %}
+      {% if has_filters %}
+      <div class="active-filters">
+
+        {% if active_q %}
+        <span class="filter-pill">
+          <span class="pill-label">&#x22;{{ active_q }}&#x22;</span>
+          <a class="pill-remove" href="#"
+             onclick="removeFilter('q'); return false;"
+             title="Remove search">&#x00D7;</a>
+        </span>
+        {% endif %}
+
+        {% if active_year_from or active_year_to %}
+        <span class="filter-pill">
+          <span class="pill-label">
+            {{ active_year_from or '…' }}&thinsp;–&thinsp;{{ active_year_to or '…' }}
+          </span>
+          <a class="pill-remove" href="#"
+             onclick="removeFilters('year_from','year_to'); return false;"
+             title="Remove year range">&#x00D7;</a>
+        </span>
+        {% endif %}
+
+        {% if active_tag %}
+        <span class="filter-pill">
+          <span class="pill-label">{{ active_tag }}</span>
+          <a class="pill-remove" href="#"
+             onclick="removeFilter('tag'); return false;"
+             title="Remove topic filter">&#x00D7;</a>
+        </span>
+        {% endif %}
+
+      </div><!-- /active-filters -->
+      {% endif %}
+
+    </div><!-- /filter-section -->
+
+    {% if grouped %}
+
+      <!-- Article list, grouped by publication period -->
+      {% for period, articles in grouped %}
+      <section class="period-section">
+        <h3 class="period-heading">{{ period | format_period }}</h3>
+        <ol class="article-list">
+          {% for a in articles %}
+          <li class="article">
+
+            <!-- Journal + date line -->
+            <div class="article-meta-top">
+              {% if not selected_journal %}
+              <span class="article-journal">{{ a.journal }}</span>
+              {% endif %}
+              {% if a.pub_date %}
+              <span class="article-date">{{ a.pub_date | display_date }}</span>
+              {% endif %}
+              {% if a.source == 'scrape' %}
+              <span class="src-badge scrape" title="Scraped — author and abstract data may be incomplete">web</span>
+              {% elif a.source == 'rss' %}
+              <span class="src-badge rss" title="Via RSS feed">RSS</span>
+              {% endif %}
+              {% if a.oa_url %}
+              <a class="oa-badge" href="{{ a.oa_url }}" target="_blank" rel="noopener" title="Open access PDF available">OA PDF</a>
+              {% endif %}
+            </div>
+
+            <!-- Title + detail link -->
+            <div class="article-title-row">
+              <a class="article-title" href="{{ a.url }}" target="_blank" rel="noopener">
+                {{ a.title }}
+              </a>
+              <a class="article-detail-link" href="/article/{{ a.id }}" title="Article details">&#9654;</a>
+            </div>
+
+            <!-- Authors + citation count -->
+            {% if a.authors %}
+            <div class="article-authors">
+              {{ a.authors }}
+              {% if a.citation_count and a.citation_count > 0 %}
+              <span class="cite-count">(cited {{ a.citation_count }}&times;)</span>
+              {% endif %}
+            </div>
+            {% elif a.source == 'scrape' %}
+            <div class="article-authors no-data">Author data unavailable</div>
+            {% endif %}
+
+            <!-- Abstract toggle -->
+            {% if a.abstract %}
+            <details class="abstract-toggle">
+              <summary>Abstract</summary>
+              <p class="abstract-text">{{ a.abstract }}</p>
+            </details>
+            {% endif %}
+
+            <!-- Tags (shown only when tags exist) -->
+            {% if a.tags %}
+            <div class="article-tags">
+              {% for t in a.tags.strip('|').split('|') %}
+              {% if t.strip() %}
+              <a class="article-tag"
+                 href="/?{% if selected_journal %}journal={{ selected_journal | urlencode }}&{% endif %}tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- CrossRef subject keywords (when available and distinct from tags) -->
+            {% if a.keywords %}
+            <div class="article-keywords">
+              <span class="keywords-label">Subjects:</span> {{ a.keywords }}
+            </div>
+            {% endif %}
+
+            <!-- DOI line (CrossRef articles only) -->
+            {% if a.doi %}
+            <div class="article-doi">
+              <a href="{{ a.url }}" target="_blank" rel="noopener">doi:{{ a.doi }}</a>
+            </div>
+            {% endif %}
+
+          </li>
+          {% endfor %}
+        </ol>
+      </section>
+      {% endfor %}
+
+      <!-- Pagination -->
+      {% if total_pages > 1 %}
+      <nav class="pagination">
+        {% if page > 1 %}
+          <a class="page-link"
+             href="?{{ filter_qs }}{% if filter_qs %}&{% endif %}page={{ page - 1 }}">&larr; Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a class="page-link"
+             href="?{{ filter_qs }}{% if filter_qs %}&{% endif %}page={{ page + 1 }}">Next &rarr;</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      {% if active_q or active_year_from or active_year_to or active_tag %}
+        <p>No articles matched your filters.</p>
+        <p><a href="/?{% if selected_journal %}journal={{ selected_journal | urlencode }}{% endif %}">Clear all filters</a> to see all articles.</p>
+      {% else %}
+        <p>No articles in the database yet.</p>
+        <p>Click <strong>Refresh all sources</strong> in the sidebar to fetch recent publications.</p>
+        <p class="empty-hint">First run will be slow — CrossRef pulls full history for each journal.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </main><!-- /content -->
+
+</div><!-- /layout -->
+
+<div id="fetch-status" class="fetch-status" style="display:none"></div>
+
+<script>
+// ── Fetch trigger ────────────────────────────────────────────────────────────
+function triggerFetch() {
+  const btn    = document.getElementById('fetch-btn');
+  const status = document.getElementById('fetch-status');
+  btn.disabled = true;
+  btn.textContent = 'Fetching…';
+  status.textContent = 'Fetch running in the background (CrossRef + RSS + scraping). Reload in a few minutes to see new articles.';
+  status.style.display = 'block';
+
+  fetch('/fetch', { method: 'POST' })
+    .then(r => r.json())
+    .then(() => {
+      status.textContent = 'Fetch started. Reload in a moment to see new articles.';
+      btn.textContent = 'Fetching in background…';
+    })
+    .catch(() => {
+      status.textContent = 'Error starting fetch — check the terminal.';
+      btn.disabled = false;
+      btn.textContent = 'Refresh all sources';
+    });
+}
+
+// ── Filter pill removal ──────────────────────────────────────────────────────
+function removeFilter(param) {
+  const url = new URL(window.location);
+  url.searchParams.delete(param);
+  url.searchParams.delete('page');
+  window.location = url.toString();
+}
+
+function removeFilters(...params) {
+  const url = new URL(window.location);
+  params.forEach(p => url.searchParams.delete(p));
+  url.searchParams.delete('page');
+  window.location = url.toString();
+}
+</script>
+
+</body>
+</html>

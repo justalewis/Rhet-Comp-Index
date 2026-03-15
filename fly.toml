@@ -1,0 +1,37 @@
+# fly.toml — Fly.io app configuration
+# Deploy: fly deploy
+# Docs:   https://fly.io/docs/reference/configuration/
+
+app = "rhet-comp-index"
+primary_region = "iad"          # Washington DC — change if you prefer another region
+                                 # Full list: fly platform regions
+
+[build]
+  # Uses the Dockerfile in this directory
+
+[env]
+  PORT = "8080"
+  # DB_PATH is set in the Dockerfile; override here if needed:
+  # DB_PATH = "/data/articles.db"
+
+[http_service]
+  internal_port = 8080
+  force_https   = true
+  auto_stop_machines  = true    # machines sleep after inactivity (saves free quota)
+  auto_start_machines = true    # wake automatically on first request
+
+  [http_service.concurrency]
+    type       = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+# Persistent volume — SQLite database survives deploys and restarts
+[[mounts]]
+  source      = "rhet_comp_data"   # fly volumes create rhet_comp_data --size 3
+  destination = "/data"
+  initial_size = "3gb"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

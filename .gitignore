@@ -1,0 +1,51 @@
+# Database — never commit, lives on the Fly.io volume
+articles.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+env/
+venv/
+.venv/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# IDEs & editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Misc
+headers.txt
