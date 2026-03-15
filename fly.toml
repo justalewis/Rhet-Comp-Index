@@ -11,6 +11,7 @@ primary_region = 'iad'
 [env]
   PORT = '8080'
   FLASK_ENV = 'production'
+  DB_PATH = '/data/articles.db'
 
 [[mounts]]
   source = 'rhet_comp_data'
