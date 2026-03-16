@@ -108,7 +108,11 @@ def _build_sidebar():
             "count":  count_map.get(j["name"], 0),
         })
 
-    return print_journals, web_journals
+    all_journals = sorted(
+        print_journals + web_journals,
+        key=lambda x: x["name"].lower()
+    )
+    return print_journals, web_journals, all_journals
 
 
 # ── Export helpers ─────────────────────────────────────────────────────────────
@@ -194,7 +198,7 @@ def _to_ris(articles):
 @app.route("/")
 def index():
     # Read all filter params
-    journal   = request.args.get("journal",   "").strip()
+    journals  = request.args.getlist("journal")
     source    = request.args.get("source",    "").strip()
     q         = request.args.get("q",         "").strip()
     year_from = request.args.get("year_from", "").strip()
@@ -205,17 +209,17 @@ def index():
 
     # Build a query-string fragment preserving all active filters except 'page'.
     filter_params = {}
-    if journal:   filter_params["journal"]   = journal
+    if journals:  filter_params["journal"]   = journals
     if source:    filter_params["source"]    = source
     if q:         filter_params["q"]         = q
     if year_from: filter_params["year_from"] = year_from
     if year_to:   filter_params["year_to"]   = year_to
     if tag:       filter_params["tag"]       = tag
-    filter_qs = urlencode(filter_params)
+    filter_qs = urlencode(filter_params, doseq=True)
 
     offset  = (page - 1) * per_page
     articles = get_articles(
-        journal=journal or None,
+        journal=journals or None,
         source=source or None,
         q=q or None,
         year_from=year_from or None,
@@ -225,7 +229,7 @@ def index():
         offset=offset,
     )
     total = get_total_count(
-        journal=journal or None,
+        journal=journals or None,
         source=source or None,
         q=q or None,
         year_from=year_from or None,
@@ -251,8 +255,8 @@ def index():
     if current_group:
         grouped.append((current_period, current_group))
 
-    print_journals, web_journals = _build_sidebar()
-    all_tags = get_all_tags(journal=journal or None, source=source or None)
+    print_journals, web_journals, all_journals = _build_sidebar()
+    all_tags = get_all_tags(journal=journals[0] if len(journals)==1 else None, source=source or None)
     min_year, max_year = get_year_range()
     new_count = get_new_article_count(days=7)
 
@@ -261,8 +265,9 @@ def index():
         grouped=grouped,
         print_journals=print_journals,
         web_journals=web_journals,
+        all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
-        selected_journal=journal,
+        active_journals=journals,
         selected_source=source,
         active_q=q,
         active_year_from=year_from,
@@ -372,7 +377,7 @@ def export():
 @app.route("/authors")
 def authors_list():
     """Alphabetical list of all authors with article counts."""
-    print_journals, web_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
     all_authors = get_all_authors(limit=500)
 
@@ -395,6 +400,7 @@ def authors_list():
         letters=letters,
         print_journals=print_journals,
         web_journals=web_journals,
+        all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -403,7 +409,7 @@ def authors_list():
 @app.route("/author/<path:name>")
 def author_detail(name):
     """All articles by a specific author."""
-    print_journals, web_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_author_articles(name)
 
@@ -413,6 +419,7 @@ def author_detail(name):
         articles=articles,
         print_journals=print_journals,
         web_journals=web_journals,
+        all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -426,7 +433,7 @@ def article_detail(article_id):
         return "Article not found", 404
 
     related = get_related_articles(article_id, limit=5)
-    print_journals, web_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
 
     return render_template(
@@ -435,6 +442,7 @@ def article_detail(article_id):
         related=related,
         print_journals=print_journals,
         web_journals=web_journals,
+        all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -443,13 +451,14 @@ def article_detail(article_id):
 @app.route("/explore")
 def explore():
     """Data exploration page: timeline, tag co-occurrence, author network."""
-    print_journals, web_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
 
     return render_template(
         "explore.html",
         print_journals=print_journals,
         web_journals=web_journals,
+        all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -496,7 +505,7 @@ def api_author_network():
 @app.route("/new")
 def new_articles():
     """Articles fetched within the last 7 days."""
-    print_journals, web_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_new_articles(days=7)
 
@@ -514,6 +523,7 @@ def new_articles():
         total=len(articles),
         print_journals=print_journals,
         web_journals=web_journals,
+        all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )

@@ -244,8 +244,13 @@ def _build_where(journal=None, source=None, q=None,
         params.append(safe)
 
     if journal:
-        where.append("a.journal = ?")
-        params.append(journal)
+        if isinstance(journal, list):
+            placeholders = ",".join("?" * len(journal))
+            where.append(f"a.journal IN ({placeholders})")
+            params.extend(journal)
+        else:
+            where.append("a.journal = ?")
+            params.append(journal)
 
     if source:
         where.append("a.source = ?")

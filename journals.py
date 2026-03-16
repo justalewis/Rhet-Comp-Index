@@ -25,6 +25,7 @@ CROSSREF_JOURNALS = [
     {"name": "Pedagogy",                                       "issn": "1531-4200"},
     {"name": "Community Literacy Journal",                     "issn": "1555-9734"},  # print ISSN — 465 DOIs
     {"name": "Poroi",                                          "issn": "2151-2957"},  # online ISSN — 259 DOIs
+    {"name": "Computers and Composition",                      "issn": "8755-4615"},
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
 ]
@@ -128,6 +129,27 @@ SCRAPE_JOURNALS = [
         "strategy": "woe",
         "notes": "Drupal 10 (UC Davis). RSS blocked (403). "
                  "Subscription journal — metadata scrapeable, full text paywalled.",
+    },
+    {
+        "name": "Writing Lab Newsletter",
+        "url": "https://writinglabnewsletter.org/",
+        "strategy": "wln",
+        "notes": "Print newsletter (1975–2015). Archive at /resources.html as full-issue PDFs. "
+                 "No individual article pages; entries are at the issue level.",
+    },
+    {
+        "name": "Writing Center Journal",
+        "url": "https://docs.lib.purdue.edu/wcj/",
+        "strategy": "wcj",
+        "notes": "Purdue Digital Commons (Open Access). Vol/iss TOC pages list articles "
+                 "with titles and authors. Vol 1 ≈ 1980.",
+    },
+    {
+        "name": "The Peer Review",
+        "url": "https://thepeerreview-iwca.org/",
+        "strategy": "peer_review",
+        "notes": "IWCA WordPress site. Issues listed at /issues/. "
+                 "Article slugs at root level.",
     },
 ]
 

@@ -38,48 +38,51 @@
         </a>
       </div>
 
-      <!-- All journals -->
-      <a href="/"
-         class="journal-link {% if not selected_journal and not selected_source %}active{% endif %}">
-        <span class="jname">All journals</span>
-        <span class="jcount">{{ total if not selected_journal and not selected_source and not active_q and not active_tag and not active_year_from and not active_year_to else '' }}</span>
-      </a>
-
-      <!-- ── Print journals ─────────────────────────────── -->
-      <div class="nav-section-head">Print Journals</div>
-
-      {% for j in print_journals %}
-      <a href="/?journal={{ j.name | urlencode }}"
-         class="journal-link {% if selected_journal == j.name %}active{% endif %}">
-        <span class="jname">{{ j.name }}</span>
-        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
-      </a>
-      {% endfor %}
-
-      <!-- ── Web-native journals ────────────────────────── -->
-      <div class="nav-section-head">Web Journals</div>
-
-      {% for j in web_journals %}
-      <a href="/?journal={{ j.name | urlencode }}"
-         class="journal-link {% if selected_journal == j.name %}active{% endif %}">
-        <span class="jname">{{ j.name }}</span>
-        <span class="jmeta">
-          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
-          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
-          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
-        </span>
-      </a>
-      {% endfor %}
-
-      <!-- ── Unavailable ───────────────────────────────── -->
-      {% if unavailable %}
-      <div class="nav-section-head unavailable-head">Unavailable</div>
-      {% for j in unavailable %}
-      <span class="journal-link unavailable" title="{{ j.note }}">
-        <span class="jname">{{ j.name }}</span>
-      </span>
-      {% endfor %}
-      {% endif %}
+      <!-- ── Journal filter (alphabetical checkbox dropdown) ─────── -->
+      <div class="journal-filter-wrapper">
+        <details class="journal-filter" id="journal-filter"
+                 {% if active_journals %}open{% endif %}>
+          <summary class="journal-filter-summary">
+            <span class="filter-summary-text">
+              {% if not active_journals %}
+                All Journals
+              {% elif active_journals|length == 1 %}
+                {{ active_journals[0]|truncate(26, true, '…') }}
+              {% else %}
+                {{ active_journals|length }} journals selected
+              {% endif %}
+            </span>
+            <span class="dropdown-arrow">▾</span>
+          </summary>
+          <div class="journal-filter-list">
+            <label class="journal-check-label all-journals-label">
+              <input type="checkbox" class="journal-check" id="check-all"
+                     {% if not active_journals %}checked{% endif %}
+                     onchange="toggleAllJournals(this)">
+              <span class="jname">All Journals</span>
+            </label>
+            <div class="journal-filter-divider"></div>
+            {% for j in all_journals %}
+            <label class="journal-check-label">
+              <input type="checkbox" class="journal-check journal-check-item"
+                     value="{{ j.name }}"
+                     {% if j.name in active_journals %}checked{% endif %}
+                     onchange="updateJournalFilter()">
+              <span class="jname">{{ j.name }}</span>
+              {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+            </label>
+            {% endfor %}
+            {% if unavailable %}
+            <div class="journal-filter-divider"></div>
+            {% for j in unavailable %}
+            <span class="journal-check-label unavailable" title="{{ j.note }}">
+              <span class="jname unavailable-name">{{ j.name }}</span>
+            </span>
+            {% endfor %}
+            {% endif %}
+          </div>
+        </details>
+      </div>
 
     </nav><!-- /journal-nav -->
 
@@ -97,8 +100,10 @@
 
     <!-- Content header -->
     <div class="content-header">
-      {% if selected_journal %}
-        <h2>{{ selected_journal }}</h2>
+      {% if active_journals and active_journals|length == 1 %}
+        <h2>{{ active_journals[0] }}</h2>
+      {% elif active_journals and active_journals|length > 1 %}
+        <h2>{{ active_journals|length }} Journals</h2>
       {% elif selected_source == 'crossref' %}
         <h2>Print Journals</h2>
       {% elif selected_source == 'rss' %}
@@ -116,9 +121,9 @@
       <form class="filter-form" method="get" action="/" autocomplete="off">
 
         <!-- Preserve journal / source selections when searching -->
-        {% if selected_journal %}
-        <input type="hidden" name="journal" value="{{ selected_journal }}">
-        {% endif %}
+        {% for j in active_journals %}
+        <input type="hidden" name="journal" value="{{ j }}">
+        {% endfor %}
         {% if selected_source %}
         <input type="hidden" name="source" value="{{ selected_source }}">
         {% endif %}
@@ -177,7 +182,7 @@
 
           {% if active_q or active_year_from or active_year_to or active_tag %}
           <a class="filter-clear"
-             href="/?{% if selected_journal %}journal={{ selected_journal | urlencode }}{% endif %}">
+             href="/?{% for j in active_journals %}journal={{ j | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}">
             Clear
           </a>
           {% endif %}
@@ -244,7 +249,7 @@
 
             <!-- Journal + date line -->
             <div class="article-meta-top">
-              {% if not selected_journal %}
+              {% if not active_journals or active_journals|length > 1 %}
               <span class="article-journal">{{ a.journal }}</span>
               {% endif %}
               {% if a.pub_date %}
@@ -294,7 +299,7 @@
               {% for t in a.tags.strip('|').split('|') %}
               {% if t.strip() %}
               <a class="article-tag"
-                 href="/?{% if selected_journal %}journal={{ selected_journal | urlencode }}&{% endif %}tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
+                 href="/?{% for j in active_journals %}journal={{ j | urlencode }}&{% endfor %}tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
               {% endif %}
               {% endfor %}
             </div>
@@ -339,7 +344,7 @@
     <div class="empty-state">
       {% if active_q or active_year_from or active_year_to or active_tag %}
         <p>No articles matched your filters.</p>
-        <p><a href="/?{% if selected_journal %}journal={{ selected_journal | urlencode }}{% endif %}">Clear all filters</a> to see all articles.</p>
+        <p><a href="/?{% for j in active_journals %}journal={{ j | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}">Clear all filters</a> to see all articles.</p>
       {% else %}
         <p>No articles in the database yet.</p>
         <p>Click <strong>Refresh all sources</strong> in the sidebar to fetch recent publications.</p>
@@ -389,6 +394,30 @@ function removeFilters(...params) {
   const url = new URL(window.location);
   params.forEach(p => url.searchParams.delete(p));
   url.searchParams.delete('page');
+  window.location = url.toString();
+}
+
+// ── Journal checkbox filter ───────────────────────────────────────────────────
+function toggleAllJournals(checkbox) {
+  if (checkbox.checked) {
+    document.querySelectorAll('.journal-check-item').forEach(cb => cb.checked = false);
+    const url = new URL(window.location);
+    url.searchParams.delete('journal');
+    url.searchParams.delete('page');
+    window.location = url.toString();
+  } else {
+    checkbox.checked = true; // keep checked if user tries to uncheck it directly
+  }
+}
+
+function updateJournalFilter() {
+  const checked = [...document.querySelectorAll('.journal-check-item:checked')]
+    .map(cb => cb.value);
+  document.getElementById('check-all').checked = (checked.length === 0);
+  const url = new URL(window.location);
+  url.searchParams.delete('journal');
+  url.searchParams.delete('page');
+  checked.forEach(j => url.searchParams.append('journal', j));
   window.location = url.toString();
 }
 </script>

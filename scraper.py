@@ -866,6 +866,249 @@ def scrape_comp_studies():
     return total
 
 
+# ── Writing Lab Newsletter ─────────────────────────────────────────────────────
+# Print newsletter (1975–2015). Archive at /resources.html as full-issue PDFs.
+# No individual article pages exist; each PDF is one issue of the newsletter.
+
+WLN_BASE = "https://writinglabnewsletter.org"
+
+
+def scrape_wln():
+    name = "Writing Lab Newsletter"
+    log.info("Scraping: %s", name)
+    total = 0
+
+    _, soup = _get(WLN_BASE + "/resources.html")
+    if soup is None:
+        update_fetch_log(name)
+        return 0
+
+    seen = set()
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        if "/archives/" not in href or not href.lower().endswith(".pdf"):
+            continue
+
+        url = _abs_url(href, WLN_BASE)
+        if not url or url in seen:
+            continue
+        seen.add(url)
+
+        # Estimate year from volume number: Vol 1 = 1975–76, Vol N ≈ 1974+N
+        m_vol = re.search(r"/v(\d+)/", href)
+        pub_date = str(1974 + int(m_vol.group(1))) if m_vol else None
+
+        link_text = a.get_text(strip=True)
+        fname = href.split("/")[-1].replace(".pdf", "")
+        title = f"WLN {link_text}" if link_text and len(link_text) >= 4 else f"WLN Issue {fname}"
+
+        total += upsert_article(
+            url=url, doi=None, title=title, authors=None,
+            abstract=None, pub_date=pub_date,
+            journal=name, source="scrape",
+            tags=auto_tag(title, None),
+        )
+
+    update_fetch_log(name)
+    log.info("  %s — %d new articles", name, total)
+    return total
+
+
+# ── Writing Center Journal ─────────────────────────────────────────────────────
+# Purdue Digital Commons (Open Access). Issue TOC pages list articles with
+# title, author(s), and URL. Individual article pages at /wcj/vol{N}/iss{N}/{N}.
+# Vol 1 ≈ 1980; currently at Vol 43 (2025).
+
+WCJ_BASE = "https://docs.lib.purdue.edu"
+
+
+def _scrape_wcj_issue(issue_url, journal_name):
+    """Scrape one Writing Center Journal issue TOC page."""
+    _, soup = _get(issue_url)
+    if soup is None:
+        return 0
+
+    # Try to extract year from page text
+    page_text = soup.get_text(" ", strip=True)
+    m_yr = re.search(r"\b(19[89]\d|200\d|201\d|202\d)\b", page_text)
+    pub_date = m_yr.group(1) if m_yr else None
+    if not pub_date:
+        m_vol = re.search(r"/vol(\d+)/", issue_url)
+        if m_vol:
+            pub_date = str(1979 + int(m_vol.group(1)))
+
+    seen, new_count = set(), 0
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if not re.search(r"/wcj/vol\d+/iss\d+/\d+$", href):
+            continue
+        full = _abs_url(href, WCJ_BASE)
+        if not full or full in seen:
+            continue
+
+        title = a.get_text(separator=" ", strip=True)
+        if not title or len(title) < 10:
+            continue
+
+        # Try to extract author from parent container
+        authors = None
+        parent = a.find_parent(["li", "div", "p", "td"])
+        if parent:
+            parent_text = parent.get_text(" ", strip=True)
+            author_text = parent_text.replace(title, "").strip()
+            author_text = re.sub(r"^[,;\s\-]+|[,;\s\-]+$", "", author_text)
+            if author_text and len(author_text) < 200:
+                authors = "; ".join(
+                    p.strip() for p in re.split(r"\s+and\s+", author_text) if p.strip()
+                )
+
+        seen.add(full)
+        new_count += upsert_article(
+            url=full, doi=None, title=title, authors=authors,
+            abstract=None, pub_date=pub_date,
+            journal=journal_name, source="scrape",
+            tags=auto_tag(title, None),
+        )
+
+    return new_count
+
+
+def scrape_wcj():
+    name = "Writing Center Journal"
+    log.info("Scraping: %s", name)
+    total = 0
+
+    _, soup = _get(WCJ_BASE + "/wcj/")
+    if soup is None:
+        update_fetch_log(name)
+        return 0
+
+    issue_urls = set()
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if re.search(r"/wcj/vol\d+/iss\d+/?$", href):
+            full = _abs_url(href, WCJ_BASE)
+            if full:
+                issue_urls.add(full.rstrip("/") + "/")
+
+    # Also probe recent volumes directly
+    for vol in range(43, 38, -1):
+        for iss in range(1, 4):
+            issue_urls.add(f"{WCJ_BASE}/wcj/vol{vol}/iss{iss}/")
+
+    log.info("  Writing Center Journal: checking %d issue URLs", len(issue_urls))
+
+    for url in sorted(issue_urls, reverse=True):
+        total += _scrape_wcj_issue(url, name)
+
+    update_fetch_log(name)
+    log.info("  %s — %d new articles", name, total)
+    return total
+
+
+# ── The Peer Review ────────────────────────────────────────────────────────────
+# IWCA WordPress site. Issues listed at /issues/. Issue pages at /issue-N[-M]/.
+# Individual articles at root-level slugs: thepeerreview-iwca.org/article-slug/
+
+PEER_REVIEW_BASE = "https://thepeerreview-iwca.org"
+
+PEER_REVIEW_SKIP = re.compile(
+    r"^(issues?|about|contact|submit|editorial|board|masthead|"
+    r"wp-content|wp-admin|feed|tag|category|author|page|#)",
+    re.I,
+)
+
+
+def _scrape_peer_review_issue(issue_url, pub_year, journal_name):
+    """Scrape one Peer Review issue page."""
+    _, soup = _get(issue_url)
+    if soup is None:
+        return 0
+
+    seen, new_count = set(), 0
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        full = _abs_url(href, PEER_REVIEW_BASE)
+        if not full or not full.startswith(PEER_REVIEW_BASE + "/"):
+            continue
+
+        path = full.replace(PEER_REVIEW_BASE, "").strip("/")
+        if not path or "/" in path:
+            continue
+        if PEER_REVIEW_SKIP.match(path):
+            continue
+        if full == issue_url or full == PEER_REVIEW_BASE + "/":
+            continue
+
+        title = a.get_text(separator=" ", strip=True)
+        if not title or len(title) < 10 or _is_nav_text(title):
+            continue
+
+        if full in seen:
+            continue
+        seen.add(full)
+
+        # Try to extract author from parent text
+        authors = None
+        parent = a.find_parent(["li", "div", "p", "article"])
+        if parent:
+            parent_text = parent.get_text(" ", strip=True)
+            author_text = parent_text.replace(title, "").strip()
+            author_text = re.sub(r"^[\s\-\u2013\u2014,]+|[\s\-\u2013\u2014,]+$", "", author_text)
+            if author_text and len(author_text) < 150:
+                authors = author_text
+
+        new_count += upsert_article(
+            url=full, doi=None, title=title, authors=authors,
+            abstract=None, pub_date=pub_year,
+            journal=journal_name, source="scrape",
+            tags=auto_tag(title, None),
+        )
+
+    return new_count
+
+
+def scrape_peer_review():
+    name = "The Peer Review"
+    log.info("Scraping: %s", name)
+    total = 0
+
+    _, soup = _get(PEER_REVIEW_BASE + "/issues/")
+    if soup is None:
+        update_fetch_log(name)
+        return 0
+
+    issue_pages = []
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        if not re.search(r"/issue-\d", href):
+            continue
+        full = _abs_url(href, PEER_REVIEW_BASE)
+        if not full:
+            continue
+        parent = a.find_parent(["li", "div", "p", "h2", "h3"])
+        ctx = parent.get_text(" ", strip=True) if parent else a.get_text(" ", strip=True)
+        m_yr = re.search(r"\b(20\d{2})\b", ctx)
+        year = m_yr.group(1) if m_yr else None
+        issue_pages.append((year, full))
+
+    seen_urls: set = set()
+    unique = []
+    for yr, url in issue_pages:
+        if url not in seen_urls:
+            seen_urls.add(url)
+            unique.append((yr, url))
+
+    log.info("  The Peer Review: found %d issue pages", len(unique))
+
+    for year, issue_url in unique:
+        total += _scrape_peer_review_issue(issue_url, year, name)
+
+    update_fetch_log(name)
+    log.info("  %s — %d new articles", name, total)
+    return total
+
+
 # ── Dispatch ──────────────────────────────────────────────────────────────────
 
 SCRAPERS = {
@@ -877,6 +1120,9 @@ SCRAPERS = {
     "comp_studies":  scrape_comp_studies,
     "enculturation": scrape_enculturation,
     "kb_journal":    scrape_kb_journal,
+    "wln":           scrape_wln,
+    "wcj":           scrape_wcj,
+    "peer_review":   scrape_peer_review,
 }
 
 
