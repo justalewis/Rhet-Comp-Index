@@ -15,6 +15,7 @@ Routes:
   GET  /api/stats/author-network   — JSON: author co-authorship network
   GET  /api/stats/most-cited       — JSON: top articles by internal citation count
   GET  /api/citations/network      — JSON: force-graph nodes + edges for citation network
+  GET  /api/stats/citation-trends  — JSON: avg internal citations per article per year
   GET  /new                     — articles fetched in last 7 days
 """
 
@@ -36,6 +37,7 @@ from db import (
     get_all_authors, get_author_articles,
     get_most_cited,
     get_citation_network,
+    get_citation_trends,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -516,6 +518,13 @@ def api_tag_cooccurrence():
 def api_author_network():
     """JSON: author co-authorship network nodes and links."""
     return jsonify(get_author_network(min_papers=3, top_n=150))
+
+
+@app.route("/api/stats/citation-trends")
+def api_citation_trends():
+    """JSON: avg internal citations per article per year, filtered by optional journal."""
+    journal = request.args.get("journal", "").strip()
+    return jsonify(get_citation_trends(journal=journal or None))
 
 
 @app.route("/api/citations/network")

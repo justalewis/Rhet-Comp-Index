@@ -92,6 +92,7 @@
       <button class="explore-tab" onclick="showTab('topics', this)">Topics</button>
       <button class="explore-tab" onclick="showTab('network', this)">Author Network</button>
       <button class="explore-tab" onclick="showTab('citations', this)">Citations</button>
+      <button class="explore-tab" onclick="showTab('cittrends', this)">Citation Trends</button>
       <button class="explore-tab" onclick="showTab('citnet', this)">Citation Network</button>
     </div>
 
@@ -181,6 +182,28 @@
 
       <div id="citations-list-container">
         <div class="loading-msg">Loading citation data…</div>
+      </div>
+
+    </div>
+
+    <!-- ── Citation Trends tab ──────────────────────────────── -->
+    <div id="tab-cittrends" class="tab-panel" style="display:none;">
+
+      <div class="chart-toolbar">
+        <label class="filter-label" for="cittrends-journal">Journal:</label>
+        <select id="cittrends-journal" class="filter-select"
+                onchange="loadCitTrends()" style="margin-left:0.4rem;">
+          <option value="">All journals</option>
+          {% for j in all_journals %}
+          <option value="{{ j.name }}">{{ j.name }}</option>
+          {% endfor %}
+        </select>
+        <span id="cittrends-note"
+              style="margin-left:1.2rem;font-family:var(--font-ui);font-size:0.78rem;color:var(--text-muted);"></span>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="cittrends-chart"></canvas>
       </div>
 
     </div>
@@ -287,6 +310,7 @@
 let topicsLoaded    = false;
 let networkLoaded   = false;
 let citationsLoaded = false;
+let citTrendsLoaded = false;
 let citnetLoaded    = false;
 
 function showTab(name, btn) {
@@ -306,6 +330,10 @@ function showTab(name, btn) {
   if (name === 'citations' && !citationsLoaded) {
     citationsLoaded = true;
     loadCitations();
+  }
+  if (name === 'cittrends' && !citTrendsLoaded) {
+    citTrendsLoaded = true;
+    loadCitTrends();
   }
   if (name === 'citnet' && !citnetLoaded) {
     citnetLoaded = true;
@@ -706,6 +734,134 @@ async function loadCitations() {
 function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+
+// ── Citation Trends ────────────────────────────────────────────────────────────
+let citTrendsChart = null;
+
+async function loadCitTrends() {
+  const noteEl = document.getElementById('cittrends-note');
+  noteEl.textContent = 'Loading…';
+
+  const journal = document.getElementById('cittrends-journal').value;
+  const params  = new URLSearchParams();
+  if (journal) params.set('journal', journal);
+
+  let rows;
+  try {
+    const resp = await fetch('/api/stats/citation-trends?' + params.toString());
+    rows = await resp.json();
+  } catch (e) {
+    noteEl.textContent = 'Failed to load data.';
+    return;
+  }
+
+  if (!rows || rows.length === 0) {
+    noteEl.textContent =
+      'No citation data yet — run python cite_fetcher.py to populate.';
+    if (citTrendsChart) { citTrendsChart.destroy(); citTrendsChart = null; }
+    return;
+  }
+
+  const totalArts = rows.reduce((s, r) => s + r.article_count, 0);
+  noteEl.textContent = `Based on ${totalArts.toLocaleString()} articles with citation data`;
+
+  const years     = rows.map(r => r.year);
+  const avgCites  = rows.map(r => r.avg_cites);
+  const artCounts = rows.map(r => r.article_count);
+  renderCitTrends(years, avgCites, artCounts);
+}
+
+function renderCitTrends(years, avgCites, artCounts) {
+  const ctx = document.getElementById('cittrends-chart').getContext('2d');
+  if (citTrendsChart) citTrendsChart.destroy();
+
+  citTrendsChart = new Chart(ctx, {
+    data: {
+      labels: years,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Avg. internal citations per article',
+          data: avgCites,
+          borderColor: '#5a3e28',
+          backgroundColor: 'rgba(90,62,40,0.07)',
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          tension: 0.35,
+          yAxisID: 'y',
+          order: 1,
+        },
+        {
+          type: 'bar',
+          label: 'Articles with citation data',
+          data: artCounts,
+          backgroundColor: 'rgba(90,62,40,0.13)',
+          borderWidth: 0,
+          yAxisID: 'y2',
+          order: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'system-ui, sans-serif', size: 11 },
+            boxWidth: 12,
+            padding: 8,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ctx.datasetIndex === 0
+              ? ` ${ctx.parsed.y.toFixed(2)} avg. internal citations`
+              : ` ${ctx.parsed.y} articles`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } },
+        },
+        y: {
+          type: 'linear',
+          position: 'left',
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Avg. internal citations / article',
+            font: { family: 'system-ui, sans-serif', size: 11 },
+            color: '#5a3e28',
+          },
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } },
+        },
+        y2: {
+          type: 'linear',
+          position: 'right',
+          beginAtZero: true,
+          grid: { drawOnChartArea: false },
+          title: {
+            display: true,
+            text: 'Articles with citation data',
+            font: { family: 'system-ui, sans-serif', size: 11 },
+            color: '#9c9890',
+          },
+          ticks: {
+            font: { family: 'system-ui, sans-serif', size: 11 },
+            color: '#9c9890',
+          },
+        },
+      },
+    },
+  });
 }
 
 

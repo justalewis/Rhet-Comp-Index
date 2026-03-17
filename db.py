@@ -869,3 +869,46 @@ def get_citation_network(min_citations=5, journals=None,
             "node_count": len(nodes),
             "link_count": len(links),
         }
+
+
+def get_citation_trends(journal=None):
+    """
+    Return per-year citation behaviour for articles whose references have been fetched.
+
+    For each year (≥ 1990, ≥ 2 articles processed) returns:
+      year            — 4-digit string
+      avg_cites       — average internal_cites_count (refs pointing inside the index)
+      article_count   — articles with references_fetched_at IS NOT NULL
+      total_cites     — raw sum of internal_cites_count for that year
+
+    Filters to references_fetched_at IS NOT NULL so unfetched articles
+    (internal_cites_count = 0) don't artificially suppress the averages.
+    Optional journal filter narrows to a single journal.
+    """
+    where  = [
+        "pub_date IS NOT NULL",
+        "SUBSTR(pub_date,1,4) >= '1990'",
+        "references_fetched_at IS NOT NULL",
+    ]
+    params = []
+
+    if journal:
+        where.append("journal = ?")
+        params.append(journal)
+
+    clause = "WHERE " + " AND ".join(where)
+
+    with get_conn() as conn:
+        rows = conn.execute(f"""
+            SELECT
+                SUBSTR(pub_date,1,4)                        AS year,
+                ROUND(AVG(CAST(internal_cites_count AS REAL)), 2) AS avg_cites,
+                COUNT(*)                                    AS article_count,
+                SUM(internal_cites_count)                   AS total_cites
+            FROM articles
+            {clause}
+            GROUP BY year
+            HAVING COUNT(*) >= 2
+            ORDER BY year
+        """, params).fetchall()
+        return [dict(r) for r in rows]
