@@ -28,6 +28,7 @@ import logging
 from urllib.parse import urlencode
 
 from flask import Flask, render_template, request, jsonify, Response, redirect
+from flask_compress import Compress
 
 from db import (
     init_db, get_articles, get_article_counts, get_total_count,
@@ -47,6 +48,7 @@ from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILAB
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
+Compress(app)
 
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()

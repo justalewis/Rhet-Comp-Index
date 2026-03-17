@@ -1,4 +1,5 @@
 flask>=3.0.0
+flask-compress>=1.14
 requests>=2.31.0
 feedparser>=6.0.11
 beautifulsoup4>=4.12.0
