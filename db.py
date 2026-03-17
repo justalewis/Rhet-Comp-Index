@@ -507,7 +507,7 @@ def get_related_articles(article_id, limit=5):
               AND ({cases}) > 0
             ORDER BY shared_count DESC, pub_date DESC
             LIMIT ?
-        """, (article_id, article_id, limit)).fetchall()
+        """, (article_id, limit)).fetchall()
         return [dict(r) for r in rows]
 
 
