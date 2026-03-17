@@ -184,10 +184,13 @@
     <section class="author-letter-section" id="letter-{{ letter }}">
       <h3 class="period-heading">{{ letter }}</h3>
       <ol class="author-list">
-        {% for name, count in grouped[letter] %}
+        {% for rec in grouped[letter] %}
         <li class="author-item">
-          <a href="/author/{{ name | urlencode }}" class="author-name-link">{{ name }}</a>
-          <span class="author-count">{{ count }} article{% if count != 1 %}s{% endif %}</span>
+          <a href="/author/{{ rec.name | urlencode }}" class="author-name-link">{{ rec.name }}</a>
+          <span class="author-count">{{ rec.count }} article{% if rec.count != 1 %}s{% endif %}</span>
+          {% if rec.institution_name %}
+          <div class="author-institution">{{ rec.institution_name }}</div>
+          {% endif %}
         </li>
         {% endfor %}
       </ol>

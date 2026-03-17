@@ -6,7 +6,10 @@ Schema versions
   v1 — doi as PRIMARY KEY, no url/source columns  (legacy, auto-migrated)
   v2 — url as UNIQUE key, source column added      (auto-migrated)
   v3 — keywords + tags columns, FTS5 virtual table (auto-migrated)
-  v4 — oa_url, citation_count, ss_id columns       (current)
+  v4 — oa_url, citation_count, ss_id columns       (auto-migrated)
+  v5 — citation network tables                     (auto-migrated)
+  v6 — openalex_id, openalex_enriched_at, oa_status on articles;
+        authors table; author_article_affiliations table (current)
 
 All migrations run automatically inside init_db(); no manual steps needed.
 """
@@ -229,6 +232,57 @@ def _migrate_v4_to_v5(conn):
     )
 
 
+def _migrate_v5_to_v6(conn):
+    """Add OpenAlex columns to articles; create authors and author_article_affiliations tables (v5 → v6).
+    Safe to call on an already-migrated database — all operations are idempotent."""
+    existing = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
+    did_work = False
+    for col, typedef in [
+        ("openalex_id",         "TEXT"),
+        ("openalex_enriched_at","TEXT"),
+        ("oa_status",           "TEXT"),
+    ]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {typedef}")
+            did_work = True
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS authors (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            name             TEXT    NOT NULL,
+            openalex_id      TEXT,
+            orcid            TEXT,
+            institution_name TEXT,
+            institution_ror  TEXT,
+            UNIQUE(name)
+        )
+    """)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_authors_name ON authors(name)"
+    )
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS author_article_affiliations (
+            id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+            article_id           INTEGER NOT NULL REFERENCES articles(id),
+            author_name          TEXT    NOT NULL,
+            openalex_author_id   TEXT,
+            institution_name     TEXT,
+            institution_ror      TEXT,
+            raw_affiliation_string TEXT,
+            UNIQUE(article_id, author_name)
+        )
+    """)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_aff_article_id ON author_article_affiliations(article_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_aff_author_name ON author_article_affiliations(author_name)"
+    )
+    if did_work:
+        log.info("v5→v6 migration complete.")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -248,7 +302,10 @@ def init_db():
 
         if "references_fetched_at" not in cols:
             _migrate_v4_to_v5(conn)
-        # else: v5 already in place — nothing to do
+
+        # Always run v6 migration — it uses IF NOT EXISTS / column-existence checks
+        # so it is safe to call on an already-migrated database.
+        _migrate_v5_to_v6(conn)
 
         conn.commit()
 
@@ -1073,3 +1130,152 @@ def get_coverage_stats():
             "coverage_pct":  round(100.0 * fetched / total, 1),
         })
     return sorted(result, key=lambda x: (-x["coverage_pct"], x["journal"]))
+
+
+# ── OpenAlex / author affiliation reads ────────────────────────────────────────
+
+def get_article_affiliations(article_id):
+    """
+    Return a dict of {author_name: {institution_name, institution_ror, openalex_author_id,
+    raw_affiliation_string}} for a single article.
+    """
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT author_name, openalex_author_id,
+                   institution_name, institution_ror, raw_affiliation_string
+            FROM author_article_affiliations
+            WHERE article_id = ?
+        """, (article_id,)).fetchall()
+    return {
+        r["author_name"]: {
+            "openalex_author_id":    r["openalex_author_id"],
+            "institution_name":      r["institution_name"],
+            "institution_ror":       r["institution_ror"],
+            "raw_affiliation_string": r["raw_affiliation_string"],
+        }
+        for r in rows
+    }
+
+
+def get_author_by_name(name):
+    """Return the authors table record for this name (exact match), or None."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM authors WHERE name = ?", (name,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def get_all_authors_with_institutions(limit=500):
+    """
+    Return list of dicts with keys: name, count, institution_name, orcid.
+    Sorted by count descending. Used by the authors index page.
+    """
+    with get_conn() as conn:
+        # Build article count from the articles.authors text field (same as get_all_authors)
+        rows = conn.execute(
+            "SELECT authors FROM articles WHERE authors IS NOT NULL AND authors != ''"
+        ).fetchall()
+
+    author_counts: dict[str, int] = {}
+    for row in rows:
+        for a in row["authors"].split(";"):
+            a = a.strip()
+            if a:
+                author_counts[a] = author_counts.get(a, 0) + 1
+
+    sorted_authors = sorted(author_counts.items(), key=lambda x: (-x[1], x[0]))[:limit]
+
+    # Fetch institution data for these authors from the authors table
+    with get_conn() as conn:
+        # Load all authors table records in one query for efficiency
+        author_records = {
+            r["name"]: dict(r)
+            for r in conn.execute("SELECT name, institution_name, orcid FROM authors").fetchall()
+        }
+
+    result = []
+    for name, count in sorted_authors:
+        rec = author_records.get(name, {})
+        result.append({
+            "name":             name,
+            "count":            count,
+            "institution_name": rec.get("institution_name"),
+            "orcid":            rec.get("orcid"),
+        })
+    return result
+
+
+def get_top_institutions(limit=25):
+    """
+    Return [(institution_name, article_count)] for the top institutions
+    by number of distinct articles they are affiliated with.
+    Uses author_article_affiliations for article-level counting.
+    """
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT institution_name, COUNT(DISTINCT article_id) AS article_count
+            FROM author_article_affiliations
+            WHERE institution_name IS NOT NULL AND institution_name != ''
+            GROUP BY institution_name
+            ORDER BY article_count DESC
+            LIMIT ?
+        """, (limit,)).fetchall()
+    return [(r["institution_name"], r["article_count"]) for r in rows]
+
+
+def get_institution_timeline(top_n=10):
+    """
+    Return data for an institutions-over-time chart.
+
+    Result: {
+        years: [year_str, ...],
+        series: [{institution: name, counts: [count_per_year, ...]}, ...]
+    }
+    Only covers the top_n institutions by total article count.
+    """
+    # Get top institutions
+    top = get_top_institutions(limit=top_n)
+    if not top:
+        return {"years": [], "series": []}
+
+    top_names = [name for name, _ in top]
+
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT
+                aaa.institution_name,
+                SUBSTR(a.pub_date, 1, 4) AS year,
+                COUNT(DISTINCT aaa.article_id) AS count
+            FROM author_article_affiliations aaa
+            JOIN articles a ON a.id = aaa.article_id
+            WHERE aaa.institution_name IS NOT NULL
+              AND aaa.institution_name != ''
+              AND a.pub_date IS NOT NULL
+              AND SUBSTR(a.pub_date, 1, 4) >= '1990'
+            GROUP BY aaa.institution_name, year
+            ORDER BY year
+        """).fetchall()
+
+    # Build year set and per-institution year→count maps
+    year_set: set[str] = set()
+    inst_year: dict[str, dict[str, int]] = {name: {} for name in top_names}
+
+    for row in rows:
+        name = row["institution_name"]
+        if name not in inst_year:
+            continue
+        year = row["year"]
+        year_set.add(year)
+        inst_year[name][year] = row["count"]
+
+    years = sorted(year_set)
+    series = [
+        {
+            "institution": name,
+            "counts": [inst_year[name].get(y, 0) for y in years],
+        }
+        for name in top_names
+    ]
+
+    return {"years": years, "series": series}

@@ -175,7 +175,13 @@
         {% elif article.source == 'rss' %}
         <span class="src-badge rss">RSS</span>
         {% endif %}
-        {% if article.oa_url %}
+        {% if article.oa_status in ('gold', 'green', 'hybrid') %}
+          {% if article.oa_url %}
+          <a class="oa-badge" href="{{ article.oa_url }}" target="_blank" rel="noopener">Open Access</a>
+          {% else %}
+          <span class="oa-badge">Open Access</span>
+          {% endif %}
+        {% elif article.oa_url %}
         <a class="oa-badge" href="{{ article.oa_url }}" target="_blank" rel="noopener">OA PDF</a>
         {% endif %}
       </div>
@@ -189,7 +195,12 @@
         {% for author in article.authors.split(';') %}
         {% set a = author.strip() %}
         {% if a %}
-        <a href="/author/{{ a | urlencode }}" class="author-link">{{ a }}</a>{% if not loop.last %}; {% endif %}
+        <span class="detail-author-item">
+          <a href="/author/{{ a | urlencode }}" class="author-link">{{ a }}</a>
+          {% if author_affiliations and a in author_affiliations and author_affiliations[a].institution_name %}
+          <span class="author-affiliation-inline">{{ author_affiliations[a].institution_name }}</span>
+          {% endif %}
+        </span>{% if not loop.last %}; {% endif %}
         {% endif %}
         {% endfor %}
       </div>
@@ -220,9 +231,16 @@
         <dd><a href="{{ article.url }}" target="_blank" rel="noopener">{{ article.doi }}</a></dd>
         {% endif %}
 
-        {% if article.oa_url %}
+        {% if article.oa_url or article.oa_status %}
         <dt>Open Access</dt>
-        <dd><a href="{{ article.oa_url }}" target="_blank" rel="noopener" class="oa-badge">OA PDF</a></dd>
+        <dd>
+          {% if article.oa_url %}
+          <a href="{{ article.oa_url }}" target="_blank" rel="noopener" class="oa-badge">OA PDF</a>
+          {% endif %}
+          {% if article.oa_status %}
+          <span class="oa-status-text">{{ article.oa_status | capitalize }}</span>
+          {% endif %}
+        </dd>
         {% endif %}
 
         {% if article.citation_count is not none %}

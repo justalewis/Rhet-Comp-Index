@@ -611,6 +611,37 @@ html.scandi .oa-badge:hover {
   text-decoration: none;
 }
 
+/* ── Author affiliation / institution / profile (scandi) ──────── */
+html.scandi .author-affiliation-inline {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+html.scandi .author-institution {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+html.scandi .author-profile-institution {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+html.scandi .author-orcid-link {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+html.scandi .oa-status-text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* ── Citation count ──────────────────────────────────────────── */
 html.scandi .cite-count {
   font-family: var(--font-body);

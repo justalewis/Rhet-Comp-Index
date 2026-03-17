@@ -168,6 +168,17 @@
       <span class="result-count">{{ articles | length }} article{% if articles | length != 1 %}s{% endif %}</span>
     </div>
 
+    {% if author_record %}
+    <div class="author-profile-meta">
+      {% if author_record.institution_name %}
+      <span class="author-profile-institution">{{ author_record.institution_name }}</span>
+      {% endif %}
+      {% if author_record.orcid %}
+      <a href="https://orcid.org/{{ author_record.orcid }}" class="author-orcid-link" target="_blank" rel="noopener">ORCID: {{ author_record.orcid }}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
     {% if articles %}
     <ol class="article-list">
       {% for a in articles %}

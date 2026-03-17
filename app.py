@@ -45,6 +45,11 @@ from db import (
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
+    get_article_affiliations,
+    get_author_by_name,
+    get_all_authors_with_institutions,
+    get_top_institutions,
+    get_institution_timeline,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -428,20 +433,21 @@ def export():
 @app.route("/authors")
 @cache_response(seconds=3600)
 def authors_list():
-    """Alphabetical list of all authors with article counts."""
+    """Alphabetical list of all authors with article counts and institution data."""
     print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
-    all_authors = get_all_authors(limit=500)
+    all_authors_data = get_all_authors_with_institutions(limit=500)
 
     # Group by first letter of last name (last word of full name)
     grouped = {}
-    for name, count in all_authors:
+    for rec in all_authors_data:
+        name = rec["name"]
         parts = name.strip().split()
         last = parts[-1] if parts else name
         letter = last[0].upper() if last else "#"
         if letter not in grouped:
             grouped[letter] = []
-        grouped[letter].append((name, count))
+        grouped[letter].append(rec)
 
     # Sort letters, put non-alpha at end
     letters = sorted(grouped.keys(), key=lambda c: (not c.isalpha(), c))
@@ -464,11 +470,13 @@ def author_detail(name):
     print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_author_articles(name)
+    author_record = get_author_by_name(name)
 
     return render_template(
         "author.html",
         author_name=name,
         articles=articles,
+        author_record=author_record,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
@@ -484,12 +492,13 @@ def article_detail(article_id):
     if article is None:
         return "Article not found", 404
 
-    related      = get_related_articles(article_id, limit=5)
-    cited_by     = get_article_citations(article_id)
-    all_refs     = get_article_all_references(article_id)
-    cites        = [r for r in all_refs if r["in_index"]]
-    outside_refs = [r for r in all_refs if not r["in_index"]]
-    outside_count = len(outside_refs)
+    related             = get_related_articles(article_id, limit=5)
+    cited_by            = get_article_citations(article_id)
+    all_refs            = get_article_all_references(article_id)
+    cites               = [r for r in all_refs if r["in_index"]]
+    outside_refs        = [r for r in all_refs if not r["in_index"]]
+    outside_count       = len(outside_refs)
+    author_affiliations = get_article_affiliations(article_id)
     print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     coverage_stats = get_coverage_stats()
@@ -505,6 +514,7 @@ def article_detail(article_id):
         cites=cites,
         outside_refs=outside_refs,
         outside_count=outside_count,
+        author_affiliations=author_affiliations,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
@@ -654,6 +664,16 @@ def api_most_cited():
         limit=limit,
     )
     return jsonify(results)
+
+
+@app.route("/api/stats/institutions")
+@cache_response(seconds=3600)
+def api_institutions():
+    """JSON: top institutions by article count + top-10 timeline."""
+    top = get_top_institutions(limit=25)
+    institutions = [{"name": name, "count": count} for name, count in top]
+    timeline = get_institution_timeline(top_n=10)
+    return jsonify({"institutions": institutions, "top10_timeline": timeline})
 
 
 @app.route("/new")
