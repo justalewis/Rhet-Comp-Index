@@ -2083,3 +2083,181 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 }
 
 .show-more-btn:hover { text-decoration: underline; }
+
+/* ── About page ────────────────────────────────────────────── */
+.about-page-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.about-nav {
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  flex-shrink: 0;
+}
+
+.about-nav-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.65rem 0;
+  flex-wrap: wrap;
+}
+
+.about-nav-home {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.about-nav-home:hover { color: var(--accent); text-decoration: none; text-shadow: 0 0 8px var(--accent); }
+
+.about-nav-links {
+  display: flex;
+  gap: 0.8rem 1.2rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.about-nav-links a {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.about-nav-links a:hover { color: var(--accent); text-decoration: none; }
+
+.about-content {
+  flex: 1;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+  width: 100%;
+}
+
+.about-title {
+  font-family: var(--font-body);
+  font-size: 1.75rem;
+  font-weight: normal;
+  color: var(--accent);
+  margin-bottom: 2.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.about-section {
+  margin-bottom: 2.75rem;
+}
+
+.about-section h2 {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.about-body {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.72;
+  color: var(--text);
+}
+
+.about-body p {
+  margin-bottom: 1.1rem;
+}
+
+.about-body p:last-child { margin-bottom: 0; }
+
+.citation-block {
+  font-family: var(--font-mono);
+  font-size: 0.855rem;
+  line-height: 1.6;
+  background: var(--bg-sidebar);
+  border-left: 3px solid var(--accent);
+  padding: 0.8rem 1.1rem;
+  margin: 1.1rem 0;
+  color: var(--accent);
+}
+
+.about-colophon {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.about-colophon h2 {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-light);
+  margin-bottom: 0.65rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.about-colophon p {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-light);
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+.about-page-footer {
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.about-page-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  margin: 0 0.4rem;
+}
+
+.about-page-footer a:hover { color: var(--accent); text-decoration: underline; }
+
+/* Sidebar link to About on every page */
+.sidebar-about-link {
+  display: block;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 0.71rem;
+  color: var(--text-light);
+  text-decoration: none;
+  margin-top: 0.55rem;
+  padding: 0.15rem 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidebar-about-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}

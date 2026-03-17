@@ -638,6 +638,12 @@ def new_articles():
     )
 
 
+@app.route("/about")
+def about():
+    """About page — project background, values, developer info."""
+    return render_template("about.html")
+
+
 @app.route("/most-cited")
 def most_cited_page():
     """Most-cited articles page with filter controls and grouped views."""
