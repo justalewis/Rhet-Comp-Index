@@ -1327,3 +1327,130 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
     gap: 1.5rem;
   }
 }
+
+/* ── Explore: Citations tab ─────────────────────────────────────── */
+.citations-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.citations-toolbar > .filter-label {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  padding-top: 0.35rem;
+  white-space: nowrap;
+}
+
+.citations-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  align-items: flex-end;
+}
+
+.citations-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.citations-filter-group .filter-label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Most-cited ranked list */
+.most-cited-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.most-cited-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.most-cited-item:last-child {
+  border-bottom: none;
+}
+
+.most-cited-rank {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-light);
+  min-width: 1.8rem;
+  text-align: right;
+  padding-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.most-cited-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.most-cited-title a {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--link);
+  line-height: 1.35;
+}
+
+.most-cited-title a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.most-cited-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.most-cited-byline {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.most-cited-journal {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.most-cited-count {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: #f5ede6;
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .citations-filters {
+    flex-direction: column;
+  }
+  .citations-toolbar {
+    flex-direction: column;
+  }
+}

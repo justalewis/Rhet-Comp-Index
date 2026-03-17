@@ -763,3 +763,38 @@ def update_citation_counts():
             )
         """)
         conn.commit()
+
+
+def get_most_cited(year_from=None, year_to=None, journal=None, tag=None, limit=50):
+    """
+    Return the top `limit` articles ranked by internal_cited_by_count.
+    Optional filters: year_from, year_to, journal (exact), tag (pipe-delimited match).
+    """
+    where = ["internal_cited_by_count > 0", "pub_date IS NOT NULL"]
+    params = []
+
+    if year_from:
+        where.append("pub_date >= ?")
+        params.append(f"{year_from}-01-01")
+    if year_to:
+        where.append("pub_date <= ?")
+        params.append(f"{year_to}-12-31")
+    if journal:
+        where.append("journal = ?")
+        params.append(journal)
+    if tag:
+        where.append("tags LIKE ?")
+        params.append(f"%|{tag}|%")
+
+    clause = "WHERE " + " AND ".join(where)
+
+    with get_conn() as conn:
+        rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal, doi, url, tags,
+                   internal_cited_by_count
+            FROM articles
+            {clause}
+            ORDER BY internal_cited_by_count DESC, pub_date DESC
+            LIMIT ?
+        """, params + [limit]).fetchall()
+        return [dict(r) for r in rows]

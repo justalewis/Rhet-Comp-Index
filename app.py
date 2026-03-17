@@ -13,6 +13,7 @@ Routes:
   GET  /api/stats/timeline      — JSON: publication timeline by year+journal
   GET  /api/stats/tag-cooccurrence — JSON: tag co-occurrence matrix
   GET  /api/stats/author-network   — JSON: author co-authorship network
+  GET  /api/stats/most-cited       — JSON: top articles by internal citation count
   GET  /new                     — articles fetched in last 7 days
 """
 
@@ -32,6 +33,7 @@ from db import (
     get_timeline_data, get_tag_cooccurrence, get_author_network,
     get_new_articles, get_new_article_count,
     get_all_authors, get_author_articles,
+    get_most_cited,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -457,9 +459,11 @@ def article_detail(article_id):
 
 @app.route("/explore")
 def explore():
-    """Data exploration page: timeline, tag co-occurrence, author network."""
+    """Data exploration page: timeline, tag co-occurrence, author network, citations."""
     print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
+    all_tags = get_all_tags()
+    min_year, max_year = get_year_range()
 
     return render_template(
         "explore.html",
@@ -468,6 +472,9 @@ def explore():
         all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
+        all_tags=all_tags,
+        min_year=min_year,
+        max_year=max_year,
     )
 
 
@@ -507,6 +514,25 @@ def api_tag_cooccurrence():
 def api_author_network():
     """JSON: author co-authorship network nodes and links."""
     return jsonify(get_author_network(min_papers=3, top_n=150))
+
+
+@app.route("/api/stats/most-cited")
+def api_most_cited():
+    """JSON: top articles by internal citation count, with optional filters."""
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+    journal   = request.args.get("journal",   "").strip()
+    tag       = request.args.get("tag",       "").strip()
+    limit     = min(100, int(request.args.get("limit", 50)))
+
+    results = get_most_cited(
+        year_from=year_from or None,
+        year_to=year_to or None,
+        journal=journal or None,
+        tag=tag or None,
+        limit=limit,
+    )
+    return jsonify(results)
 
 
 @app.route("/new")
