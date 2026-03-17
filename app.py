@@ -23,11 +23,13 @@ Routes:
 
 import os
 import re
+import time
 import threading
 import logging
+from functools import wraps
 from urllib.parse import urlencode
 
-from flask import Flask, render_template, request, jsonify, Response, redirect
+from flask import Flask, render_template, request, jsonify, Response, redirect, make_response
 from flask_compress import Compress
 
 from db import (
@@ -52,6 +54,36 @@ Compress(app)
 
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()
+
+
+# ── HTTP cache decorator ────────────────────────────────────────────────────────
+
+def cache_response(seconds=300):
+    """Add Cache-Control: public, max-age=N to a route's response."""
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            resp = make_response(f(*args, **kwargs))
+            resp.headers["Cache-Control"] = f"public, max-age={seconds}"
+            return resp
+        return wrapped
+    return decorator
+
+
+# ── Sidebar cache ───────────────────────────────────────────────────────────────
+
+_sidebar_cache = None
+_sidebar_ts = 0.0
+_SIDEBAR_TTL = 300  # seconds (5 minutes)
+
+
+def _get_sidebar():
+    """Return cached sidebar data, rebuilding at most every 5 minutes."""
+    global _sidebar_cache, _sidebar_ts
+    if _sidebar_cache is None or time.time() - _sidebar_ts > _SIDEBAR_TTL:
+        _sidebar_cache = _build_sidebar()
+        _sidebar_ts = time.time()
+    return _sidebar_cache
 
 @app.before_request
 def redirect_www():
@@ -274,7 +306,7 @@ def index():
     if current_group:
         grouped.append((current_period, current_group))
 
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     all_tags = get_all_tags(journal=journals[0] if len(journals)==1 else None, source=source or None)
     min_year, max_year = get_year_range()
     new_count = get_new_article_count(days=7)
@@ -394,9 +426,10 @@ def export():
 
 
 @app.route("/authors")
+@cache_response(seconds=3600)
 def authors_list():
     """Alphabetical list of all authors with article counts."""
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     all_authors = get_all_authors(limit=500)
 
@@ -428,7 +461,7 @@ def authors_list():
 @app.route("/author/<path:name>")
 def author_detail(name):
     """All articles by a specific author."""
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_author_articles(name)
 
@@ -457,7 +490,7 @@ def article_detail(article_id):
     cites        = [r for r in all_refs if r["in_index"]]
     outside_refs = [r for r in all_refs if not r["in_index"]]
     outside_count = len(outside_refs)
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     coverage_stats = get_coverage_stats()
     journal_coverage = next(
@@ -484,7 +517,7 @@ def article_detail(article_id):
 @app.route("/explore")
 def explore():
     """Data exploration page: timeline, tag co-occurrence, author network, citations."""
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     all_tags = get_all_tags()
     min_year, max_year = get_year_range()
@@ -515,7 +548,7 @@ def citation_network_page():
     if article is None:
         return "Article not found", 404
 
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
 
     return render_template(
@@ -539,6 +572,7 @@ def api_ego_network():
 
 
 @app.route("/api/stats/timeline")
+@cache_response(seconds=3600)
 def api_timeline():
     """JSON: article counts per year per journal, 1990–present."""
     raw = get_timeline_data()
@@ -565,18 +599,21 @@ def api_timeline():
 
 
 @app.route("/api/stats/tag-cooccurrence")
+@cache_response(seconds=3600)
 def api_tag_cooccurrence():
     """JSON: tag co-occurrence matrix."""
     return jsonify(get_tag_cooccurrence())
 
 
 @app.route("/api/stats/author-network")
+@cache_response(seconds=3600)
 def api_author_network():
     """JSON: author co-authorship network nodes and links."""
     return jsonify(get_author_network(min_papers=3, top_n=150))
 
 
 @app.route("/api/stats/citation-trends")
+@cache_response(seconds=3600)
 def api_citation_trends():
     """JSON: avg internal citations per article per year, filtered by optional journal."""
     journal = request.args.get("journal", "").strip()
@@ -622,7 +659,7 @@ def api_most_cited():
 @app.route("/new")
 def new_articles():
     """Articles fetched within the last 7 days."""
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_new_articles(days=7)
 
@@ -653,9 +690,10 @@ def about():
 
 
 @app.route("/most-cited")
+@cache_response(seconds=1800)
 def most_cited_page():
     """Most-cited articles page with filter controls and grouped views."""
-    print_journals, web_journals, all_journals = _build_sidebar()
+    print_journals, web_journals, all_journals = _get_sidebar()
     new_count = get_new_article_count(days=7)
     all_tags  = get_all_tags()
     min_year, max_year = get_year_range()
