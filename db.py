@@ -798,3 +798,74 @@ def get_most_cited(year_from=None, year_to=None, journal=None, tag=None, limit=5
             LIMIT ?
         """, params + [limit]).fetchall()
         return [dict(r) for r in rows]
+
+
+def get_citation_network(min_citations=5, journals=None,
+                         year_from=None, year_to=None, max_nodes=500):
+    """
+    Return nodes and directed links for the citation network graph.
+
+    Nodes  = articles with internal_cited_by_count >= min_citations (capped at
+             max_nodes, ranked by citation count so the most-cited are kept).
+    Links  = citations where *both* source and target are in the node set.
+
+    Uses a CTE for the edge query to avoid SQLite's ~999-parameter limit.
+
+    Returns {nodes, links, node_count, link_count}.
+    """
+    where  = ["internal_cited_by_count >= ?"]
+    params = [min_citations]
+
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            where.append(f"journal IN ({placeholders})")
+            params.extend(journals)
+        elif isinstance(journals, str):
+            where.append("journal = ?")
+            params.append(journals)
+
+    if year_from:
+        where.append("pub_date >= ?")
+        params.append(f"{year_from}-01-01")
+    if year_to:
+        where.append("pub_date <= ?")
+        params.append(f"{year_to}-12-31")
+
+    clause = "WHERE " + " AND ".join(where)
+
+    with get_conn() as conn:
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count, internal_cites_count
+            FROM articles
+            {clause}
+            ORDER BY internal_cited_by_count DESC
+            LIMIT ?
+        """, params + [max_nodes]).fetchall()
+
+        if not node_rows:
+            return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+        # CTE avoids hitting the SQLite variable-count limit for large IN sets
+        link_rows = conn.execute(f"""
+            WITH filtered AS (
+                SELECT id FROM articles {clause}
+                ORDER BY internal_cited_by_count DESC LIMIT ?
+            )
+            SELECT c.source_article_id AS source,
+                   c.target_article_id AS target
+            FROM citations c
+            WHERE c.source_article_id IN (SELECT id FROM filtered)
+              AND c.target_article_id IN (SELECT id FROM filtered)
+        """, params + [max_nodes]).fetchall()
+
+        nodes = [dict(r) for r in node_rows]
+        links = [{"source": r["source"], "target": r["target"]} for r in link_rows]
+
+        return {
+            "nodes":      nodes,
+            "links":      links,
+            "node_count": len(nodes),
+            "link_count": len(links),
+        }

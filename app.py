@@ -14,6 +14,7 @@ Routes:
   GET  /api/stats/tag-cooccurrence — JSON: tag co-occurrence matrix
   GET  /api/stats/author-network   — JSON: author co-authorship network
   GET  /api/stats/most-cited       — JSON: top articles by internal citation count
+  GET  /api/citations/network      — JSON: force-graph nodes + edges for citation network
   GET  /new                     — articles fetched in last 7 days
 """
 
@@ -34,6 +35,7 @@ from db import (
     get_new_articles, get_new_article_count,
     get_all_authors, get_author_articles,
     get_most_cited,
+    get_citation_network,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -514,6 +516,23 @@ def api_tag_cooccurrence():
 def api_author_network():
     """JSON: author co-authorship network nodes and links."""
     return jsonify(get_author_network(min_papers=3, top_n=150))
+
+
+@app.route("/api/citations/network")
+def api_citations_network():
+    """JSON: force-graph nodes and directed edges for the citation network."""
+    min_citations = max(1, int(request.args.get("min_citations", 5)))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_citation_network(
+        min_citations=min_citations,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+    )
+    return jsonify(data)
 
 
 @app.route("/api/stats/most-cited")

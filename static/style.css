@@ -1454,3 +1454,192 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
     flex-direction: column;
   }
 }
+
+/* ── Explore: Citation Network tab ──────────────────────────────── */
+.citnet-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.citnet-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 1rem;
+}
+
+.citnet-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.citnet-filter-group .filter-label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.citnet-slider {
+  width: 120px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  display: block;
+}
+
+/* Journal picker dropdown */
+.citnet-journal-picker {
+  position: relative;
+}
+
+.citnet-journal-summary {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text);
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.citnet-journal-summary::-webkit-details-marker { display: none; }
+.citnet-journal-summary::marker { display: none; }
+
+.citnet-journal-list {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  z-index: 200;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  min-width: 230px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+}
+
+.citnet-journal-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text);
+  padding: 0.18rem 0;
+  cursor: pointer;
+}
+
+.citnet-journal-label:hover { color: var(--accent); }
+
+/* Search box */
+.citnet-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 1.4rem;
+}
+
+.citnet-search-input {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--text);
+  width: 230px;
+}
+
+.citnet-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.citnet-search-count {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 5rem;
+}
+
+/* Stats + legend row */
+.citnet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.2rem;
+  margin-bottom: 0.5rem;
+  min-height: 1.4rem;
+}
+
+.citnet-stats-text {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.citnet-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.8rem;
+}
+
+.citnet-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-ui);
+  font-size: 0.71rem;
+  color: var(--text-muted);
+}
+
+.citnet-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* SVG container */
+.citnet-container {
+  width: 100%;
+  min-height: 580px;
+  background: #fdfcfb;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.citnet-container svg {
+  display: block;
+}
+
+/* Tooltip reuses .heatmap-tooltip; this overrides max-width */
+.citnet-tip {
+  max-width: 260px;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  .citnet-controls     { flex-direction: column; }
+  .citnet-filters      { flex-direction: column; align-items: stretch; }
+  .citnet-search-wrap  { padding-top: 0; }
+  .citnet-search-input { width: 100%; }
+  .citnet-journal-list { position: static; max-height: 160px; }
+}
