@@ -323,8 +323,8 @@
             {% if r.pub_date %}<span class="article-date">{{ r.pub_date | display_date }}</span>{% endif %}
           </div>
           <div class="article-title-row">
-            <a class="article-title" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a>
-            <a class="article-detail-link" href="/article/{{ r.id }}" title="Article details">&#9654;</a>
+            <a class="article-title" href="/article/{{ r.id }}">{{ r.title }}</a>
+            <a class="article-detail-link" href="{{ r.url }}" target="_blank" rel="noopener" title="View on publisher site">&#8599;</a>
           </div>
           {% if r.authors %}
           <div class="article-authors">{{ r.authors }}</div>

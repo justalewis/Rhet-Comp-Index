@@ -738,7 +738,7 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 
 .article-detail-link {
   font-family: var(--font-ui);
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   color: var(--text-light);
   text-decoration: none;
   flex-shrink: 0;

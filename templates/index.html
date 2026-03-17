@@ -267,10 +267,10 @@
 
             <!-- Title + detail link -->
             <div class="article-title-row">
-              <a class="article-title" href="{{ a.url }}" target="_blank" rel="noopener">
+              <a class="article-title" href="/article/{{ a.id }}">
                 {{ a.title }}
               </a>
-              <a class="article-detail-link" href="/article/{{ a.id }}" title="Article details">&#9654;</a>
+              <a class="article-detail-link" href="{{ a.url }}" target="_blank" rel="noopener" title="View on publisher site">&#8599;</a>
             </div>
 
             <!-- Authors + citation count -->
