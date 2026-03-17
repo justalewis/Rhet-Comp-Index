@@ -179,6 +179,100 @@
 
     </div><!-- /detail-meta -->
 
+    <!-- ── Citation Context ──────────────────────────────────────── -->
+    {%- macro cite_item(r) %}
+      {%- set year = r.pub_date[:4] if r.pub_date else '' %}
+      {%- set raw_authors = r.authors or '' %}
+      {%- set first = raw_authors.split(';')[0].strip() if raw_authors else '' %}
+      {%- set last_name = first.split()[-1] if first.split() else '' %}
+      {%- set multi = ';' in raw_authors %}
+      <li class="citation-item">
+        <div class="citation-byline">
+          {%- if last_name %}{{ last_name }}{%- if multi %} et al.{%- endif %}{%- endif %}
+          {%- if year %} ({{ year }}){%- endif %}
+        </div>
+        <div class="citation-title">
+          <a href="/article/{{ r.id }}">{{ r.title | truncate(80, true, '…') }}</a>
+        </div>
+        <div class="citation-journal">{{ r.journal }}</div>
+      </li>
+    {%- endmacro %}
+
+    <div class="citation-context">
+      <h3 class="detail-section-head">Citation Context</h3>
+
+      {% if not article.references_fetched_at %}
+      <p class="citation-pending">Citation data not yet available for this article.</p>
+
+      {% else %}
+      <div class="citation-columns">
+
+        <!-- Cited by -->
+        <div class="citation-col">
+          <h4 class="citation-col-head">
+            Cited by in this index
+            <span class="citation-count">({{ cited_by | length }})</span>
+          </h4>
+          {% if cited_by %}
+          <ol class="citation-list">
+            {% for r in cited_by[:5] %}{{ cite_item(r) }}{% endfor %}
+          </ol>
+          {% if cited_by | length > 5 %}
+          <details class="citation-overflow">
+            <summary>Show all {{ cited_by | length }} &rarr;</summary>
+            <ol class="citation-list">
+              {% for r in cited_by[5:] %}{{ cite_item(r) }}{% endfor %}
+            </ol>
+          </details>
+          {% endif %}
+          {% else %}
+          <p class="citation-empty">No articles in this index cite this work.</p>
+          {% endif %}
+        </div>
+
+        <!-- Cites -->
+        <div class="citation-col">
+          <h4 class="citation-col-head">
+            Cites in this index
+            <span class="citation-count">({{ cites | length }})</span>
+          </h4>
+          {% if cites %}
+          <ol class="citation-list">
+            {% for r in cites[:5] %}{{ cite_item(r) }}{% endfor %}
+          </ol>
+          {% if cites | length > 5 %}
+          <details class="citation-overflow">
+            <summary>Show all {{ cites | length }} &rarr;</summary>
+            <ol class="citation-list">
+              {% for r in cites[5:] %}{{ cite_item(r) }}{% endfor %}
+            </ol>
+          </details>
+          {% endif %}
+          {% else %}
+          <p class="citation-empty">No references match articles in this index.</p>
+          {% endif %}
+        </div>
+
+      </div><!-- /citation-columns -->
+
+      {% if outside_count > 0 or article.crossref_cited_by_count is not none %}
+      <div class="citation-stats">
+        {% if outside_count > 0 %}
+        <span class="citation-stat">
+          Also cites {{ outside_count }} work{{ 's' if outside_count != 1 }} outside this index
+        </span>
+        {% endif %}
+        {% if article.crossref_cited_by_count is not none %}
+        <span class="citation-stat">
+          CrossRef global citation count: {{ article.crossref_cited_by_count }}
+        </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% endif %}
+    </div><!-- /citation-context -->
+
     {% if related %}
     <div class="related-section">
       <h3 class="detail-section-head">Related Articles</h3>

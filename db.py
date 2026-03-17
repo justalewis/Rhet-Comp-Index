@@ -697,6 +697,16 @@ def get_article_references(article_id):
         return [dict(r) for r in rows]
 
 
+def get_outside_citation_count(article_id):
+    """Count of references from this article that point to DOIs outside our index."""
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT COUNT(*) FROM citations "
+            "WHERE source_article_id = ? AND target_article_id IS NULL",
+            (article_id,)
+        ).fetchone()[0]
+
+
 # ── Citation network — writes ──────────────────────────────────────────────────
 
 def upsert_citation(source_article_id, target_doi, target_article_id, raw_reference):

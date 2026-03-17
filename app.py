@@ -28,6 +28,7 @@ from db import (
     init_db, get_articles, get_article_counts, get_total_count,
     get_all_tags, get_year_range,
     get_article_by_id, get_related_articles,
+    get_article_citations, get_article_references, get_outside_citation_count,
     get_timeline_data, get_tag_cooccurrence, get_author_network,
     get_new_articles, get_new_article_count,
     get_all_authors, get_author_articles,
@@ -432,7 +433,10 @@ def article_detail(article_id):
     if article is None:
         return "Article not found", 404
 
-    related = get_related_articles(article_id, limit=5)
+    related       = get_related_articles(article_id, limit=5)
+    cited_by      = get_article_citations(article_id)
+    cites         = get_article_references(article_id)
+    outside_count = get_outside_citation_count(article_id)
     print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
 
@@ -440,6 +444,9 @@ def article_detail(article_id):
         "article.html",
         article=article,
         related=related,
+        cited_by=cited_by,
+        cites=cites,
+        outside_count=outside_count,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
