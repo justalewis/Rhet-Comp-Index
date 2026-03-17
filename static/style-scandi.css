@@ -1,0 +1,1653 @@
+/* ═══════════════════════════════════════════════════════════════
+   SCANDI THEME — Rhet-Comp Index / Pinakes
+   Scandinavian minimalist aesthetic
+   Activated by adding class "scandi" to <body>
+   localStorage key 'rc-theme' = 'scandi'
+═══════════════════════════════════════════════════════════════ */
+
+/* ── CSS variable overrides ──────────────────────────────────── */
+html.scandi body {
+  --sidebar-w:     270px;
+  --bg:            #FAFAF8;
+  --bg-sidebar:    #F2F0EB;
+  --border:        #E5E2DC;
+  --text:          #2C2C2A;
+  --text-muted:    #7A7870;
+  --text-light:    #A8A49C;
+  --accent:        #5C6B5E;
+  --accent-hover:  #3D4A3F;
+  --link:          #5C6B5E;
+  --link-hover:    #3D4A3F;
+  --active-bg:     rgba(92,107,94,0.08);
+  --sidebar-hover: rgba(92,107,94,0.06);
+  --font-body:     -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'DM Sans', sans-serif;
+  --font-ui:       -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'DM Sans', sans-serif;
+  --font-mono:     'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+
+  /* base */
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Links ───────────────────────────────────────────────────── */
+html.scandi a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+html.scandi a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Layout ──────────────────────────────────────────────────── */
+html.scandi .layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+html.scandi .sidebar {
+  background: var(--bg-sidebar);
+  border-right: 0.5px solid var(--border);
+}
+
+html.scandi .sidebar-header {
+  padding: 1.75rem 1.4rem 1.2rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .sidebar-header h1 {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+html.scandi .sidebar-header .subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+/* ── Journal nav ─────────────────────────────────────────────── */
+html.scandi .journal-nav {
+  padding: 0.65rem 0 0.65rem;
+}
+
+html.scandi .nav-section-head {
+  padding: 1rem 1.4rem 0.25rem;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  border-top: 0.5px solid var(--border);
+  margin-top: 0.4rem;
+}
+
+html.scandi .nav-section-head:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+html.scandi .unavailable-head {
+  color: #C8C4BC;
+}
+
+html.scandi .journal-link {
+  padding: 0.4rem 1.4rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  border-left: 2px solid transparent;
+  transition: background 0.1s;
+}
+
+html.scandi .journal-link:hover {
+  background: var(--sidebar-hover);
+  color: var(--text);
+  text-decoration: none;
+}
+
+html.scandi .journal-link.active {
+  background: var(--active-bg);
+  border-left-color: var(--accent);
+  color: var(--text);
+  font-weight: 500;
+}
+
+html.scandi .journal-link.unavailable {
+  opacity: 0.4;
+}
+
+html.scandi .journal-link.unavailable:hover {
+  background: none;
+}
+
+html.scandi .jcount {
+  font-size: 11px;
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+/* ── Source badges ───────────────────────────────────────────── */
+html.scandi .src-badge {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  padding: 0.1em 0.35em;
+}
+
+html.scandi .src-badge.rss {
+  background: #EBF0E8;
+  color: #4A6B3A;
+  border: 0.5px solid #C8D8BE;
+}
+
+html.scandi .src-badge.scrape {
+  background: #F2EDE4;
+  color: #7A6040;
+  border: 0.5px solid #DDD0BC;
+}
+
+/* ── Sidebar footer ──────────────────────────────────────────── */
+html.scandi .sidebar-footer {
+  padding: 1.2rem 1.4rem;
+  border-top: 0.5px solid var(--border);
+}
+
+html.scandi .fetch-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  background: transparent;
+  color: var(--accent);
+  border: 0.5px solid var(--accent);
+  border-radius: 2px;
+  padding: 8px 18px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  transition: background 0.12s;
+}
+
+html.scandi .fetch-btn:hover:not(:disabled) {
+  background: rgba(92,107,94,0.06);
+}
+
+html.scandi .fetch-btn:disabled {
+  opacity: 0.5;
+}
+
+html.scandi .fetch-note {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+/* ── Main content ────────────────────────────────────────────── */
+html.scandi .content {
+  padding: 2.5rem 3rem;
+}
+
+html.scandi .content-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .content-header h2 {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+html.scandi .result-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+/* ── Search & filter bar ─────────────────────────────────────── */
+html.scandi .filter-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .search-input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: #FFFFFF;
+  color: var(--text);
+  padding: 8px 12px;
+}
+
+html.scandi .search-input:focus {
+  border-color: #D4C5A9;
+  outline: none;
+  box-shadow: none;
+}
+
+html.scandi .search-input::placeholder {
+  color: var(--text-light);
+  font-style: normal;
+}
+
+html.scandi .search-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  background: transparent;
+  color: var(--accent);
+  border: 0.5px solid var(--accent);
+  border-radius: 2px;
+  padding: 8px 18px;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background 0.12s;
+}
+
+html.scandi .search-btn:hover {
+  background: rgba(92,107,94,0.06);
+}
+
+html.scandi .filter-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .filter-dash {
+  font-family: var(--font-body);
+  color: var(--text-light);
+}
+
+html.scandi .filter-select {
+  font-family: var(--font-body);
+  font-size: 13px;
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: #FFFFFF;
+  color: var(--text);
+  padding: 6px 10px;
+}
+
+html.scandi .filter-select:focus {
+  border-color: #D4C5A9;
+  outline: none;
+}
+
+html.scandi .filter-apply-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  padding: 6px 12px;
+  transition: background 0.1s;
+}
+
+html.scandi .filter-apply-btn:hover {
+  background: rgba(92,107,94,0.06);
+}
+
+html.scandi .filter-clear {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+html.scandi .filter-clear:hover {
+  color: var(--text-muted);
+}
+
+/* ── Active filter pills ─────────────────────────────────────── */
+html.scandi .filter-pill {
+  font-family: var(--font-body);
+  font-size: 12px;
+  background: var(--bg-sidebar);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-muted);
+}
+
+html.scandi .pill-remove {
+  color: var(--text-light);
+}
+
+html.scandi .pill-remove:hover {
+  color: var(--text);
+}
+
+/* ── Article tags ────────────────────────────────────────────── */
+html.scandi .article-tags {
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+html.scandi .article-tag {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--bg-sidebar);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  padding: 0.1em 0.45em;
+  text-transform: lowercase;
+  letter-spacing: 0;
+}
+
+html.scandi .article-tag:hover {
+  background: rgba(92,107,94,0.08);
+  border-color: #D4C5A9;
+  color: var(--accent-hover);
+  text-decoration: none;
+}
+
+/* ── CrossRef subject keywords ───────────────────────────────── */
+html.scandi .article-keywords {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+/* ── Period sections ─────────────────────────────────────────── */
+html.scandi .period-section {
+  margin-bottom: 2.75rem;
+}
+
+html.scandi .period-heading {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-top: 40px;
+  margin-bottom: 20px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+html.scandi .period-heading::before { content: none; }
+html.scandi .period-heading::after  { content: none; }
+
+/* ── Article list ────────────────────────────────────────────── */
+html.scandi .article-list {
+  list-style: none;
+  padding: 0;
+}
+
+html.scandi .article {
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .article:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+html.scandi .article-meta-top {
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+html.scandi .article-journal {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-light);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+html.scandi .article-date {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .article-title {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+html.scandi .article-title:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+html.scandi .article-authors {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+html.scandi .article-authors.no-data {
+  font-style: normal;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+/* ── Abstract toggle ─────────────────────────────────────────── */
+html.scandi .abstract-toggle {
+  margin-top: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+html.scandi .abstract-toggle summary {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .abstract-toggle summary::before {
+  content: "▶";
+  font-size: 0.55rem;
+  transition: transform 0.15s;
+}
+
+html.scandi .abstract-toggle[open] summary::before {
+  transform: rotate(90deg);
+  content: "▶";
+}
+
+html.scandi .abstract-text {
+  margin-top: 0.6rem;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  max-width: 68ch;
+  padding-left: 0.9rem;
+  border-left: 0.5px solid var(--border);
+}
+
+/* ── DOI ─────────────────────────────────────────────────────── */
+html.scandi .article-doi {
+  margin-top: 0.35rem;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .article-doi a {
+  color: var(--text-light);
+}
+
+html.scandi .article-doi a:hover {
+  color: var(--link);
+  text-decoration: underline;
+}
+
+/* ── Pagination ──────────────────────────────────────────────── */
+html.scandi .pagination {
+  font-family: var(--font-body);
+  font-size: 13px;
+  border-top: 0.5px solid var(--border);
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+}
+
+html.scandi .page-link  { color: var(--link); }
+html.scandi .page-info  { color: var(--text-muted); }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+html.scandi .empty-state {
+  font-family: var(--font-body);
+  color: var(--text-muted);
+}
+
+html.scandi .empty-hint {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+/* ── Fetch status toast ──────────────────────────────────────── */
+html.scandi .fetch-status {
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-body);
+  font-size: 13px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: none;
+}
+
+/* ── Feature nav ─────────────────────────────────────────────── */
+html.scandi .feature-nav {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .feature-nav-link {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  padding: 0.4rem 1.4rem;
+  border-left: 2px solid transparent;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+html.scandi .feature-nav-link:hover {
+  background: var(--sidebar-hover);
+  color: var(--text);
+  text-decoration: none;
+}
+
+html.scandi .active-feature-link {
+  background: var(--active-bg);
+  border-left-color: var(--accent);
+  color: var(--text);
+  font-weight: 500;
+}
+
+html.scandi .feature-nav-icon {
+  font-size: 0.6rem;
+  color: var(--text-light);
+}
+
+html.scandi .new-badge {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.1em 0.5em;
+}
+
+/* ── OA badge ────────────────────────────────────────────────── */
+html.scandi .oa-badge {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  border-radius: 2px;
+  background: #EBF0E8;
+  color: #3D5C30;
+  border: 0.5px solid #C4D8B8;
+  padding: 0.1em 0.4em;
+}
+
+html.scandi .oa-badge:hover {
+  background: #DCE8D8;
+  color: #2D4520;
+  text-decoration: none;
+}
+
+/* ── Citation count ──────────────────────────────────────────── */
+html.scandi .cite-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* ── Article title row ───────────────────────────────────────── */
+html.scandi .article-detail-link {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+html.scandi .article-detail-link:hover {
+  color: var(--link);
+  text-decoration: none;
+}
+
+/* ── Export buttons ──────────────────────────────────────────── */
+html.scandi .export-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  padding: 4px 10px;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+html.scandi .export-btn:hover {
+  background: rgba(92,107,94,0.06);
+  border-color: #D4C5A9;
+}
+
+/* ── Article detail page ─────────────────────────────────────── */
+html.scandi .detail-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .detail-title {
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  margin: 0.6rem 0 0.75rem;
+}
+
+html.scandi .detail-title a {
+  color: var(--text);
+}
+
+html.scandi .detail-title a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+html.scandi .detail-authors {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+html.scandi .author-link {
+  color: var(--link);
+}
+
+html.scandi .author-link:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+html.scandi .detail-section-head {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 0.85rem;
+}
+
+html.scandi .detail-section-head::before { content: none; }
+
+html.scandi .detail-fields {
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+html.scandi .detail-fields dt {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+html.scandi .detail-fields dd {
+  color: var(--text);
+}
+
+html.scandi .related-section {
+  border-top: 0.5px solid var(--border);
+}
+
+html.scandi .related-item {
+  border-bottom: 0.5px solid var(--border);
+  padding-bottom: 1.4rem;
+  margin-bottom: 1.4rem;
+}
+
+html.scandi .related-item:last-child {
+  border-bottom: none;
+}
+
+/* ── Authors list page ───────────────────────────────────────── */
+html.scandi .alpha-nav {
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+html.scandi .alpha-link {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--link);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  padding: 0.15em 0.5em;
+  transition: background 0.1s;
+}
+
+html.scandi .alpha-link:hover {
+  background: rgba(92,107,94,0.06);
+  text-decoration: none;
+  border-color: #D4C5A9;
+}
+
+html.scandi .author-name-link {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--link);
+}
+
+html.scandi .author-name-link:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+html.scandi .author-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* ── Explore page tabs ───────────────────────────────────────── */
+html.scandi .explore-tabs {
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+html.scandi .explore-tab {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+  padding: 0.5rem 1.25rem;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+html.scandi .explore-tab:hover {
+  color: var(--text);
+}
+
+html.scandi .explore-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Chart and graph containers ──────────────────────────────── */
+html.scandi .network-container {
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: var(--bg);
+}
+
+html.scandi .explore-hint {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: normal;
+}
+
+html.scandi .explore-hint::before { content: none; }
+
+html.scandi .loading-msg {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+html.scandi .loading-msg::before { content: none; }
+
+/* ── D3 tooltip ──────────────────────────────────────────────── */
+html.scandi .heatmap-tooltip {
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-body);
+  font-size: 12px;
+  border-radius: 2px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ── What's New page ─────────────────────────────────────────── */
+html.scandi .new-page-header h2 {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* ── Journal filter dropdown ─────────────────────────────────── */
+html.scandi .journal-filter {
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: var(--bg);
+}
+
+html.scandi .journal-filter-summary {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text);
+  padding: 0.5rem 0.85rem;
+}
+
+html.scandi .journal-filter-summary:hover {
+  background: var(--sidebar-hover);
+}
+
+html.scandi .journal-filter-list {
+  border-top: 0.5px solid var(--border);
+  background: #FFFFFF;
+}
+
+html.scandi .journal-check-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+  padding: 0.32rem 0.85rem;
+}
+
+html.scandi .journal-check-label:hover {
+  background: var(--sidebar-hover);
+}
+
+html.scandi .journal-check-label.all-journals-label {
+  font-weight: 500;
+}
+
+html.scandi .journal-check {
+  accent-color: var(--accent);
+}
+
+html.scandi .journal-filter-divider {
+  background: var(--border);
+  height: 0.5px;
+}
+
+/* ── Citation context ────────────────────────────────────────── */
+html.scandi .citation-context {
+  border-top: 0.5px solid var(--border);
+}
+
+html.scandi .citation-col-head {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+html.scandi .citation-item {
+  border-left: 0.5px solid var(--border);
+  font-size: 14px;
+}
+
+html.scandi .citation-byline {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .citation-title a {
+  color: var(--link);
+  font-family: var(--font-body);
+}
+
+html.scandi .citation-title a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+html.scandi .citation-journal {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .citation-overflow > summary {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--link);
+}
+
+html.scandi .citation-stats {
+  border-top: 0.5px solid var(--border);
+}
+
+html.scandi .citation-stat {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+html.scandi .citation-pending,
+html.scandi .citation-empty {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: normal;
+}
+
+html.scandi .citation-item--ext {
+  border-left-color: #E8E4DC;
+  opacity: 0.8;
+}
+
+html.scandi .citation-title--plain {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+html.scandi .ext-doi-link {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+html.scandi .ext-doi-link:hover {
+  color: var(--link);
+  text-decoration: underline;
+}
+
+html.scandi .citation-outside {
+  border-top: 0.5px dashed var(--border);
+}
+
+html.scandi .citation-outside-summary {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+html.scandi .citation-outside-summary:hover {
+  color: var(--text);
+}
+
+html.scandi .citation-outside-count {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: normal;
+}
+
+html.scandi .citation-network-link {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--link);
+}
+
+html.scandi .citation-network-link:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* ── Citations (ego network) page ────────────────────────────── */
+html.scandi .ego-header {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .ego-title {
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+html.scandi .ego-authors {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+html.scandi .ego-stats-text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .ego-key-item {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .ego-container {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+}
+
+/* ── Explore: Citations tab ──────────────────────────────────── */
+html.scandi .citations-toolbar {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .citations-toolbar > .filter-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+html.scandi .citations-filter-group .filter-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Most-cited list ─────────────────────────────────────────── */
+html.scandi .most-cited-item {
+  border-bottom: 0.5px solid var(--border);
+  padding: 1rem 0;
+}
+
+html.scandi .most-cited-rank {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-light);
+}
+
+html.scandi .most-cited-title a {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+html.scandi .most-cited-title a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+html.scandi .most-cited-meta {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+html.scandi .most-cited-byline {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+html.scandi .most-cited-journal {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .most-cited-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background: rgba(92,107,94,0.08);
+  border-radius: 2px;
+  padding: 0.1rem 0.45rem;
+  border: none;
+}
+
+html.scandi .most-cited-group-head {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .show-more-wrap {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .show-more-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--link);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+html.scandi .show-more-btn:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* ── Most-cited page controls ────────────────────────────────── */
+html.scandi .most-cited-controls {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .most-cited-control-group label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+html.scandi .most-cited-control-group select,
+html.scandi .most-cited-control-group input {
+  font-family: var(--font-body);
+  font-size: 13px;
+  border: 0.5px solid var(--border);
+  background: #FFFFFF;
+  color: var(--text);
+  border-radius: 2px;
+  padding: 6px 10px;
+}
+
+html.scandi .most-cited-view-tabs {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .most-cited-view-tab {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  border-radius: 0;
+}
+
+html.scandi .most-cited-view-tab:hover {
+  color: var(--text);
+}
+
+html.scandi .most-cited-view-tab.active {
+  background: var(--bg);
+  border-color: var(--border);
+  border-bottom-color: var(--bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Citation network controls ───────────────────────────────── */
+html.scandi .citnet-controls {
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .citnet-filter-group .filter-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+html.scandi .citnet-slider {
+  accent-color: var(--accent);
+}
+
+html.scandi .citnet-journal-summary {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: var(--bg);
+  padding: 6px 12px;
+}
+
+html.scandi .citnet-journal-list {
+  background: #FFFFFF;
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+html.scandi .citnet-journal-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+}
+
+html.scandi .citnet-journal-label:hover {
+  color: var(--accent);
+}
+
+html.scandi .citnet-search-input {
+  font-family: var(--font-body);
+  font-size: 13px;
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  background: #FFFFFF;
+  color: var(--text);
+}
+
+html.scandi .citnet-search-input:focus {
+  border-color: #D4C5A9;
+  outline: none;
+}
+
+html.scandi .citnet-search-count {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .citnet-stats-text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .citnet-legend-item {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .citnet-legend-dot {
+  border-radius: 50%;
+}
+
+html.scandi .citnet-container {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+}
+
+/* ── Dropdown feature nav ────────────────────────────────────── */
+html.scandi .nav-item > a.feature-nav-link,
+html.scandi .nav-item-trigger {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  border-left: 2px solid transparent;
+  padding: 0.4rem 1.4rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+html.scandi .nav-item-trigger:hover,
+html.scandi .nav-item > a.feature-nav-link:hover {
+  background: var(--sidebar-hover);
+  color: var(--text);
+  text-decoration: none;
+}
+
+html.scandi .nav-item.active > .nav-item-trigger,
+html.scandi .nav-item.active > a.feature-nav-link {
+  background: var(--active-bg);
+  border-left-color: var(--accent);
+  color: var(--text);
+  font-weight: 500;
+}
+
+html.scandi .nav-chevron {
+  color: var(--text-light);
+}
+
+html.scandi .nav-dropdown {
+  background: var(--bg-sidebar);
+  border-left: 2px solid var(--accent);
+  margin-left: 1.4rem;
+}
+
+html.scandi .nav-dropdown-item {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  padding: 0.28rem 0.9rem;
+  letter-spacing: 0;
+}
+
+html.scandi .nav-dropdown-item:hover {
+  background: var(--sidebar-hover);
+  color: var(--text);
+  text-decoration: none;
+}
+
+html.scandi .nav-dropdown-item.active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+html.scandi .nav-dropdown-divider {
+  background: var(--border);
+  height: 0.5px;
+}
+
+/* ── Page & tab intros ───────────────────────────────────────── */
+html.scandi .page-intro {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+html.scandi .tab-intro {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  border-left: 0.5px solid var(--border);
+  padding-left: 1rem;
+}
+
+/* ── Coverage panel ──────────────────────────────────────────── */
+html.scandi .coverage-toggle {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+html.scandi .coverage-toggle:hover {
+  color: var(--text);
+}
+
+html.scandi .coverage-table-wrap {
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+}
+
+html.scandi .coverage-table {
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+html.scandi .coverage-table th {
+  background: var(--bg-sidebar);
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 0.5px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+}
+
+html.scandi .coverage-table td {
+  border-bottom: 0.5px solid var(--border);
+  color: var(--text);
+}
+
+html.scandi .coverage-pct-bar {
+  background: var(--border);
+  border-radius: 1px;
+}
+
+html.scandi .coverage-pct-bar-fill {
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+html.scandi .coverage-note {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+html.scandi .citation-coverage-note {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg-sidebar);
+  border-left: 0.5px solid var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── About page ──────────────────────────────────────────────── */
+html.scandi .about-page-wrap {
+  background: var(--bg);
+}
+
+html.scandi .about-nav {
+  background: var(--bg-sidebar);
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .about-nav-home {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--accent);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+html.scandi .about-nav-home:hover {
+  color: var(--accent-hover);
+}
+
+html.scandi .about-nav-links a {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+html.scandi .about-nav-links a:hover {
+  color: var(--text);
+}
+
+html.scandi .about-title {
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--text);
+  border-bottom: 0.5px solid var(--border);
+  letter-spacing: 0.01em;
+}
+
+html.scandi .about-section h2 {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 0.5px solid var(--border);
+}
+
+html.scandi .about-body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+html.scandi .citation-block {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  background: var(--bg-sidebar);
+  border-left: 0.5px solid var(--accent);
+  color: var(--text);
+  border-radius: 0 2px 2px 0;
+}
+
+html.scandi .about-colophon {
+  border-top: 0.5px solid var(--border);
+}
+
+html.scandi .about-colophon h2 {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-light);
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+html.scandi .about-colophon p {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+html.scandi .about-page-footer {
+  background: var(--bg-sidebar);
+  border-top: 0.5px solid var(--border);
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+html.scandi .about-page-footer a {
+  color: var(--text-muted);
+}
+
+html.scandi .about-page-footer a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+html.scandi .sidebar-about-link {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-light);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+html.scandi .sidebar-about-link:hover {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+/* ── Theme toggle buttons ────────────────────────────────────── */
+/* DEFAULT skin: Scandi button style */
+.scandi-toggle-btn {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  font-family: var(--font-ui, system-ui, -apple-system, sans-serif);
+  font-size: 0.68rem;
+  padding: 0.35rem 0.7rem;
+  background: #F2F0EB;
+  color: #7A7870;
+  border: 1px solid #E5E2DC;
+  border-radius: 3px;
+  cursor: pointer;
+  z-index: 9999;
+  letter-spacing: 0.03em;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.scandi-toggle-btn:hover {
+  background: #E8E4DC;
+  border-color: #C8C4BC;
+  color: #2C2C2A;
+}
+
+/* SCANDI skin: override Scandi button style */
+html.scandi .scandi-toggle-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 8px 18px;
+  background: transparent;
+  color: var(--accent);
+  border: 0.5px solid var(--accent);
+  border-radius: 2px;
+  letter-spacing: 0;
+  box-shadow: none;
+  transition: background 0.12s;
+}
+
+html.scandi .scandi-toggle-btn:hover {
+  background: rgba(92,107,94,0.06);
+  color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* SCANDI skin: Terminal button style (still visible) */
+html.scandi .theme-toggle-btn {
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 8px 18px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 0.5px solid var(--border);
+  border-radius: 2px;
+  box-shadow: none;
+  letter-spacing: 0;
+  transition: background 0.12s;
+}
+
+html.scandi .theme-toggle-btn:hover {
+  background: rgba(92,107,94,0.06);
+  color: var(--text);
+  border-color: #D4C5A9;
+}
+
+/* Position the two buttons side by side */
+.theme-toggle-btn {
+  right: 1.25rem;
+  bottom: 1.25rem;
+}
+
+.scandi-toggle-btn {
+  right: calc(1.25rem + 110px);
+  bottom: 1.25rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  html.scandi .sidebar {
+    border-right: none;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  html.scandi .journal-link {
+    border-left: none;
+    border-radius: 2px;
+    border: 0.5px solid var(--border);
+    padding: 0.3rem 0.65rem;
+  }
+
+  html.scandi .journal-link.active {
+    background: rgba(92,107,94,0.08);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  html.scandi .content {
+    padding: 1.5rem 1.25rem;
+  }
+}
