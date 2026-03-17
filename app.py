@@ -10,11 +10,13 @@ Routes:
   GET  /author/<name>           — articles by one author
   GET  /article/<id>            — article detail page
   GET  /explore                 — data visualisation page
+  GET  /citations               — per-article ego network visualisation
   GET  /api/stats/timeline      — JSON: publication timeline by year+journal
   GET  /api/stats/tag-cooccurrence — JSON: tag co-occurrence matrix
   GET  /api/stats/author-network   — JSON: author co-authorship network
   GET  /api/stats/most-cited       — JSON: top articles by internal citation count
-  GET  /api/citations/network      — JSON: force-graph nodes + edges for citation network
+  GET  /api/citations/network      — JSON: force-graph nodes + edges for global citation network
+  GET  /api/citations/ego          — JSON: 2-degree ego network around a specific article
   GET  /api/stats/citation-trends  — JSON: avg internal citations per article per year
   GET  /new                     — articles fetched in last 7 days
 """
@@ -25,19 +27,20 @@ import threading
 import logging
 from urllib.parse import urlencode
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, redirect
 
 from db import (
     init_db, get_articles, get_article_counts, get_total_count,
     get_all_tags, get_year_range,
     get_article_by_id, get_related_articles,
-    get_article_citations, get_article_references, get_outside_citation_count,
+    get_article_citations, get_article_all_references,
     get_timeline_data, get_tag_cooccurrence, get_author_network,
     get_new_articles, get_new_article_count,
     get_all_authors, get_author_articles,
     get_most_cited,
     get_citation_network,
     get_citation_trends,
+    get_ego_network,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -439,10 +442,12 @@ def article_detail(article_id):
     if article is None:
         return "Article not found", 404
 
-    related       = get_related_articles(article_id, limit=5)
-    cited_by      = get_article_citations(article_id)
-    cites         = get_article_references(article_id)
-    outside_count = get_outside_citation_count(article_id)
+    related      = get_related_articles(article_id, limit=5)
+    cited_by     = get_article_citations(article_id)
+    all_refs     = get_article_all_references(article_id)
+    cites        = [r for r in all_refs if r["in_index"]]
+    outside_refs = [r for r in all_refs if not r["in_index"]]
+    outside_count = len(outside_refs)
     print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
 
@@ -452,6 +457,7 @@ def article_detail(article_id):
         related=related,
         cited_by=cited_by,
         cites=cites,
+        outside_refs=outside_refs,
         outside_count=outside_count,
         print_journals=print_journals,
         web_journals=web_journals,
@@ -480,6 +486,40 @@ def explore():
         min_year=min_year,
         max_year=max_year,
     )
+
+
+@app.route("/citations")
+def citation_network_page():
+    """Per-article ego-network visualisation page."""
+    article_id = request.args.get("article", type=int)
+    if not article_id:
+        return redirect("/explore?tab=citnet")
+
+    article = get_article_by_id(article_id)
+    if article is None:
+        return "Article not found", 404
+
+    print_journals, web_journals, all_journals = _build_sidebar()
+    new_count = get_new_article_count(days=7)
+
+    return render_template(
+        "citations.html",
+        article=article,
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=new_count,
+    )
+
+
+@app.route("/api/citations/ego")
+def api_ego_network():
+    """JSON: 2-degree ego network around a specific article."""
+    article_id = request.args.get("article", type=int)
+    if not article_id:
+        return jsonify({"error": "article parameter required"}), 400
+    return jsonify(get_ego_network(article_id))
 
 
 @app.route("/api/stats/timeline")

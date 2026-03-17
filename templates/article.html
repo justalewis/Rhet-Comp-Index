@@ -180,6 +180,7 @@
     </div><!-- /detail-meta -->
 
     <!-- ── Citation Context ──────────────────────────────────────── -->
+
     {%- macro cite_item(r) %}
       {%- set year = r.pub_date[:4] if r.pub_date else '' %}
       {%- set raw_authors = r.authors or '' %}
@@ -195,6 +196,31 @@
           <a href="/article/{{ r.id }}">{{ r.title | truncate(80, true, '…') }}</a>
         </div>
         <div class="citation-journal">{{ r.journal }}</div>
+      </li>
+    {%- endmacro %}
+
+    {%- macro cite_item_out(r) %}
+      {%- if r.title %}
+        {%- set display = r.title | truncate(90, true, '…') %}
+      {%- elif r.unstructured %}
+        {%- set display = r.unstructured | truncate(110, true, '…') %}
+      {%- else %}
+        {%- set display = r.doi %}
+      {%- endif %}
+      <li class="citation-item citation-item--ext">
+        <div class="citation-byline">
+          {%- if r.authors %}{{ r.authors }}{%- endif %}
+          {%- if r.year %} ({{ r.year }}){%- endif %}
+        </div>
+        {%- if display %}
+        <div class="citation-title citation-title--plain">{{ display }}</div>
+        {%- endif %}
+        <div class="citation-journal">
+          {{ r.journal -}}
+          {%- if r.doi %}
+          &ensp;<a href="https://doi.org/{{ r.doi }}" target="_blank" rel="noopener" class="ext-doi-link" title="View on doi.org">&#8599;</a>
+          {%- endif %}
+        </div>
       </li>
     {%- endmacro %}
 
@@ -251,22 +277,35 @@
           {% else %}
           <p class="citation-empty">No references match articles in this index.</p>
           {% endif %}
+
+          {% if outside_refs %}
+          <details class="citation-overflow citation-outside">
+            <summary class="citation-outside-summary">
+              Also cites {{ outside_refs | length }} work{{ 's' if outside_refs | length != 1 }} outside this index &darr;
+            </summary>
+            <ol class="citation-list citation-list--ext">
+              {% for r in outside_refs %}{{ cite_item_out(r) }}{% endfor %}
+            </ol>
+          </details>
+          {% elif outside_count > 0 %}
+          <p class="citation-outside-count">
+            Also cites {{ outside_count }} work{{ 's' if outside_count != 1 }} outside this index
+          </p>
+          {% endif %}
         </div>
 
       </div><!-- /citation-columns -->
 
-      {% if outside_count > 0 or article.crossref_cited_by_count is not none %}
+      {% if article.crossref_cited_by_count is not none or article.references_fetched_at %}
       <div class="citation-stats">
-        {% if outside_count > 0 %}
-        <span class="citation-stat">
-          Also cites {{ outside_count }} work{{ 's' if outside_count != 1 }} outside this index
-        </span>
-        {% endif %}
         {% if article.crossref_cited_by_count is not none %}
         <span class="citation-stat">
           CrossRef global citation count: {{ article.crossref_cited_by_count }}
         </span>
         {% endif %}
+        <a href="/citations?article={{ article.id }}" class="citation-network-link">
+          View in citation network &rarr;
+        </a>
       </div>
       {% endif %}
 

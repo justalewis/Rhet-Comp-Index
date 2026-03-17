@@ -1321,11 +1321,171 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   margin-top: 0.5rem;
 }
 
+/* Out-of-index citation items */
+.citation-item--ext {
+  border-left-color: #e8e4dd;
+  opacity: 0.82;
+}
+
+.citation-title--plain {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.ext-doi-link {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.ext-doi-link:hover {
+  color: var(--link);
+  text-decoration: none;
+}
+
+/* "Also cites N works outside this index" collapsible */
+.citation-outside {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+}
+
+.citation-outside-summary {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  list-style: none;
+  padding: 0.15rem 0;
+  user-select: none;
+}
+
+.citation-outside-summary::-webkit-details-marker { display: none; }
+.citation-outside-summary:hover { color: var(--text); }
+
+.citation-outside[open] .citation-outside-summary {
+  margin-bottom: 0.5rem;
+}
+
+.citation-list--ext {
+  margin-top: 0.4rem;
+}
+
+/* Plain count when outside_refs not available */
+.citation-outside-count {
+  margin-top: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* "View in citation network" link in stats bar */
+.citation-network-link {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--link);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.citation-network-link:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
 @media (max-width: 640px) {
   .citation-columns {
     flex-direction: column;
     gap: 1.5rem;
   }
+}
+
+/* ── Citations page (per-article ego network) ───────────────────── */
+.ego-page {
+  max-width: 960px;
+}
+
+.ego-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.ego-title {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1.4;
+  color: var(--text);
+  margin: 0.4rem 0 0.5rem;
+}
+
+.ego-authors {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.ego-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 0.5rem;
+  min-height: 1.5rem;
+}
+
+.ego-stats-text {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Edge colour key */
+.ego-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin-bottom: 0.6rem;
+}
+
+.ego-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* SVG graph container */
+.ego-container {
+  width: 100%;
+  min-height: 600px;
+  background: #fdfcfb;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ego-container svg {
+  display: block;
+}
+
+/* Tooltip: inherits .heatmap-tooltip, this tweaks max-width */
+.ego-tip {
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .ego-page { padding: 1rem; }
+  .ego-key  { flex-direction: column; gap: 0.3rem; }
 }
 
 /* ── Explore: Citations tab ─────────────────────────────────────── */

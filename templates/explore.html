@@ -1145,6 +1145,17 @@ function searchCitationNetwork(query) {
     }
   }
 }
+
+// ── Auto-activate tab from ?tab= URL param ──────────────────────────────────
+// Used by article detail pages: "View in citation network →" links here with
+// ?tab=citnet so the right tab opens automatically.
+window.addEventListener('DOMContentLoaded', function () {
+  const tp = new URLSearchParams(location.search).get('tab');
+  if (!tp) return;
+  const btn = Array.from(document.querySelectorAll('.explore-tab'))
+                   .find(b => (b.getAttribute('onclick') || '').includes("'" + tp + "'"));
+  if (btn) btn.click();
+});
 </script>
 
 </body>

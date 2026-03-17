@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citation Network — {{ article.title | truncate(60, true, '…') }} — Rhetoric &amp; Composition</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1>Rhetoric &amp; Composition<br>
+        <span class="subtitle">Current Scholarship</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+
+      <div class="feature-nav">
+        <a href="/new" class="feature-nav-link">
+          <span class="feature-nav-icon">★</span>
+          What's New
+          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+        </a>
+        <a href="/explore" class="feature-nav-link">
+          <span class="feature-nav-icon">◎</span>
+          Explore
+        </a>
+        <a href="/authors" class="feature-nav-link">
+          <span class="feature-nav-icon">◈</span>
+          Authors
+        </a>
+      </div>
+
+      <a href="/" class="journal-link">
+        <span class="jname">All journals</span>
+      </a>
+
+      <div class="nav-section-head">Print Journals</div>
+      {% for j in print_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section-head">Web Journals</div>
+      {% for j in web_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        <span class="jmeta">
+          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
+          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
+          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+
+      {% if unavailable %}
+      <div class="nav-section-head unavailable-head">Unavailable</div>
+      {% for j in unavailable %}
+      <span class="journal-link unavailable" title="{{ j.note }}">
+        <span class="jname">{{ j.name }}</span>
+      </span>
+      {% endfor %}
+      {% endif %}
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/article/{{ article.id }}" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to article</a>
+    </div>
+
+  </aside>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content ego-page">
+
+    <!-- Article header -->
+    <div class="ego-header">
+      <div class="article-meta-top">
+        <span class="article-journal">{{ article.journal }}</span>
+        {% if article.pub_date %}
+        <span class="article-date">{{ article.pub_date | display_date }}</span>
+        {% endif %}
+      </div>
+      <h2 class="ego-title">{{ article.title }}</h2>
+      {% if article.authors %}
+      <div class="ego-authors">
+        {% for author in article.authors.split(';') %}
+        {% set a = author.strip() %}
+        {% if a %}
+        <a href="/author/{{ a | urlencode }}" class="author-link">{{ a }}</a>{% if not loop.last %}; {% endif %}
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Stats + legend row -->
+    <div class="ego-meta">
+      <span class="ego-stats-text" id="ego-stats-text">Loading graph…</span>
+      <div class="citnet-legend" id="ego-legend"></div>
+    </div>
+
+    <!-- Edge direction key -->
+    <div class="ego-key">
+      <span class="ego-key-item">
+        <svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#5a3e28" stroke-width="2.5" stroke-dasharray="4,2"/></svg>
+        focal article
+      </span>
+      <span class="ego-key-item">
+        <svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#c8956e" stroke-width="2"/></svg>
+        this article cites
+      </span>
+      <span class="ego-key-item">
+        <svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#6b8cba" stroke-width="2"/></svg>
+        cites this article
+      </span>
+      <span class="ego-key-item">
+        <svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#d0ccc5" stroke-width="1.5"/></svg>
+        between neighbors
+      </span>
+    </div>
+
+    <!-- Graph container -->
+    <div class="ego-container" id="ego-container"></div>
+
+    <p class="explore-hint" style="margin-top:0.5rem;">
+      Click any node to open that article &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; drag to pan
+    </p>
+
+  </main>
+
+</div><!-- /.layout -->
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script>
+const FOCAL_ID   = {{ article.id }};
+const ALL_JOURNALS = {{ all_journals | tojson | safe }};
+
+// ── Journal colour map (identical palette to explore.html) ──────────────────
+const PALETTE = [
+  '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
+  '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ac',
+  '#d37295','#a0cbe8','#ffbe7d','#8cd17d',
+];
+const _colorMap = {};
+ALL_JOURNALS.map(j => j.name).slice().sort().forEach((name, i) => {
+  _colorMap[name] = PALETTE[i % PALETTE.length];
+});
+function journalColor(name) { return _colorMap[name] || '#9c9890'; }
+
+// ── Tooltip ─────────────────────────────────────────────────────────────────
+const tip = d3.select('body').append('div')
+  .attr('class', 'heatmap-tooltip ego-tip')
+  .style('opacity', 0)
+  .style('pointer-events', 'none');
+
+// ── Load + render ────────────────────────────────────────────────────────────
+async function loadGraph() {
+  const statsEl = document.getElementById('ego-stats-text');
+  try {
+    const resp = await fetch('/api/citations/ego?article=' + FOCAL_ID);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.nodes || data.nodes.length === 0) {
+      statsEl.textContent = 'No citation data available for this article yet.';
+      return;
+    }
+    renderGraph(data);
+  } catch (err) {
+    statsEl.textContent = 'Failed to load graph: ' + err.message;
+  }
+}
+
+function renderGraph(data) {
+  const { nodes, links, focal_id } = data;
+
+  // ── Stats bar ────────────────────────────────────────────────────────────
+  const statsEl = document.getElementById('ego-stats-text');
+  const neighborCount = nodes.length - 1;
+  statsEl.textContent =
+    `${nodes.length} article${nodes.length !== 1 ? 's' : ''} · ` +
+    `${links.length} citation link${links.length !== 1 ? 's' : ''}` +
+    (neighborCount > 0 ? ` · ${neighborCount} neighbor${neighborCount !== 1 ? 's' : ''}` : '');
+
+  // ── Legend ───────────────────────────────────────────────────────────────
+  const journalSet = [...new Set(nodes.map(n => n.journal).filter(Boolean))].sort();
+  const legendEl = document.getElementById('ego-legend');
+  legendEl.innerHTML = journalSet.map(j =>
+    `<span class="citnet-legend-item">
+       <span class="citnet-legend-dot" style="background:${journalColor(j)}"></span>${j}
+     </span>`
+  ).join('');
+
+  // ── SVG setup ────────────────────────────────────────────────────────────
+  const container = document.getElementById('ego-container');
+  const W = container.clientWidth || 820;
+  const H = 600;
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', W)
+    .attr('height', H);
+
+  const g = svg.append('g');
+
+  svg.call(
+    d3.zoom().scaleExtent([0.15, 10]).on('zoom', e => g.attr('transform', e.transform))
+  );
+
+  // ── Helper: resolve ID from a link endpoint (string or object) ───────────
+  function lid(x) { return typeof x === 'object' ? x.id : x; }
+
+  // ── Node radius ──────────────────────────────────────────────────────────
+  function nodeR(d) {
+    const base = Math.sqrt(d.internal_cited_by_count || 0) * 3 + 5;
+    return d.id === focal_id ? base * 1.6 : base;
+  }
+
+  // ── Edge styling ─────────────────────────────────────────────────────────
+  function edgeStroke(l) {
+    const s = lid(l.source), t = lid(l.target);
+    if (s === focal_id) return '#c8956e';   // focal → neighbour (cites)
+    if (t === focal_id) return '#6b8cba';   // neighbour → focal (cited by)
+    return '#d0ccc5';                        // neighbour ↔ neighbour
+  }
+  function edgeWidth(l) {
+    const s = lid(l.source), t = lid(l.target);
+    return (s === focal_id || t === focal_id) ? 1.8 : 0.9;
+  }
+  function edgeOpacity(l) {
+    const s = lid(l.source), t = lid(l.target);
+    return (s === focal_id || t === focal_id) ? 0.75 : 0.35;
+  }
+
+  // ── Force simulation ─────────────────────────────────────────────────────
+  const sim = d3.forceSimulation(nodes)
+    .force('link',    d3.forceLink(links).id(d => d.id).distance(80).strength(0.4))
+    .force('charge',  d3.forceManyBody().strength(-220))
+    .force('center',  d3.forceCenter(W / 2, H / 2))
+    .force('collide', d3.forceCollide(d => nodeR(d) + 4))
+    .alphaDecay(0.025);
+
+  // ── Links ────────────────────────────────────────────────────────────────
+  const linkSel = g.append('g').selectAll('line')
+    .data(links)
+    .join('line')
+      .attr('stroke',         edgeStroke)
+      .attr('stroke-width',   edgeWidth)
+      .attr('stroke-opacity', edgeOpacity);
+
+  // ── Node groups ──────────────────────────────────────────────────────────
+  const nodeG = g.append('g').selectAll('g')
+    .data(nodes)
+    .join('g')
+      .attr('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+      )
+      .on('click', (e, d) => { window.location.href = '/article/' + d.id; })
+      .on('mouseover', (e, d) => {
+        const year    = d.pub_date ? d.pub_date.slice(0, 4) : '';
+        const authors = d.authors
+          ? d.authors.split(';')[0].trim() + (d.authors.includes(';') ? ' et al.' : '')
+          : '';
+        tip.style('opacity', 1)
+           .html(
+             `<strong>${d.title}</strong><br>` +
+             `${authors}${year ? ' (' + year + ')' : ''}<br>` +
+             `<em>${d.journal || ''}</em><br>` +
+             `Cited by ${d.internal_cited_by_count || 0} in index`
+           );
+      })
+      .on('mousemove', e => {
+        tip.style('left', (e.clientX + 14) + 'px')
+           .style('top',  (e.clientY - 28) + 'px');
+      })
+      .on('mouseout', () => tip.style('opacity', 0));
+
+  // Dashed ring behind focal node
+  nodeG.filter(d => d.id === focal_id)
+    .append('circle')
+      .attr('r',               d => nodeR(d) + 5)
+      .attr('fill',            'none')
+      .attr('stroke',          '#5a3e28')
+      .attr('stroke-width',    2)
+      .attr('stroke-dasharray','5,3')
+      .attr('opacity',         0.65);
+
+  // Filled circle
+  nodeG.append('circle')
+    .attr('r',            nodeR)
+    .attr('fill',         d => journalColor(d.journal))
+    .attr('stroke',       d => d.id === focal_id ? '#5a3e28' : '#fff')
+    .attr('stroke-width', d => d.id === focal_id ? 2.5 : 1);
+
+  // Labels: always focal; others if they exceed 20% of max citation count
+  const maxCit = d3.max(nodes, d => d.internal_cited_by_count || 0) || 1;
+  const labelCutoff = Math.max(2, Math.ceil(maxCit * 0.20));
+
+  nodeG.filter(d => d.id === focal_id || (d.internal_cited_by_count || 0) >= labelCutoff)
+    .append('text')
+      .text(d => {
+        const lastName = d.authors
+          ? d.authors.split(';')[0].trim().split(' ').pop()
+          : '';
+        const year = d.pub_date ? d.pub_date.slice(0, 4) : '';
+        return lastName && year ? `${lastName} (${year})` : d.title.slice(0, 22);
+      })
+      .attr('x', d => nodeR(d) + 4)
+      .attr('y', 4)
+      .attr('font-family', 'system-ui, sans-serif')
+      .attr('font-size',   d => d.id === focal_id ? '11px' : '9px')
+      .attr('font-weight', d => d.id === focal_id ? '700'  : '400')
+      .attr('fill',        d => d.id === focal_id ? '#3e2a18' : '#555')
+      .attr('pointer-events', 'none');
+
+  // ── Tick ─────────────────────────────────────────────────────────────────
+  sim.on('tick', () => {
+    linkSel
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    nodeG.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+
+loadGraph();
+</script>
+
+</body>
+</html>

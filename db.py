@@ -703,6 +703,135 @@ def get_article_references(article_id):
         return [dict(r) for r in rows]
 
 
+def get_article_all_references(article_id):
+    """
+    Return ALL references for an article — both in-index and out-of-index.
+
+    Each item is a dict with an 'in_index' key:
+      in_index=True  — full article fields; the DOI matched an article in our DB
+      in_index=False — parsed CrossRef raw_reference metadata; DOI not in our index
+
+    In-index refs come first (ordered by pub_date DESC), then out-of-index.
+    """
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT
+                c.target_article_id,
+                c.raw_reference,
+                a.id        AS a_id,
+                a.title     AS a_title,
+                a.authors   AS a_authors,
+                a.pub_date  AS a_pub_date,
+                a.journal   AS a_journal
+            FROM citations c
+            LEFT JOIN articles a ON a.id = c.target_article_id
+            WHERE c.source_article_id = ?
+            ORDER BY
+                CASE WHEN c.target_article_id IS NOT NULL THEN 0 ELSE 1 END,
+                a.pub_date DESC
+        """, (article_id,)).fetchall()
+
+    results = []
+    for row in rows:
+        if row["target_article_id"] is not None:
+            results.append({
+                "in_index": True,
+                "id":       row["a_id"],
+                "title":    row["a_title"],
+                "authors":  row["a_authors"],
+                "pub_date": row["a_pub_date"],
+                "journal":  row["a_journal"],
+            })
+        else:
+            raw = {}
+            if row["raw_reference"]:
+                try:
+                    raw = json.loads(row["raw_reference"])
+                except (ValueError, TypeError):
+                    pass
+            results.append({
+                "in_index":     False,
+                "title":        raw.get("article-title") or raw.get("volume-title") or "",
+                "authors":      raw.get("author") or "",
+                "year":         raw.get("year") or "",
+                "journal":      raw.get("journal-title") or raw.get("series-title") or "",
+                "doi":          raw.get("DOI") or "",
+                "unstructured": raw.get("unstructured") or "",
+            })
+
+    return results
+
+
+def get_ego_network(article_id):
+    """
+    Return the 2-degree ego network centred on article_id.
+
+    Includes:
+      - The focal article itself
+      - All articles it cites that are in the index   (1st-degree outgoing)
+      - All articles in the index that cite it        (1st-degree incoming)
+      - All citation links between ANY two nodes in that set
+
+    Uses CTEs so we never hit SQLite's ~999-parameter limit regardless of
+    how many neighbours the focal article has.
+
+    Returns {focal_id, nodes, links, node_count, link_count}.
+    """
+    with get_conn() as conn:
+        node_rows = conn.execute("""
+            WITH neighbors AS (
+                SELECT ? AS id
+                UNION
+                SELECT source_article_id AS id
+                FROM   citations
+                WHERE  target_article_id = ?
+                  AND  source_article_id IS NOT NULL
+                UNION
+                SELECT target_article_id AS id
+                FROM   citations
+                WHERE  source_article_id = ?
+                  AND  target_article_id IS NOT NULL
+            )
+            SELECT a.id, a.title, a.authors, a.pub_date, a.journal,
+                   a.doi, a.url,
+                   a.internal_cited_by_count, a.internal_cites_count
+            FROM   articles a
+            WHERE  a.id IN (SELECT id FROM neighbors)
+        """, (article_id, article_id, article_id)).fetchall()
+
+        link_rows = conn.execute("""
+            WITH neighbors AS (
+                SELECT ? AS id
+                UNION
+                SELECT source_article_id AS id
+                FROM   citations
+                WHERE  target_article_id = ?
+                  AND  source_article_id IS NOT NULL
+                UNION
+                SELECT target_article_id AS id
+                FROM   citations
+                WHERE  source_article_id = ?
+                  AND  target_article_id IS NOT NULL
+            )
+            SELECT c.source_article_id AS source,
+                   c.target_article_id AS target
+            FROM   citations c
+            WHERE  c.source_article_id IN (SELECT id FROM neighbors)
+              AND  c.target_article_id  IN (SELECT id FROM neighbors)
+        """, (article_id, article_id, article_id)).fetchall()
+
+    nodes = [dict(r) for r in node_rows]
+    links = [{"source": r["source"], "target": r["target"]} for r in link_rows]
+
+    return {
+        "focal_id":   article_id,
+        "nodes":      nodes,
+        "links":      links,
+        "node_count": len(nodes),
+        "link_count": len(links),
+    }
+
+
 def get_outside_citation_count(article_id):
     """Count of references from this article that point to DOIs outside our index."""
     with get_conn() as conn:
