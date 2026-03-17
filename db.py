@@ -11,6 +11,7 @@ Schema versions
 All migrations run automatically inside init_db(); no manual steps needed.
 """
 
+import json
 import sqlite3
 import os
 import logging
@@ -188,6 +189,40 @@ def _migrate_v3_to_v4(conn):
     log.info("v3→v4 migration complete.")
 
 
+def _migrate_v4_to_v5(conn):
+    """Add citation columns to articles + citations table (v4 → v5)."""
+    existing = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
+    for col, typedef in [
+        ("crossref_cited_by_count", "INTEGER"),
+        ("internal_cited_by_count", "INTEGER DEFAULT 0"),
+        ("internal_cites_count",    "INTEGER DEFAULT 0"),
+        ("references_fetched_at",   "TEXT"),
+    ]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {typedef}")
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS citations (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_article_id INTEGER NOT NULL REFERENCES articles(id),
+            target_doi        TEXT    NOT NULL,
+            target_article_id INTEGER REFERENCES articles(id),
+            raw_reference     TEXT,
+            created_at        TEXT    DEFAULT (datetime('now')),
+            UNIQUE(source_article_id, target_doi)
+        )
+    """)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_citations_source ON citations(source_article_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_citations_target_doi ON citations(target_doi)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_citations_target_id ON citations(target_article_id)"
+    )
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -204,7 +239,10 @@ def init_db():
         elif "oa_url" not in cols:
             # v3 schema — add v4 columns
             _migrate_v3_to_v4(conn)
-        # else: v4 already in place — nothing to do
+
+        if "references_fetched_at" not in cols:
+            _migrate_v4_to_v5(conn)
+        # else: v5 already in place — nothing to do
 
         conn.commit()
 
@@ -609,3 +647,109 @@ def get_author_articles(author_name):
             ORDER BY pub_date DESC, fetched_at DESC
         """, (f"%{author_name}%",)).fetchall()
         return [dict(r) for r in rows]
+
+
+# ── Citation network — reads ───────────────────────────────────────────────────
+
+def get_articles_needing_citation_fetch(limit=None):
+    """Articles with DOIs where references_fetched_at IS NULL, newest-first."""
+    with get_conn() as conn:
+        q = (
+            "SELECT id, doi, title FROM articles "
+            "WHERE doi IS NOT NULL AND references_fetched_at IS NULL "
+            "ORDER BY pub_date DESC"
+        )
+        if limit:
+            q += f" LIMIT {limit}"
+        return [dict(r) for r in conn.execute(q).fetchall()]
+
+
+def get_doi_to_article_id_map():
+    """Return {normalized_doi: article_id} for all articles that have a DOI."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, doi FROM articles WHERE doi IS NOT NULL"
+        ).fetchall()
+        return {r["doi"].strip().lower(): r["id"] for r in rows}
+
+
+def get_article_citations(article_id):
+    """Articles in our index that CITE the given article (cited-by list)."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT a.* FROM articles a
+            JOIN citations c ON c.source_article_id = a.id
+            WHERE c.target_article_id = ?
+            ORDER BY a.pub_date DESC
+        """, (article_id,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_article_references(article_id):
+    """Articles in our index that are CITED BY the given article (reference list)."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT a.* FROM articles a
+            JOIN citations c ON c.target_article_id = a.id
+            WHERE c.source_article_id = ?
+            ORDER BY a.pub_date DESC
+        """, (article_id,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+# ── Citation network — writes ──────────────────────────────────────────────────
+
+def upsert_citation(source_article_id, target_doi, target_article_id, raw_reference):
+    """
+    Insert a citation record.  Silently ignored if the (source, target_doi)
+    pair already exists (UNIQUE constraint).  Returns 1 if inserted, 0 if skipped.
+    """
+    with get_conn() as conn:
+        conn.execute("""
+            INSERT OR IGNORE INTO citations
+                (source_article_id, target_doi, target_article_id, raw_reference)
+            VALUES (?, ?, ?, ?)
+        """, (
+            source_article_id,
+            target_doi,
+            target_article_id,
+            json.dumps(raw_reference) if raw_reference else None,
+        ))
+        conn.commit()
+        return conn.execute("SELECT changes()").fetchone()[0]
+
+
+def mark_references_fetched(article_id, crossref_cited_by_count=None):
+    """Stamp references_fetched_at and (optionally) crossref_cited_by_count."""
+    with get_conn() as conn:
+        conn.execute("""
+            UPDATE articles
+            SET references_fetched_at  = datetime('now'),
+                crossref_cited_by_count = COALESCE(?, crossref_cited_by_count)
+            WHERE id = ?
+        """, (crossref_cited_by_count, article_id))
+        conn.commit()
+
+
+def update_citation_counts():
+    """
+    Recompute internal_cited_by_count and internal_cites_count for every article.
+    Safe to call repeatedly — always overwrites with fresh counts.
+    """
+    with get_conn() as conn:
+        conn.execute("""
+            UPDATE articles
+            SET internal_cited_by_count = (
+                SELECT COUNT(*) FROM citations
+                WHERE target_article_id = articles.id
+            )
+        """)
+        conn.execute("""
+            UPDATE articles
+            SET internal_cites_count = (
+                SELECT COUNT(*) FROM citations
+                WHERE source_article_id = articles.id
+                  AND target_article_id IS NOT NULL
+            )
+        """)
+        conn.commit()
