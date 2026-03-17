@@ -28,6 +28,12 @@ DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "art
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    # WAL mode lets readers and writers run concurrently — essential when
+    # cite_fetcher.py is running alongside the live web server.
+    conn.execute("PRAGMA journal_mode=WAL")
+    # Wait up to 10 s if another connection holds a write lock rather than
+    # immediately raising "database is locked".
+    conn.execute("PRAGMA busy_timeout=10000")
     return conn
 
 
