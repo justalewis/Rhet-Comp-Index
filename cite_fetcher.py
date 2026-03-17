@@ -47,8 +47,18 @@ CROSSREF_BASE = "https://api.crossref.org/works"
 HEADERS = {
     "User-Agent": f"RhetCompIndex/1.0 (mailto:{CONTACT_EMAIL})",
 }
-# 50 ms between requests — comfortably within CrossRef's polite-pool rate limit
-REQUEST_DELAY = 0.05
+# 500 ms between requests — safe sustained rate for CrossRef polite pool.
+# (The original 50 ms / 20 req-per-second caused 429 errors on long runs.)
+REQUEST_DELAY = 0.5
+
+# How long to pause after receiving a 429 before retrying (doubles each attempt)
+RATE_LIMIT_BACKOFF_BASE = 30  # seconds
+
+
+# ── Custom exception ────────────────────────────────────────────────────────────
+
+class RateLimitError(Exception):
+    """Raised when CrossRef returns 429 Too Many Requests."""
 
 
 # ── CrossRef API ───────────────────────────────────────────────────────────────
@@ -56,7 +66,10 @@ REQUEST_DELAY = 0.05
 def _fetch_crossref_work(doi: str) -> dict | None:
     """
     Retrieve a single CrossRef work by DOI.
-    Returns the 'message' dict on success, None on 404 or any other error.
+
+    Returns the 'message' dict on success, None on 404 or other permanent errors.
+    Raises RateLimitError on 429 so the caller can back off without stamping the
+    article as fetched (it should stay in the queue for the next run).
     """
     url = f"{CROSSREF_BASE}/{doi}?mailto={CONTACT_EMAIL}"
     try:
@@ -64,8 +77,12 @@ def _fetch_crossref_work(doi: str) -> dict | None:
         if resp.status_code == 404:
             log.debug("  DOI not in CrossRef: %s", doi)
             return None
+        if resp.status_code == 429:
+            raise RateLimitError(doi)
         resp.raise_for_status()
         return resp.json().get("message")
+    except RateLimitError:
+        raise
     except Exception as exc:
         log.warning("  CrossRef error [%s]: %s", doi, exc)
         return None
@@ -77,13 +94,14 @@ def _process_article(article: dict, doi_map: dict) -> tuple[int, int]:
     """
     Fetch CrossRef data for one article, store its citations.
     Returns (citations_inserted, total_references_with_doi).
+    Raises RateLimitError if CrossRef returns 429 — caller must not stamp the article.
     """
     article_id = article["id"]
     doi        = article["doi"].strip()
 
-    message = _fetch_crossref_work(doi)
+    message = _fetch_crossref_work(doi)  # may raise RateLimitError
     if message is None:
-        # Mark as fetched so we skip it on future runs (no useful data available)
+        # 404 or permanent error — mark as fetched so we skip on future runs
         mark_references_fetched(article_id, crossref_cited_by_count=None)
         return 0, 0
 
@@ -144,19 +162,36 @@ def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
     total_citations  = 0
     total_doi_refs   = 0
     errors           = 0
+    rate_limit_hits  = 0
 
     for article in articles:
         try:
             ins, refs = _process_article(article, doi_map)
             total_citations += ins
             total_doi_refs  += refs
+
+        except RateLimitError:
+            rate_limit_hits += 1
+            backoff = RATE_LIMIT_BACKOFF_BASE * (2 ** min(rate_limit_hits - 1, 4))
+            log.warning(
+                "  429 rate-limited — article %d (%s). "
+                "Backing off %d s. Article left in queue for next run.",
+                article["id"], article.get("doi", ""), backoff,
+            )
+            # Do NOT stamp references_fetched_at — leave it in the queue
+            time.sleep(backoff)
+            errors += 1
+            # Continue to next article (skipping the normal REQUEST_DELAY below)
+            processed += 1
+            continue
+
         except Exception as exc:
             log.error(
                 "  Unexpected error — article %d (%s): %s",
                 article["id"], article.get("doi", ""), exc,
             )
             errors += 1
-            # Still mark fetched so a transient error doesn't block the whole queue
+            # Stamp fetched so a one-off error doesn't block the whole queue
             try:
                 mark_references_fetched(article["id"])
             except Exception:
@@ -165,16 +200,16 @@ def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
         processed += 1
         if processed % 100 == 0:
             log.info(
-                "  %d / %d  |  citations inserted: %d  |  DOI refs seen: %d",
-                processed, total, total_citations, total_doi_refs,
+                "  %d / %d  |  citations inserted: %d  |  DOI refs seen: %d  |  errors: %d",
+                processed, total, total_citations, total_doi_refs, errors,
             )
 
         time.sleep(REQUEST_DELAY)
 
     log.info(
         "Fetch complete — processed: %d  |  citations inserted: %d  |  "
-        "DOI refs: %d  |  errors: %d",
-        processed, total_citations, total_doi_refs, errors,
+        "DOI refs: %d  |  errors: %d  |  rate-limit hits: %d",
+        processed, total_citations, total_doi_refs, errors, rate_limit_hits,
     )
     _recompute_counts()
 
