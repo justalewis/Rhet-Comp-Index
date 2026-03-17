@@ -38,20 +38,62 @@
     <nav class="journal-nav">
 
       <div class="feature-nav">
-        <a href="/new" class="feature-nav-link">
-          <span class="feature-nav-icon">★</span>
-          What's New
-          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
-        </a>
-        <a href="/explore" class="feature-nav-link">
-          <span class="feature-nav-icon">◎</span>
-          Explore
-        </a>
-        <a href="/authors" class="feature-nav-link active-feature-link">
-          <span class="feature-nav-icon">◈</span>
-          Authors
-        </a>
+        <div class="nav-item">
+          <a href="/new" class="feature-nav-link">
+            <span class="feature-nav-icon">★</span>
+            What's New
+            {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+          </a>
+        </div>
+        <div class="nav-item" id="nav-explore">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">◎</span>
+            Explore
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
+            <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+            <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
+            <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
+          </div>
+        </div>
+        <div class="nav-item active" id="nav-authors">
+          <button class="nav-item-trigger active-feature-link" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">◈</span>
+            Authors
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/authors" class="nav-dropdown-item active">Author Index</a>
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+          </div>
+        </div>
+        <div class="nav-item" id="nav-most-cited">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">⬡</span>
+            Most Cited
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/most-cited" class="nav-dropdown-item">All</a>
+            <a href="/most-cited?view=journal" class="nav-dropdown-item">By Journal</a>
+            <a href="/most-cited?view=topic" class="nav-dropdown-item">By Topic</a>
+            <a href="/most-cited?view=decade" class="nav-dropdown-item">By Decade</a>
+          </div>
+        </div>
       </div>
+      <script>
+      (function(){
+        function closeAll(except){document.querySelectorAll('.nav-item').forEach(function(el){if(el!==except)el.classList.remove('open');});}
+        document.querySelectorAll('.nav-item-trigger').forEach(function(btn){
+          btn.addEventListener('click',function(e){var item=btn.closest('.nav-item');var isOpen=item.classList.contains('open');closeAll();if(!isOpen)item.classList.add('open');e.stopPropagation();});
+        });
+        document.addEventListener('click',function(){closeAll();});
+        document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
+      })();
+      </script>
 
       <a href="/" class="journal-link">
         <span class="jname">All journals</span>
@@ -101,6 +143,10 @@
       <h2>Authors</h2>
       <span class="result-count">Top 500 by article count</span>
     </div>
+
+    <p class="page-intro">
+      The 500 most frequently published authors in this index, drawn from the full article record across all 14 indexed journals. Select any name to see their full publication list, co-authors, and citation connections within the field.
+    </p>
 
     <!-- Alphabet quick-jump -->
     <div class="alpha-nav">

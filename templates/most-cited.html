@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Most Cited — Rhetoric &amp; Composition</title>
+  <link id="theme-css" rel="stylesheet" href="/static/style.css">
+  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal')document.getElementById('theme-css').href='/static/style-terminal.css';})();</script>
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var btn=document.createElement('button');
+      btn.className='theme-toggle-btn';
+      var cur=localStorage.getItem('rc-theme')||'normal';
+      btn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
+      btn.addEventListener('click',function(){
+        var next=(localStorage.getItem('rc-theme')||'normal')==='terminal'?'normal':'terminal';
+        localStorage.setItem('rc-theme',next);
+        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
+        btn.textContent=next==='terminal'?'◑ Default':'◐ Terminal';
+      });
+      document.body.appendChild(btn);
+    });
+  </script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1>Rhetoric &amp; Composition<br>
+        <span class="subtitle">Current Scholarship</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+
+      <!-- ── Feature navigation ─────────────────────────── -->
+      <nav class="feature-nav" id="feature-nav">
+
+        <!-- What's New — no dropdown -->
+        <a href="/new" class="nav-item-trigger feature-nav-link">
+          <span class="feature-nav-icon">★</span>
+          What's New
+          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+        </a>
+
+        <!-- Explore ▾ -->
+        <div class="nav-item" id="nav-explore">
+          <button class="nav-item-trigger"
+                  aria-haspopup="true" aria-expanded="false"
+                  data-href="/explore">
+            <span class="feature-nav-icon">◎</span>
+            Explore
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown" role="menu">
+            <div class="nav-dropdown-section">
+              <div class="nav-dropdown-head">Visualizations</div>
+              <a class="nav-dropdown-item" href="/explore#timeline"  role="menuitem">Publication timeline</a>
+              <a class="nav-dropdown-item" href="/explore#topics"    role="menuitem">Topic co-occurrence</a>
+              <a class="nav-dropdown-item" href="/explore#authors"   role="menuitem">Co-authorship network</a>
+              <a class="nav-dropdown-item" href="/explore#citations" role="menuitem">Citation network</a>
+            </div>
+            <div class="nav-dropdown-divider"></div>
+            <div class="nav-dropdown-section">
+              <div class="nav-dropdown-head">Trends</div>
+              <a class="nav-dropdown-item" href="/explore#citation-trends" role="menuitem">Citation trends</a>
+              <a class="nav-dropdown-item placeholder" href="/explore" role="menuitem">Topics over time</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authors ▾ -->
+        <div class="nav-item" id="nav-authors">
+          <button class="nav-item-trigger"
+                  aria-haspopup="true" aria-expanded="false"
+                  data-href="/authors">
+            <span class="feature-nav-icon">◈</span>
+            Authors
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown" role="menu">
+            <a class="nav-dropdown-item" href="/authors"        role="menuitem">Author index</a>
+            <a class="nav-dropdown-item" href="/explore#authors" role="menuitem">Co-authorship network</a>
+          </div>
+        </div>
+
+        <!-- Most Cited ▾ -->
+        <div class="nav-item" id="nav-most-cited">
+          <button class="nav-item-trigger active-feature-link"
+                  aria-haspopup="true" aria-expanded="false"
+                  data-href="/most-cited">
+            <span class="feature-nav-icon">⬡</span>
+            Most Cited
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown" role="menu">
+            <a class="nav-dropdown-item" href="/most-cited"          role="menuitem">Most cited in this index</a>
+            <a class="nav-dropdown-item" href="/explore#citations"   role="menuitem">Citation network map</a>
+            <div class="nav-dropdown-divider"></div>
+            <div class="nav-dropdown-head">Filter by</div>
+            <a class="nav-dropdown-item" href="/most-cited?view=journal" role="menuitem">By journal</a>
+            <a class="nav-dropdown-item" href="/most-cited?view=topic"   role="menuitem">By topic</a>
+            <a class="nav-dropdown-item" href="/most-cited?view=decade"  role="menuitem">By decade</a>
+          </div>
+        </div>
+
+      </nav>
+
+      <script>
+      (function(){
+        var nav = document.getElementById('feature-nav');
+        if (!nav) return;
+        var items = nav.querySelectorAll('.nav-item');
+        function closeAll(except) {
+          items.forEach(function(item) {
+            if (item === except) return;
+            item.classList.remove('open');
+            var btn = item.querySelector('[aria-expanded]');
+            if (btn) btn.setAttribute('aria-expanded','false');
+          });
+        }
+        function openItem(item) {
+          closeAll(item);
+          item.classList.add('open');
+          var btn = item.querySelector('[aria-expanded]');
+          if (btn) btn.setAttribute('aria-expanded','true');
+        }
+        items.forEach(function(item) {
+          var btn = item.querySelector('.nav-item-trigger');
+          if (!btn) return;
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var href = btn.getAttribute('data-href');
+            var dropdown = item.querySelector('.nav-dropdown');
+            if (!dropdown) return;
+            if (item.classList.contains('open')) {
+              if (href) window.location.href = href;
+            } else {
+              openItem(item);
+            }
+          });
+          var hoverTimer = null;
+          item.addEventListener('mouseenter', function() {
+            hoverTimer = setTimeout(function() { openItem(item); }, 120);
+          });
+          item.addEventListener('mouseleave', function() {
+            clearTimeout(hoverTimer);
+            setTimeout(function() {
+              if (!item.matches(':hover')) {
+                item.classList.remove('open');
+                var b = item.querySelector('[aria-expanded]');
+                if (b) b.setAttribute('aria-expanded','false');
+              }
+            }, 200);
+          });
+          btn.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { closeAll(); btn.focus(); }
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              openItem(item);
+              var first = item.querySelector('.nav-dropdown-item');
+              if (first) first.focus();
+            }
+          });
+        });
+        nav.querySelectorAll('.nav-dropdown').forEach(function(dd) {
+          dd.addEventListener('keydown', function(e) {
+            var links = Array.from(dd.querySelectorAll('.nav-dropdown-item:not(.placeholder)'));
+            var idx = links.indexOf(document.activeElement);
+            if (e.key === 'ArrowDown') { e.preventDefault(); if (links[idx+1]) links[idx+1].focus(); }
+            if (e.key === 'ArrowUp')   { e.preventDefault(); if (links[idx-1]) links[idx-1].focus(); }
+            if (e.key === 'Escape')    { closeAll(); }
+            if (e.key === 'Tab')       { closeAll(); }
+          });
+        });
+        document.addEventListener('click', function() { closeAll(); });
+      })();
+      </script>
+
+      <a href="/" class="journal-link">
+        <span class="jname">All journals</span>
+      </a>
+
+      <div class="nav-section-head">Print Journals</div>
+      {% for j in print_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+      </a>
+      {% endfor %}
+
+      <div class="nav-section-head">Web Journals</div>
+      {% for j in web_journals %}
+      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+        <span class="jname">{{ j.name }}</span>
+        <span class="jmeta">
+          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
+          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
+          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+
+      {% if unavailable %}
+      <div class="nav-section-head unavailable-head">Unavailable</div>
+      {% for j in unavailable %}
+      <span class="journal-link unavailable" title="{{ j.note }}">
+        <span class="jname">{{ j.name }}</span>
+      </span>
+      {% endfor %}
+      {% endif %}
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to index</a>
+    </div>
+
+  </aside>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="content-header">
+      <h2>Most cited in this index</h2>
+    </div>
+
+    <p class="page-intro">What does the field treat as foundational — and is that different from what we assume? These rankings reflect citation counts within the discipline's own journals, not Google Scholar's cross-disciplinary totals. An article cited 200 times across CCC, College English, and Written Communication tells a different story than one cited 200 times from linguistics or education. This is the field citing itself — the closest approximation we have to what rhetoric and composition actually considers essential reading.</p>
+
+    <!-- Coverage data panel -->
+    <div style="margin-bottom:1.25rem;">
+      <button class="coverage-toggle" id="coverage-toggle-main" aria-expanded="false">
+        <span class="coverage-chevron" id="coverage-chevron-main">▸</span>
+        About this data: which journals have citation coverage?
+      </button>
+      <div class="coverage-panel" id="coverage-panel-main">
+        <div class="coverage-table-wrap">
+          {% set full_coverage = coverage | selectattr('coverage_pct', 'ge', 50) | list %}
+          {% set partial_coverage = coverage | selectattr('coverage_pct', 'lt', 50) | selectattr('fetched_count', 'gt', 0) | list %}
+          {% set no_coverage = coverage | selectattr('fetched_count', 'eq', 0) | list %}
+
+          {% if full_coverage %}
+          <div class="coverage-section-head">Full citation data available</div>
+          <table class="coverage-table">
+            <thead><tr><th>Journal</th><th>Articles</th><th>With references</th><th>Coverage</th></tr></thead>
+            <tbody>
+            {% for c in full_coverage %}
+            <tr><td>{{ c.journal }}</td><td>{{ c.article_count }}</td><td>{{ c.fetched_count }}</td><td>{{ c.coverage_pct }}%</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+
+          {% if partial_coverage %}
+          <div class="coverage-section-head">Limited or no citation data</div>
+          <table class="coverage-table">
+            <thead><tr><th>Journal</th><th>Articles</th><th>With references</th><th>Coverage</th></tr></thead>
+            <tbody>
+            {% for c in partial_coverage %}
+            <tr><td>{{ c.journal }}</td><td>{{ c.article_count }}</td><td>{{ c.fetched_count }}</td><td>{{ c.coverage_pct }}%</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+
+          {% if no_coverage %}
+          <div class="coverage-section-head">No DOIs (web-only journals)</div>
+          <table class="coverage-table">
+            <thead><tr><th>Journal</th><th>Articles</th><th>With references</th><th>Coverage</th></tr></thead>
+            <tbody>
+            {% for c in no_coverage %}
+            <tr><td>{{ c.journal }}</td><td>{{ c.article_count }}</td><td>0</td><td>—</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+
+          <p class="coverage-note">Citation data comes from CrossRef, which aggregates reference lists deposited by publishers. Some publishers in the index — particularly Sage and Taylor &amp; Francis — deposit complete reference lists for their journals. Others, including some open-access and society-published journals, deposit DOIs but not reference lists. Web-only journals without DOIs cannot contribute citation data at all, though they can still appear as cited works when other journals reference them. The citation network and 'Most Cited' rankings therefore reflect a partial picture, weighted toward journals whose publishers participate fully in CrossRef's reference deposit system. This is a limitation of the available infrastructure, not a judgment about the value of any journal's scholarship.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter controls -->
+    <div class="filter-section">
+      <form method="get" action="/most-cited" class="filter-form">
+        <div class="filter-row">
+          <span class="filter-label">Journal:</span>
+          <select name="journal" class="filter-select" onchange="this.form.submit()">
+            <option value="">All journals</option>
+            {% for j in all_journals %}
+            <option value="{{ j.name }}" {% if sel_journal == j.name %}selected{% endif %}>{{ j.name }}</option>
+            {% endfor %}
+          </select>
+
+          <span class="filter-label filter-label-spaced">Topic:</span>
+          <select name="tag" class="filter-select filter-select-tag" onchange="this.form.submit()">
+            <option value="">All topics</option>
+            {% for tag_name, tag_count in all_tags %}
+            <option value="{{ tag_name }}" {% if sel_tag == tag_name %}selected{% endif %}>{{ tag_name }} ({{ tag_count }})</option>
+            {% endfor %}
+          </select>
+
+          <span class="filter-label filter-label-spaced">Years:</span>
+          <select name="year_from" class="filter-select">
+            <option value="">From</option>
+            {% if min_year and max_year %}
+            {% for y in range(min_year, max_year + 1) %}
+            <option value="{{ y }}" {% if year_from == y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+          <span class="filter-dash">–</span>
+          <select name="year_to" class="filter-select">
+            <option value="">To</option>
+            {% if min_year and max_year %}
+            {% for y in range(max_year, min_year - 1, -1) %}
+            <option value="{{ y }}" {% if year_to == y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+            {% endif %}
+          </select>
+          <button type="submit" class="search-btn">Apply</button>
+          {% if sel_journal or sel_tag or year_from or year_to %}
+          <a href="/most-cited{% if view != 'all' %}?view={{ view }}{% endif %}" class="filter-clear">Clear</a>
+          {% endif %}
+        </div>
+        <input type="hidden" name="view" value="{{ view }}">
+      </form>
+    </div>
+
+    <!-- View mode tabs -->
+    <div class="most-cited-view-tabs">
+      <a class="most-cited-view-tab {% if view == 'all' %}active{% endif %}"
+         href="/most-cited?{% if sel_journal %}journal={{ sel_journal | urlencode }}&{% endif %}{% if sel_tag %}tag={{ sel_tag | urlencode }}&{% endif %}{% if year_from %}year_from={{ year_from }}&{% endif %}{% if year_to %}year_to={{ year_to }}&{% endif %}view=all">All</a>
+      <a class="most-cited-view-tab {% if view == 'journal' %}active{% endif %}"
+         href="/most-cited?{% if sel_journal %}journal={{ sel_journal | urlencode }}&{% endif %}{% if sel_tag %}tag={{ sel_tag | urlencode }}&{% endif %}{% if year_from %}year_from={{ year_from }}&{% endif %}{% if year_to %}year_to={{ year_to }}&{% endif %}view=journal">By Journal</a>
+      <a class="most-cited-view-tab {% if view == 'topic' %}active{% endif %}"
+         href="/most-cited?{% if sel_journal %}journal={{ sel_journal | urlencode }}&{% endif %}{% if sel_tag %}tag={{ sel_tag | urlencode }}&{% endif %}{% if year_from %}year_from={{ year_from }}&{% endif %}{% if year_to %}year_to={{ year_to }}&{% endif %}view=topic">By Topic</a>
+      <a class="most-cited-view-tab {% if view == 'decade' %}active{% endif %}"
+         href="/most-cited?{% if sel_journal %}journal={{ sel_journal | urlencode }}&{% endif %}{% if sel_tag %}tag={{ sel_tag | urlencode }}&{% endif %}{% if year_from %}year_from={{ year_from }}&{% endif %}{% if year_to %}year_to={{ year_to }}&{% endif %}view=decade">By Decade</a>
+    </div>
+
+    <!-- Article list -->
+    {% if not articles %}
+    <p class="empty-state">No articles found with citation data for the current filters.</p>
+    {% else %}
+
+    {% if view == 'all' %}
+      <!-- Flat ranked list with show-more -->
+      <ol class="most-cited-list" id="most-cited-all-list">
+        {% for a in articles[:50] %}
+        <li class="most-cited-item">
+          <span class="most-cited-rank">{{ loop.index }}</span>
+          <div class="most-cited-body">
+            <div class="most-cited-title">
+              <a href="/article/{{ a.id }}">{{ a.title }}</a>
+            </div>
+            <div class="most-cited-meta">
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
+              <span class="most-cited-journal">{{ a.journal }}</span>
+              <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }} in this index</span>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% if articles | length > 50 %}
+      <ol class="most-cited-list" id="most-cited-more-list" style="display:none;">
+        {% for a in articles[50:] %}
+        <li class="most-cited-item">
+          <span class="most-cited-rank">{{ loop.index + 50 }}</span>
+          <div class="most-cited-body">
+            <div class="most-cited-title">
+              <a href="/article/{{ a.id }}">{{ a.title }}</a>
+            </div>
+            <div class="most-cited-meta">
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
+              <span class="most-cited-journal">{{ a.journal }}</span>
+              <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }} in this index</span>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      <button class="show-more-btn" id="show-more-btn">Show all {{ articles | length }} &rarr;</button>
+      {% endif %}
+
+    {% elif view == 'journal' %}
+      {% set ns = namespace(current_journal=None, rank=0) %}
+      {% for a in articles %}
+        {% if a.journal != ns.current_journal %}
+          {% if ns.current_journal is not none %}</ol></div>{% endif %}
+          {% set ns.current_journal = a.journal %}
+          {% set ns.rank = 0 %}
+          <div class="most-cited-group"><div class="most-cited-group-head">{{ a.journal }}</div>
+          <ol class="most-cited-list">
+        {% endif %}
+        {% if ns.rank < 10 %}
+        {% set ns.rank = ns.rank + 1 %}
+        <li class="most-cited-item">
+          <span class="most-cited-rank">{{ ns.rank }}</span>
+          <div class="most-cited-body">
+            <div class="most-cited-title"><a href="/article/{{ a.id }}">{{ a.title }}</a></div>
+            <div class="most-cited-meta">
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
+              <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }}</span>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+      {% endfor %}
+      {% if ns.current_journal is not none %}</ol></div>{% endif %}
+
+    {% elif view == 'topic' %}
+      {% set ns = namespace(current_tag=None, rank=0) %}
+      {% set tagged = articles | selectattr('tags') | list %}
+      {% if tagged %}
+        {% for a in tagged %}
+          {% set first_tag = a.tags.strip('|').split('|')[0] if a.tags else '' %}
+          {% if first_tag != ns.current_tag %}
+            {% if ns.current_tag is not none %}</ol></div>{% endif %}
+            {% set ns.current_tag = first_tag %}
+            {% set ns.rank = 0 %}
+            <div class="most-cited-group"><div class="most-cited-group-head">{{ first_tag }}</div>
+            <ol class="most-cited-list">
+          {% endif %}
+          {% if ns.rank < 10 %}
+          {% set ns.rank = ns.rank + 1 %}
+          <li class="most-cited-item">
+            <span class="most-cited-rank">{{ ns.rank }}</span>
+            <div class="most-cited-body">
+              <div class="most-cited-title"><a href="/article/{{ a.id }}">{{ a.title }}</a></div>
+              <div class="most-cited-meta">
+                {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+                {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
+                <span class="most-cited-journal">{{ a.journal }}</span>
+                <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }}</span>
+              </div>
+            </div>
+          </li>
+          {% endif %}
+        {% endfor %}
+        {% if ns.current_tag is not none %}</ol></div>{% endif %}
+      {% else %}
+      <p class="empty-state">No tagged articles found with citation data.</p>
+      {% endif %}
+
+    {% elif view == 'decade' %}
+      {% set ns = namespace(current_decade=None, rank=0) %}
+      {% for a in articles %}
+        {% set decade = (a.pub_date[:4] | int // 10 * 10) if a.pub_date else 0 %}
+        {% set decade_label = decade | string + 's' if decade else 'Undated' %}
+        {% if decade_label != ns.current_decade %}
+          {% if ns.current_decade is not none %}</ol></div>{% endif %}
+          {% set ns.current_decade = decade_label %}
+          {% set ns.rank = 0 %}
+          <div class="most-cited-group"><div class="most-cited-group-head">{{ decade_label }}</div>
+          <ol class="most-cited-list">
+        {% endif %}
+        {% if ns.rank < 10 %}
+        {% set ns.rank = ns.rank + 1 %}
+        <li class="most-cited-item">
+          <span class="most-cited-rank">{{ ns.rank }}</span>
+          <div class="most-cited-body">
+            <div class="most-cited-title"><a href="/article/{{ a.id }}">{{ a.title }}</a></div>
+            <div class="most-cited-meta">
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
+              <span class="most-cited-journal">{{ a.journal }}</span>
+              <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }}</span>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+      {% endfor %}
+      {% if ns.current_decade is not none %}</ol></div>{% endif %}
+    {% endif %}
+
+    {% endif %}
+
+  </main>
+
+</div>
+
+<script>
+// Show more button
+var showBtn = document.getElementById('show-more-btn');
+if (showBtn) {
+  showBtn.addEventListener('click', function() {
+    document.getElementById('most-cited-more-list').style.display = '';
+    showBtn.style.display = 'none';
+  });
+}
+
+// Coverage panel toggle
+var covToggle = document.getElementById('coverage-toggle-main');
+var covPanel  = document.getElementById('coverage-panel-main');
+var covChev   = document.getElementById('coverage-chevron-main');
+if (covToggle && covPanel) {
+  covToggle.addEventListener('click', function() {
+    var open = covPanel.classList.toggle('open');
+    covToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (covChev) covChev.textContent = open ? '▾' : '▸';
+  });
+}
+</script>
+
+</body>
+</html>

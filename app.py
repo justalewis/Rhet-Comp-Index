@@ -41,6 +41,7 @@ from db import (
     get_citation_network,
     get_citation_trends,
     get_ego_network,
+    get_coverage_stats,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -450,6 +451,10 @@ def article_detail(article_id):
     outside_count = len(outside_refs)
     print_journals, web_journals, all_journals = _build_sidebar()
     new_count = get_new_article_count(days=7)
+    coverage_stats = get_coverage_stats()
+    journal_coverage = next(
+        (c for c in coverage_stats if c["journal"] == article.get("journal")), None
+    )
 
     return render_template(
         "article.html",
@@ -464,6 +469,7 @@ def article_detail(article_id):
         all_journals=all_journals,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
+        journal_coverage=journal_coverage,
     )
 
 
@@ -474,6 +480,7 @@ def explore():
     new_count = get_new_article_count(days=7)
     all_tags = get_all_tags()
     min_year, max_year = get_year_range()
+    coverage = get_coverage_stats()
 
     return render_template(
         "explore.html",
@@ -485,6 +492,7 @@ def explore():
         all_tags=all_tags,
         min_year=min_year,
         max_year=max_year,
+        coverage=coverage,
     )
 
 
@@ -622,6 +630,50 @@ def new_articles():
         "new.html",
         journal_groups=journal_groups,
         total=len(articles),
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=new_count,
+    )
+
+
+@app.route("/most-cited")
+def most_cited_page():
+    """Most-cited articles page with filter controls and grouped views."""
+    print_journals, web_journals, all_journals = _build_sidebar()
+    new_count = get_new_article_count(days=7)
+    all_tags  = get_all_tags()
+    min_year, max_year = get_year_range()
+    coverage  = get_coverage_stats()
+
+    # Filter params
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+    journal   = request.args.get("journal",   "").strip()
+    tag       = request.args.get("tag",       "").strip()
+    view      = request.args.get("view",      "all").strip()
+
+    articles = get_most_cited(
+        year_from=year_from or None,
+        year_to=year_to or None,
+        journal=journal or None,
+        tag=tag or None,
+        limit=200,
+    )
+
+    return render_template(
+        "most-cited.html",
+        articles=articles,
+        view=view,
+        year_from=year_from,
+        year_to=year_to,
+        sel_journal=journal,
+        sel_tag=tag,
+        all_tags=all_tags,
+        min_year=min_year,
+        max_year=max_year,
+        coverage=coverage,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,

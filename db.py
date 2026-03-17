@@ -1047,3 +1047,29 @@ def get_citation_trends(journal=None):
             ORDER BY year
         """, params).fetchall()
         return [dict(r) for r in rows]
+
+
+def get_coverage_stats():
+    """Return per-journal citation coverage stats (how many articles have had
+    references fetched vs. total articles in the DB)."""
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT
+                journal,
+                COUNT(*) AS article_count,
+                SUM(CASE WHEN references_fetched_at IS NOT NULL THEN 1 ELSE 0 END) AS fetched_count
+            FROM articles
+            GROUP BY journal
+            ORDER BY journal
+        """).fetchall()
+    result = []
+    for r in rows:
+        fetched = r["fetched_count"] or 0
+        total   = r["article_count"] or 1
+        result.append({
+            "journal":      r["journal"],
+            "article_count": r["article_count"],
+            "fetched_count": fetched,
+            "coverage_pct":  round(100.0 * fetched / total, 1),
+        })
+    return sorted(result, key=lambda x: (-x["coverage_pct"], x["journal"]))

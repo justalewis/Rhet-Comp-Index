@@ -38,20 +38,62 @@
     <nav class="journal-nav">
 
       <div class="feature-nav">
-        <a href="/new" class="feature-nav-link">
-          <span class="feature-nav-icon">★</span>
-          What's New
-          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
-        </a>
-        <a href="/explore" class="feature-nav-link active-feature-link">
-          <span class="feature-nav-icon">◎</span>
-          Explore
-        </a>
-        <a href="/authors" class="feature-nav-link">
-          <span class="feature-nav-icon">◈</span>
-          Authors
-        </a>
+        <div class="nav-item">
+          <a href="/new" class="feature-nav-link">
+            <span class="feature-nav-icon">★</span>
+            What's New
+            {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+          </a>
+        </div>
+        <div class="nav-item active" id="nav-explore">
+          <button class="nav-item-trigger active-feature-link" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">◎</span>
+            Explore
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
+            <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+            <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
+            <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
+          </div>
+        </div>
+        <div class="nav-item" id="nav-authors">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">◈</span>
+            Authors
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/authors" class="nav-dropdown-item">Author Index</a>
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+          </div>
+        </div>
+        <div class="nav-item" id="nav-most-cited">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">⬡</span>
+            Most Cited
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/most-cited" class="nav-dropdown-item">All</a>
+            <a href="/most-cited?view=journal" class="nav-dropdown-item">By Journal</a>
+            <a href="/most-cited?view=topic" class="nav-dropdown-item">By Topic</a>
+            <a href="/most-cited?view=decade" class="nav-dropdown-item">By Decade</a>
+          </div>
+        </div>
       </div>
+      <script>
+      (function(){
+        function closeAll(except){document.querySelectorAll('.nav-item').forEach(function(el){if(el!==except)el.classList.remove('open');});}
+        document.querySelectorAll('.nav-item-trigger').forEach(function(btn){
+          btn.addEventListener('click',function(e){var item=btn.closest('.nav-item');var isOpen=item.classList.contains('open');closeAll();if(!isOpen)item.classList.add('open');e.stopPropagation();});
+        });
+        document.addEventListener('click',function(){closeAll();});
+        document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
+      })();
+      </script>
 
       <a href="/" class="journal-link">
         <span class="jname">All journals</span>
@@ -102,18 +144,23 @@
       <span class="result-count">Data visualisations</span>
     </div>
 
+    <p class="page-intro">
+      Patterns in the literature, made visible. Use the tabs below to explore publication trends over time, topic clusters, co-authorship networks, the most-cited work in the field, and how citation activity has shifted across decades.
+    </p>
+
     <!-- Tabs -->
     <div class="explore-tabs">
-      <button class="explore-tab active" onclick="showTab('timeline', this)">Timeline</button>
-      <button class="explore-tab" onclick="showTab('topics', this)">Topics</button>
-      <button class="explore-tab" onclick="showTab('network', this)">Author Network</button>
-      <button class="explore-tab" onclick="showTab('citations', this)">Citations</button>
-      <button class="explore-tab" onclick="showTab('cittrends', this)">Citation Trends</button>
-      <button class="explore-tab" onclick="showTab('citnet', this)">Citation Network</button>
+      <button class="explore-tab active" onclick="showTab('timeline', this)" data-hash="timeline">Timeline</button>
+      <button class="explore-tab" onclick="showTab('topics', this)" data-hash="topics">Topics</button>
+      <button class="explore-tab" onclick="showTab('network', this)" data-hash="authors">Author Network</button>
+      <button class="explore-tab" onclick="showTab('citations', this)" data-hash="citations">Citations</button>
+      <button class="explore-tab" onclick="showTab('cittrends', this)" data-hash="citation-trends">Citation Trends</button>
+      <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
     </div>
 
     <!-- ── Timeline tab ──────────────────────────────────────── -->
     <div id="tab-timeline" class="tab-panel">
+      <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record.</p>
       <div class="chart-toolbar">
         <button id="toggle-journals-btn" class="filter-apply-btn" onclick="toggleJournals()">
           Show top 8 journals only
@@ -127,6 +174,7 @@
 
     <!-- ── Topics tab ────────────────────────────────────────── -->
     <div id="tab-topics" class="tab-panel" style="display:none;">
+      <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap — a quick way to see which research threads are most tightly intertwined.</p>
       <p class="explore-hint">Tag co-occurrence — how often topic pairs appear together. Hover cells for counts.</p>
       <div class="heatmap-container" id="heatmap-container">
         <div class="loading-msg">Loading tag data…</div>
@@ -135,6 +183,7 @@
 
     <!-- ── Author Network tab ────────────────────────────────── -->
     <div id="tab-network" class="tab-panel" style="display:none;">
+      <p class="tab-intro">Co-authorship graph for authors with three or more indexed publications. Node size reflects article count; edges connect co-authors. Clusters reveal research communities and collaborative pockets within rhet/comp. Click any node to open that author's profile.</p>
       <p class="explore-hint">Co-authorship network — authors with 3+ papers. Node size = paper count. Click a node to view author page.</p>
       <div class="network-container" id="network-container">
         <div class="loading-msg">Loading author data…</div>
@@ -143,6 +192,8 @@
 
     <!-- ── Citations tab ─────────────────────────────────────── -->
     <div id="tab-citations" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro">Articles most cited by other work indexed here — a rough measure of internal influence within the field as captured by this database. Filter by year, journal, or topic. Coverage depends on publisher reference deposit practices; see the coverage table below for per-journal detail.</p>
 
       <div class="citations-toolbar">
         <span class="filter-label">Most Cited in This Index</span>
@@ -200,10 +251,38 @@
         <div class="loading-msg">Loading citation data…</div>
       </div>
 
+      <!-- Coverage panel -->
+      <div style="margin-top:2rem;">
+        <button class="coverage-toggle" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'▴ Hide citation coverage':'▾ Citation coverage by journal';">▾ Citation coverage by journal</button>
+        <div class="coverage-panel">
+          <div class="coverage-table-wrap">
+            <table class="coverage-table">
+              <thead><tr><th>Journal</th><th>Articles</th><th>References fetched</th><th>Coverage</th></tr></thead>
+              <tbody>
+              {% for c in coverage %}
+              <tr>
+                <td>{{ c.journal }}</td>
+                <td>{{ c.article_count }}</td>
+                <td>{{ c.fetched_count }}</td>
+                <td>
+                  <span class="coverage-pct-bar"><span class="coverage-pct-bar-fill" style="width:{{ c.coverage_pct }}%"></span></span>
+                  {{ c.coverage_pct }}%
+                </td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <p class="coverage-note">Coverage reflects how many articles in this index have had their reference lists fetched from CrossRef. Journals with 0% coverage do not deposit reference data with CrossRef.</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- ── Citation Trends tab ──────────────────────────────── -->
     <div id="tab-cittrends" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro">Average citations per article by publication year — showing how citation density has changed over time. Earlier articles have had more time to accumulate citations, so the curve naturally rises toward older work. Filter by journal to compare citation patterns across venues.</p>
 
       <div class="chart-toolbar">
         <label class="filter-label" for="cittrends-journal">Journal:</label>
@@ -226,6 +305,8 @@
 
     <!-- ── Citation Network tab ──────────────────────────────── -->
     <div id="tab-citnet" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro">Force-directed graph of citation relationships between articles in this index. Each node is an article; edges represent a citation. Raise the minimum-citations threshold to show only the most densely connected work. Filter by journal or year to focus on a particular corner of the field.</p>
 
       <!-- Controls bar -->
       <div class="citnet-controls">
@@ -334,6 +415,9 @@ function showTab(name, btn) {
   document.querySelectorAll('.explore-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).style.display = 'block';
   btn.classList.add('active');
+  // Update URL hash for deep-linking
+  const hash = btn.getAttribute('data-hash') || name;
+  history.replaceState(null, '', '#' + hash);
 
   if (name === 'topics' && !topicsLoaded) {
     topicsLoaded = true;
@@ -1162,10 +1246,24 @@ function searchCitationNetwork(query) {
   }
 }
 
-// ── Auto-activate tab from ?tab= URL param ──────────────────────────────────
-// Used by article detail pages: "View in citation network →" links here with
-// ?tab=citnet so the right tab opens automatically.
+// ── Auto-activate tab from URL hash or ?tab= param ────────────────────────
+// Hash takes priority; ?tab= kept for backward compat with article pages.
 window.addEventListener('DOMContentLoaded', function () {
+  // Build a lookup: hash → tab name (from data-hash attributes)
+  const hashMap = {};
+  document.querySelectorAll('.explore-tab[data-hash]').forEach(b => {
+    hashMap[b.getAttribute('data-hash')] = b;
+  });
+
+  // Check hash first
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    // Special case: #citation-trends → cittrends tab
+    const btn = hashMap[hash];
+    if (btn) { btn.click(); return; }
+  }
+
+  // Fall back to ?tab= param
   const tp = new URLSearchParams(location.search).get('tab');
   if (!tp) return;
   const btn = Array.from(document.querySelectorAll('.explore-tab'))
