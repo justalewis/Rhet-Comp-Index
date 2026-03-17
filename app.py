@@ -51,6 +51,12 @@ app = Flask(__name__)
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()
 
+@app.before_request
+def redirect_www():
+    """Redirect www.pinakes.xyz → pinakes.xyz (301 permanent)."""
+    if request.host.startswith("www."):
+        return redirect(request.url.replace("www.", "", 1), code=301)
+
 
 # ── Template helpers ───────────────────────────────────────────────────────────
 
