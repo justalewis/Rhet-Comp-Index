@@ -4,7 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Authors — Rhetoric &amp; Composition</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link id="theme-css" rel="stylesheet" href="/static/style.css">
+  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal')document.getElementById('theme-css').href='/static/style-terminal.css';})();</script>
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var btn=document.createElement('button');
+      btn.className='theme-toggle-btn';
+      var cur=localStorage.getItem('rc-theme')||'normal';
+      btn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
+      btn.addEventListener('click',function(){
+        var next=(localStorage.getItem('rc-theme')||'normal')==='terminal'?'normal':'terminal';
+        localStorage.setItem('rc-theme',next);
+        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
+        btn.textContent=next==='terminal'?'◑ Default':'◐ Terminal';
+      });
+      document.body.appendChild(btn);
+    });
+  </script>
 </head>
 <body>
 
