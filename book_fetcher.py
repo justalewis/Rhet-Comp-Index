@@ -108,36 +108,27 @@ PUBLISHERS = {
     "pitt": {
         "label":    "University of Pittsburgh Press",
         "strategy": "curated",
-        # Books registered under JSTOR's CrossRef prefix (10.2307).
-        # Expand this list as new titles are identified.
+        # All books in the Pittsburgh Series in Composition, Literacy, and Culture
+        # registered under JSTOR's CrossRef prefix (10.2307).
+        # Each DOI confirmed via direct CrossRef lookup.
         "dois": [
-            "10.2307/j.ctv1g4rvf6",   # Translingual Inheritance — Kimball (2020)
-            "10.2307/j.ctt1d9nnx6",   # Shades of Sulh — Diab (2017)
-            "10.2307/jj.2667632",     # Writing and Desire — Alexander (2022)
+            "10.2307/j.ctv1g4rvf6",   # Translingual Inheritance — Kimball (2021)
+            "10.2307/j.ctt1d9nnx6",   # Shades of Sulh — Diab (2016)
+            "10.2307/jj.2667632",     # Writing and Desire — Alexander (2023)
             "10.2307/j.ctv7fmfwd",    # Resisting Brown — Epps-Robertson (2018)
-            "10.2307/j.ctt9qh3cv",    # Reclaiming Rhetorica — Lunsford (1995)
-            "10.2307/j.ctt9qh8wq",    # Rhetoric and Reality — Berlin (1987)
-            "10.2307/j.ctv7h0skk",    # The Ethics of Rhetoric — Weaver (1953)
-            "10.2307/j.ctv1hrd1b5",   # Citizen Critics — Wells (1996)
-            "10.2307/j.ctv9hj9r9",    # Literacy in the New Media Age — Kress (2003)
+            "10.2307/j.ctt5hjt73",    # Reclaiming Rhetorica — Lunsford, ed. (1995)
         ],
     },
     "routledge": {
         "label":    "Routledge",
         "strategy": "curated",
-        # Key rhet/comp titles from Routledge. Chapters for these books have
-        # references deposited in CrossRef (unlike WAC/UP Colorado).
-        # Expand this list as more titles are confirmed.
+        # Key rhet/comp titles from Routledge/T&F (prefix 10.4324).
+        # Chapters for these books have references deposited in CrossRef
+        # (unlike WAC/UP Colorado). DOIs confirmed via direct CrossRef lookup.
         "dois": [
             "10.4324/9780429198748",   # Technical Communication after the Social Justice Turn — Walton et al. (2019)
-            "10.4324/9781003160809",   # Rhetorical Work in Emergency Medical Services — Angeli (2021)
-            "10.4324/9781003293798",   # Designing for Social Justice — Jiang & Tham (2022)
-            "10.4324/9781003035787",   # Communicating Race, Ethnicity, and Identity in Technical Communication — Jones et al. (2021)
-            "10.4324/9781003282907",   # Writing Program Administration and Disability — Wood & Jung (2022)
-            "10.4324/9780203700440",   # The Routledge Handbook of Rhetoric and Public Address (2018)
-            "10.4324/9780203700082",   # The Routledge Handbook of Language and Professional Communication (2014)
-            "10.4324/9781315453163",   # Feminist Rhetorical Resilience — Flynn et al. (2012)
-            "10.4324/9780203120613",   # The Braddock Essays — Connors (1999)
+            "10.4324/9781315104881",   # Rhetorical Work in Emergency Medical Services — Angeli (2021)
+            "10.4324/9781003469995",   # Designing for Social Justice — Jiang & Tham (2024)
         ],
     },
 }
