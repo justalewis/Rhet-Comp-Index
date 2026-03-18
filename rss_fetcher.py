@@ -294,6 +294,10 @@ def _harvest_wp_api(api_url, journal_name, since_date=None):
         log.info("  WP API page %d/%d — %d posts", page, total_pages, len(posts))
 
         for post in posts:
+            # Skip password-protected posts (pre-publication / peer-review copies)
+            if post.get("content", {}).get("protected") or post.get("excerpt", {}).get("protected"):
+                continue
+
             # Strip any HTML from the title (some themes add markup)
             title = _strip_html(post.get("title", {}).get("rendered", "") or "")
             if not title:
