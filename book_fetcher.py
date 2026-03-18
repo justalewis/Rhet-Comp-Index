@@ -2,32 +2,30 @@
 book_fetcher.py — Harvests monographs and edited collections from CrossRef.
 
 Publishers covered:
-  WAC Clearinghouse        member 23835  prefix 10.37514
-  University Press of Colorado / Utah State UP
-                           member 3910   prefixes 10.7330, 10.5876
+  WAC Clearinghouse              member 23835  prefix 10.37514
+  Utah State University Press    member 3910   prefixes 10.7330, 10.5876
+  Ohio State University Press    member 7412   prefix 10.26818
+  University of Pittsburgh Press (curated DOI list via JSTOR prefix 10.2307)
+  Routledge / Taylor & Francis   (curated DOI list via prefix 10.4324)
 
-WAC chapter strategy:
-  Each WAC edited-book DOI follows the pattern:
-    book  →  10.37514/PER-B.2024.2180
-    ch 1  →  10.37514/PER-B.2024.2180.2.01
-    ch 2  →  10.37514/PER-B.2024.2180.2.02
-    ...
-  Chapters are enumerated by incrementing the suffix until 3 consecutive
-  404s are returned.  Front-matter lives at .1.01, .1.02, etc.
-
-  Note: CrossRef does not deposit reference lists for book chapters at
-  either press — only structural metadata (title, authors, DOI, ISBN,
-  container) is available.  The books section therefore functions as a
-  bibliographic index rather than a citation network.
+Strategies:
+  wac      — WAC edited-book DOI suffix enumeration (.2.01, .2.02, …)
+  upc      — UP Colorado / Utah State bulk member fetch + ISBN chapter lookup
+  member   — Generic bulk member fetch with rhet/comp keyword filter at ingest
+  curated  — Fetch a fixed list of book DOIs; look up chapters via ISBN
 
 Usage:
-    python book_fetcher.py              # fetch all publishers (incremental)
-    python book_fetcher.py wac          # WAC Clearinghouse only
-    python book_fetcher.py upc          # UP Colorado / Utah State only
-    python book_fetcher.py --full       # ignore last-fetch dates (full re-fetch)
-    python book_fetcher.py wac --full   # WAC full re-fetch
+    python book_fetcher.py                    # fetch all publishers (incremental)
+    python book_fetcher.py wac                # WAC Clearinghouse only
+    python book_fetcher.py upc                # UP Colorado / Utah State only
+    python book_fetcher.py osu                # Ohio State University Press only
+    python book_fetcher.py pitt               # Pitt Press curated list
+    python book_fetcher.py routledge          # Routledge curated list
+    python book_fetcher.py --full             # ignore last-fetch dates (full re-fetch)
+    python book_fetcher.py osu --full         # OSU full re-fetch
 """
 
+import re
 import sys
 import time
 import logging
@@ -57,6 +55,35 @@ DELAY         = 0.6   # seconds between API requests
 DELAY_ENUM    = 0.4   # seconds between chapter-DOI enumeration hits
 
 
+# ── Rhet/comp keyword filter (used for broad-catalog publishers) ────────────────
+
+_RHET_COMP_TERMS = [
+    r"\bwrit",              # writing, writer, writers, written, writes, rewriting
+    r"\brhetor",            # rhetoric, rhetorics, rhetorical, rhetorician
+    r"\bcomposit",          # composition, compositional
+    r"\bcomposing\b",
+    r"\bliterac",           # literacy, literacies
+    r"\bliterate\b",
+    r"\bmultilingual",
+    r"\btranslingual",
+    r"\bmultimodal",
+    r"\bpedagog",           # pedagogy, pedagogical
+    r"\btutor",             # tutoring, tutors
+    r"\bdiscourse",
+    r"\bWAC\b",
+    r"\bWAW\b",
+    r"\bWPA\b",
+    r"first.year",
+    r"technical communication",
+    r"\bauthorship\b",
+    r"\bplagiarism\b",
+]
+RHET_COMP_RE = re.compile("|".join(_RHET_COMP_TERMS), re.IGNORECASE)
+
+def _is_rhet_comp(title: str) -> bool:
+    return bool(RHET_COMP_RE.search(title or ""))
+
+
 # ── Publisher configs ───────────────────────────────────────────────────────────
 
 PUBLISHERS = {
@@ -71,6 +98,47 @@ PUBLISHERS = {
         "member_id": 3910,
         "prefixes":  ["10.7330", "10.5876"],
         "strategy":  "upc",
+    },
+    "osu": {
+        "label":     "Ohio State University Press",
+        "member_id": 7412,
+        "prefixes":  ["10.26818"],
+        "strategy":  "member",
+    },
+    "pitt": {
+        "label":    "University of Pittsburgh Press",
+        "strategy": "curated",
+        # Books registered under JSTOR's CrossRef prefix (10.2307).
+        # Expand this list as new titles are identified.
+        "dois": [
+            "10.2307/j.ctv1g4rvf6",   # Translingual Inheritance — Kimball (2020)
+            "10.2307/j.ctt1d9nnx6",   # Shades of Sulh — Diab (2017)
+            "10.2307/jj.2667632",     # Writing and Desire — Alexander (2022)
+            "10.2307/j.ctv7fmfwd",    # Resisting Brown — Epps-Robertson (2018)
+            "10.2307/j.ctt9qh3cv",    # Reclaiming Rhetorica — Lunsford (1995)
+            "10.2307/j.ctt9qh8wq",    # Rhetoric and Reality — Berlin (1987)
+            "10.2307/j.ctv7h0skk",    # The Ethics of Rhetoric — Weaver (1953)
+            "10.2307/j.ctv1hrd1b5",   # Citizen Critics — Wells (1996)
+            "10.2307/j.ctv9hj9r9",    # Literacy in the New Media Age — Kress (2003)
+        ],
+    },
+    "routledge": {
+        "label":    "Routledge",
+        "strategy": "curated",
+        # Key rhet/comp titles from Routledge. Chapters for these books have
+        # references deposited in CrossRef (unlike WAC/UP Colorado).
+        # Expand this list as more titles are confirmed.
+        "dois": [
+            "10.4324/9780429198748",   # Technical Communication after the Social Justice Turn — Walton et al. (2019)
+            "10.4324/9781003160809",   # Rhetorical Work in Emergency Medical Services — Angeli (2021)
+            "10.4324/9781003293798",   # Designing for Social Justice — Jiang & Tham (2022)
+            "10.4324/9781003035787",   # Communicating Race, Ethnicity, and Identity in Technical Communication — Jones et al. (2021)
+            "10.4324/9781003282907",   # Writing Program Administration and Disability — Wood & Jung (2022)
+            "10.4324/9780203700440",   # The Routledge Handbook of Rhetoric and Public Address (2018)
+            "10.4324/9780203700082",   # The Routledge Handbook of Language and Professional Communication (2014)
+            "10.4324/9781315453163",   # Feminist Rhetorical Resilience — Flynn et al. (2012)
+            "10.4324/9780203120613",   # The Braddock Essays — Connors (1999)
+        ],
     },
 }
 
@@ -499,6 +567,205 @@ def fetch_upc(full=False):
     return total_books, total_ch
 
 
+# ── Generic member fetch with rhet/comp keyword filter ──────────────────────────
+
+def fetch_member_filtered(key, full=False):
+    """
+    Bulk-fetch all book-type works for a CrossRef member, keeping only those
+    whose title passes the rhet/comp keyword filter.
+
+    Used for publishers like OSU Press whose catalog spans many disciplines.
+    """
+    pub   = PUBLISHERS[key]
+    label = pub["label"]
+    mid   = pub["member_id"]
+
+    since = None if full else get_books_fetch_log(label)
+    log.info("%s — %s", label, "full fetch" if full else f"incremental since {since}")
+
+    total_books = 0
+    skipped     = 0
+
+    for cr_type in BOOK_TYPES_TO_FETCH:
+        cursor = "*"
+        page   = 0
+        while True:
+            items, next_cursor = _fetch_member_works(
+                mid, cr_type, rows=100, cursor=cursor, since_date=since
+            )
+            if not items:
+                break
+            page += 1
+            log.info("  %s %s page %d — %d items", key.upper(), cr_type, page, len(items))
+
+            for work in items:
+                doi  = work.get("DOI") or ""
+                t    = _title(work)
+                if not t:
+                    continue
+
+                # Skip non-rhet/comp titles
+                if not _is_rhet_comp(t):
+                    skipped += 1
+                    continue
+
+                book_type = _crossref_type_to_book_type(cr_type, work)
+                editors   = _people(work, "editor")
+                authors   = _people(work, "author")
+                year      = _year(work)
+                isbn      = _isbn(work)
+                tags      = auto_tag(t, None)
+
+                _, is_new = upsert_book(
+                    doi        = doi or None,
+                    isbn       = isbn,
+                    title      = t,
+                    record_type= "book",
+                    book_type  = book_type,
+                    editors    = editors,
+                    authors    = authors,
+                    publisher  = label,
+                    year       = year,
+                    pages      = None,
+                    abstract   = None,
+                    subjects   = tags,
+                    cited_by   = work.get("is-referenced-by-count", 0),
+                    parent_id  = None,
+                )
+                if is_new:
+                    total_books += 1
+
+            if not next_cursor or next_cursor == cursor:
+                break
+            cursor = next_cursor
+
+    update_books_fetch_log(label)
+    log.info("%s complete — %d new books kept, %d skipped (off-topic)", label, total_books, skipped)
+    return total_books, 0
+
+
+# ── Curated DOI list fetcher (Pitt, Routledge) ──────────────────────────────────
+
+def _fetch_chapters_by_isbn_generic(isbn, parent_id, publisher_label):
+    """
+    Fetch book-chapter records sharing an ISBN with the parent book.
+    Used for curated publishers (Pitt, Routledge) where we have specific ISBNs.
+    Returns count of new chapter records.
+    """
+    if not isbn:
+        return 0
+
+    url = f"{CROSSREF_BASE}/works"
+    params = {
+        "filter": f"type:book-chapter,isbn:{isbn}",
+        "rows":   100,
+        "mailto": MAILTO,
+    }
+    data = _get(url, params=params)
+    time.sleep(DELAY)
+    if not data:
+        return 0
+
+    items     = data.get("message", {}).get("items", [])
+    new_count = 0
+
+    for work in items:
+        doi  = work.get("DOI") or ""
+        t    = _title(work)
+        if not t:
+            continue
+        authors  = _people(work, "author")
+        year     = _year(work)
+        tags     = auto_tag(t, None)
+        refs     = len(work.get("reference", []))
+
+        _, is_new = upsert_book(
+            doi        = doi or None,
+            isbn       = _isbn(work),
+            title      = t,
+            record_type= "chapter",
+            book_type  = None,
+            editors    = None,
+            authors    = authors,
+            publisher  = publisher_label,
+            year       = year,
+            pages      = work.get("page"),
+            abstract   = None,
+            subjects   = tags,
+            cited_by   = work.get("is-referenced-by-count", 0),
+            parent_id  = parent_id,
+        )
+        if is_new:
+            new_count += 1
+
+    return new_count
+
+
+def fetch_curated(key, full=False):
+    """
+    Fetch a fixed list of book DOIs and their chapters.
+    Used for Pitt (JSTOR prefix) and Routledge where bulk member queries
+    return too many off-topic results.
+    """
+    pub   = PUBLISHERS[key]
+    label = pub["label"]
+    dois  = pub["dois"]
+
+    log.info("%s (curated) — %d book DOIs", label, len(dois))
+
+    total_books = 0
+    total_ch    = 0
+
+    for doi in dois:
+        work = _fetch_doi(doi)
+        if not work:
+            log.warning("  %s — not found in CrossRef", doi)
+            continue
+
+        t         = _title(work)
+        cr_type   = work.get("type", "monograph")
+        book_type = _crossref_type_to_book_type(cr_type, work)
+        editors   = _people(work, "editor")
+        authors   = _people(work, "author")
+        year      = _year(work)
+        isbn      = _isbn(work)
+        tags      = auto_tag(t, None)
+        cited_by  = work.get("is-referenced-by-count", 0)
+
+        book_id, is_new = upsert_book(
+            doi        = work.get("DOI") or doi,
+            isbn       = isbn,
+            title      = t,
+            record_type= "book",
+            book_type  = book_type,
+            editors    = editors,
+            authors    = authors,
+            publisher  = label,
+            year       = year,
+            pages      = None,
+            abstract   = None,
+            subjects   = tags,
+            cited_by   = cited_by,
+            parent_id  = None,
+        )
+
+        if is_new:
+            total_books += 1
+            log.info("  + %s [%s] cited:%d", t[:60], year or "?", cited_by)
+        else:
+            log.info("  = %s (already in DB)", t[:60])
+
+        # Fetch chapters via ISBN if this is an edited collection
+        if book_id and isbn and book_type == "edited-collection":
+            ch_new = _fetch_chapters_by_isbn_generic(isbn, book_id, label)
+            total_ch += ch_new
+            if ch_new:
+                log.info("    → %d new chapters", ch_new)
+
+    log.info("%s (curated) complete — %d new books, %d new chapters", label, total_books, total_ch)
+    return total_books, total_ch
+
+
 # ── Main ────────────────────────────────────────────────────────────────────────
 
 def main():
@@ -508,17 +775,26 @@ def main():
     full = "--full" in args
     targets = [a for a in args if not a.startswith("--")]
 
-    # Default: fetch both publishers
+    # Default: fetch all publishers
     if not targets:
-        targets = ["wac", "upc"]
+        targets = ["wac", "upc", "osu", "pitt", "routledge"]
 
     for target in targets:
         if target == "wac":
             fetch_wac(full=full)
         elif target in ("upc", "usc", "utah"):
             fetch_upc(full=full)
+        elif target == "osu":
+            fetch_member_filtered("osu", full=full)
+        elif target in ("pitt", "pittsburgh"):
+            fetch_curated("pitt", full=full)
+        elif target in ("routledge", "tf", "taylor"):
+            fetch_curated("routledge", full=full)
         else:
-            log.error("Unknown publisher target: %s  (use 'wac' or 'upc')", target)
+            log.error(
+                "Unknown publisher target: %s  "
+                "(use wac, upc, osu, pitt, routledge)", target
+            )
 
     # Print summary
     from db import get_book_publishers
