@@ -19,6 +19,8 @@ Routes:
   GET  /api/citations/ego          — JSON: 2-degree ego network around a specific article
   GET  /api/stats/citation-trends  — JSON: avg internal citations per article per year
   GET  /new                     — articles fetched in last 7 days
+  GET  /books                   — monograph and edited-collection index
+  GET  /book/<id>               — single book / edited collection detail with chapter list
 """
 
 import os
@@ -50,6 +52,9 @@ from db import (
     get_all_authors_with_institutions,
     get_top_institutions,
     get_institution_timeline,
+    # books
+    get_books, get_book_count, get_book_by_id, get_book_chapters,
+    get_book_publishers,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
 
@@ -746,6 +751,87 @@ def most_cited_page():
         min_year=min_year,
         max_year=max_year,
         coverage=coverage,
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=new_count,
+    )
+
+
+@app.route("/books")
+@cache_response(seconds=600)
+def books():
+    """Monograph and edited-collection index with publisher/type/year filters."""
+    print_journals, web_journals, all_journals = _get_sidebar()
+    new_count   = get_new_article_count(days=7)
+    publishers  = get_book_publishers()
+
+    # Filter params
+    pub       = request.args.get("publisher", "").strip()
+    book_type = request.args.get("type",      "").strip()
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+    q         = request.args.get("q",         "").strip()
+    page      = max(1, int(request.args.get("page", 1) or 1))
+    per_page  = 48
+
+    total = get_book_count(
+        publisher=pub or None,
+        book_type=book_type or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        q=q or None,
+    )
+    book_list = get_books(
+        publisher=pub or None,
+        book_type=book_type or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        q=q or None,
+        limit=per_page,
+        offset=(page - 1) * per_page,
+    )
+    total_pages = max(1, (total + per_page - 1) // per_page)
+
+    return render_template(
+        "books.html",
+        book_list=book_list,
+        publishers=publishers,
+        total=total,
+        page=page,
+        total_pages=total_pages,
+        sel_publisher=pub,
+        sel_type=book_type,
+        year_from=year_from,
+        year_to=year_to,
+        q=q,
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=new_count,
+    )
+
+
+@app.route("/book/<int:book_id>")
+@cache_response(seconds=600)
+def book_detail(book_id):
+    """Single book detail page: metadata + chapter list for edited collections."""
+    book = get_book_by_id(book_id)
+    if not book:
+        return "Book not found", 404
+
+    print_journals, web_journals, all_journals = _get_sidebar()
+    new_count = get_new_article_count(days=7)
+    chapters  = []
+    if book.get("book_type") == "edited-collection":
+        chapters = get_book_chapters(book_id)
+
+    return render_template(
+        "book.html",
+        book=book,
+        chapters=chapters,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,

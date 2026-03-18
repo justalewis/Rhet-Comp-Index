@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Books — Pinakes</title>
+  <link id="theme-css" rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style-scandi.css">
+  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var termBtn=document.createElement('button');
+      termBtn.className='theme-toggle-btn';
+      var scandiBtn=document.createElement('button');
+      scandiBtn.className='scandi-toggle-btn';
+      function updateBtns(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        termBtn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
+        scandiBtn.textContent=cur==='scandi'?'◇ Default':'◇ Scandi';
+      }
+      updateBtns();
+      termBtn.addEventListener('click',function(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        var next=cur==='terminal'?'normal':'terminal';
+        localStorage.setItem('rc-theme',next);
+        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
+        document.documentElement.classList.remove('scandi');
+        updateBtns();
+      });
+      scandiBtn.addEventListener('click',function(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        var next=cur==='scandi'?'normal':'scandi';
+        localStorage.setItem('rc-theme',next);
+        if(next==='scandi'){document.getElementById('theme-css').href='/static/style.css';document.documentElement.classList.add('scandi');}
+        else{document.documentElement.classList.remove('scandi');}
+        updateBtns();
+      });
+      document.body.appendChild(termBtn);
+      document.body.appendChild(scandiBtn);
+    });
+  </script>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1><a href="/" style="text-decoration:none;color:inherit;">Pinakes</a><br>
+        <span class="subtitle">Curating Disciplinary Knowledge</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+
+      <!-- ── Feature navigation ─────────────────────────── -->
+      <div class="feature-nav">
+        <div class="nav-item">
+          <a href="/new" class="feature-nav-link">
+            <span class="feature-nav-icon">★</span>
+            What's New
+            {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
+          </a>
+        </div>
+        <div class="nav-item" id="nav-explore">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">◎</span>
+            Explore
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
+            <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+            <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
+            <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
+          </div>
+        </div>
+        <div class="nav-item" id="nav-authors">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">◈</span>
+            Authors
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/authors" class="nav-dropdown-item">Author Index</a>
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+          </div>
+        </div>
+        <div class="nav-item" id="nav-most-cited">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
+            <span class="feature-nav-icon">⬡</span>
+            Most Cited
+            <span class="nav-chevron">▾</span>
+          </button>
+          <div class="nav-dropdown">
+            <a href="/most-cited" class="nav-dropdown-item">All</a>
+            <a href="/most-cited?view=journal" class="nav-dropdown-item">By Journal</a>
+            <a href="/most-cited?view=topic" class="nav-dropdown-item">By Topic</a>
+            <a href="/most-cited?view=decade" class="nav-dropdown-item">By Decade</a>
+          </div>
+        </div>
+        <div class="nav-item">
+          <a href="/books" class="feature-nav-link active">
+            <span class="feature-nav-icon">◻</span>
+            Books
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="/about" class="feature-nav-link">
+            <span class="feature-nav-icon">ℹ</span>
+            About
+          </a>
+        </div>
+      </div>
+      <script>
+      (function(){
+        function closeAll(except){document.querySelectorAll('.nav-item').forEach(function(el){if(el!==except)el.classList.remove('open');});}
+        document.querySelectorAll('.nav-item-trigger').forEach(function(btn){
+          btn.addEventListener('click',function(e){var item=btn.closest('.nav-item');var isOpen=item.classList.contains('open');closeAll();if(!isOpen)item.classList.add('open');e.stopPropagation();});
+        });
+        document.addEventListener('click',function(){closeAll();});
+        document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
+      })();
+      </script>
+
+      <!-- ── Journal list (collapsed on books page) ────── -->
+      <div class="journal-filter-wrapper">
+        <details class="journal-filter" id="journal-filter">
+          <summary class="journal-filter-summary">
+            <span class="filter-summary-text">All Journals</span>
+            <span class="dropdown-arrow">▾</span>
+          </summary>
+          <div class="journal-filter-list">
+            {% for j in all_journals %}
+            <a href="/?journal={{ j.name|urlencode }}" class="journal-check-label" style="display:block;text-decoration:none;">
+              <span class="jname">{{ j.name }}</span>
+              {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        </details>
+      </div>
+
+    </nav><!-- /journal-nav -->
+
+    <div class="sidebar-footer">
+      <p class="fetch-note">CrossRef · RSS feeds · Web scraping</p>
+    </div>
+
+  </aside><!-- /sidebar -->
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="content-header">
+      <h2 class="content-title">Books</h2>
+      <p class="page-intro">
+        Scholarly monographs and edited collections in rhetoric and composition, harvested from the
+        <a href="https://wac.colostate.edu/books/" target="_blank" rel="noopener">WAC Clearinghouse</a>
+        and <a href="https://upcolorado.com/utah-state-university-press" target="_blank" rel="noopener">Utah State University Press</a>.
+        Edited collections are indexed at both the book and chapter level — each chapter is a
+        separately searchable record with its own authors and DOI.
+      </p>
+    </div>
+
+    <!-- ── Filter bar ─────────────────────────────────────── -->
+    <form class="books-filter-bar" method="get" action="/books">
+      <div class="books-filter-row">
+
+        <div class="books-filter-group">
+          <label class="books-filter-label" for="bf-q">Search</label>
+          <input id="bf-q" class="books-filter-input" type="text" name="q"
+                 value="{{ q }}" placeholder="Title, author, editor…">
+        </div>
+
+        <div class="books-filter-group">
+          <label class="books-filter-label" for="bf-pub">Publisher</label>
+          <select id="bf-pub" class="books-filter-select" name="publisher">
+            <option value="">All publishers</option>
+            {% for p in publishers %}
+            <option value="{{ p.publisher }}" {% if sel_publisher == p.publisher %}selected{% endif %}>
+              {{ p.publisher }} ({{ p.book_count }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="books-filter-group">
+          <label class="books-filter-label" for="bf-type">Type</label>
+          <select id="bf-type" class="books-filter-select" name="type">
+            <option value="">All types</option>
+            <option value="monograph" {% if sel_type == 'monograph' %}selected{% endif %}>Monographs</option>
+            <option value="edited-collection" {% if sel_type == 'edited-collection' %}selected{% endif %}>Edited Collections</option>
+          </select>
+        </div>
+
+        <div class="books-filter-group books-filter-years">
+          <label class="books-filter-label">Years</label>
+          <div class="books-year-range">
+            <input class="books-filter-input books-year-input" type="number" name="year_from"
+                   value="{{ year_from }}" placeholder="From" min="1980" max="2030">
+            <span class="books-year-sep">–</span>
+            <input class="books-filter-input books-year-input" type="number" name="year_to"
+                   value="{{ year_to }}" placeholder="To" min="1980" max="2030">
+          </div>
+        </div>
+
+        <div class="books-filter-actions">
+          <button type="submit" class="books-filter-btn">Filter</button>
+          {% if q or sel_publisher or sel_type or year_from or year_to %}
+          <a href="/books" class="books-filter-clear">Clear</a>
+          {% endif %}
+        </div>
+
+      </div>
+    </form>
+
+    <!-- ── Results count ─────────────────────────────────── -->
+    <div class="books-results-meta">
+      {% if total == 0 %}
+        No books matched your filters.
+      {% elif total == 1 %}
+        1 book
+      {% else %}
+        {{ total }} books
+      {% endif %}
+      {% if total_pages > 1 %} &nbsp;·&nbsp; Page {{ page }} of {{ total_pages }}{% endif %}
+    </div>
+
+    <!-- ── Book grid ─────────────────────────────────────── -->
+    {% if book_list %}
+    <div class="books-grid">
+      {% for b in book_list %}
+      <a href="/book/{{ b.id }}" class="book-card">
+        <div class="book-card-meta">
+          <span class="book-card-type {% if b.book_type == 'edited-collection' %}book-card-type--edited{% endif %}">
+            {{ 'Edited Collection' if b.book_type == 'edited-collection' else 'Monograph' }}
+          </span>
+          {% if b.year %}
+          <span class="book-card-year">{{ b.year }}</span>
+          {% endif %}
+        </div>
+        <div class="book-card-title">{{ b.title }}</div>
+        <div class="book-card-people">
+          {% if b.editors %}
+            <span class="book-card-role">Ed.</span> {{ b.editors|truncate(60, true, '…') }}
+          {% elif b.authors %}
+            {{ b.authors|truncate(60, true, '…') }}
+          {% endif %}
+        </div>
+        {% if b.publisher %}
+        <div class="book-card-publisher">{{ b.publisher }}</div>
+        {% endif %}
+        {% if b.subjects %}
+        <div class="book-card-subjects">{{ b.subjects|truncate(70, true, '…') }}</div>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="books-empty">
+      <p>No books in the index yet.</p>
+      {% if not (q or sel_publisher or sel_type or year_from or year_to) %}
+      <p>Run <code>python book_fetcher.py</code> to harvest books from CrossRef.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── Pagination ─────────────────────────────────────── -->
+    {% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Page navigation">
+      {% set base_args = [] %}
+      {% if q %}{% set base_args = base_args + ['q=' + q|urlencode] %}{% endif %}
+      {% if sel_publisher %}{% set base_args = base_args + ['publisher=' + sel_publisher|urlencode] %}{% endif %}
+      {% if sel_type %}{% set base_args = base_args + ['type=' + sel_type|urlencode] %}{% endif %}
+      {% if year_from %}{% set base_args = base_args + ['year_from=' + year_from] %}{% endif %}
+      {% if year_to %}{% set base_args = base_args + ['year_to=' + year_to] %}{% endif %}
+      {% set qs = '&'.join(base_args) %}
+
+      {% if page > 1 %}
+      <a class="page-btn" href="/books?{{ qs }}{% if qs %}&{% endif %}page={{ page - 1 }}">← Prev</a>
+      {% endif %}
+
+      {% for p in range([1, page - 2]|max, [total_pages + 1, page + 3]|min) %}
+      <a class="page-btn {% if p == page %}page-btn--active{% endif %}"
+         href="/books?{{ qs }}{% if qs %}&{% endif %}page={{ p }}">{{ p }}</a>
+      {% endfor %}
+
+      {% if page < total_pages %}
+      <a class="page-btn" href="/books?{{ qs }}{% if qs %}&{% endif %}page={{ page + 1 }}">Next →</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+  </main><!-- /content -->
+
+</div><!-- /layout -->
+</body>
+</html>
