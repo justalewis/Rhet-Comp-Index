@@ -194,7 +194,7 @@
 
       <div class="book-detail-links">
         {% if book.doi %}
-        <a class="book-detail-link" href="https://doi.org/{{ book.doi }}" target="_blank" rel="noopener">
+        <a class="book-detail-link" href="{{ 'https://doi.org/' + book.doi if not book.doi.startswith('http') else book.doi }}" target="_blank" rel="noopener">
           Open Access Full Text ↗
         </a>
         {% endif %}
@@ -306,7 +306,7 @@
         <em>{{ book.title }}</em>.
         {% if book.publisher %}{{ book.publisher }},{% endif %}
         {% if book.year %}{{ book.year }}.{% endif %}
-        {% if book.doi %}DOI: <a href="https://doi.org/{{ book.doi }}">{{ book.doi }}</a>.{% endif %}
+        {% if book.doi and not book.doi.startswith('http') %}DOI: <a href="https://doi.org/{{ book.doi }}">{{ book.doi }}</a>.{% endif %}
       </p>
       {% endif %}
       {% else %}
@@ -316,14 +316,15 @@
         <em>{{ book.title }}</em>.
         {% if book.publisher %}{{ book.publisher }},{% endif %}
         {% if book.year %}{{ book.year }}.{% endif %}
-        {% if book.doi %}DOI: <a href="https://doi.org/{{ book.doi }}">{{ book.doi }}</a>.{% endif %}
+        {% if book.doi and not book.doi.startswith('http') %}DOI: <a href="https://doi.org/{{ book.doi }}">{{ book.doi }}</a>.{% endif %}
       </p>
       {% endif %}
       {% endif %}
       <p class="book-citation-note">
-        Metadata sourced from CrossRef.
+        {% if book.source == 'digitalcommons' %}Metadata sourced from Digital Commons / USU Press.
+        {% else %}Metadata sourced from CrossRef.{% endif %}
         {% if book.doi %}
-        <a href="https://doi.org/{{ book.doi }}" target="_blank" rel="noopener">Open record ↗</a>
+        <a href="{{ 'https://doi.org/' + book.doi if not book.doi.startswith('http') else book.doi }}" target="_blank" rel="noopener">Open record ↗</a>
         {% endif %}
       </p>
     </div>
