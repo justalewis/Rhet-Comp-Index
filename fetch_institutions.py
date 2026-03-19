@@ -37,11 +37,16 @@ log = logging.getLogger(__name__)
 
 MAILTO   = "justalewis1@gmail.com"
 BASE_URL = "https://api.openalex.org"
-DELAY    = 0.12   # seconds between requests (polite pool)
+DELAY    = 0.30   # seconds between requests (polite pool — ~3 req/s)
 
 
-def _get(url, params=None):
-    """HTTP GET with polite delay and error handling. Returns JSON dict or None."""
+class RateLimitError(Exception):
+    """Raised when OpenAlex 429s persist after backoff. Article will be retried next run."""
+    pass
+
+
+def _get(url, params=None, _retry=0):
+    """HTTP GET with polite delay, 429 backoff, and error handling. Returns JSON or None."""
     time.sleep(DELAY)
     try:
         resp = requests.get(
@@ -52,8 +57,17 @@ def _get(url, params=None):
             return resp.json()
         if resp.status_code == 404:
             return None
+        if resp.status_code == 429:
+            if _retry >= 3:
+                raise RateLimitError(f"Still rate-limited after 3 retries: {url}")
+            wait = int(resp.headers.get("Retry-After", 60))
+            log.warning("Rate limited (429). Waiting %ds before retry %d/3…", wait, _retry + 1)
+            time.sleep(wait)
+            return _get(url, params=params, _retry=_retry + 1)
         log.warning("OpenAlex returned %d for %s", resp.status_code, url)
         return None
+    except RateLimitError:
+        raise
     except requests.RequestException as e:
         log.error("Request failed for %s: %s", url, e)
         return None
@@ -183,6 +197,15 @@ def main():
                 found += 1
             else:
                 not_found += 1
+
+        except RateLimitError as e:
+            # Don't log — leave this article out of openalex_fetch_log so the
+            # next run will retry it. Sleep a bit before continuing.
+            log.warning("Rate limit exhausted for article %d — will retry next run.", article_id)
+            errors += 1
+            time.sleep(120)  # 2-minute cool-down before resuming
+            done += 1
+            continue
 
         except Exception as e:
             log.error("Error on article %d (%s): %s",
