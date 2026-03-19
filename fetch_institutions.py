@@ -60,7 +60,11 @@ def _get(url, params=None, _retry=0):
         if resp.status_code == 429:
             if _retry >= 3:
                 raise RateLimitError(f"Still rate-limited after 3 retries: {url}")
-            wait = int(resp.headers.get("Retry-After", 60))
+            raw_wait = resp.headers.get("Retry-After", "60")
+            try:
+                wait = min(int(raw_wait), 120)  # cap at 2 minutes regardless of header
+            except ValueError:
+                wait = 60
             log.warning("Rate limited (429). Waiting %ds before retry %d/3…", wait, _retry + 1)
             time.sleep(wait)
             return _get(url, params=params, _retry=_retry + 1)
