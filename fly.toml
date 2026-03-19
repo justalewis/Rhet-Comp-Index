@@ -30,6 +30,13 @@ primary_region = 'iad'
     hard_limit = 25
     soft_limit = 20
 
+  [[http_service.checks]]
+    interval = "10s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/"
+
 [[vm]]
   memory = '1gb'
   cpus = 1
