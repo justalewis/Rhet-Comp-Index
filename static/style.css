@@ -950,6 +950,7 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 /* ── Explore page ──────────────────────────────────────────────── */
 .explore-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   margin-bottom: 1.5rem;
   border-bottom: 2px solid var(--border);
