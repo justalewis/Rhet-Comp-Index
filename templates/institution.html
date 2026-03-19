@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ author_name }} — Rhetoric &amp; Composition</title>
+  <title>{{ institution.display_name }} — Rhetoric &amp; Composition</title>
   <link id="theme-css" rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/style-scandi.css">
   <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
@@ -78,8 +78,8 @@
             <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
         </div>
-        <div class="nav-item active" id="nav-authors">
-          <button class="nav-item-trigger active-feature-link" aria-haspopup="true" aria-expanded="false">
+        <div class="nav-item" id="nav-authors">
+          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
             <span class="feature-nav-icon">◈</span>
             Authors
             <span class="nav-chevron">▾</span>
@@ -162,7 +162,7 @@
     </nav>
 
     <div class="sidebar-footer">
-      <a href="/authors" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; All Authors</a>
+      <a href="/explore#institutions" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; All Institutions</a>
     </div>
 
   </aside>
@@ -171,33 +171,39 @@
   <main class="content">
 
     <div class="content-header">
-      <h2>{{ author_name }}</h2>
-      <span class="result-count">{{ articles | length }} article{% if articles | length != 1 %}s{% endif %}</span>
+      <h2>{{ institution.display_name }}</h2>
+      <span class="result-count">{{ article_count }} article{% if article_count != 1 %}s{% endif %}</span>
     </div>
 
-    {% if author_record %}
+    <!-- Institution metadata -->
     <div class="author-profile-meta">
-      {% if author_record.institution_name %}
-      <span class="author-profile-institution">{{ author_record.institution_name }}</span>
+      {% if institution.type %}
+      <span class="author-profile-institution">{{ institution.type | capitalize }}</span>
       {% endif %}
-      {% if author_record.orcid %}
-      <a href="https://orcid.org/{{ author_record.orcid }}" class="author-orcid-link" target="_blank" rel="noopener">ORCID: {{ author_record.orcid }}</a>
+      {% if institution.country_code %}
+      <span class="author-profile-institution">{{ institution.country_code }}</span>
       {% endif %}
+      {% if institution.ror_id %}
+      <a href="{{ institution.ror_id }}" class="author-orcid-link" target="_blank" rel="noopener">ROR ↗</a>
+      {% endif %}
+    </div>
+
+    <!-- Top authors at this institution -->
+    {% if top_authors %}
+    <div style="margin-bottom:1.5rem;">
+      <div class="nav-section-head" style="margin-bottom:0.5rem;">Top authors here</div>
+      <ul style="list-style:none;padding:0;margin:0;">
+        {% for author_name, count in top_authors %}
+        <li style="display:flex;justify-content:space-between;align-items:baseline;padding:0.2rem 0;border-bottom:1px solid var(--border-color,#e8e4de);">
+          <a href="/author/{{ author_name | urlencode }}" class="author-link">{{ author_name }}</a>
+          <span class="jcount" style="flex-shrink:0;margin-left:0.5rem;">{{ count }}</span>
+        </li>
+        {% endfor %}
+      </ul>
     </div>
     {% endif %}
 
-    {% if institution_summary %}
-    <div class="author-affiliation-summary">
-      <span class="author-affiliation-label">Affiliations:</span>
-      {% for inst_name, inst_count in institution_summary[:3] %}
-      <span class="author-affiliation-item">{{ inst_name }} ({{ inst_count }})</span>{% if not loop.last %}, {% endif %}
-      {% endfor %}
-      {% if institution_summary | length > 3 %}
-      <span class="author-affiliation-more"> and {{ institution_summary | length - 3 }} more</span>
-      {% endif %}
-    </div>
-    {% endif %}
-
+    <!-- Article list -->
     {% if articles %}
     <ol class="article-list">
       {% for a in articles %}
@@ -249,12 +255,6 @@
         </div>
         {% endif %}
 
-        {% if affiliations_by_article and a.id in affiliations_by_article %}
-        <div class="article-affiliation">
-          📍 {{ affiliations_by_article[a.id] | join(' · ') }}
-        </div>
-        {% endif %}
-
         {% if a.doi %}
         <div class="article-doi">
           <a href="{{ a.url }}" target="_blank" rel="noopener">doi:{{ a.doi }}</a>
@@ -266,7 +266,7 @@
     </ol>
     {% else %}
     <div class="empty-state">
-      <p>No articles found for this author.</p>
+      <p>No articles found for this institution. Run <code>python fetch_institutions.py</code> to populate institution data.</p>
     </div>
     {% endif %}
 

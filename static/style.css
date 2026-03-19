@@ -2426,6 +2426,32 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   text-decoration: underline;
 }
 
+/* ── Author affiliation summary ──────────────────────────────────────────── */
+.author-affiliation-summary {
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b6760);
+  margin: 0.4rem 0 1rem;
+}
+.author-affiliation-label {
+  font-weight: 600;
+  margin-right: 0.3rem;
+}
+.author-affiliation-item {
+  /* inline — rendered as comma-separated list */
+}
+.author-affiliation-more {
+  font-style: italic;
+}
+
+/* ── Per-article affiliation line ────────────────────────────────────────── */
+.article-affiliation {
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b6760);
+  margin-top: 0.25rem;
+}
+
 /* ── OA status text (article detail dl) ────────────────────────── */
 .oa-status-text {
   font-family: var(--font-ui);

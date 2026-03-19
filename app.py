@@ -21,6 +21,7 @@ Routes:
   GET  /new                     — articles fetched in last 7 days
   GET  /books                   — monograph and edited-collection index
   GET  /book/<id>               — single book / edited collection detail with chapter list
+  GET  /institution/<id>        — institution detail page
 """
 
 import os
@@ -52,6 +53,14 @@ from db import (
     get_all_authors_with_institutions,
     get_top_institutions,
     get_institution_timeline,
+    get_top_institutions_v2,
+    get_institution_timeline_v2,
+    get_institution_by_id,
+    get_institution_article_count,
+    get_institution_articles,
+    get_institution_top_authors,
+    get_author_affiliations_per_article,
+    get_author_institution_summary,
     # books
     get_books, get_book_count, get_book_by_id, get_book_chapters,
     get_book_publishers,
@@ -476,12 +485,16 @@ def author_detail(name):
     new_count = get_new_article_count(days=7)
     articles = get_author_articles(name)
     author_record = get_author_by_name(name)
+    affiliations_by_article = get_author_affiliations_per_article(name)
+    institution_summary = get_author_institution_summary(name)
 
     return render_template(
         "author.html",
         author_name=name,
         articles=articles,
         author_record=author_record,
+        affiliations_by_article=affiliations_by_article,
+        institution_summary=institution_summary,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
@@ -675,9 +688,18 @@ def api_most_cited():
 @cache_response(seconds=3600)
 def api_institutions():
     """JSON: top institutions by article count + top-10 timeline."""
-    top = get_top_institutions(limit=25)
-    institutions = [{"name": name, "count": count} for name, count in top]
-    timeline = get_institution_timeline(top_n=10)
+    top = get_top_institutions_v2(limit=25)
+    institutions = [
+        {
+            "id":      r.get("id"),
+            "name":    r.get("display_name") or r.get("name", ""),
+            "count":   r.get("article_count") or r.get("count", 0),
+            "country": r.get("country_code"),
+            "type":    r.get("type"),
+        }
+        for r in top
+    ]
+    timeline = get_institution_timeline_v2(top_n=10)
     return jsonify({"institutions": institutions, "top10_timeline": timeline})
 
 
@@ -832,6 +854,34 @@ def book_detail(book_id):
         "book.html",
         book=book,
         chapters=chapters,
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=new_count,
+    )
+
+
+@app.route("/institution/<int:institution_id>")
+@cache_response(seconds=3600)
+def institution_detail(institution_id):
+    """Institution detail page: metadata, article list, top authors."""
+    institution = get_institution_by_id(institution_id)
+    if not institution:
+        return "Institution not found", 404
+
+    print_journals, web_journals, all_journals = _get_sidebar()
+    new_count    = get_new_article_count(days=7)
+    article_count = get_institution_article_count(institution_id)
+    articles     = get_institution_articles(institution_id, limit=200)
+    top_authors  = get_institution_top_authors(institution_id, limit=10)
+
+    return render_template(
+        "institution.html",
+        institution=institution,
+        articles=articles,
+        article_count=article_count,
+        top_authors=top_authors,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,

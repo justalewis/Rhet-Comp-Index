@@ -1325,7 +1325,7 @@ async function loadInstitutions() {
     barContainer.innerHTML =
       '<p class="explore-hint">No institution data yet — run <code>python enrich_openalex.py</code> to populate.</p>';
   } else {
-    barContainer.innerHTML = '<canvas id="inst-bar-chart"></canvas>';
+    barContainer.innerHTML = '<canvas id="inst-bar-chart" style="cursor:pointer"></canvas>';
     const barCtx = document.getElementById('inst-bar-chart').getContext('2d');
     if (instBarChart) instBarChart.destroy();
 
@@ -1354,6 +1354,15 @@ async function loadInstitutions() {
               label: (ctx) => ` ${ctx.parsed.x} article${ctx.parsed.x !== 1 ? 's' : ''}`,
             },
           },
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const idx = elements[0].index;
+            const inst = institutions[idx];
+            if (inst && inst.id) {
+              window.location = '/institution/' + inst.id;
+            }
+          }
         },
         scales: {
           x: {
