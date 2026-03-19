@@ -32,5 +32,10 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-# Use gunicorn for production; 1 worker keeps SQLite writes safe
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "--capture-output", "--log-level", "debug", "--preload", "app:app"]
+# Use gunicorn for production; 1 worker keeps SQLite writes safe.
+# --preload is intentionally omitted: it imports app.py (and runs init_db) in the
+# master process before forking, which conflicts with any background SQLite writer
+# (e.g. fetch_institutions.py) that may be holding a write lock at deploy time,
+# causing the single worker to deadlock on startup. Without --preload each worker
+# imports the app independently after forking, which is safe.
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "--capture-output", "--log-level", "info", "app:app"]
