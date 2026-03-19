@@ -161,6 +161,12 @@
 
     </nav>
 
+    <div class="sidebar-comppile">
+      Looking for books, dissertations, or edited collections?<br>
+      <a href="https://wacclearinghouse.org/comppile/search/" target="_blank" rel="noopener noreferrer">Search CompPile &#8599;</a>
+      — the field's comprehensive bibliography since 1939 (117,000+ records).
+    </div>
+
     <div class="sidebar-footer">
       <a href="/authors" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; All Authors</a>
     </div>
@@ -173,6 +179,15 @@
     <div class="content-header">
       <h2>{{ author_name }}</h2>
       <span class="result-count">{{ articles | length }} article{% if articles | length != 1 %}s{% endif %}</span>
+    </div>
+
+    <div class="author-comppile-link">
+      <a href="https://wacclearinghouse.org/comppile/search/"
+         target="_blank" rel="noopener noreferrer"
+         class="comppile-ref-link"
+         title="Search CompPile for articles by {{ author_name.split()[-1] }}. CompPile is the field&#39;s comprehensive bibliography with 117,000+ records including books, dissertations, and edited collections.">
+        📚 Search for {{ author_name.split()[-1] }} in CompPile →
+      </a>
     </div>
 
     {% if author_record %}

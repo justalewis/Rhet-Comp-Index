@@ -161,6 +161,12 @@
 
     </nav>
 
+    <div class="sidebar-comppile">
+      Looking for books, dissertations, or edited collections?<br>
+      <a href="https://wacclearinghouse.org/comppile/search/" target="_blank" rel="noopener noreferrer">Search CompPile &#8599;</a>
+      — the field's comprehensive bibliography since 1939 (117,000+ records).
+    </div>
+
     <div class="sidebar-footer">
       <a href="/" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to index</a>
     </div>
@@ -236,6 +242,16 @@
         <dt>DOI</dt>
         <dd><a href="{{ article.url }}" target="_blank" rel="noopener">{{ article.doi }}</a></dd>
         {% endif %}
+
+        <dt>CompPile</dt>
+        <dd>
+          <a href="https://wacclearinghouse.org/comppile/search/"
+             target="_blank" rel="noopener noreferrer"
+             class="comppile-ref-link"
+             title="Search for this article in CompPile — the field&#39;s comprehensive bibliography of rhetoric and composition scholarship, with 117,000+ records including books, dissertations, and edited collections. Search by title: {{ article.title | truncate(80, true, '…') }}">
+            Search in CompPile &#8599;
+          </a>
+        </dd>
 
         {% if article.oa_url or article.oa_status %}
         <dt>Open Access</dt>
