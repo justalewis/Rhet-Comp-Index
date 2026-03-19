@@ -74,6 +74,22 @@ Compress(app)
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()
 
+# Pre-warm the SQLite page cache so the first HTTP request isn't slow.
+# On Fly.io, the persistent volume is cold on startup; the first query that
+# touches the 89 MB DB can take 10-15 s while the OS loads pages from disk.
+# Running the most expensive main-page queries here (at import/preload time)
+# fills the OS page cache before any user traffic arrives.
+try:
+    _t0 = time.time()
+    get_articles(limit=50, offset=0)
+    get_total_count()
+    get_article_counts()
+    get_all_tags()
+    get_new_article_count()
+    log.info("DB page cache warmed in %.2f s", time.time() - _t0)
+except Exception as _e:
+    log.warning("DB warmup failed (non-fatal): %s", _e)
+
 
 # ── HTTP cache decorator ────────────────────────────────────────────────────────
 
