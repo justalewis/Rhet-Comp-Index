@@ -195,7 +195,11 @@
       {% endif %}
 
       <div class="book-detail-links">
-        {% if book.doi %}
+        {% if book.publisher == 'Ohio State University Press' and book.isbn %}
+        <a class="book-detail-link" href="https://ohiostatepress.org/books/titles/{{ book.isbn }}.html" target="_blank" rel="noopener">
+          View at Ohio State University Press ↗
+        </a>
+        {% elif book.doi %}
         <a class="book-detail-link" href="{{ 'https://doi.org/' + book.doi if not book.doi.startswith('http') else book.doi }}" target="_blank" rel="noopener">
           Open Access Full Text ↗
         </a>
@@ -325,7 +329,9 @@
       <p class="book-citation-note">
         {% if book.source == 'digitalcommons' %}Metadata sourced from Digital Commons / USU Press.
         {% else %}Metadata sourced from CrossRef.{% endif %}
-        {% if book.doi %}
+        {% if book.publisher == 'Ohio State University Press' and book.isbn %}
+        <a href="https://ohiostatepress.org/books/titles/{{ book.isbn }}.html" target="_blank" rel="noopener">Ohio State University Press ↗</a>
+        {% elif book.doi %}
         <a href="{{ 'https://doi.org/' + book.doi if not book.doi.startswith('http') else book.doi }}" target="_blank" rel="noopener">Open record ↗</a>
         {% endif %}
       </p>
