@@ -26,7 +26,8 @@ CROSSREF_JOURNALS = [
     {"name": "Community Literacy Journal",                     "issn": "1555-9734"},  # print ISSN — 465 DOIs
     {"name": "Poroi",                                          "issn": "2151-2957"},  # online ISSN — 259 DOIs
     {"name": "Computers and Composition",                      "issn": "8755-4615"},
-    {"name": "Communication Design Quarterly",                 "issn": "2166-1642"},  # ACM SIGDOC — 407 DOIs, 2012–present; predecessor "CDQ Review" (2166-1200) covers 2001–2019
+    {"name": "Communication Design Quarterly",                 "issn": "2166-1642"},  # ACM SIGDOC — 407 DOIs, 2012–present
+    {"name": "Communication Design Quarterly Review",          "issn": "2166-1200"},  # ACM SIGDOC predecessor — 131 DOIs, 2001–2019
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
 ]
