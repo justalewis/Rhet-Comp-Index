@@ -215,16 +215,9 @@
         <span class="jname">All journals</span>
       </a>
 
-      <div class="nav-section-head">Print Journals</div>
-      {% for j in print_journals %}
-      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
-        <span class="jname">{{ j.name }}</span>
-        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
-      </a>
-      {% endfor %}
-
-      <div class="nav-section-head">Web Journals</div>
-      {% for j in web_journals %}
+      {% for group in journal_groups %}
+      <div class="nav-section-head">{{ group.label }}</div>
+      {% for j in group.journals %}
       <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
         <span class="jname">{{ j.name }}</span>
         <span class="jmeta">
@@ -233,6 +226,7 @@
           {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
         </span>
       </a>
+      {% endfor %}
       {% endfor %}
 
       {% if unavailable %}
