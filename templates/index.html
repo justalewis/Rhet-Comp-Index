@@ -151,8 +151,10 @@
                      onchange="toggleAllJournals(this)">
               <span class="jname">All Journals</span>
             </label>
+            {% for group in journal_groups %}
             <div class="journal-filter-divider"></div>
-            {% for j in all_journals %}
+            <div class="journal-group-label">{{ group.label }}</div>
+            {% for j in group.journals %}
             <label class="journal-check-label">
               <input type="checkbox" class="journal-check journal-check-item"
                      value="{{ j.name }}"
@@ -161,6 +163,7 @@
               <span class="jname">{{ j.name }}</span>
               {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
             </label>
+            {% endfor %}
             {% endfor %}
             {% if unavailable %}
             <div class="journal-filter-divider"></div>

@@ -182,9 +182,9 @@
       Rhetoric and composition scholarship publishes continuously across more than a dozen journals simultaneously. This page tracks articles ingested into the index within the last 7 days, grouped by journal — a live pulse of the field's current output.
     </p>
 
-    {% if journal_groups %}
+    {% if new_by_journal %}
 
-      {% for journal_name, articles in journal_groups.items() %}
+      {% for journal_name, articles in new_by_journal.items() %}
       <section class="journal-new-section period-section">
         <h3 class="period-heading">
           {{ journal_name }}

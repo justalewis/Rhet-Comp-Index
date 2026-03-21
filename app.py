@@ -65,7 +65,7 @@ from db import (
     get_books, get_book_count, get_book_by_id, get_book_chapters,
     get_book_publishers,
 )
-from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS
+from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS, JOURNAL_GROUPS
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -198,7 +198,22 @@ def _build_sidebar():
         print_journals + web_journals,
         key=lambda x: x["name"].lower()
     )
-    return print_journals, web_journals, all_journals
+
+    # Build grouped structure for sidebar navigation
+    journal_map = {j["name"]: j for j in all_journals}
+    assigned = set()
+    journal_groups = []
+    for group_label, names in JOURNAL_GROUPS:
+        members = [journal_map[n] for n in names if n in journal_map]
+        if members:
+            journal_groups.append({"label": group_label, "journals": members})
+            assigned.update(n for n in names if n in journal_map)
+    # Catch any journals not assigned to a group
+    ungrouped = [j for j in all_journals if j["name"] not in assigned]
+    if ungrouped:
+        journal_groups.append({"label": "Other", "journals": ungrouped})
+
+    return print_journals, web_journals, all_journals, journal_groups
 
 
 # ── Export helpers ─────────────────────────────────────────────────────────────
@@ -341,7 +356,7 @@ def index():
     if current_group:
         grouped.append((current_period, current_group))
 
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     all_tags = get_all_tags(journal=journals[0] if len(journals)==1 else None, source=source or None)
     min_year, max_year = get_year_range()
     new_count = get_new_article_count(days=7)
@@ -352,6 +367,7 @@ def index():
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         active_journals=journals,
         selected_source=source,
@@ -464,7 +480,7 @@ def export():
 @cache_response(seconds=3600)
 def authors_list():
     """Alphabetical list of all authors with article counts and institution data."""
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     all_authors_data = get_all_authors_with_institutions(limit=500)
 
@@ -489,6 +505,7 @@ def authors_list():
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -497,7 +514,7 @@ def authors_list():
 @app.route("/author/<path:name>")
 def author_detail(name):
     """All articles by a specific author."""
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_author_articles(name)
     author_record = get_author_by_name(name)
@@ -514,6 +531,7 @@ def author_detail(name):
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -533,7 +551,7 @@ def article_detail(article_id):
     outside_refs        = [r for r in all_refs if not r["in_index"]]
     outside_count       = len(outside_refs)
     author_affiliations = get_article_affiliations(article_id)
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     coverage_stats = get_coverage_stats()
     journal_coverage = next(
@@ -552,6 +570,7 @@ def article_detail(article_id):
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
         journal_coverage=journal_coverage,
@@ -561,7 +580,7 @@ def article_detail(article_id):
 @app.route("/explore")
 def explore():
     """Data exploration page: timeline, tag co-occurrence, author network, citations."""
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     all_tags = get_all_tags()
     min_year, max_year = get_year_range()
@@ -572,6 +591,7 @@ def explore():
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
         all_tags=all_tags,
@@ -592,7 +612,7 @@ def citation_network_page():
     if article is None:
         return "Article not found", 404
 
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
 
     return render_template(
@@ -601,6 +621,7 @@ def citation_network_page():
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -722,25 +743,26 @@ def api_institutions():
 @app.route("/new")
 def new_articles():
     """Articles fetched within the last 7 days."""
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_new_articles(days=7)
 
-    # Group by journal
-    journal_groups: dict[str, list] = {}
+    # Group by journal for display on this page
+    new_by_journal: dict[str, list] = {}
     for a in articles:
         j = a.get("journal") or "Unknown"
-        if j not in journal_groups:
-            journal_groups[j] = []
-        journal_groups[j].append(a)
+        if j not in new_by_journal:
+            new_by_journal[j] = []
+        new_by_journal[j].append(a)
 
     return render_template(
         "new.html",
-        journal_groups=journal_groups,
+        new_by_journal=new_by_journal,
         total=len(articles),
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -756,7 +778,7 @@ def about():
 @cache_response(seconds=1800)
 def most_cited_page():
     """Most-cited articles page with filter controls and grouped views."""
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     all_tags  = get_all_tags()
     min_year, max_year = get_year_range()
@@ -792,6 +814,7 @@ def most_cited_page():
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -801,7 +824,7 @@ def most_cited_page():
 @cache_response(seconds=600)
 def books():
     """Monograph and edited-collection index with publisher/type/year filters."""
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count   = get_new_article_count(days=7)
     publishers  = get_book_publishers()
 
@@ -847,6 +870,7 @@ def books():
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -860,7 +884,7 @@ def book_detail(book_id):
     if not book:
         return "Book not found", 404
 
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     chapters  = []
     if book.get("book_type") == "edited-collection":
@@ -873,6 +897,7 @@ def book_detail(book_id):
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
@@ -886,7 +911,7 @@ def institution_detail(institution_id):
     if not institution:
         return "Institution not found", 404
 
-    print_journals, web_journals, all_journals = _get_sidebar()
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count    = get_new_article_count(days=7)
     article_count = get_institution_article_count(institution_id)
     articles     = get_institution_articles(institution_id, limit=200)
@@ -901,6 +926,7 @@ def institution_detail(institution_id):
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
+        journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )

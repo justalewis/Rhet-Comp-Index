@@ -180,6 +180,70 @@ UNAVAILABLE_JOURNALS = [
     },
 ]
 
+# ── Journal groups (for sidebar navigation) ──────────────────────────────────
+# Ordered list of (group_label, [journal_names]).
+# Any journal not listed here will appear ungrouped at the end.
+
+JOURNAL_GROUPS = [
+    ("Composition & Writing Studies", [
+        "College Composition and Communication",
+        "College English",
+        "Composition Studies",
+        "Composition Forum",
+        "Research in the Teaching of English",
+        "Pedagogy",
+        "Teaching English in the Two-Year College",
+        "Assessing Writing",
+        "Journal of Writing Analytics",
+        "Prompt: A Journal of Academic Writing Assignments",
+        "Writing on the Edge",
+        "Literacy in Composition Studies",
+        "Basic Writing e-Journal",
+    ]),
+    ("Rhetoric", [
+        "Rhetoric Society Quarterly",
+        "Rhetoric Review",
+        "Philosophy & Rhetoric",
+        "Rhetoric & Public Affairs",
+        "Poroi",
+        "Advances in the History of Rhetoric",
+        "Peitho",
+        "Present Tense: A Journal of Rhetoric in Society",
+        "KB Journal: The Journal of the Kenneth Burke Society",
+        "Enculturation",
+    ]),
+    ("Technical Communication", [
+        "Technical Communication Quarterly",
+        "Journal of Business and Technical Communication",
+        "Journal of Technical Writing and Communication",
+        "Communication Design Quarterly",
+        "Communication Design Quarterly Review",
+        "Business and Professional Communication Quarterly",
+        "Double Helix",
+        "Rhetoric of Health and Medicine",
+    ]),
+    ("Writing Centers", [
+        "Writing Center Journal",
+        "Praxis: A Writing Center Journal",
+        "Writing Lab Newsletter",
+        "The Peer Review",
+    ]),
+    ("WAC / Writing Across the Curriculum", [
+        "Across the Disciplines",
+        "The WAC Journal",
+        "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
+        "Written Communication",
+    ]),
+    ("Digital & Multimodal", [
+        "Computers and Composition",
+        "Kairos: A Journal of Rhetoric, Technology, and Pedagogy",
+        "Journal of Multimodal Rhetorics",
+    ]),
+    ("Community Literacy", [
+        "Community Literacy Journal",
+    ]),
+]
+
 # ── Convenience lookups ───────────────────────────────────────────────────────
 
 ISSN_TO_NAME = {j["issn"]: j["name"] for j in CROSSREF_JOURNALS}
