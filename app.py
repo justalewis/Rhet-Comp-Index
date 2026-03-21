@@ -204,7 +204,7 @@ def _build_sidebar():
     assigned = set()
     journal_groups = []
     for group_label, names in JOURNAL_GROUPS:
-        members = [journal_map[n] for n in names if n in journal_map]
+        members = sorted([journal_map[n] for n in names if n in journal_map], key=lambda j: j["name"].lower())
         if members:
             journal_groups.append({"label": group_label, "journals": members})
             assigned.update(n for n in names if n in journal_map)
