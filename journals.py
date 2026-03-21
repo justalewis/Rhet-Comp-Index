@@ -27,9 +27,23 @@ CROSSREF_JOURNALS = [
     {"name": "Poroi",                                          "issn": "2151-2957"},  # online ISSN — 259 DOIs
     {"name": "Computers and Composition",                      "issn": "8755-4615"},
     {"name": "Communication Design Quarterly",                 "issn": "2166-1642"},  # ACM SIGDOC — 407 DOIs, 2012–present
-    {"name": "Communication Design Quarterly Review",          "issn": "2166-1200"},  # ACM SIGDOC predecessor — 131 DOIs, 2001–2019
+    {"name": "Communication Design Quarterly Review",          "issn": "2166-1200"},  # ACM SIGDOC predecessor — 65 DOIs, 2001–2019
+    # WAC Clearinghouse journals
+    {"name": "Across the Disciplines",                         "issn": "1554-8244"},  # WAC Clearinghouse — 370 DOIs, 2004–present
+    {"name": "The WAC Journal",                                "issn": "1544-4929"},  # WAC Clearinghouse — 345 DOIs, 1989–present
+    {"name": "Journal of Writing Analytics",                   "issn": "2474-7491"},  # WAC Clearinghouse — 95 DOIs, 2017–present
+    {"name": "Prompt: A Journal of Academic Writing Assignments", "issn": "2476-0943"},  # WAC Clearinghouse — 127 DOIs, 2016–present
+    {"name": "Peitho",                                         "issn": "2169-0774"},  # Coalition of Feminist Scholars / WAC Clearinghouse — 114 DOIs
+    {"name": "Double Helix",                                   "issn": "2372-7497"},  # WAC Clearinghouse — 112 DOIs, 2012–2024
+    # Other CrossRef-indexed journals
+    {"name": "Advances in the History of Rhetoric",            "issn": "1936-0835"},  # Penn State UP — 312 DOIs, 1998–2019
+    {"name": "Assessing Writing",                              "issn": "1075-2935"},  # Elsevier — 1000 DOIs, 1994–present
+    {"name": "Rhetoric of Health and Medicine",                "issn": "2573-5063"},  # U of Florida Press — 197 DOIs, 2018–present
+    {"name": "Business and Professional Communication Quarterly", "issn": "2329-4922"},  # SAGE — 508 DOIs, 2013–present
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
+    # English Journal (NCTE): not indexed in CrossRef
+    # WLN: A Journal of Writing Center Scholarship: in CrossRef but no DOIs deposited; print archive (1975–2015) scraped separately
 ]
 
 # ── Web-native journals with confirmed RSS/Atom feeds ─────────────────────────
