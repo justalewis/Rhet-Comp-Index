@@ -947,6 +947,64 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   flex-shrink: 0;
 }
 
+/* ── Author index: letter-picker redesign ──────────────────────── */
+.alpha-nav-picker {
+  gap: 0.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.alpha-link-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.alpha-link-active:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.alpha-prompt {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+
+.author-letter-list-wrap {
+  margin-top: 0.5rem;
+}
+
+/* Full letter list: single column, no break, taller rows */
+.author-list-full {
+  columns: 1;
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.25rem 0.75rem;
+}
+
+.author-item-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.author-institution {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.05rem;
+}
+
+.no-results {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+
 /* ── Explore page ──────────────────────────────────────────────── */
 .explore-tabs {
   display: flex;

@@ -1390,6 +1390,54 @@ def get_author_by_name(name):
         return dict(row) if row else None
 
 
+def get_authors_by_letter(letter):
+    """
+    Return all authors whose last name starts with `letter`, sorted
+    alphabetically by last name then first name.
+    Keys: name, count, institution_name, orcid.
+    """
+    letter = letter.upper()
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT authors FROM articles WHERE authors IS NOT NULL AND authors != ''"
+        ).fetchall()
+
+    author_counts: dict[str, int] = {}
+    for row in rows:
+        for a in row["authors"].split(";"):
+            a = a.strip()
+            if not a:
+                continue
+            parts = a.split()
+            last = parts[-1] if parts else a
+            if last and last[0].upper() == letter:
+                author_counts[a] = author_counts.get(a, 0) + 1
+
+    def _sort_key(name):
+        parts = name.strip().split()
+        last = parts[-1] if parts else name
+        first = " ".join(parts[:-1]) if len(parts) > 1 else ""
+        return (last.upper(), first.upper())
+
+    sorted_authors = sorted(author_counts.items(), key=lambda x: _sort_key(x[0]))
+
+    with get_conn() as conn:
+        author_records = {
+            r["name"]: dict(r)
+            for r in conn.execute("SELECT name, institution_name, orcid FROM authors").fetchall()
+        }
+
+    return [
+        {
+            "name": name,
+            "count": count,
+            "institution_name": author_records.get(name, {}).get("institution_name"),
+            "orcid": author_records.get(name, {}).get("orcid"),
+        }
+        for name, count in sorted_authors
+    ]
+
+
 def get_all_authors_with_institutions(limit=500):
     """
     Return list of dicts with keys: name, count, institution_name, orcid.

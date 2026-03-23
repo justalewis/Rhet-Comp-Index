@@ -167,37 +167,50 @@
 
     <div class="content-header">
       <h2>Authors</h2>
-      <span class="result-count">Top 500 by article count</span>
+      {% if selected_letter %}
+      <span class="result-count">{{ letter_authors | length }} author{% if letter_authors | length != 1 %}s{% endif %} — {{ selected_letter }}</span>
+      {% else %}
+      <span class="result-count">Browse all authors</span>
+      {% endif %}
     </div>
 
     <p class="page-intro">
-      The 500 most frequently published authors in this index, drawn from the full article record across all 14 indexed journals. Select any name to see their full publication list, co-authors, and citation connections within the field.
+      All authors with articles indexed in Pinakes, browsable by the first letter of their last name.
+      Select a letter below, then click any name to view their full profile.
     </p>
 
-    <!-- Alphabet quick-jump -->
-    <div class="alpha-nav">
-      {% for letter in letters %}
-      <a href="#letter-{{ letter }}" class="alpha-link">{{ letter }}</a>
+    <!-- ── Letter picker ──────────────────────────────────── -->
+    <div class="alpha-nav alpha-nav-picker">
+      {% for letter in all_letters %}
+      <a href="/authors?letter={{ letter }}"
+         class="alpha-link{% if letter == selected_letter %} alpha-link-active{% endif %}">{{ letter }}</a>
       {% endfor %}
     </div>
 
-    <!-- Author groups -->
-    {% for letter in letters %}
-    <section class="author-letter-section" id="letter-{{ letter }}">
-      <h3 class="period-heading">{{ letter }}</h3>
-      <ol class="author-list">
-        {% for rec in grouped[letter] %}
-        <li class="author-item">
-          <a href="/author/{{ rec.name | urlencode }}" class="author-name-link">{{ rec.name }}</a>
-          <span class="author-count">{{ rec.count }} article{% if rec.count != 1 %}s{% endif %}</span>
-          {% if rec.institution_name %}
-          <div class="author-institution">{{ rec.institution_name }}</div>
-          {% endif %}
-        </li>
-        {% endfor %}
-      </ol>
-    </section>
-    {% endfor %}
+    <!-- ── Author list for selected letter ───────────────── -->
+    {% if selected_letter %}
+      {% if letter_authors %}
+      <div class="author-letter-list-wrap">
+        <ol class="author-list author-list-full">
+          {% for rec in letter_authors %}
+          <li class="author-item">
+            <div class="author-item-main">
+              <a href="/author/{{ rec.name | urlencode }}" class="author-name-link">{{ rec.name }}</a>
+              <span class="author-count">{{ rec.count }} article{% if rec.count != 1 %}s{% endif %}</span>
+            </div>
+            {% if rec.institution_name %}
+            <div class="author-institution">{{ rec.institution_name }}</div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% else %}
+      <p class="no-results">No authors found for <strong>{{ selected_letter }}</strong>.</p>
+      {% endif %}
+    {% else %}
+    <p class="alpha-prompt">Select a letter above to browse authors.</p>
+    {% endif %}
 
   </main>
 

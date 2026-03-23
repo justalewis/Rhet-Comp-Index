@@ -51,6 +51,7 @@ from db import (
     get_article_affiliations,
     get_author_by_name,
     get_all_authors_with_institutions,
+    get_authors_by_letter,
     get_top_institutions,
     get_institution_timeline,
     get_top_institutions_v2,
@@ -481,31 +482,25 @@ def export():
 
 
 @app.route("/authors")
-@cache_response(seconds=3600)
 def authors_list():
-    """Alphabetical list of all authors with article counts and institution data."""
+    """Browse all authors by last-name initial."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
-    all_authors_data = get_all_authors_with_institutions(limit=500)
 
-    # Group by first letter of last name (last word of full name)
-    grouped = {}
-    for rec in all_authors_data:
-        name = rec["name"]
-        parts = name.strip().split()
-        last = parts[-1] if parts else name
-        letter = last[0].upper() if last else "#"
-        if letter not in grouped:
-            grouped[letter] = []
-        grouped[letter].append(rec)
+    selected_letter = request.args.get("letter", "").upper()
+    if selected_letter and len(selected_letter) == 1 and selected_letter.isalpha():
+        letter_authors = get_authors_by_letter(selected_letter)
+    else:
+        selected_letter = ""
+        letter_authors = []
 
-    # Sort letters, put non-alpha at end
-    letters = sorted(grouped.keys(), key=lambda c: (not c.isalpha(), c))
+    all_letters = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
     return render_template(
         "authors.html",
-        grouped=grouped,
-        letters=letters,
+        selected_letter=selected_letter,
+        letter_authors=letter_authors,
+        all_letters=all_letters,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,
