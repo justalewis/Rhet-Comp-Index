@@ -2712,3 +2712,133 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .book-citation-text a { color: var(--accent); }
 .book-citation-note { font-family: var(--font-ui); font-size: 0.76rem; color: var(--text-muted); margin: 0; }
 .book-citation-note a { color: var(--accent); }
+
+/* ── Author Insights ────────────────────────────────────────────────── */
+.author-insights {
+  margin: 1.5rem 0 2rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.25rem 1.5rem 1rem;
+  background: var(--bg-sidebar);
+}
+.insight-note {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+.insight-heading {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.65rem;
+}
+.insight-block { margin-bottom: 1.5rem; }
+.insight-chart-wrap { position: relative; height: 200px; }
+.insight-row { display: flex; gap: 1.5rem; align-items: flex-start; }
+.insight-col { flex: 1; min-width: 0; }
+.insight-empty {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding: 1rem 0.5rem;
+}
+
+/* Co-author network container */
+#author-network-container {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  height: 300px;
+  overflow: hidden;
+}
+
+/* Topic bars */
+#author-topics-container { height: 300px; overflow-y: auto; }
+.author-topics-list { padding-right: 0.25rem; }
+.author-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.author-topic-label {
+  width: 150px;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--link);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+}
+.author-topic-label:hover { color: var(--link-hover); text-decoration: underline; }
+.author-topic-bar-wrap { flex: 1; display: flex; align-items: center; gap: 0.35rem; }
+.author-topic-bar {
+  height: 9px;
+  background: var(--accent);
+  opacity: 0.55;
+  border-radius: 2px;
+  min-width: 2px;
+  transition: opacity 0.15s;
+}
+.author-topic-row:hover .author-topic-bar { opacity: 0.85; }
+.author-topic-count {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.author-topics-toggle {
+  margin-top: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--link);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.author-topics-toggle:hover { color: var(--link-hover); text-decoration: underline; }
+
+/* Books section */
+.author-books-section {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+.author-books-heading {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+.author-books-list { list-style: none; }
+.author-book-item {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.author-book-item:last-child { border-bottom: none; }
+.author-book-title { font-family: var(--font-body); font-size: 0.92rem; }
+.author-book-meta {
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+.author-book-role { font-style: italic; }
+.author-book-series { color: var(--text-light); }
+
+@media (max-width: 720px) {
+  .insight-row { flex-direction: column; }
+  #author-network-container { height: 260px; }
+  #author-topics-container { height: auto; }
+}

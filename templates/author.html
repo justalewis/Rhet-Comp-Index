@@ -173,7 +173,9 @@
 
     <div class="content-header">
       <h2>{{ author_name }}</h2>
-      <span class="result-count">{{ articles | length }} article{% if articles | length != 1 %}s{% endif %}</span>
+      <span class="result-count">
+        {{ articles | length }} article{% if articles | length != 1 %}s{% endif %}{% if author_books %} · {{ author_books | length }} book{% if author_books | length != 1 %}s{% endif %}{% endif %}
+      </span>
     </div>
 
     <div class="author-comppile-link">
@@ -207,6 +209,29 @@
       {% endif %}
     </div>
     {% endif %}
+
+    <!-- ── Author Insights ─────────────────────────────────── -->
+    <section class="author-insights" id="author-insights">
+      <p class="insight-note" id="insight-note">Loading profile…</p>
+
+      <div class="insight-block" id="timeline-block">
+        <h3 class="insight-heading">Publication Timeline</h3>
+        <div class="insight-chart-wrap">
+          <canvas id="author-timeline-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="insight-row">
+        <div class="insight-col" id="coauthor-block">
+          <h3 class="insight-heading">Co-Author Network</h3>
+          <div id="author-network-container"></div>
+        </div>
+        <div class="insight-col" id="topics-block">
+          <h3 class="insight-heading">Research Topics</h3>
+          <div id="author-topics-container"></div>
+        </div>
+      </div>
+    </section>
 
     {% if articles %}
     <ol class="article-list">
@@ -280,10 +305,263 @@
     </div>
     {% endif %}
 
+    {% if author_books %}
+    <section class="author-books-section">
+      <h3 class="author-books-heading">Books in Pinakes ({{ author_books | length }})</h3>
+      <ul class="author-books-list">
+        {% for b in author_books %}
+        <li class="author-book-item">
+          <div class="author-book-title">
+            {% if b.doi %}
+            <a href="/book/{{ b.id }}">{{ b.title }}</a>
+            {% else %}
+            <a href="/book/{{ b.id }}">{{ b.title }}</a>
+            {% endif %}
+          </div>
+          <div class="author-book-meta">
+            {% if b.record_type in ('edited-book', 'edited_collection') %}
+            <span class="author-book-role">Edited collection</span> ·
+            {% endif %}
+            {{ b.publisher }}{% if b.year %}, {{ b.year }}{% endif %}
+            {% if b.subjects %}
+            · <span class="author-book-series">{{ b.subjects.split(';')[0] }}</span>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
   </main>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+// ── Author page visualizations ────────────────────────────────────────────────
+const AUTHOR_NAME = {{ author_name | tojson }};
+const PALETTE = [
+  '#5a3e28','#8b6045','#b38a6a','#c9a882','#d4bc99',
+  '#3a5a28','#456b40','#6b8f60','#8aac82','#b2ccaa',
+  '#28445a','#405c78','#608aac','#82aacc','#aaccdd',
+  '#5a2840','#7a4560','#ac6882','#cc8aaa','#ddaac4',
+  '#5a5828','#787845','#aaaa60','#c8c880','#e0e0a8',
+];
+
+async function loadAuthorInsights() {
+  const enc = encodeURIComponent(AUTHOR_NAME);
+  try {
+    const [tl, co, tp] = await Promise.all([
+      fetch(`/api/author/${enc}/timeline`).then(r => r.json()),
+      fetch(`/api/author/${enc}/coauthors`).then(r => r.json()),
+      fetch(`/api/author/${enc}/topics`).then(r => r.json()),
+    ]);
+    renderTimeline(tl);
+    renderCoauthors(co);
+    renderTopics(tp);
+    updateNote(tl);
+  } catch(e) {
+    console.warn('Author insights error:', e);
+    const sec = document.getElementById('author-insights');
+    if (sec) sec.style.display = 'none';
+  }
+}
+
+function updateNote(tl) {
+  const artCount = {{ articles | length }};
+  const bookCount = (tl.books || []).length;
+  const el = document.getElementById('insight-note');
+  if (!el) return;
+  el.textContent = 'Based on ' + artCount + ' article' + (artCount !== 1 ? 's' : '') +
+    (bookCount > 0 ? ' and ' + bookCount + ' book' + (bookCount !== 1 ? 's' : '') : '') +
+    ' indexed in Pinakes. Coverage varies by journal and publisher; see About for details.';
+}
+
+function renderTimeline(data) {
+  const block = document.getElementById('timeline-block');
+  if (!data.years || data.years.length === 0) { block.style.display = 'none'; return; }
+
+  const ctx = document.getElementById('author-timeline-chart').getContext('2d');
+  const datasets = data.series.map((s, i) => ({
+    label: s.journal,
+    data: s.counts,
+    backgroundColor: PALETTE[i % PALETTE.length],
+    borderWidth: 0,
+    stack: 'articles',
+  }));
+
+  if (data.books && data.books.length > 0) {
+    const byYear = {};
+    data.books.forEach(b => { byYear[b.year] = (byYear[b.year] || 0) + 1; });
+    datasets.push({
+      label: '📚 Books',
+      data: data.years.map(yr => byYear[yr] || null),
+      backgroundColor: '#8b2020',
+      borderColor: '#8b2020',
+      borderWidth: 2,
+      type: 'bar',
+      stack: 'books',
+      barThickness: 8,
+    });
+  }
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels: data.years, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { family: 'system-ui, sans-serif', size: 10 }, boxWidth: 10, padding: 6 }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            footer: (items) => {
+              const yr = items[0]?.label;
+              const bks = (data.books || []).filter(b => b.year === yr);
+              return bks.length > 0 ? '📚 ' + bks.map(b => b.title).join(' · ') : '';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'system-ui, sans-serif', size: 10 } } },
+        y: { stacked: true, beginAtZero: true, ticks: { font: { family: 'system-ui, sans-serif', size: 10 }, precision: 0 } }
+      }
+    }
+  });
+}
+
+function renderCoauthors(data) {
+  const container = document.getElementById('author-network-container');
+  const noCoauthors = !data.nodes || data.nodes.length <= 1;
+  if (noCoauthors) {
+    container.innerHTML = '<p class="insight-empty">No co-authored articles in the index.</p>';
+    return;
+  }
+
+  const W = container.clientWidth || 360;
+  const H = 300;
+  const nodes = data.nodes.map(d => ({...d}));
+  const links = data.links.map(d => ({...d}));
+
+  const coNodes = nodes.filter(n => !n.is_center);
+  const cntExt = d3.extent(coNodes, d => d.count);
+  const rScale = d3.scaleSqrt().domain([Math.max(1, cntExt[0] || 1), Math.max(2, cntExt[1] || 2)]).range([4, 12]);
+  const lwScale = d3.scaleLinear().domain(d3.extent(links, d => d.value) || [1,1]).range([1, 4]);
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', W).attr('height', H)
+    .call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => g.attr('transform', e.transform)));
+  const g = svg.append('g');
+
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(75))
+    .force('charge', d3.forceManyBody().strength(-160))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => (d.is_center ? 14 : rScale(Math.max(1, d.count))) + 4));
+
+  const link = g.append('g').selectAll('line').data(links).enter().append('line')
+    .style('stroke', 'var(--border)').style('stroke-width', d => lwScale(d.value)).style('stroke-opacity', 0.7);
+
+  const nodeG = g.append('g').selectAll('g').data(nodes).enter().append('g')
+    .style('cursor', d => d.is_center ? 'default' : 'pointer')
+    .call(d3.drag()
+      .on('start', (e,d) => { if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
+      .on('end',   (e,d) => { if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+    )
+    .on('click', (e,d) => { if(!d.is_center) window.location='/author/'+encodeURIComponent(d.id); });
+
+  nodeG.append('circle')
+    .attr('r', d => d.is_center ? 13 : rScale(Math.max(1, d.count)))
+    .style('fill', d => d.is_center ? 'var(--accent)' : PALETTE[(d.id.charCodeAt(Math.max(0,d.id.lastIndexOf(' ')+1))||0) % PALETTE.length])
+    .style('fill-opacity', d => d.is_center ? 1 : 0.82)
+    .style('stroke', d => d.is_center ? 'var(--accent-hover)' : '#fff')
+    .style('stroke-width', d => d.is_center ? 2.5 : 1.5);
+
+  nodeG.append('text')
+    .text(d => { const p = d.id.trim().split(' '); return p[p.length-1]; })
+    .attr('dy', d => (d.is_center ? 13 : rScale(Math.max(1,d.count))) + 10)
+    .attr('text-anchor', 'middle')
+    .style('font-family','system-ui,sans-serif')
+    .style('font-size', d => d.is_center ? '10px' : '8px')
+    .style('fill','var(--text-muted)')
+    .style('pointer-events','none');
+
+  const tip = d3.select('body').append('div')
+    .attr('class','heatmap-tooltip').style('display','none').style('max-width','240px');
+
+  nodeG
+    .on('mouseover', (e,d) => {
+      const html = d.is_center
+        ? `<strong>${d.id}</strong><br>${d.count} article${d.count!==1?'s':''} in index`
+        : `<strong>${d.id}</strong><br>${d.shared} shared · ${d.count} total in index`;
+      tip.style('display','block').html(html);
+    })
+    .on('mousemove', e => tip.style('left',(e.pageX+12)+'px').style('top',(e.pageY-28)+'px'))
+    .on('mouseout',  () => tip.style('display','none'));
+
+  link
+    .on('mouseover', (e,d) => {
+      const titles = (d.titles||[]).map(t=>`· ${t}`).join('<br>');
+      tip.style('display','block').html(`<strong>${d.value} shared article${d.value!==1?'s':''}</strong>${titles?'<br>'+titles:''}`);
+    })
+    .on('mousemove', e => tip.style('left',(e.pageX+12)+'px').style('top',(e.pageY-28)+'px'))
+    .on('mouseout',  () => tip.style('display','none'));
+
+  sim.on('tick', () => {
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeG.attr('transform', d=>`translate(${d.x},${d.y})`);
+  });
+}
+
+function renderTopics(data) {
+  const block  = document.getElementById('topics-block');
+  const container = document.getElementById('author-topics-container');
+  if (!data || data.length === 0) { block.style.display='none'; return; }
+
+  const top10 = data.slice(0,10);
+  const rest  = data.slice(10);
+  const maxCount = top10[0].count;
+
+  function bars(items) {
+    return items.map(item => {
+      const pct = (item.count / maxCount * 100).toFixed(1);
+      const enc = encodeURIComponent(item.tag);
+      return `<div class="author-topic-row">
+        <a href="/?tag=${enc}" class="author-topic-label" title="Browse '${item.tag}'">${item.tag}</a>
+        <div class="author-topic-bar-wrap">
+          <div class="author-topic-bar" style="width:${pct}%"></div>
+          <span class="author-topic-count">${item.count}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  let html = `<div class="author-topics-list">${bars(top10)}`;
+  if (rest.length > 0) {
+    html += `<div id="topics-more" style="display:none">${bars(rest)}</div>
+    <button class="author-topics-toggle" onclick="
+      var m=document.getElementById('topics-more');
+      var b=this;
+      if(m.style.display==='none'){m.style.display='block';b.textContent='Show fewer';}
+      else{m.style.display='none';b.textContent='Show all ${data.length} topics';}
+    ">Show all ${data.length} topics</button>`;
+  }
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', loadAuthorInsights);
+</script>
 <script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

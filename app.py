@@ -61,6 +61,10 @@ from db import (
     get_institution_top_authors,
     get_author_affiliations_per_article,
     get_author_institution_summary,
+    get_author_books,
+    get_author_timeline,
+    get_author_coauthors,
+    get_author_topics,
     # books
     get_books, get_book_count, get_book_by_id, get_book_chapters,
     get_book_publishers,
@@ -520,11 +524,13 @@ def author_detail(name):
     author_record = get_author_by_name(name)
     affiliations_by_article = get_author_affiliations_per_article(name)
     institution_summary = get_author_institution_summary(name)
+    author_books = get_author_books(name)
 
     return render_template(
         "author.html",
         author_name=name,
         articles=articles,
+        author_books=author_books,
         author_record=author_record,
         affiliations_by_article=affiliations_by_article,
         institution_summary=institution_summary,
@@ -535,6 +541,24 @@ def author_detail(name):
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
     )
+
+
+@app.route("/api/author/<path:name>/timeline")
+def author_timeline_api(name):
+    """Publication timeline for a single author: articles by year+journal plus books."""
+    return jsonify(get_author_timeline(name))
+
+
+@app.route("/api/author/<path:name>/coauthors")
+def author_coauthors_api(name):
+    """Co-authorship mini-network for a single author."""
+    return jsonify(get_author_coauthors(name))
+
+
+@app.route("/api/author/<path:name>/topics")
+def author_topics_api(name):
+    """Topic tag distribution for a single author."""
+    return jsonify(get_author_topics(name))
 
 
 @app.route("/article/<int:article_id>")

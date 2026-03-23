@@ -801,6 +801,141 @@ def get_author_articles(author_name):
         return [dict(r) for r in rows]
 
 
+def get_author_books(author_name: str) -> list:
+    """Return whole-book records where this author appears as author or editor."""
+    like = f"%{author_name}%"
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT id, title, year, publisher, record_type, doi, isbn, editors, authors, subjects
+            FROM books
+            WHERE (authors LIKE ? OR editors LIKE ?)
+              AND record_type NOT IN ('chapter', 'front-matter')
+            ORDER BY year DESC
+        """, (like, like)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_author_timeline(author_name: str) -> dict:
+    """Return publication timeline: articles by year+journal and whole-book entries."""
+    from collections import defaultdict
+    like = f"%{author_name}%"
+    with get_conn() as conn:
+        art_rows = conn.execute("""
+            SELECT SUBSTR(pub_date, 1, 4) AS year, journal, COUNT(*) AS n
+            FROM articles
+            WHERE authors LIKE ?
+              AND pub_date IS NOT NULL AND pub_date != ''
+            GROUP BY year, journal
+            ORDER BY year
+        """, (like,)).fetchall()
+        book_rows = conn.execute("""
+            SELECT year, title, record_type
+            FROM books
+            WHERE (authors LIKE ? OR editors LIKE ?)
+              AND record_type NOT IN ('chapter', 'front-matter')
+              AND year IS NOT NULL
+            ORDER BY year
+        """, (like, like)).fetchall()
+
+    journal_year: dict = defaultdict(lambda: defaultdict(int))
+    all_years: set = set()
+    journal_order: dict = {}
+
+    for row in art_rows:
+        yr, j, n = row["year"], row["journal"], row["n"]
+        if yr and yr.isdigit() and 1970 <= int(yr) <= 2030:
+            all_years.add(yr)
+            journal_year[j][yr] += n
+            if j not in journal_order:
+                journal_order[j] = len(journal_order)
+
+    if not all_years:
+        return {"years": [], "series": [], "books": []}
+
+    years = sorted(all_years)
+    series = [
+        {"journal": j, "counts": [journal_year[j].get(yr, 0) for yr in years]}
+        for j in sorted(journal_order, key=lambda j: journal_order[j])
+    ]
+    books = [
+        {
+            "year": str(r["year"]),
+            "title": r["title"][:60] + ("…" if len(r["title"]) > 60 else ""),
+            "type": r["record_type"],
+        }
+        for r in book_rows if r["year"]
+    ]
+    return {"years": years, "series": series, "books": books}
+
+
+def get_author_coauthors(author_name: str) -> dict:
+    """Return co-authorship mini-network data centered on this author."""
+    like = f"%{author_name}%"
+    with get_conn() as conn:
+        art_rows = conn.execute("""
+            SELECT id, title, authors FROM articles
+            WHERE authors LIKE ? AND authors IS NOT NULL
+        """, (like,)).fetchall()
+        all_rows = conn.execute(
+            "SELECT authors FROM articles WHERE authors IS NOT NULL AND authors != ''"
+        ).fetchall()
+
+    # Count total articles per author for node sizing
+    author_totals: dict = {}
+    for row in all_rows:
+        for a in row["authors"].split(";"):
+            a = a.strip()
+            if a:
+                author_totals[a] = author_totals.get(a, 0) + 1
+
+    # Find co-authors; skip LIKE false positives via exact parse check
+    coauthor_articles: dict = {}
+    for row in art_rows:
+        parsed = [a.strip() for a in row["authors"].split(";") if a.strip()]
+        if author_name not in parsed:
+            continue
+        for a in parsed:
+            if a != author_name:
+                coauthor_articles.setdefault(a, []).append(row["title"])
+
+    if not coauthor_articles:
+        return {"nodes": [], "links": [], "center": author_name}
+
+    nodes = [{"id": author_name, "count": author_totals.get(author_name, 0),
+               "is_center": True, "shared": 0}]
+    for co, titles in sorted(coauthor_articles.items(), key=lambda x: -len(x[1])):
+        nodes.append({"id": co, "count": author_totals.get(co, 0),
+                      "is_center": False, "shared": len(titles)})
+
+    links = [
+        {"source": author_name, "target": co, "value": len(titles), "titles": titles[:5]}
+        for co, titles in coauthor_articles.items()
+    ]
+    return {"nodes": nodes, "links": links, "center": author_name}
+
+
+def get_author_topics(author_name: str) -> list:
+    """Return topic tag frequency distribution for this author's articles."""
+    like = f"%{author_name}%"
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT tags FROM articles
+            WHERE authors LIKE ? AND tags IS NOT NULL AND tags != ''
+        """, (like,)).fetchall()
+
+    tag_counts: dict = {}
+    for row in rows:
+        for tag in row["tags"].strip("|").split("|"):
+            tag = tag.strip()
+            if tag:
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+
+    return sorted(
+        [{"tag": t, "count": c} for t, c in tag_counts.items()],
+        key=lambda x: -x["count"],
+    )
+
+
 # ── Citation network — reads ───────────────────────────────────────────────────
 
 def get_articles_needing_citation_fetch(limit=None):
