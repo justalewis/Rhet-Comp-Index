@@ -690,10 +690,16 @@ def api_tag_cooccurrence():
 
 
 @app.route("/api/stats/author-network")
-@cache_response(seconds=3600)
 def api_author_network():
-    """JSON: author co-authorship network nodes and links."""
-    return jsonify(get_author_network(min_papers=3, top_n=150))
+    """JSON: author co-authorship network nodes and links.
+    Accepts: ?min_papers=3&top_n=150
+    """
+    try:
+        min_papers = max(2, min(int(request.args.get("min_papers", 3)), 25))
+        top_n      = max(25, min(int(request.args.get("top_n",      150)), 350))
+    except (TypeError, ValueError):
+        min_papers, top_n = 3, 150
+    return jsonify(get_author_network(min_papers=min_papers, top_n=top_n))
 
 
 @app.route("/api/stats/citation-trends")

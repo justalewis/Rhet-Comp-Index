@@ -210,8 +210,52 @@
 
     <!-- ── Author Network tab ────────────────────────────────── -->
     <div id="tab-network" class="tab-panel" style="display:none;">
-      <p class="tab-intro">Co-authorship graph for authors with three or more indexed publications. Node size reflects article count; edges connect co-authors. Clusters reveal research communities and collaborative pockets within rhet/comp. Click any node to open that author's profile.</p>
-      <p class="explore-hint">Co-authorship network — authors with 3+ papers. Node size = paper count. Click a node to view author page.</p>
+
+      <div class="network-explainer">
+        <p>This graph maps collaborative relationships among the most-published authors in Pinakes. Each circle represents an author — its size reflects their total article count in the index. Lines connect authors who have co-authored at least one article together; thicker lines mean more shared publications.</p>
+        <p>Rhetoric and composition is historically a solo-author field, so most scholars don't appear here: they either have fewer indexed publications than the threshold you've set, or they haven't co-authored with others in the index. The authors who do appear — and especially the clusters that form around them — tend to reflect sustained research communities: writing center scholars, WAC researchers, technical communication groups, empirical writing researchers. Isolates (nodes with no edges) are frequent publishers who work primarily alone.</p>
+        <p class="network-howto"><strong>How to use it:</strong> Scroll or pinch to zoom · Drag nodes to rearrange · <strong>Click a node</strong> to highlight that author's connections; click again or use the "View profile" button to open their full page · Use the controls below to change which authors appear.</p>
+      </div>
+
+      <!-- Controls -->
+      <div class="network-toolbar">
+        <div class="net-control-group">
+          <label for="net-min-papers" class="net-label">Min. publications</label>
+          <select id="net-min-papers" class="net-select">
+            <option value="2">2+</option>
+            <option value="3" selected>3+ (default)</option>
+            <option value="5">5+</option>
+            <option value="10">10+</option>
+            <option value="20">20+</option>
+          </select>
+        </div>
+        <div class="net-control-group">
+          <label for="net-top-n" class="net-label">Authors shown</label>
+          <select id="net-top-n" class="net-select">
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="150" selected>150 (default)</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+          </select>
+        </div>
+        <div class="net-control-group net-search-group">
+          <label for="net-search" class="net-label">Search author</label>
+          <input type="search" id="net-search" class="net-search" placeholder="Last name…" autocomplete="off">
+        </div>
+        <button id="net-reload-btn" class="net-btn">Reload</button>
+        <button id="net-reset-btn" class="net-btn">Reset view</button>
+        <span id="net-stats" class="net-stats"></span>
+      </div>
+
+      <!-- Selected author info bar -->
+      <div id="net-infobar" class="net-infobar" style="display:none;">
+        <span id="net-infobar-name" class="net-infobar-name"></span>
+        <span id="net-infobar-detail" class="net-infobar-detail"></span>
+        <a id="net-infobar-link" class="net-infobar-link" href="#">View profile →</a>
+        <button id="net-infobar-close" class="net-infobar-close" aria-label="Clear selection">✕</button>
+      </div>
+
       <div class="network-container" id="network-container">
         <div class="loading-msg">Loading author data…</div>
       </div>
@@ -471,6 +515,22 @@ function showTab(name, btn) {
   if (name === 'network' && !networkLoaded) {
     networkLoaded = true;
     loadNetwork();
+    // Wire controls (safe to call multiple times — buttons only added once)
+    document.getElementById('net-reload-btn').addEventListener('click', () => {
+      networkLoaded = false; // allow reload
+      document.getElementById('net-search').value = '';
+      loadNetwork();
+      networkLoaded = true;
+    });
+    document.getElementById('net-reset-btn').addEventListener('click', () => {
+      if (netSvgEl && netZoomBehavior) {
+        d3.select(netSvgEl).transition().duration(400)
+          .call(netZoomBehavior.transform, d3.zoomIdentity);
+      }
+    });
+    document.getElementById('net-infobar-close').addEventListener('click', () => {
+      clearNetInfobar();
+    });
   }
   if (name === 'citations' && !citationsLoaded) {
     citationsLoaded = true;
@@ -685,60 +745,85 @@ async function loadHeatmap() {
 
 
 // ── Author co-authorship network ──────────────────────────────────────────────
-async function loadNetwork() {
-  const resp = await fetch('/api/stats/author-network');
-  const data = await resp.json();
+
+let netZoomBehavior = null;   // stored so Reset view can call it
+let netSvgEl       = null;
+
+async function loadNetwork(minPapers, topN) {
+  minPapers = minPapers || parseInt(document.getElementById('net-min-papers').value) || 3;
+  topN      = topN      || parseInt(document.getElementById('net-top-n').value)      || 150;
 
   const container = document.getElementById('network-container');
+  container.innerHTML = '<div class="loading-msg">Loading author data…</div>';
+  clearNetInfobar();
+
+  const resp = await fetch(`/api/stats/author-network?min_papers=${minPapers}&top_n=${topN}`);
+  const data = await resp.json();
+
   container.innerHTML = '';
 
   const nodes = data.nodes;
   const links = data.links;
 
+  // Stats bar
+  document.getElementById('net-stats').textContent =
+    `${nodes.length} authors · ${links.length} co-authorship links`;
+
   if (!nodes || nodes.length === 0) {
-    container.innerHTML = '<p class="explore-hint">Not enough co-authorship data yet (need authors with 3+ papers).</p>';
+    container.innerHTML = '<p class="explore-hint">No authors found with those settings. Try lowering the minimum publications threshold.</p>';
     return;
   }
 
   const W = container.clientWidth || 720;
-  const H = 520;
+  const H = 560;
 
   const countExtent = d3.extent(nodes, d => d.count);
-  const rScale = d3.scaleSqrt().domain(countExtent).range([4, 16]);
+  const rScale = d3.scaleSqrt().domain(countExtent).range([4, 18]);
 
   const linkExtent = links.length > 0 ? d3.extent(links, d => d.value) : [1, 1];
-  const lwScale = d3.scaleLinear().domain(linkExtent).range([0.5, 3]);
+  const lwScale = d3.scaleLinear().domain(linkExtent).range([0.5, 4]);
 
-  const svg = d3.select('#network-container')
+  // Build adjacency for highlight
+  const neighbors = {};
+  nodes.forEach(n => { neighbors[n.id] = new Set(); });
+  links.forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    neighbors[s] && neighbors[s].add(t);
+    neighbors[t] && neighbors[t].add(s);
+  });
+
+  netZoomBehavior = d3.zoom().scaleExtent([0.2, 6]).on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  });
+
+  const svgSel = d3.select('#network-container')
     .append('svg')
     .attr('width', W)
     .attr('height', H)
-    .call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', (event) => {
-      g.attr('transform', event.transform);
-    }));
+    .call(netZoomBehavior);
 
-  const g = svg.append('g');
-
-  // Build a node-id lookup
-  const nodeById = {};
-  nodes.forEach(n => { nodeById[n.id] = n; });
+  netSvgEl = svgSel.node();
+  const g = svgSel.append('g');
 
   const simulation = d3.forceSimulation(nodes)
     .force('link', d3.forceLink(links)
       .id(d => d.id)
-      .distance(d => 60 / (d.value || 1) + 40)
+      .distance(d => 55 / (d.value || 1) + 38)
     )
-    .force('charge', d3.forceManyBody().strength(-120))
+    .force('charge', d3.forceManyBody().strength(-130))
     .force('center', d3.forceCenter(W / 2, H / 2))
-    .force('collision', d3.forceCollide().radius(d => rScale(d.count) + 3));
+    .force('collision', d3.forceCollide().radius(d => rScale(d.count) + 4));
 
-  const link = g.append('g')
+  const linkSel = g.append('g')
     .selectAll('line')
     .data(links)
     .enter().append('line')
       .style('stroke', '#ccc7bb')
-      .style('stroke-opacity', 0.6)
+      .style('stroke-opacity', 0.55)
       .style('stroke-width', d => lwScale(d.value));
+
+  let selectedId = null;
 
   const nodeGroup = g.append('g')
     .selectAll('g')
@@ -757,13 +842,27 @@ async function loadNetwork() {
         })
       )
       .on('click', (event, d) => {
-        window.location = '/author/' + encodeURIComponent(d.id);
+        event.stopPropagation();
+        if (selectedId === d.id) {
+          // Second click → navigate
+          window.location = '/author/' + encodeURIComponent(d.id);
+          return;
+        }
+        selectedId = d.id;
+        applyHighlight(d.id, neighbors, nodeGroup, linkSel);
+        showNetInfobar(d, neighbors);
       });
 
-  nodeGroup.append('circle')
+  // Click background to clear selection
+  svgSel.on('click', () => {
+    selectedId = null;
+    clearHighlight(nodeGroup, linkSel);
+    clearNetInfobar();
+  });
+
+  const circleSel = nodeGroup.append('circle')
     .attr('r', d => rScale(d.count))
     .style('fill', d => {
-      // Color by first letter of last name to give some variety
       const idx = (d.id.charCodeAt(d.id.lastIndexOf(' ') + 1) || 0) % PALETTE.length;
       return PALETTE[idx];
     })
@@ -774,10 +873,7 @@ async function loadNetwork() {
   // Labels for nodes with count >= 5
   nodeGroup.filter(d => d.count >= 5)
     .append('text')
-      .text(d => {
-        const parts = d.id.split(' ');
-        return parts[parts.length - 1]; // last name only
-      })
+      .text(d => { const p = d.id.split(' '); return p[p.length - 1]; })
       .attr('dy', d => rScale(d.count) + 10)
       .attr('text-anchor', 'middle')
       .style('font-family', 'system-ui, sans-serif')
@@ -792,28 +888,70 @@ async function loadNetwork() {
 
   nodeGroup
     .on('mouseover', function(event, d) {
-      tooltip
-        .style('display', 'block')
-        .html(`<strong>${d.id}</strong><br>${d.count} paper${d.count !== 1 ? 's' : ''}`);
+      const nb = neighbors[d.id] ? neighbors[d.id].size : 0;
+      tooltip.style('display', 'block')
+        .html(`<strong>${d.id}</strong><br>${d.count} article${d.count !== 1 ? 's' : ''} · ${nb} co-author${nb !== 1 ? 's' : ''}<br><em style="font-size:0.8em;opacity:0.7">Click to highlight · Click again to open profile</em>`);
     })
     .on('mousemove', function(event) {
-      tooltip
-        .style('left', (event.pageX + 12) + 'px')
-        .style('top',  (event.pageY - 28) + 'px');
+      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
     })
-    .on('mouseout', function() {
-      tooltip.style('display', 'none');
-    });
+    .on('mouseout', function() { tooltip.style('display', 'none'); });
 
   simulation.on('tick', () => {
-    link
-      .attr('x1', d => d.source.x)
-      .attr('y1', d => d.source.y)
-      .attr('x2', d => d.target.x)
-      .attr('y2', d => d.target.y);
-
+    linkSel
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
     nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
   });
+
+  // Search highlighting
+  document.getElementById('net-search').addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    if (!q) { clearHighlight(nodeGroup, linkSel); clearNetInfobar(); return; }
+    const matched = nodes.filter(n => n.id.toLowerCase().includes(q));
+    if (matched.length === 1) {
+      selectedId = matched[0].id;
+      applyHighlight(matched[0].id, neighbors, nodeGroup, linkSel);
+      showNetInfobar(matched[0], neighbors);
+    } else {
+      // Dim non-matching nodes
+      nodeGroup.style('opacity', d => d.id.toLowerCase().includes(q) ? 1 : 0.15);
+      linkSel.style('opacity', 0.1);
+    }
+  });
+}
+
+function applyHighlight(id, neighbors, nodeGroup, linkSel) {
+  const nb = neighbors[id] || new Set();
+  nodeGroup.style('opacity', d => (d.id === id || nb.has(d.id)) ? 1 : 0.12);
+  linkSel.style('opacity', l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return (s === id || t === id) ? 0.8 : 0.05;
+  }).style('stroke', l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return (s === id || t === id) ? '#8b6340' : '#ccc7bb';
+  });
+}
+
+function clearHighlight(nodeGroup, linkSel) {
+  nodeGroup.style('opacity', 1);
+  linkSel.style('opacity', 0.55).style('stroke', '#ccc7bb');
+}
+
+function showNetInfobar(d, neighbors) {
+  const nb = neighbors[d.id] ? neighbors[d.id].size : 0;
+  const bar = document.getElementById('net-infobar');
+  document.getElementById('net-infobar-name').textContent = d.id;
+  document.getElementById('net-infobar-detail').textContent =
+    `${d.count} article${d.count !== 1 ? 's' : ''} · ${nb} co-author${nb !== 1 ? 's' : ''} in index`;
+  document.getElementById('net-infobar-link').href = '/author/' + encodeURIComponent(d.id);
+  bar.style.display = 'flex';
+}
+
+function clearNetInfobar() {
+  document.getElementById('net-infobar').style.display = 'none';
 }
 
 
