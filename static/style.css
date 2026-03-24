@@ -971,18 +971,48 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   margin-top: 1rem;
 }
 
-.author-letter-list-wrap {
-  margin-top: 0.5rem;
+/* Filter input row */
+.author-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0.75rem;
 }
 
-/* Full letter list: single column, no break, taller rows */
-.author-list-full {
-  columns: 1;
-  max-height: 70vh;
-  overflow-y: auto;
+.author-filter-input {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  padding: 0.35em 0.65em;
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 0.25rem 0.75rem;
+  background: var(--bg);
+  color: var(--text);
+  width: 18rem;
+  max-width: 100%;
+}
+
+.author-filter-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.author-filter-count {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Full letter list: two columns, natural page scroll */
+.author-list-full {
+  columns: 2;
+  gap: 0.25rem 2rem;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .author-list-full { columns: 1; }
+  .author-filter-input { width: 100%; }
 }
 
 .author-item-main {

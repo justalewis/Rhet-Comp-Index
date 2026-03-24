@@ -190,21 +190,49 @@
     <!-- ── Author list for selected letter ───────────────── -->
     {% if selected_letter %}
       {% if letter_authors %}
-      <div class="author-letter-list-wrap">
-        <ol class="author-list author-list-full">
-          {% for rec in letter_authors %}
-          <li class="author-item">
-            <div class="author-item-main">
-              <a href="/author/{{ rec.name | urlencode }}" class="author-name-link">{{ rec.name }}</a>
-              <span class="author-count">{{ rec.count }} article{% if rec.count != 1 %}s{% endif %}</span>
-            </div>
-            {% if rec.institution_name %}
-            <div class="author-institution">{{ rec.institution_name }}</div>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ol>
+      <div class="author-filter-wrap">
+        <input type="search"
+               id="author-filter"
+               class="author-filter-input"
+               placeholder="Filter by name…"
+               autocomplete="off"
+               autofocus>
+        <span class="author-filter-count" id="author-filter-count">{{ letter_authors | length }} authors</span>
       </div>
+      <ol class="author-list author-list-full" id="author-list">
+        {% for rec in letter_authors %}
+        <li class="author-item" data-name="{{ rec.name | lower }}">
+          <div class="author-item-main">
+            <a href="/author/{{ rec.name | urlencode }}" class="author-name-link">{{ rec.name }}</a>
+            <span class="author-count">{{ rec.count }} article{% if rec.count != 1 %}s{% endif %}</span>
+          </div>
+          {% if rec.institution_name %}
+          <div class="author-institution">{{ rec.institution_name }}</div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      <script>
+        (function () {
+          var input = document.getElementById('author-filter');
+          var list  = document.getElementById('author-list');
+          var counter = document.getElementById('author-filter-count');
+          var items = Array.from(list.querySelectorAll('li[data-name]'));
+          var total = items.length;
+          input.addEventListener('input', function () {
+            var q = input.value.trim().toLowerCase();
+            var visible = 0;
+            items.forEach(function (li) {
+              var match = !q || li.dataset.name.indexOf(q) !== -1;
+              li.style.display = match ? '' : 'none';
+              if (match) visible++;
+            });
+            counter.textContent = q
+              ? visible + ' of ' + total + ' authors'
+              : total + ' authors';
+          });
+        })();
+      </script>
       {% else %}
       <p class="no-results">No authors found for <strong>{{ selected_letter }}</strong>.</p>
       {% endif %}
