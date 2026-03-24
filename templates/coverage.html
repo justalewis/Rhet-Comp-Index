@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index Coverage — Pinakes</title>
+  <link id="theme-css" rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style-scandi.css">
+  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var termBtn=document.createElement('button');
+      termBtn.className='theme-toggle-btn';
+      var scandiBtn=document.createElement('button');
+      scandiBtn.className='scandi-toggle-btn';
+      function updateBtns(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        termBtn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
+        scandiBtn.textContent=cur==='scandi'?'◇ Default':'◇ Scandi';
+      }
+      updateBtns();
+      termBtn.addEventListener('click',function(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        var next=cur==='terminal'?'normal':'terminal';
+        localStorage.setItem('rc-theme',next);
+        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
+        document.documentElement.classList.remove('scandi');
+        updateBtns();
+      });
+      scandiBtn.addEventListener('click',function(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        var next=cur==='scandi'?'normal':'scandi';
+        localStorage.setItem('rc-theme',next);
+        if(next==='scandi'){document.getElementById('theme-css').href='/static/style.css';document.documentElement.classList.add('scandi');}
+        else{document.documentElement.classList.remove('scandi');}
+        updateBtns();
+      });
+      document.body.appendChild(termBtn);
+      document.body.appendChild(scandiBtn);
+    });
+  </script>
+</head>
+<body>
+
+<div class="about-page-wrap">
+
+  <!-- ── Top nav ───────────────────────────────────────────── -->
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/new">What's New</a>
+        <a href="/explore">Explore</a>
+        <a href="/authors">Authors</a>
+        <a href="/most-cited">Most Cited</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="about-content">
+
+    <h1 class="about-title">Index Coverage</h1>
+
+    <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing — and explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
+
+    <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
+
+    <h2>Two Tiers of Indexing</h2>
+
+    <p>Pinakes draws from two kinds of sources. The distinction matters for everything downstream — citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
+
+    <p><strong>Full CrossRef indexing</strong> means a journal registers each article's metadata — title, authors, abstract, publication date, and reference list — with <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer">CrossRef</a> using a registered DOI. This enables: citation tracking (because CrossRef carries reference lists), OpenAlex enrichment (institutional affiliations, topic classifications, open-access status), and reliable author disambiguation. Most commercial publishers and NCTE do this for current content.</p>
+
+    <p><strong>RSS or scrape-only indexing</strong> means Pinakes collects basic article metadata — title, authors, publication date — from an RSS feed or by parsing the journal's website. These articles appear in search results and the timeline, but they contribute <em>nothing</em> to the citation network, and OpenAlex enrichment is hit-or-miss without a DOI. Author affiliation data for these articles is largely absent.</p>
+
+    <h2>Journals: Full CrossRef Coverage</h2>
+
+    <p>The following journals contribute complete metadata including reference lists and, in most cases, author affiliations via OpenAlex:</p>
+
+    <ul class="coverage-list coverage-list--full">
+      <li><em>College Composition and Communication</em> (NCTE)</li>
+      <li><em>College English</em> (NCTE)</li>
+      <li><em>Teaching English in the Two-Year College</em> (NCTE)</li>
+      <li><em>Research in the Teaching of English</em> (NCTE)</li>
+      <li><em>English Journal</em> (NCTE) — full for current issues; pre-2000 content is JSTOR-only with no individual-article DOIs</li>
+      <li><em>Rhetoric Society Quarterly</em> (Taylor &amp; Francis)</li>
+      <li><em>Rhetoric Review</em> (Taylor &amp; Francis)</li>
+      <li><em>Technical Communication Quarterly</em> (Taylor &amp; Francis)</li>
+      <li><em>Advances in the History of Rhetoric</em> (Taylor &amp; Francis)</li>
+      <li><em>Pedagogy</em> (Duke University Press)</li>
+      <li><em>Written Communication</em> (SAGE)</li>
+      <li><em>Journal of Business and Technical Communication</em> (SAGE)</li>
+      <li><em>Journal of Technical Writing and Communication</em> (SAGE)</li>
+      <li><em>Business and Professional Communication Quarterly</em> (SAGE)</li>
+      <li><em>Computers and Composition</em> (Elsevier)</li>
+      <li><em>Assessing Writing</em> (Elsevier)</li>
+      <li><em>Philosophy &amp; Rhetoric</em> (Penn State University Press)</li>
+      <li><em>Rhetoric of Health &amp; Medicine</em> (University of Florida Press)</li>
+      <li><em>Communication Design Quarterly</em> (ACM SIGDOC)</li>
+      <li><em>Communication Design Quarterly Review</em> (ACM SIGDOC)</li>
+      <li><em>Across the Disciplines</em> (WAC Clearinghouse)</li>
+      <li><em>The WAC Journal</em> (WAC Clearinghouse)</li>
+      <li><em>WLN: A Journal of Writing Center Scholarship</em> (WAC Clearinghouse)</li>
+      <li><em>Journal of Writing Analytics</em> (WAC Clearinghouse)</li>
+      <li><em>Prompt: A Journal of Academic Writing Assignments</em> (WAC Clearinghouse)</li>
+      <li><em>Peitho</em> (Coalition of Feminist Scholars in Communication, via WAC Clearinghouse)</li>
+      <li><em>Community Literacy Journal</em></li>
+      <li><em>Poroi</em></li>
+    </ul>
+
+    <h2>Journals: Partial or Limited Coverage</h2>
+
+    <p>These journals are in the index but contribute reduced data to the visualizations. The technical reason varies by venue.</p>
+
+    <h3>RSS or scrape only — no CrossRef DOIs</h3>
+    <p>These are legitimate field journals that have not registered DOIs. Pinakes collects title, author, and date from RSS feeds or by parsing the journal website. No citation data, no OpenAlex enrichment, no reference lists.</p>
+    <ul class="coverage-list coverage-list--partial">
+      <li><em>Kairos: A Journal of Rhetoric, Technology, and Pedagogy</em> — custom HTML format; scraped manually per issue</li>
+      <li><em>Enculturation</em> — RSS only</li>
+      <li><em>Composition Forum</em> — RSS only</li>
+      <li><em>Present Tense: A Journal of Rhetoric in Society</em> — RSS only</li>
+      <li><em>KB Journal</em> (Kenneth Burke Society) — RSS only</li>
+      <li><em>Reflections: A Journal of Community-Engaged Writing and Rhetoric</em> — RSS only</li>
+    </ul>
+
+    <h3>OJS installations without CrossRef registration</h3>
+    <p>Many small society journals run Open Journal Systems but never completed CrossRef membership or DOI registration. The content is technically open access but invisible to APIs.</p>
+    <ul class="coverage-list coverage-list--partial">
+      <li><em>Young Scholars in Writing</em> — undergraduate research journal; OJS, no CrossRef</li>
+      <li><em>Journal of Writing Assessment</em> — inconsistent CrossRef registration; some issues registered, some not</li>
+      <li><em>Writing Program Administration (WPA)</em> — older issues are JSTOR-only with no DOIs; recent issues are better</li>
+      <li><em>Xchanges</em> — technical communication OA journal; OJS but minimal CrossRef</li>
+      <li><em>Basic Writing e-Journal</em> — partial CrossRef; some volumes missing</li>
+      <li><em>The Peer Review</em> (IWCA) — writing center journal; limited metadata structure</li>
+    </ul>
+
+    <h3>CrossRef registration incomplete by era</h3>
+    <p>These journals have CrossRef coverage for recent issues but significant gaps in their back catalogs, where content was digitized to JSTOR without individual-article DOI registration.</p>
+    <ul class="coverage-list coverage-list--partial">
+      <li><em>College Composition and Communication</em> — anything before roughly 1999 has no machine-readable article-level metadata despite being in JSTOR</li>
+      <li><em>English Journal</em> (NCTE) — same pattern; decades of print content is accessible via JSTOR but not DOI-registered</li>
+      <li><em>Composition Studies</em> (Creighton University) — CrossRef registration exists but is spotty; some volumes unregistered</li>
+    </ul>
+
+    <h3>Hosted platforms without CrossRef</h3>
+    <ul class="coverage-list coverage-list--partial">
+      <li><em>Journal of Multimodal Rhetorics</em> — newer journal; minimal CrossRef compliance at time of indexing</li>
+      <li><em>Literacy in Composition Studies</em> — OA; some CrossRef but incomplete across volumes</li>
+    </ul>
+
+    <h2>Books: University Presses with Gaps</h2>
+
+    <p>The books index covers roughly 3,200 titles from seven publishers. The gaps in book coverage stem from a structural problem distinct from the journal situation: CrossRef's data model was designed around journals, where a container (journal title + ISSN) gives you a reliable handle on a series. For books, the equivalent would be the series ISSN — a standard that exists but that most publishers either don't register or don't include in their CrossRef deposits. This means you can't query CrossRef for "all books in X series" the way you can query for "all articles in X journal."</p>
+
+    <h3>Series metadata missing from CrossRef</h3>
+    <p>These publishers have DOI-registered books but don't include series names in CrossRef, making their relevant series undiscoverable by automated query. Coverage in Pinakes comes from manually curated title lists and direct ISBN lookups.</p>
+    <ul class="coverage-list coverage-list--partial">
+      <li><strong>Routledge (Taylor &amp; Francis)</strong> — four major series relevant to the field (<em>Routledge Studies in Rhetoric and Communication</em>, <em>Routledge Research in Writing Studies</em>, <em>ATTW Series in Technical and Professional Communication</em>, <em>Routledge Studies in Technical Communication, Rhetoric, and Culture</em>) contain roughly 96 titles. CrossRef series queries return approximately 26. The remainder require individual lookup by known title.</li>
+      <li><strong>University of Alabama Press</strong> — publishes <em>Studies in Rhetoric and Communication</em>, a significant series. Books have individual DOIs but the series isn't queryable.</li>
+      <li><strong>SUNY Press</strong> — <em>SUNY Series on Literacy, Culture, and Learning</em> and adjacent series; same problem.</li>
+      <li><strong>Fordham University Press</strong> — some rhetoric titles with DOIs but no series tagging.</li>
+      <li><strong>University of Michigan Press</strong> — digital rhetoric titles; CrossRef records exist but series metadata is absent.</li>
+      <li><strong>University of South Carolina Press</strong> — rhetoric and public address titles.</li>
+      <li><strong>University of Nevada Press</strong> — place-based rhetoric and composition titles.</li>
+    </ul>
+
+    <h3>Publishers with minimal CrossRef footprint</h3>
+    <ul class="coverage-list coverage-list--gap">
+      <li><strong>Hampton Press</strong> — now closed; published significant rhet/comp scholarship through the 2000s–2010s under the Cresskill imprint. Most titles have no DOIs. A curated ISBN list would be the only route to indexing these.</li>
+      <li><strong>Peter Lang</strong> — publishes rhet/comp-adjacent work in applied linguistics and L2 writing; DOI registration is inconsistent across imprints.</li>
+      <li><strong>Multilingual Matters</strong> — significant for L2 writing research; CrossRef records exist but are not discoverable by series, and their website returns 403 to automated requests.</li>
+      <li><strong>Equinox Publishing</strong> — applied linguistics and discourse studies overlap; minimal CrossRef series data.</li>
+      <li><strong>Cambridge University Press</strong> and <strong>Oxford University Press</strong> — both have DOIs for relevant titles, but their relevant series aren't queryable by series via CrossRef. Full coverage would require a manually compiled title list.</li>
+    </ul>
+
+    <h2>What This Means for the Visualizations</h2>
+
+    <p>The analytical tools on the <a href="/explore">Explore</a> page are built entirely from the indexed data. Coverage gaps affect each visualization differently:</p>
+
+    <ul class="coverage-list">
+      <li><strong>Publication timeline</strong> — Journals indexed via RSS or scrape appear in the timeline but may have gaps where issues weren't captured. Pre-2000 back catalog is sparse for most journals.</li>
+      <li><strong>Topic co-occurrence heatmap</strong> — Tags are assigned using title and abstract text. RSS-only articles often have no abstract, which reduces tagging accuracy for those venues.</li>
+      <li><strong>Author network</strong> — Co-authorship links depend on articles being in the index. Authors who publish primarily in venues with partial coverage will appear less connected than they actually are. Solo authors may appear as isolates even if they have collaborative work in unindexed venues.</li>
+      <li><strong>Citation network</strong> — Only journals that deposit reference lists with CrossRef contribute citation edges. See the coverage table on the <a href="/explore#citations">Citations tab</a> for per-journal detail. RSS-only journals contribute zero citation edges regardless of how frequently they cite or are cited.</li>
+      <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>
+    </ul>
+
+    <h2>What We're Working On</h2>
+
+    <p>The most tractable gaps are the university press series where DOIs exist but series metadata is missing — Routledge in particular. Full coverage there requires assembling a curated title list from library catalog sources, then running individual DOI lookups. If you maintain a Zotero library of rhet/comp books or can point to a good source for any of the series above, please <a href="mailto:justalewis1@gmail.com">get in touch</a>.</p>
+
+    <p>The journals with no CrossRef registration (Kairos, Enculturation, Composition Forum, and others) are harder. Improving their coverage in Pinakes would require either the publishers registering DOIs — a decision that's theirs to make — or more sophisticated scraping infrastructure. For now they contribute what they can.</p>
+
+    <p>← <a href="/about">Back to About</a></p>
+
+  </main>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot;
+    <a href="/new">What's New</a> &middot;
+    <a href="/explore">Explore</a> &middot;
+    <a href="/authors">Authors</a> &middot;
+    <a href="/most-cited">Most Cited</a> &middot;
+    <a href="/books">Books</a> &middot;
+    <a href="/about">About</a> &middot;
+    <a href="/coverage">Coverage</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    &copy; 2026 Justin Lewis
+  </footer>
+
+</div><!-- /about-page-wrap -->
+
+<script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

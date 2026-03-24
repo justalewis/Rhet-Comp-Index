@@ -799,6 +799,12 @@ def about():
     return render_template("about.html")
 
 
+@app.route("/coverage")
+def coverage():
+    """Index coverage page — what's fully indexed, what's partial, what's missing."""
+    return render_template("coverage.html")
+
+
 @app.route("/most-cited")
 @cache_response(seconds=1800)
 def most_cited_page():
