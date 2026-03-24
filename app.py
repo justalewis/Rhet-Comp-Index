@@ -793,6 +793,12 @@ def new_articles():
     )
 
 
+@app.route("/health")
+def health():
+    """Lightweight health check — no DB queries, returns immediately."""
+    return "ok", 200
+
+
 @app.route("/about")
 def about():
     """About page — project background, values, developer info."""
