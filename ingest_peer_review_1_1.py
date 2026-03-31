@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "articles.db")
+DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "articles.db"))
 JSON_PATH = os.path.join(os.path.dirname(__file__), "peer_review_references.json")
 
 # Issue 1.1 publication year — The Peer Review launched in 2017
