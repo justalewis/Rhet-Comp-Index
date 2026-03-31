@@ -70,7 +70,7 @@ from db import (
     get_books, get_book_count, get_book_by_id, get_book_chapters,
     get_book_publishers,
 )
-from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, UNAVAILABLE_JOURNALS, JOURNAL_GROUPS
+from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, MANUAL_JOURNALS, UNAVAILABLE_JOURNALS, JOURNAL_GROUPS
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -196,6 +196,12 @@ def _build_sidebar():
         web_journals.append({
             "name":   j["name"],
             "source": "scrape",
+            "count":  count_map.get(j["name"], 0),
+        })
+    for j in MANUAL_JOURNALS:
+        web_journals.append({
+            "name":   j["name"],
+            "source": "manual",
             "count":  count_map.get(j["name"], 0),
         })
 

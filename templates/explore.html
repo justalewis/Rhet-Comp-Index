@@ -110,6 +110,12 @@
           </a>
         </div>
         <div class="nav-item">
+          <a href="/coverage" class="feature-nav-link">
+            <span class="feature-nav-icon">◫</span>
+            Coverage
+          </a>
+        </div>
+        <div class="nav-item">
           <a href="/about" class="feature-nav-link">
             <span class="feature-nav-icon">&#9432;</span>
             About
@@ -187,7 +193,8 @@
 
     <!-- ── Timeline tab ──────────────────────────────────────── -->
     <div id="tab-timeline" class="tab-panel">
-      <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record. <a href="/coverage" class="coverage-note-link">Coverage notes →</a></p>
+      <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: not all journals contribute equal data to this chart →</a></p>
       <div class="chart-toolbar">
         <button id="toggle-journals-btn" class="filter-apply-btn" onclick="toggleJournals()">
           Show top 8 journals only
@@ -201,7 +208,8 @@
 
     <!-- ── Topics tab ────────────────────────────────────────── -->
     <div id="tab-topics" class="tab-panel" style="display:none;">
-      <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap — a quick way to see which research threads are most tightly intertwined. Tags are assigned from title and abstract text; journals without abstracts in the index are underrepresented. <a href="/coverage" class="coverage-note-link">Coverage notes →</a></p>
+      <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap — a quick way to see which research threads are most tightly intertwined. Tags are assigned from title and abstract text; journals without abstracts in the index are underrepresented.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals indexed via RSS or scraping often lack abstracts and are underrepresented here →</a></p>
       <p class="explore-hint">Tag co-occurrence — how often topic pairs appear together. Hover cells for counts.</p>
       <div class="heatmap-container" id="heatmap-container">
         <div class="loading-msg">Loading tag data…</div>
@@ -214,7 +222,8 @@
       <div class="network-explainer">
         <p>This graph maps collaborative relationships among the most-published authors in Pinakes. Each circle represents an author — its size reflects their total article count in the index. Lines connect authors who have co-authored at least one article together; thicker lines mean more shared publications.</p>
         <p>Rhetoric and composition is historically a solo-author field, so most scholars don't appear here: they either have fewer indexed publications than the threshold you've set, or they haven't co-authored with others in the index. The authors who do appear — and especially the clusters that form around them — tend to reflect sustained research communities: writing center scholars, WAC researchers, technical communication groups, empirical writing researchers. Isolates (nodes with no edges) are frequent publishers who work primarily alone.</p>
-        <p class="network-howto"><strong>How to use it:</strong> Scroll or pinch to zoom · Drag nodes to rearrange · <strong>Click a node</strong> to highlight that author's connections; click again or use the "View profile" button to open their full page · Use the controls below to change which authors appear. Authors who publish primarily in journals without CrossRef DOIs will appear less connected than their actual collaborative record; see <a href="/coverage" class="coverage-note-link">coverage notes</a> for detail.</p>
+        <p class="network-howto"><strong>How to use it:</strong> Scroll or pinch to zoom · Drag nodes to rearrange · <strong>Click a node</strong> to highlight that author's connections; click again or use the "View profile" button to open their full page · Use the controls below to change which authors appear.</p>
+        <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: authors who publish primarily in journals without CrossRef DOIs appear less connected than their actual collaborative record →</a></p>
       </div>
 
       <!-- Controls -->
@@ -264,7 +273,8 @@
     <!-- ── Citations tab ─────────────────────────────────────── -->
     <div id="tab-citations" class="tab-panel" style="display:none;">
 
-      <p class="tab-intro">Articles most cited by other work indexed here — a rough measure of internal influence within the field as captured by this database. Filter by year, journal, or topic. Coverage depends on publisher reference deposit practices; see the per-journal table below or the full <a href="/coverage" class="coverage-note-link">index coverage notes →</a></p>
+      <p class="tab-intro">Articles most cited by other work indexed here — a rough measure of internal influence within the field as captured by this database. Filter by year, journal, or topic. Coverage depends on publisher reference deposit practices; see the per-journal table below.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: only journals that deposit reference lists with CrossRef contribute citation data — many do not →</a></p>
 
       <div class="citations-toolbar">
         <span class="filter-label">Most Cited in This Index</span>
@@ -354,6 +364,7 @@
     <div id="tab-cittrends" class="tab-panel" style="display:none;">
 
       <p class="tab-intro">Average citations per article by publication year — showing how citation density has changed over time. Earlier articles have had more time to accumulate citations, so the curve naturally rises toward older work. Filter by journal to compare citation patterns across venues.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation counts reflect only journals that deposit reference lists with CrossRef →</a></p>
 
       <div class="chart-toolbar">
         <label class="filter-label" for="cittrends-journal">Journal:</label>
@@ -378,6 +389,7 @@
     <div id="tab-citnet" class="tab-panel" style="display:none;">
 
       <p class="tab-intro">Force-directed graph of citation relationships between articles in this index. Each node is an article; edges represent a citation. Raise the minimum-citations threshold to show only the most densely connected work. Filter by journal or year to focus on a particular corner of the field.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals without CrossRef reference deposits contribute no edges to this graph →</a></p>
 
       <!-- Controls bar -->
       <div class="citnet-controls">
@@ -467,7 +479,8 @@
     <!-- ── Institutions tab ──────────────────────────────────── -->
     <div id="tab-institutions" class="tab-panel" style="display:none;">
 
-      <p class="tab-intro">Institutional output across the index — derived from author affiliation data collected via OpenAlex. The bar chart shows the 25 most productive institutions by article count; the line chart tracks the top 10 over time. Institutions are attributed at the per-article level (one article may contribute to multiple institutions). Articles without CrossRef DOIs have no OpenAlex record and contribute no affiliation data; institutions associated with journals indexed via RSS or scraping are undercounted. <a href="/coverage" class="coverage-note-link">Coverage notes →</a></p>
+      <p class="tab-intro">Institutional output across the index — derived from author affiliation data collected via OpenAlex. The bar chart shows the 25 most productive institutions by article count; the line chart tracks the top 10 over time. Institutions are attributed at the per-article level (one article may contribute to multiple institutions). Articles without CrossRef DOIs have no OpenAlex record and contribute no affiliation data; institutions associated with journals indexed via RSS or scraping are undercounted.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: affiliation data requires a CrossRef DOI — RSS-only journals contribute no institution data →</a></p>
 
       <h4 class="chart-section-head">Top 25 Institutions by Article Count</h4>
       <div class="chart-container chart-container--horiz" id="inst-bar-container">

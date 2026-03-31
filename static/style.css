@@ -2486,16 +2486,29 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .coverage-list--partial li::marker { color: #b07a30; }
 .coverage-list--gap li::marker { color: var(--text-muted); }
 
-/* Inline coverage link in visualization tab-intros */
+/* Coverage link in visualization tab-intros */
 .coverage-note-link {
   font-family: var(--font-ui);
-  font-size: 0.8em;
+  font-size: 0.82em;
   color: var(--text-muted);
   text-decoration: none;
   border-bottom: 1px dotted var(--text-muted);
   white-space: nowrap;
 }
 .coverage-note-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Standalone coverage link line below each tab intro */
+.tab-coverage-link {
+  margin: 0.15rem 0 0.9rem 0;
+  padding: 0.35rem 0.6rem;
+  border-left: 2px solid var(--border);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.tab-coverage-link a.coverage-note-link {
+  font-size: 1em;
+}
 
 .about-title {
   font-family: var(--font-body);

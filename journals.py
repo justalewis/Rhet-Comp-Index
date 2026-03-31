@@ -169,6 +169,24 @@ SCRAPE_JOURNALS = [
     },
 ]
 
+# ── Manually indexed print journals ──────────────────────────────────────────
+# No web presence, no CrossRef DOIs, no RSS. Records inserted via one-off
+# ingestion scripts (e.g. ingest_pretext.py) from hand-compiled indexes.
+# source='manual' in the articles table. No live refresh.
+
+MANUAL_JOURNALS = [
+    {
+        "name": "Pre/Text",
+        "full_name": "Pre/Text: A Journal of Rhetorical Theory",
+        "editor": "Victor J. Vitanza",
+        "years": "1980–2016",
+        "volumes": "1–22 (vols 19–20 not indexed)",
+        "notes": "Analog-only journal; never digitized or assigned DOIs. "
+                 "234 articles indexed from a hand-compiled record across 22 volumes. "
+                 "Ingested via ingest_pretext.py.",
+    },
+]
+
 # ── Journals currently unavailable ───────────────────────────────────────────
 # Displayed in the sidebar for reference. Not fetched.
 
@@ -207,6 +225,7 @@ JOURNAL_GROUPS = [
         "Rhetoric & Public Affairs",
         "Poroi",
         "Advances in the History of Rhetoric",
+        "Pre/Text",
         "Peitho",
         "Present Tense: A Journal of Rhetoric in Society",
         "KB Journal: The Journal of the Kenneth Burke Society",
@@ -252,4 +271,5 @@ ALL_JOURNAL_NAMES = (
     [j["name"] for j in CROSSREF_JOURNALS]
     + [j["name"] for j in RSS_JOURNALS]
     + [j["name"] for j in SCRAPE_JOURNALS]
+    + [j["name"] for j in MANUAL_JOURNALS]
 )

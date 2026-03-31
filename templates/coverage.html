@@ -53,6 +53,8 @@
         <a href="/explore">Explore</a>
         <a href="/authors">Authors</a>
         <a href="/most-cited">Most Cited</a>
+        <a href="/books">Books</a>
+        <a href="/coverage">Coverage</a>
       </nav>
     </div>
   </header>
@@ -112,6 +114,12 @@
     <h2>Journals: Partial or Limited Coverage</h2>
 
     <p>These journals are in the index but contribute reduced data to the visualizations. The technical reason varies by venue.</p>
+
+    <h3>Manually indexed print journals — analog only</h3>
+    <p>These journals were never digitized, never registered DOIs, and have no web presence. Coverage comes from hand-compiled article indexes. Records include title, author, volume/issue, and date only. No links to source material exist.</p>
+    <ul class="coverage-list coverage-list--partial">
+      <li><em>Pre/Text: A Journal of Rhetorical Theory</em> (ed. Victor J. Vitanza, 1980–2016) — 234 articles across volumes 1–22; volumes 19–20 not indexed. The journal is one of the most significant theory-oriented publications in the history of rhetoric and composition and was never digitized.</li>
+    </ul>
 
     <h3>RSS or scrape only — no CrossRef DOIs</h3>
     <p>These are legitimate field journals that have not registered DOIs. Pinakes collects title, author, and date from RSS feeds or by parsing the journal website. No citation data, no OpenAlex enrichment, no reference lists.</p>
@@ -185,12 +193,6 @@
       <li><strong>Citation network</strong> — Only journals that deposit reference lists with CrossRef contribute citation edges. See the coverage table on the <a href="/explore#citations">Citations tab</a> for per-journal detail. RSS-only journals contribute zero citation edges regardless of how frequently they cite or are cited.</li>
       <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>
     </ul>
-
-    <h2>What We're Working On</h2>
-
-    <p>The most tractable gaps are the university press series where DOIs exist but series metadata is missing — Routledge in particular. Full coverage there requires assembling a curated title list from library catalog sources, then running individual DOI lookups. If you maintain a Zotero library of rhet/comp books or can point to a good source for any of the series above, please <a href="mailto:justalewis1@gmail.com">get in touch</a>.</p>
-
-    <p>The journals with no CrossRef registration (Kairos, Enculturation, Composition Forum, and others) are harder. Improving their coverage in Pinakes would require either the publishers registering DOIs — a decision that's theirs to make — or more sophisticated scraping infrastructure. For now they contribute what they can.</p>
 
     <p>← <a href="/about">Back to About</a></p>
 
