@@ -2023,6 +2023,46 @@ def get_author_institution_summary(author_name):
 
 # ── Citation centrality (eigenvector + betweenness) ────────────────────────────
 
+def _pagerank_python(G, alpha=0.85, max_iter=500, tol=1e-06):
+    """
+    Pure-Python iterative PageRank (no numpy/scipy required).
+
+    Equivalent to nx.pagerank() but avoids the numpy import that fails
+    on the slim production Docker image.
+    """
+    N = len(G)
+    if N == 0:
+        return {}
+
+    nodes = list(G)
+    # Start with uniform distribution
+    pr = {n: 1.0 / N for n in nodes}
+    # Pre-compute in-edges for each node
+    in_edges = {n: list(G.predecessors(n)) for n in nodes}
+    out_degree = {n: G.out_degree(n) for n in nodes}
+
+    dangling = [n for n in nodes if out_degree[n] == 0]
+
+    for _ in range(max_iter):
+        prev = pr.copy()
+        # Sum of PageRank from dangling nodes (no outgoing edges)
+        dangling_sum = sum(prev[n] for n in dangling)
+
+        for n in nodes:
+            # Incoming contribution
+            incoming = sum(prev[src] / out_degree[src]
+                          for src in in_edges[n]
+                          if out_degree[src] > 0)
+            pr[n] = (1.0 - alpha) / N + alpha * (incoming + dangling_sum / N)
+
+        # Check convergence
+        err = sum(abs(pr[n] - prev[n]) for n in nodes)
+        if err < N * tol:
+            break
+
+    return pr
+
+
 def get_citation_centrality(min_citations=1, journals=None,
                             year_from=None, year_to=None, max_nodes=600):
     """
@@ -2104,7 +2144,10 @@ def get_citation_centrality(min_citations=1, journals=None,
     # is the damped variant of eigenvector centrality — conceptually
     # equivalent but handles disconnected components (common in real
     # citation networks) via its teleportation/damping factor.
-    eigen = nx.pagerank(G, alpha=0.85, max_iter=500)
+    #
+    # Pure-Python iterative implementation to avoid numpy/scipy dependency
+    # in production (the Docker image doesn't ship numpy).
+    eigen = _pagerank_python(G, alpha=0.85, max_iter=500, tol=1e-06)
 
     between = nx.betweenness_centrality(G)
 
