@@ -17,6 +17,7 @@ Routes:
   GET  /api/stats/most-cited       — JSON: top articles by internal citation count
   GET  /api/citations/network      — JSON: force-graph nodes + edges for global citation network
   GET  /api/citations/ego          — JSON: 2-degree ego network around a specific article
+  GET  /api/citations/centrality   — JSON: citation network with eigenvector + betweenness centrality
   GET  /api/stats/citation-trends  — JSON: avg internal citations per article per year
   GET  /new                     — articles fetched in last 7 days
   GET  /books                   — monograph and edited-collection index
@@ -45,6 +46,7 @@ from db import (
     get_all_authors, get_author_articles,
     get_most_cited,
     get_citation_network,
+    get_citation_centrality,
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
@@ -729,6 +731,25 @@ def api_citations_network():
         journals=journals or None,
         year_from=year_from or None,
         year_to=year_to or None,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/centrality")
+def api_citation_centrality():
+    """JSON: citation network with eigenvector and betweenness centrality scores."""
+    min_citations = max(1, int(request.args.get("min_citations", 2)))
+    max_nodes     = min(800, max(50, int(request.args.get("max_nodes", 600))))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_citation_centrality(
+        min_citations=min_citations,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        max_nodes=max_nodes,
     )
     return jsonify(data)
 

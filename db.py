@@ -2019,3 +2019,123 @@ def get_author_institution_summary(author_name):
                 ORDER BY cnt DESC
             """, (author_name,)).fetchall()
     return [(r["display_name"], r["cnt"]) for r in rows]
+
+
+# ── Citation centrality (eigenvector + betweenness) ────────────────────────────
+
+def get_citation_centrality(min_citations=1, journals=None,
+                            year_from=None, year_to=None, max_nodes=600):
+    """
+    Build a directed citation graph and compute eigenvector centrality and
+    betweenness centrality for each node.
+
+    Nodes  = articles with internal_cited_by_count >= min_citations (capped at
+             max_nodes, ranked by citation count so the most-cited are kept).
+    Links  = citations where *both* source and target are in the node set.
+
+    Returns {
+        nodes: [..., eigenvector_centrality, betweenness_centrality],
+        links: [...],
+        top_eigenvector: [top 25 by eigenvector],
+        top_betweenness: [top 25 by betweenness],
+        node_count, link_count
+    }
+    """
+    import networkx as nx
+
+    where  = ["internal_cited_by_count >= ?"]
+    params = [min_citations]
+
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            where.append(f"journal IN ({placeholders})")
+            params.extend(journals)
+        elif isinstance(journals, str):
+            where.append("journal = ?")
+            params.append(journals)
+
+    if year_from:
+        where.append("pub_date >= ?")
+        params.append(f"{year_from}-01-01")
+    if year_to:
+        where.append("pub_date <= ?")
+        params.append(f"{year_to}-12-31")
+
+    clause = "WHERE " + " AND ".join(where)
+
+    with get_conn() as conn:
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count, internal_cites_count
+            FROM articles
+            {clause}
+            ORDER BY internal_cited_by_count DESC
+            LIMIT ?
+        """, params + [max_nodes]).fetchall()
+
+        if not node_rows:
+            return {"nodes": [], "links": [], "top_eigenvector": [],
+                    "top_betweenness": [], "node_count": 0, "link_count": 0}
+
+        node_ids = {r["id"] for r in node_rows}
+
+        link_rows = conn.execute(f"""
+            WITH filtered AS (
+                SELECT id FROM articles {clause}
+                ORDER BY internal_cited_by_count DESC LIMIT ?
+            )
+            SELECT c.source_article_id AS source,
+                   c.target_article_id AS target
+            FROM citations c
+            WHERE c.source_article_id IN (SELECT id FROM filtered)
+              AND c.target_article_id IN (SELECT id FROM filtered)
+        """, params + [max_nodes]).fetchall()
+
+    # ── Build NetworkX directed graph ──────────────────────────────────────
+    G = nx.DiGraph()
+    G.add_nodes_from(node_ids)
+    for r in link_rows:
+        G.add_edge(r["source"], r["target"])
+
+    # ── Compute centrality metrics ─────────────────────────────────────────
+    # PageRank on the citation graph: incoming citations raise your score,
+    # and being cited by highly-cited articles raises it further.  PageRank
+    # is the damped variant of eigenvector centrality — conceptually
+    # equivalent but handles disconnected components (common in real
+    # citation networks) via its teleportation/damping factor.
+    eigen = nx.pagerank(G, alpha=0.85, max_iter=500)
+
+    between = nx.betweenness_centrality(G)
+
+    # Normalise scores to [0, 1] for consistent front-end display
+    max_eigen   = max(eigen.values())   if eigen   else 1
+    max_between = max(between.values()) if between else 1
+    if max_eigen == 0:
+        max_eigen = 1
+    if max_between == 0:
+        max_between = 1
+
+    # ── Build response ─────────────────────────────────────────────────────
+    nodes = []
+    for r in node_rows:
+        nid = r["id"]
+        node = dict(r)
+        node["eigenvector_centrality"] = round(eigen.get(nid, 0) / max_eigen, 6)
+        node["betweenness_centrality"] = round(between.get(nid, 0) / max_between, 6)
+        nodes.append(node)
+
+    links = [{"source": r["source"], "target": r["target"]} for r in link_rows]
+
+    # Top-25 tables sorted by each metric
+    by_eigen = sorted(nodes, key=lambda n: n["eigenvector_centrality"], reverse=True)[:25]
+    by_between = sorted(nodes, key=lambda n: n["betweenness_centrality"], reverse=True)[:25]
+
+    return {
+        "nodes":            nodes,
+        "links":            links,
+        "top_eigenvector":  by_eigen,
+        "top_betweenness":  by_between,
+        "node_count":       len(nodes),
+        "link_count":       len(links),
+    }
