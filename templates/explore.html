@@ -484,6 +484,45 @@
       <p class="tab-intro">Network centrality analysis of citation relationships across the index. <strong>Eigenvector centrality</strong> identifies articles connected to the most highly-connected work — the intellectual epicentres of the field. <strong>Betweenness centrality</strong> identifies bridge articles that sit on the shortest paths between clusters — the work that connects different conversations. Inspired by <a href="https://publicationsncte.org/content/journals/10.58680/ccc2026773430" target="_blank" rel="noopener">Marie Pruitt's bibliometric network analysis of <em>CCC</em> (2026)</a>, extended here across all journals in the index.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: centrality scores reflect only journals that deposit reference lists with CrossRef →</a></p>
 
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>The citation network is constructed from reference lists deposited by publishers with <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a>. When an article in the index includes another indexed article in its reference list, that creates a directed edge from the citing article to the cited article. Only <em>internal</em> citations are represented &mdash; references to work outside this index are excluded. Not all journals deposit reference lists with CrossRef; journals that do not contribute no edges to this graph. See the <a href="/coverage">coverage page</a> for per-journal details.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The visualization displays a directed graph <em>G&thinsp;</em>=&thinsp;(<em>V</em>,&thinsp;<em>E</em>), where each node <em>v</em>&thinsp;&isin;&thinsp;<em>V</em> is an article and each directed edge (<em>u</em>,&thinsp;<em>v</em>)&thinsp;&isin;&thinsp;<em>E</em> means article <em>u</em> cites article <em>v</em>. Nodes are filtered to articles with at least <em>n</em> internal citations (configurable via the &ldquo;Min. citations&rdquo; slider), capped at 600 nodes ranked by citation count. Edges are included only when both endpoints are in the filtered node set.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Eigenvector centrality (PageRank)</h4>
+        <p>Eigenvector centrality measures an article&rsquo;s importance based not just on how many articles cite it, but on the importance of those citing articles. An article cited by five highly-cited articles scores higher than one cited by fifty peripheral ones. This captures the intuition that influence propagates through the network: being embedded in the most connected region of scholarship matters more than raw citation volume.</p>
+        <p>The implementation uses <strong>PageRank</strong> (Brin &amp; Page, 1998), a damped variant of eigenvector centrality originally developed for web search. PageRank adds a &ldquo;damping factor&rdquo; (&alpha;&thinsp;=&thinsp;0.85) that models a random walker who follows citation links 85% of the time and jumps to a random article 15% of the time. This handles a practical problem with classical eigenvector centrality: real citation networks contain disconnected components (clusters of articles with no citation links between them), and classical eigenvector centrality assigns zero to all nodes outside the largest component. PageRank&rsquo;s damping factor ensures every node receives a nonzero score, producing meaningful rankings across the full graph.</p>
+        <p>Scores are normalized to a 0&ndash;100% scale relative to the highest-scoring article in the current filtered set.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Betweenness centrality</h4>
+        <p>Betweenness centrality measures how often an article lies on the shortest path between two other articles in the network. Formally, for a node <em>v</em>, betweenness is the sum over all pairs (<em>s</em>,&thinsp;<em>t</em>) of the fraction of shortest paths from <em>s</em> to <em>t</em> that pass through <em>v</em>. Articles with high betweenness are <strong>bridge</strong> articles &mdash; they connect subcommunities of scholarship that would otherwise be more isolated from each other. Removing a high-betweenness article would increase the distance between clusters of the network.</p>
+        <p>Where eigenvector centrality rewards being embedded in a dense, highly-connected cluster, betweenness centrality rewards occupying a position <em>between</em> clusters. An article can have modest eigenvector centrality but high betweenness if it is the primary link between two otherwise separate conversations &mdash; for instance, a genre theory article that bridges writing studies and technical communication.</p>
+        <p>Scores are normalized to a 0&ndash;100% scale relative to the highest-scoring article in the current filtered set.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Visualization</h4>
+        <p>The graph uses a <strong>force-directed layout</strong> (d3-force), where nodes repel each other and edges act as springs pulling connected nodes together. The simulation iterates until it reaches a stable configuration, producing a layout where clusters of densely-cited articles appear as visual groupings and bridge articles tend to sit between them. This is comparable to the ForceAtlas&thinsp;2 algorithm used in Gephi-based bibliometric studies.</p>
+        <p><strong>Node size</strong> can be toggled between three modes: eigenvector centrality (larger = more influential), betweenness centrality (larger = more bridging), or raw citation count. <strong>Node color</strong> can be toggled between journal identity (each journal a distinct color) and a heat-mapped gradient (cream &rarr; brown) representing the selected centrality metric.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Interpretation and limitations</h4>
+        <p>These metrics reflect structural position within <em>this index only</em>. An article that is foundational to the broader field but rarely cited <em>within</em> the journals indexed here will not score highly. Conversely, an article that is heavily cited within a small cluster of indexed journals may score higher than its broader influence warrants. Citation data depends on publisher deposits with CrossRef; journals that do not deposit reference lists are effectively invisible to this analysis.</p>
+        <p>The network is also sensitive to <strong>time</strong>: older articles have had more time to accumulate citations, so they tend to dominate both metrics. Use the year-range filters to isolate a specific period and see which articles are structurally central within that window.</p>
+        <p>Scores change as the index grows and as more citation data is fetched. They should be understood as a snapshot of the network&rsquo;s current state, not as fixed measures of an article&rsquo;s permanent importance.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Brin, S., &amp; Page, L. (1998). The anatomy of a large-scale hypertextual web search engine. <em>Computer Networks and ISDN Systems, 30</em>(1&ndash;7), 107&ndash;117.</li>
+          <li>Freeman, L. C. (1977). A set of measures of centrality based on betweenness. <em>Sociometry, 40</em>(1), 35&ndash;41.</li>
+          <li>Pruitt, M. (2026). (Re)Considering centrality: A bibliometric network analysis of <em>College Composition and Communication</em>, 1950&ndash;2022. <em>College Composition and Communication, 77</em>(3). <a href="https://publicationsncte.org/content/journals/10.58680/ccc2026773430" target="_blank" rel="noopener">https://publicationsncte.org/content/journals/10.58680/ccc2026773430</a></li>
+        </ul>
+
+        </div>
+      </details>
+
       <!-- Controls bar -->
       <div class="citnet-controls">
 
