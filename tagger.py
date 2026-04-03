@@ -218,6 +218,7 @@ VOCAB = {
         "process approach", "process pedagogy",
         "pedagogical approach to writing",
         "pedagogy", "pedagogical",  # generic pedagogical discussion
+        "classroom", "assignment",  # context-specific pedagogy terms
     ],
 
     # Scope: Writing courses and programs designed for underprepared
@@ -262,6 +263,7 @@ VOCAB = {
         "curriculum design", "course design", "course development",
         "program design", "course sequence", "syllabus design",
         "curriculum development", "course redesign",
+        "curriculum", "course",  # generic course/curriculum discussion
     ],
 
     # Scope: Writing as a learning tool and writing embedded across
@@ -316,6 +318,7 @@ VOCAB = {
         "preservice writing teacher", "writing teacher education",
         "teacher research", "practitioner research",
         "teacher as researcher",
+        "teacher", "teaching",  # generic teacher/teaching discussion
     ],
 
 
@@ -597,6 +600,7 @@ VOCAB = {
         "online composition", "distance writing", "hybrid writing",
         "online writing pedagogy", "learning management system",
         "lms", "canvas lms", "blackboard",
+        "online", "digital", "web",  # generic online/digital context
     ],
 
     # Scope: AI tools and their applications in writing and writing
@@ -696,6 +700,7 @@ VOCAB = {
         "racial literacy", "raciolinguistics",
         "critical race theory and writing",
         "equity in writing", "white supremacy and writing",
+        "social justice", "equity", "access", "identity",  # broader social context
     ],
 
     # Scope: Gender and sexuality in writing and rhetoric. Includes
