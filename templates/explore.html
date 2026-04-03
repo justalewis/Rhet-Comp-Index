@@ -94,14 +94,15 @@
         <div class="nav-item" id="nav-most-cited">
           <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
             <span class="feature-nav-icon">⬡</span>
-            Most Cited
+            Citations
             <span class="nav-chevron">▾</span>
           </button>
           <div class="nav-dropdown">
-            <a href="/most-cited" class="nav-dropdown-item">All</a>
+            <a href="/most-cited" class="nav-dropdown-item">Most Cited</a>
             <a href="/most-cited?view=journal" class="nav-dropdown-item">By Journal</a>
             <a href="/most-cited?view=topic" class="nav-dropdown-item">By Topic</a>
             <a href="/most-cited?view=decade" class="nav-dropdown-item">By Decade</a>
+            <a href="/explore#cocitation" class="nav-dropdown-item">Co-Citation</a>
           </div>
         </div>
         <div class="nav-item">
@@ -190,6 +191,7 @@
       <button class="explore-tab" onclick="showTab('cittrends', this)" data-hash="citation-trends">Citation Trends</button>
       <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
       <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
+      <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
     </div>
 
@@ -197,6 +199,23 @@
     <div id="tab-timeline" class="tab-panel">
       <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: not all journals contribute equal data to this chart →</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>Article records are drawn from <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a> using the Metadata API, queried by journal ISSN. For each journal, Pinakes fetches all articles with DOIs and records their publication date, title, authors, and abstract where available. A small number of journals are indexed via RSS feeds or web scraping when CrossRef coverage is unavailable; these records may lack structured dates.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Chart construction</h4>
+        <p>Articles are grouped by publication year and journal. The stacked bar chart shows the count of articles published per year for each journal. Years with zero articles for a given journal appear as gaps in that journal&rsquo;s color band. The &ldquo;Show top 8&rdquo; toggle filters to the eight journals with the most articles across all years, reducing visual clutter for trend analysis.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Interpretation and limitations</h4>
+        <p>The timeline reflects <em>indexed</em> output, not total output. Journals added to the index more recently show data only from their first fetch onward, even if they published earlier. Journals that publish infrequently or that deposit metadata irregularly with CrossRef may show apparent gaps that reflect data availability rather than actual publication hiatuses. The date used is the CrossRef <code>published-print</code> or <code>published-online</code> date, whichever is earlier; some publishers backdate or batch-release content, which can create artificial spikes.</p>
+
+        </div>
+      </details>
+
       <div class="chart-toolbar">
         <button id="toggle-journals-btn" class="filter-apply-btn" onclick="toggleJournals()">
           Show top 8 journals only
@@ -212,6 +231,23 @@
     <div id="tab-topics" class="tab-panel" style="display:none;">
       <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap — a quick way to see which research threads are most tightly intertwined. Tags are drawn from a 61-term disciplinary vocabulary and matched against title and abstract text, currently covering about 73% of indexed articles. Journals without abstracts in the index are underrepresented.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals indexed via RSS or scraping often lack abstracts and are underrepresented here →</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Tagging system</h4>
+        <p>Pinakes uses a controlled vocabulary of 61 disciplinary topics developed to capture the major research areas in rhetoric and composition. Each article is tagged automatically by matching its title and abstract text against keyword patterns for each topic. An article can receive multiple tags. The tagging is rule-based (string matching with word boundaries), not machine-learned; it trades recall for precision, preferring to miss a marginal match rather than over-assign topics.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Co-occurrence matrix</h4>
+        <p>The heatmap displays a symmetric matrix where each cell (<em>i</em>,&thinsp;<em>j</em>) contains the number of articles tagged with both topic <em>i</em> and topic <em>j</em>. Diagonal cells show the total count for each topic alone. The color intensity uses a sequential scale from white (zero co-occurrences) to dark brown (highest co-occurrence count in the matrix). Only topic pairs with at least one co-occurrence are colored.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Interpretation and limitations</h4>
+        <p>High co-occurrence between two topics means they frequently appear on the same article, suggesting thematic overlap or a recognized sub-field at their intersection. However, topics with very high base rates (e.g., &ldquo;pedagogy&rdquo;) will naturally co-occur with many others simply because they are common &mdash; the matrix does not normalize for frequency. Articles lacking abstracts receive fewer tags, so journals indexed via RSS or scraping are systematically underrepresented. The 61-term vocabulary was designed for rhetoric and composition specifically and may not adequately capture interdisciplinary work that uses different terminology.</p>
+
+        </div>
+      </details>
+
       <p class="explore-hint">Tag co-occurrence — how often topic pairs appear together. Hover cells for counts.</p>
       <div class="heatmap-container" id="heatmap-container">
         <div class="loading-msg">Loading tag data…</div>
@@ -227,6 +263,26 @@
         <p class="network-howto"><strong>How to use it:</strong> Scroll or pinch to zoom · Drag nodes to rearrange · <strong>Click a node</strong> to highlight that author's connections; click again or use the "View profile" button to open their full page · Use the controls below to change which authors appear.</p>
         <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: authors who publish primarily in journals without CrossRef DOIs appear less connected than their actual collaborative record →</a></p>
       </div>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>Author names are extracted from CrossRef metadata for each article. Co-authorship is inferred from shared bylines: if two authors appear on the same article, they share a co-authorship edge. Author names are normalized (case-folded, whitespace-trimmed) but not disambiguated &mdash; two authors with the same name are treated as one person, and the same author with variant name forms (e.g., with or without middle initial) may appear as separate nodes.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The visualization displays an <em>undirected, weighted</em> graph where each node is an author and each edge connects two authors who have co-authored at least one indexed article. Edge weight equals the number of co-authored articles. The node set is filtered to authors with at least <em>n</em> indexed publications (configurable via the &ldquo;Min. publications&rdquo; dropdown), then capped at the top <em>k</em> by total publication count. Only edges between nodes in the displayed set are shown.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Layout algorithm</h4>
+        <p>The graph uses a <strong>force-directed layout</strong> (d3-force) where nodes repel each other via simulated charge and edges act as springs pulling co-authors together. Stronger co-authorship ties (more shared papers) produce shorter, thicker edges. The simulation iterates until it reaches a visually stable configuration, causing research communities to form visible clusters.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Interpretation and limitations</h4>
+        <p>Clusters in the graph reflect collaborative communities within the indexed journals. However, the network reflects only publications <em>within this index</em>: scholars who collaborate extensively in books, edited collections, or journals not indexed here will appear less connected than their actual collaborative record warrants. Solo-authored work &mdash; still the dominant mode in rhetoric and composition &mdash; is invisible in this graph. Prolific solo authors appear as isolates (unconnected nodes), which is an accurate representation of their collaborative profile within the index but not necessarily of their broader influence.</p>
+        <p>Author name disambiguation remains an unsolved problem in bibliometrics. Common names may inflate connectivity, while name variants for the same author may understate it.</p>
+
+        </div>
+      </details>
 
       <!-- Controls -->
       <div class="network-toolbar">
@@ -277,6 +333,25 @@
 
       <p class="tab-intro">Articles most cited by other work indexed here — a rough measure of internal influence within the field as captured by this database. Filter by year, journal, or topic. Coverage depends on publisher reference deposit practices; see the per-journal table below.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: only journals that deposit reference lists with CrossRef contribute citation data — many do not →</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>Citation counts are derived from reference lists deposited by publishers with <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a>. When an indexed article includes another indexed article in its reference list, that counts as one internal citation. Citations from or to articles <em>outside</em> this index are not tracked. The <code>cite_fetcher.py</code> script matches DOIs in reference lists against DOIs in the articles table.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Counting method</h4>
+        <p>Each article&rsquo;s citation count reflects the number of <em>distinct</em> indexed articles that cite it. Self-citations (an article citing itself) are included if they appear in the CrossRef reference list. The list is ranked by descending citation count. Ties are broken alphabetically by title.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Filters</h4>
+        <p>The year filters restrict which <em>cited</em> articles appear (by their publication year), not which citing articles contribute counts. The journal filter restricts cited articles to a single journal. The topic filter restricts to articles carrying a specific topic tag. All filters interact: selecting &ldquo;From 2010&rdquo; + &ldquo;Journal: CCC&rdquo; shows only CCC articles published in or after 2010, ranked by how often other indexed articles cite them.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>This is an <em>internal</em> citation count — it reflects influence within the journals indexed here, not total citations across all of scholarship. Many rhetoric and composition journals do not deposit reference lists with CrossRef, so their citing behavior is invisible. Older articles have had more time to accumulate citations, creating an inherent recency disadvantage. See the coverage panel below for per-journal reference deposit rates.</p>
+
+        </div>
+      </details>
 
       <div class="citations-toolbar">
         <span class="filter-label">Most Cited in This Index</span>
@@ -368,6 +443,28 @@
       <p class="tab-intro">Average citations per article by publication year — showing how citation density has changed over time. Earlier articles have had more time to accumulate citations, so the curve naturally rises toward older work. Filter by journal to compare citation patterns across venues.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation counts reflect only journals that deposit reference lists with CrossRef →</a></p>
 
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>Citation counts come from reference lists deposited with CrossRef, as described in the <a href="#citations">Citations</a> tab. Each article&rsquo;s citation count is the number of other indexed articles that cite it.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Chart construction</h4>
+        <p>Articles are grouped by publication year. For each year, the chart plots the <strong>mean internal citation count</strong> &mdash; the average number of times articles published that year are cited by other work in the index. The line chart uses year as the x-axis and average citation count as the y-axis.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">The time-accumulation curve</h4>
+        <p>The chart will almost always show a declining curve from left to right. This is not a sign that older scholarship was &ldquo;better&rdquo; &mdash; it reflects the simple fact that older articles have had more years to accumulate citations. An article published in 2000 has had 25+ years of opportunities to be cited, while one from 2024 has had less than two. This <strong>citation age effect</strong> is a well-known feature of bibliometric data. To compare across years on equal footing, the chart would need to be normalized by citation window (e.g., citations received within 5 years of publication), which this index does not currently support.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Journal filter</h4>
+        <p>Selecting a journal restricts the chart to articles published in that journal, allowing comparison of citation trajectories across venues. Some journals will show higher average counts than others; this reflects both the journal&rsquo;s internal influence within this index and the degree to which other journals cite it.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>Average citation counts can be volatile for years with few articles. Journals that entered the index recently will show a truncated history. Because only internal citations are counted, a journal that is frequently cited by work <em>outside</em> this index will appear less influential here than its true impact warrants.</p>
+
+        </div>
+      </details>
+
       <div class="chart-toolbar">
         <label class="filter-label" for="cittrends-journal">Journal:</label>
         <select id="cittrends-journal" class="filter-select"
@@ -392,6 +489,28 @@
 
       <p class="tab-intro">Force-directed graph of citation relationships between articles in this index. Each node is an article; edges represent a citation. Raise the minimum-citations threshold to show only the most densely connected work. Filter by journal or year to focus on a particular corner of the field.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals without CrossRef reference deposits contribute no edges to this graph →</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>The citation network is built from reference lists deposited by publishers with <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a>. Each directed edge represents one article citing another. Only citations between articles <em>both</em> present in this index are shown &mdash; references to external work are excluded.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The graph is <em>directed</em>: an edge from article A to article B means A cites B. Nodes are filtered to articles receiving at least <em>n</em> internal citations (configurable via the slider), capped at 500 nodes ranked by citation count. Edges are retained only when both the citing and cited article appear in the filtered node set. Node size is proportional to internal citation count; node color is assigned by journal.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Layout algorithm</h4>
+        <p>The visualization uses a <strong>force-directed layout</strong> (d3-force). Nodes repel each other via simulated electrostatic charge; citation edges act as spring forces pulling connected nodes together. The simulation runs until the layout stabilizes. Densely interconnected articles cluster together, while articles with few shared citations drift to the periphery.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Search and interaction</h4>
+        <p>The search bar filters by title or author name, highlighting matching nodes. Hovering over a node shows article details and citation count. Clicking a node navigates to its full article page. The graph supports zoom (scroll), pan (drag background), and node drag (drag individual nodes).</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>The network shows only <em>internal</em> citation relationships. An article heavily cited outside this index appears small or absent. Journals that do not deposit reference lists with CrossRef contribute no edges. The cap at 500 nodes means peripheral articles may be excluded even at low minimum-citation thresholds. The force layout is stochastic: the exact node positions change on each load, though the cluster structure remains stable.</p>
+
+        </div>
+      </details>
 
       <!-- Controls bar -->
       <div class="citnet-controls">
@@ -646,11 +765,149 @@
 
     </div><!-- /tab-centrality -->
 
+    <!-- ── Co-Citation tab ──────────────────────────────────────── -->
+    <div id="tab-cocitation" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro">Co-citation analysis reveals which articles the field treats as intellectually related. Two articles are <strong>co-cited</strong> when a third article cites both of them in its reference list. The more often a pair is co-cited, the stronger the field's perception that they belong together. This is a fundamentally different view from direct citation: it captures how the <em>citing community</em> organizes knowledge, not just who cites whom.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: co-citation data depends on journals that deposit reference lists with CrossRef →</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What co-citation measures</h4>
+        <p>Direct citation records intellectual debt: article A cites article B. Co-citation records perceived kinship: articles B and C are co-cited when article A cites both of them. The co-citation count for a pair (B, C) is the number of articles in the index that cite both B and C in their reference lists. A high count means many authors, independently, have treated these two articles as relevant to the same argument.</p>
+        <p>Co-citation analysis was introduced by Henry Small (1973) as a method for mapping the intellectual structure of scientific fields. It has since become one of the standard tools in bibliometrics and scientometrics, used to identify research fronts, trace the evolution of ideas, and reveal how scholarly communities organize knowledge.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The visualization displays an <em>undirected, weighted</em> graph. Each node is an article; each edge connects two articles that have been co-cited at least <em>n</em> times (configurable via the &ldquo;Min. co-citations&rdquo; slider). Edge thickness reflects co-citation frequency &mdash; thicker edges mean a pair is cited together more often. Node size reflects <strong>co-citation strength</strong>: the sum of all edge weights for that node, measuring how deeply embedded it is in the co-citation network overall.</p>
+        <p>The graph is capped at 400 nodes, ranked by co-citation strength, to keep the visualization responsive. Edges are included only when both endpoints appear in the filtered node set.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">How to read the clusters</h4>
+        <p>Because the force-directed layout pulls co-cited articles together, visual clusters represent <strong>intellectual groupings</strong> as perceived by the citing community. Articles that cluster tightly are routinely cited together; articles positioned between clusters bridge different conversations. The clusters often &mdash; but do not always &mdash; align with topical or methodological boundaries.</p>
+        <p>Unlike direct citation (which flows forward in time from cited to citing), co-citation is <strong>retrospective</strong>: it reflects how <em>later</em> scholarship has organized <em>earlier</em> work. An article published in 1985 and one from 2005 can be tightly co-cited if post-2005 scholarship routinely invokes both.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Differences from direct citation and centrality</h4>
+        <p>The <a href="#citnet">Citation Network</a> tab shows who cites whom &mdash; directed edges representing intellectual influence. The <a href="#centrality">Centrality</a> tab computes structural importance within that directed network. Co-citation shows something different: the field&rsquo;s collective perception of which articles <em>belong together</em>. Two articles can be heavily co-cited even if neither cites the other, as long as subsequent work treats them as part of the same conversation.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>Co-citation data depends on reference list deposits with CrossRef. Journals that do not deposit reference lists contribute no co-citation edges. The network reflects only citations <em>within</em> this index &mdash; if two articles are routinely co-cited in books or in journals not indexed here, that relationship is invisible. Co-citation also has a recency bias in reverse: very recent articles have had less time to be co-cited, even if they will become tightly paired in the future.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Small, H. (1973). Co-citation in the scientific literature: A new measure of the relationship between two documents. <em>Journal of the American Society for Information Science, 24</em>(4), 265&ndash;269.</li>
+          <li>White, H. D., &amp; Griffith, B. C. (1981). Author cocitation: A literature measure of intellectual structure. <em>Journal of the American Society for Information Science, 32</em>(3), 163&ndash;171.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <!-- Controls bar -->
+      <div class="citnet-controls">
+
+        <div class="citnet-filters">
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">
+              Min. co-citations:&nbsp;<strong id="cocit-min-val">3</strong>
+            </label>
+            <input type="range" id="cocit-min-slider" class="citnet-slider"
+                   min="1" max="20" value="3"
+                   oninput="onCocitSliderChange(this.value)">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="cocit-year-from">From</label>
+            <select id="cocit-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="cocit-year-to">To</label>
+            <select id="cocit-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="cocit-journal-picker">
+              <summary class="citnet-journal-summary">
+                Journals&nbsp;<span id="cocit-journal-count">(all)</span>
+              </summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label">
+                  <input type="checkbox" id="cocit-check-all" checked
+                         onchange="toggleAllCocitJournals(this)">
+                  <em>All journals</em>
+                </label>
+                {% for j in all_journals %}
+                <label class="citnet-journal-label">
+                  <input type="checkbox" class="cocit-journal-check"
+                         value="{{ j.name }}" checked
+                         onchange="updateCocitJournalCount()">
+                  {{ j.name }}
+                </label>
+                {% endfor %}
+              </div>
+            </details>
+          </div>
+
+          <button class="filter-apply-btn" onclick="loadCocitation()">Compute</button>
+
+        </div>
+
+      </div><!-- /citnet-controls -->
+
+      <div class="citnet-meta">
+        <span id="cocit-stats" class="citnet-stats-text"></span>
+        <div class="citnet-legend" id="cocit-legend"></div>
+      </div>
+
+      <div class="citnet-container" id="cocit-container">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the co-citation graph.</div>
+      </div>
+
+      <p class="explore-hint" style="margin-top:0.5rem;">
+        Click any node to open that article &nbsp;&middot;&nbsp; scroll to zoom &nbsp;&middot;&nbsp; drag to pan &nbsp;&middot;&nbsp; thicker edges = more frequent co-citation
+      </p>
+
+    </div><!-- /tab-cocitation -->
+
     <!-- ── Institutions tab ──────────────────────────────────── -->
     <div id="tab-institutions" class="tab-panel" style="display:none;">
 
       <p class="tab-intro">Institutional output across the index — derived from author affiliation data collected via OpenAlex. The bar chart shows the 25 most productive institutions by article count; the line chart tracks the top 10 over time. Institutions are attributed at the per-article level (one article may contribute to multiple institutions). Articles without CrossRef DOIs have no OpenAlex record and contribute no affiliation data; institutions associated with journals indexed via RSS or scraping are undercounted.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: affiliation data requires a CrossRef DOI — RSS-only journals contribute no institution data →</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+        <p>Institutional affiliations are retrieved from <a href="https://openalex.org/" target="_blank" rel="noopener">OpenAlex</a>, an open bibliographic database. For each article with a CrossRef DOI, Pinakes queries OpenAlex to retrieve author-level affiliation data, which maps each author to their institutional affiliation at the time of publication. Institutions are identified by their <a href="https://ror.org/" target="_blank" rel="noopener">ROR</a> (Research Organization Registry) identifiers when available.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Attribution method</h4>
+        <p>An institution is credited with an article if <em>any</em> author on that article lists it as their affiliation. Multi-authored articles may credit multiple institutions. This is a <strong>whole-count</strong> method (each institution gets full credit for each article), not a fractional-count method (where credit would be divided among co-authors&rsquo; institutions). Whole-counting tends to favor institutions with prolific collaborators.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Charts</h4>
+        <p>The <strong>bar chart</strong> shows the 25 institutions with the highest article counts across the full index. The <strong>line chart</strong> shows the top 10 institutions&rsquo; article counts over time (by publication year), allowing comparison of institutional trajectories. Both charts use the same whole-count attribution.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>OpenAlex affiliation data is imperfect: some authors lack affiliations, others have outdated or ambiguous entries. Institutional mergers, name changes, and multi-campus systems can split one institution&rsquo;s output across multiple entries. Articles without CrossRef DOIs (e.g., those indexed via RSS) have no OpenAlex record and contribute no affiliation data, systematically undercounting institutions associated with those journals. Authors who changed institutions mid-career are credited to whichever institution OpenAlex records for each specific article.</p>
+
+        </div>
+      </details>
 
       <h4 class="chart-section-head">Top 25 Institutions by Article Count</h4>
       <div class="chart-container chart-container--horiz" id="inst-bar-container">
@@ -681,6 +938,7 @@ let citationsLoaded    = false;
 let citTrendsLoaded    = false;
 let citnetLoaded       = false;
 let centralityLoaded   = false;
+let cocitationLoaded   = false;
 let institutionsLoaded = false;
 
 function showTab(name, btn) {
@@ -731,6 +989,10 @@ function showTab(name, btn) {
   if (name === 'centrality' && !centralityLoaded) {
     // Don't auto-load — user clicks "Compute" to start
     centralityLoaded = true;
+  }
+  if (name === 'cocitation' && !cocitationLoaded) {
+    // Don't auto-load — user clicks "Compute" to start
+    cocitationLoaded = true;
   }
   if (name === 'institutions' && !institutionsLoaded) {
     institutionsLoaded = true;
@@ -1923,6 +2185,284 @@ function renderCentralityTables(data) {
 
   renderTable('cent-table-eigen', data.top_eigenvector);
   renderTable('cent-table-between', data.top_betweenness);
+}
+
+
+// ── Co-Citation ──────────────────────────────────────────────────────────────
+
+let cocitSimulation   = null;
+let cocitZoomBehavior = null;
+let cocitSvgEl        = null;
+let cocitNodeSel      = null;
+let cocitLinkSel      = null;
+let cocitNodes        = [];
+let cocitLinks        = [];
+let cocitDebounce     = null;
+
+function onCocitSliderChange(val) {
+  document.getElementById('cocit-min-val').textContent = val;
+  clearTimeout(cocitDebounce);
+  cocitDebounce = setTimeout(loadCocitation, 700);
+}
+
+function toggleAllCocitJournals(cb) {
+  document.querySelectorAll('.cocit-journal-check').forEach(c => c.checked = cb.checked);
+  updateCocitJournalCount();
+}
+
+function updateCocitJournalCount() {
+  const total   = document.querySelectorAll('.cocit-journal-check').length;
+  const checked = document.querySelectorAll('.cocit-journal-check:checked').length;
+  document.getElementById('cocit-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}\u202f/\u202f${total})`;
+  const allCb = document.getElementById('cocit-check-all');
+  if (allCb) allCb.checked = (checked === total);
+  if (allCb) allCb.indeterminate = (checked > 0 && checked < total);
+}
+
+async function loadCocitation() {
+  clearTimeout(cocitDebounce);
+
+  const container = document.getElementById('cocit-container');
+  container.innerHTML = '<div class="loading-msg">Computing co-citation network\u2026</div>';
+  document.getElementById('cocit-stats').textContent = '';
+  document.getElementById('cocit-legend').innerHTML  = '';
+
+  if (cocitSimulation) { cocitSimulation.stop(); cocitSimulation = null; }
+  d3.selectAll('.cocit-tip').remove();
+
+  const minCocit = document.getElementById('cocit-min-slider').value;
+  const yearFrom = document.getElementById('cocit-year-from').value;
+  const yearTo   = document.getElementById('cocit-year-to').value;
+  const checked  = [...document.querySelectorAll('.cocit-journal-check:checked')].map(c => c.value);
+  const total    = document.querySelectorAll('.cocit-journal-check').length;
+
+  const params = new URLSearchParams({ min_cocitations: minCocit });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/cocitation?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load co-citation data.</p>';
+    return;
+  }
+
+  if (!data.nodes || data.nodes.length === 0) {
+    container.innerHTML =
+      '<p class="explore-hint">No co-citation pairs match these filters \u2014 try a lower minimum, ' +
+      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+    return;
+  }
+
+  renderCocitation(container, data);
+}
+
+function renderCocitation(container, data) {
+  container.innerHTML = '';
+  cocitNodes = data.nodes.map(d => ({ ...d }));
+  cocitLinks = data.links.map(d => ({ ...d }));
+
+  // Stats bar
+  const maxWeight = d3.max(cocitLinks, l => l.weight) || 1;
+  document.getElementById('cocit-stats').textContent =
+    `${data.node_count} articles\u2002\u00b7\u2002${data.link_count} co-citation pairs` +
+    `\u2002\u00b7\u2002strongest pair co-cited ${maxWeight}\u00d7`;
+
+  // Legend — colour by journal
+  const seenJournals = [...new Set(cocitNodes.map(n => n.journal))].sort();
+  const legendEl = document.getElementById('cocit-legend');
+  legendEl.innerHTML = seenJournals.map(j =>
+    `<span class="citnet-legend-item">` +
+    `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
+    `${escapeHtml(j)}</span>`
+  ).join('');
+
+  const W = container.clientWidth || 820;
+  const H = 600;
+
+  // Node radius: by co-citation strength (sum of edge weights)
+  const maxStrength = d3.max(cocitNodes, n => n.cocitation_strength) || 1;
+  const rScale = d3.scaleSqrt().domain([0, maxStrength]).range([3, 20]);
+
+  // Edge thickness: by co-citation weight
+  const edgeScale = d3.scaleLinear().domain([1, Math.max(maxWeight, 2)]).range([0.8, 5]);
+
+  // SVG + zoom
+  cocitSvgEl = d3.select('#cocit-container')
+    .append('svg')
+    .attr('width', W)
+    .attr('height', H);
+
+  cocitZoomBehavior = d3.zoom()
+    .scaleExtent([0.1, 8])
+    .on('zoom', (event) => gRoot.attr('transform', event.transform));
+
+  cocitSvgEl.call(cocitZoomBehavior);
+  const gRoot = cocitSvgEl.append('g');
+
+  // Links (undirected, weighted)
+  cocitLinkSel = gRoot.append('g').attr('class', 'cocit-links')
+    .selectAll('line')
+    .data(cocitLinks)
+    .enter().append('line')
+    .style('stroke',         '#ccc7bb')
+    .style('stroke-opacity', d => 0.15 + 0.55 * (d.weight / maxWeight))
+    .style('stroke-width',   d => edgeScale(d.weight));
+
+  // Tooltip
+  const tip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip cocit-tip')
+    .style('display',    'none')
+    .style('max-width',  '320px')
+    .style('line-height','1.45');
+
+  // Node groups
+  const nodeGroup = gRoot.append('g').attr('class', 'cocit-nodes')
+    .selectAll('g')
+    .data(cocitNodes)
+    .enter().append('g')
+    .style('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', (event, d) => {
+        if (!event.active) cocitSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end',   (event, d) => {
+        if (!event.active) cocitSimulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      })
+    )
+    .on('click', (event, d) => {
+      event.stopPropagation();
+      window.location = '/article/' + d.id;
+    })
+    .on('mouseover', (event, d) => {
+      const year  = d.pub_date ? d.pub_date.slice(0, 4) : '';
+      const auth  = d.authors || '';
+      const first = auth.split(';')[0].trim();
+      const last  = first.split(' ').filter(Boolean).pop() || '';
+      const byline = last
+        + (auth.includes(';') ? ' et al.' : '')
+        + (year ? ` (${year})` : '');
+
+      // Find top co-citation partners for this node
+      const partners = cocitLinks
+        .filter(l => {
+          const sid = typeof l.source === 'object' ? l.source.id : l.source;
+          const tid = typeof l.target === 'object' ? l.target.id : l.target;
+          return sid === d.id || tid === d.id;
+        })
+        .map(l => {
+          const sid = typeof l.source === 'object' ? l.source.id : l.source;
+          const tid = typeof l.target === 'object' ? l.target.id : l.target;
+          const partnerId = sid === d.id ? tid : sid;
+          const partner = cocitNodes.find(n => n.id === partnerId);
+          return { name: partner ? partner.title : '?', weight: l.weight };
+        })
+        .sort((a, b) => b.weight - a.weight)
+        .slice(0, 5);
+
+      const partnerHtml = partners.length > 0
+        ? '<br><span style="font-size:0.78rem;color:#9c9890;">Top co-cited with:</span>' +
+          partners.map(p =>
+            `<br><span style="font-size:0.78rem;">\u2022 ${escapeHtml(p.name.length > 60 ? p.name.slice(0, 57) + '\u2026' : p.name)} (${p.weight}\u00d7)</span>`
+          ).join('')
+        : '';
+
+      tip.style('display', 'block').html(
+        `<strong>${escapeHtml(d.title)}</strong><br>` +
+        (byline ? `${escapeHtml(byline)}<br>` : '') +
+        `<em>${escapeHtml(d.journal)}</em><br>` +
+        `Co-citation strength: <strong>${d.cocitation_strength}</strong>` +
+        (d.internal_cited_by_count ? ` \u2002\u00b7\u2002 Cited ${d.internal_cited_by_count}\u00d7` : '') +
+        partnerHtml
+      );
+
+      // Highlight connected edges
+      cocitLinkSel.style('stroke-opacity', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id)
+          ? 0.8
+          : 0.06;
+      });
+      nodeGroup.select('circle').style('fill-opacity', n => {
+        if (n.id === d.id) return 1;
+        const connected = cocitLinks.some(l => {
+          const sid = typeof l.source === 'object' ? l.source.id : l.source;
+          const tid = typeof l.target === 'object' ? l.target.id : l.target;
+          return (sid === d.id && tid === n.id) || (tid === d.id && sid === n.id);
+        });
+        return connected ? 0.9 : 0.15;
+      });
+    })
+    .on('mousemove', (event) => {
+      tip.style('left', (event.pageX + 14) + 'px')
+         .style('top',  (event.pageY - 38) + 'px');
+    })
+    .on('mouseout', () => {
+      tip.style('display', 'none');
+      cocitLinkSel.style('stroke-opacity', l => 0.15 + 0.55 * (l.weight / maxWeight));
+      nodeGroup.select('circle').style('fill-opacity', 0.88);
+    });
+
+  cocitNodeSel = nodeGroup;
+
+  // Circles
+  nodeGroup.append('circle')
+    .attr('r', d => rScale(d.cocitation_strength))
+    .style('fill',         d => citnetJournalColor(d.journal))
+    .style('fill-opacity', 0.88)
+    .style('stroke',       '#fff')
+    .style('stroke-width', 1.5);
+
+  // Labels for top 20 nodes by co-citation strength
+  const sortedByStrength = [...cocitNodes].sort((a, b) => b.cocitation_strength - a.cocitation_strength);
+  const labelIds = new Set(sortedByStrength.slice(0, 20).map(n => n.id));
+
+  nodeGroup.filter(d => labelIds.has(d.id))
+    .append('text')
+    .text(d => {
+      const auth  = d.authors || '';
+      const first = auth.split(';')[0].trim();
+      return first.split(' ').filter(Boolean).pop() || '';
+    })
+    .attr('dy',           d => rScale(d.cocitation_strength) + 10)
+    .attr('text-anchor',  'middle')
+    .style('font-family', 'system-ui, sans-serif')
+    .style('font-size',   '9px')
+    .style('fill',        '#5a3e28')
+    .style('pointer-events', 'none');
+
+  // Dismiss tooltip on background click
+  cocitSvgEl.on('click', () => {
+    tip.style('display', 'none');
+    cocitLinkSel.style('stroke-opacity', l => 0.15 + 0.55 * (l.weight / maxWeight));
+    nodeGroup.select('circle').style('fill-opacity', 0.88);
+  });
+
+  // Force simulation — undirected, weighted
+  // Stronger co-citation pulls nodes closer; higher weight = shorter distance
+  cocitSimulation = d3.forceSimulation(cocitNodes)
+    .force('link', d3.forceLink(cocitLinks)
+      .id(d => d.id)
+      .distance(d => Math.max(20, 80 - d.weight * 3))
+      .strength(d => 0.2 + 0.6 * (d.weight / maxWeight)))
+    .force('charge',    d3.forceManyBody().strength(-80))
+    .force('center',    d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => rScale(d.cocitation_strength) + 2))
+    .alphaDecay(0.025)
+    .on('tick', () => {
+      cocitLinkSel
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
 }
 
 

@@ -2021,6 +2021,141 @@ def get_author_institution_summary(author_name):
     return [(r["display_name"], r["cnt"]) for r in rows]
 
 
+# ── Co-citation network ───────────────────────────────────────────────────────
+
+def get_cocitation_network(min_cocitations=3, journals=None,
+                           year_from=None, year_to=None, max_nodes=400):
+    """
+    Build an undirected co-citation network.
+
+    Two articles are co-cited when a third article cites both of them.
+    Edge weight = number of articles that co-cite the pair.
+
+    Nodes  = articles that participate in at least one co-citation pair
+             meeting the threshold (capped at max_nodes, ranked by total
+             co-citation strength).
+    Links  = co-citation pairs where both endpoints are in the node set.
+
+    Returns {nodes, links, node_count, link_count}.
+    """
+    # ── Optional filters on the *cited* articles ──────────────────────────
+    art_where = []
+    art_params = []
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            art_where.append(f"journal IN ({placeholders})")
+            art_params.extend(journals)
+        elif isinstance(journals, str):
+            art_where.append("journal = ?")
+            art_params.append(journals)
+    if year_from:
+        art_where.append("pub_date >= ?")
+        art_params.append(f"{year_from}-01-01")
+    if year_to:
+        art_where.append("pub_date <= ?")
+        art_params.append(f"{year_to}-12-31")
+
+    art_clause = ""
+    if art_where:
+        art_clause = "WHERE " + " AND ".join(art_where)
+
+    with get_conn() as conn:
+        # If we have article filters, first get the qualifying article IDs
+        if art_clause:
+            filtered_ids = conn.execute(f"""
+                SELECT id FROM articles {art_clause}
+            """, art_params).fetchall()
+            id_set = {r["id"] for r in filtered_ids}
+            if not id_set:
+                return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+            # Co-citation pairs among filtered articles
+            pair_rows = conn.execute(f"""
+                WITH eligible AS (
+                    SELECT id FROM articles {art_clause}
+                )
+                SELECT c1.target_article_id AS article_a,
+                       c2.target_article_id AS article_b,
+                       COUNT(*)             AS weight
+                FROM citations c1
+                JOIN citations c2
+                  ON c1.source_article_id = c2.source_article_id
+                 AND c1.target_article_id < c2.target_article_id
+                WHERE c1.target_article_id IN (SELECT id FROM eligible)
+                  AND c2.target_article_id IN (SELECT id FROM eligible)
+                GROUP BY c1.target_article_id, c2.target_article_id
+                HAVING COUNT(*) >= ?
+                ORDER BY weight DESC
+            """, art_params + art_params + [min_cocitations]).fetchall()
+        else:
+            pair_rows = conn.execute("""
+                SELECT c1.target_article_id AS article_a,
+                       c2.target_article_id AS article_b,
+                       COUNT(*)             AS weight
+                FROM citations c1
+                JOIN citations c2
+                  ON c1.source_article_id = c2.source_article_id
+                 AND c1.target_article_id < c2.target_article_id
+                WHERE c1.target_article_id IS NOT NULL
+                  AND c2.target_article_id IS NOT NULL
+                GROUP BY c1.target_article_id, c2.target_article_id
+                HAVING COUNT(*) >= ?
+                ORDER BY weight DESC
+            """, (min_cocitations,)).fetchall()
+
+        if not pair_rows:
+            return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+        # Collect all node IDs and their total co-citation strength
+        strength = {}
+        for r in pair_rows:
+            strength[r["article_a"]] = strength.get(r["article_a"], 0) + r["weight"]
+            strength[r["article_b"]] = strength.get(r["article_b"], 0) + r["weight"]
+
+        # Keep top max_nodes by strength
+        top_ids = sorted(strength.keys(), key=lambda k: strength[k], reverse=True)[:max_nodes]
+        top_set = set(top_ids)
+
+        # Filter links to only those where both ends are in top_set
+        links = []
+        for r in pair_rows:
+            if r["article_a"] in top_set and r["article_b"] in top_set:
+                links.append({
+                    "source": r["article_a"],
+                    "target": r["article_b"],
+                    "weight": r["weight"],
+                })
+
+        # Fetch article metadata for nodes
+        if not top_ids:
+            return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+        placeholders = ",".join("?" * len(top_ids))
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count
+            FROM articles
+            WHERE id IN ({placeholders})
+        """, top_ids).fetchall()
+
+    nodes = []
+    for r in node_rows:
+        node = dict(r)
+        node["cocitation_strength"] = strength.get(r["id"], 0)
+        nodes.append(node)
+
+    # Sort by strength descending for consistent ordering
+    nodes.sort(key=lambda n: n["cocitation_strength"], reverse=True)
+
+    return {
+        "nodes":      nodes,
+        "links":      links,
+        "node_count": len(nodes),
+        "link_count": len(links),
+    }
+
+
 # ── Citation centrality (eigenvector + betweenness) ────────────────────────────
 
 def _pagerank_python(G, alpha=0.85, max_iter=500, tol=1e-06):

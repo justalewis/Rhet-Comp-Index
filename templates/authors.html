@@ -94,14 +94,15 @@
         <div class="nav-item" id="nav-most-cited">
           <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
             <span class="feature-nav-icon">⬡</span>
-            Most Cited
+            Citations
             <span class="nav-chevron">▾</span>
           </button>
           <div class="nav-dropdown">
-            <a href="/most-cited" class="nav-dropdown-item">All</a>
+            <a href="/most-cited" class="nav-dropdown-item">Most Cited</a>
             <a href="/most-cited?view=journal" class="nav-dropdown-item">By Journal</a>
             <a href="/most-cited?view=topic" class="nav-dropdown-item">By Topic</a>
             <a href="/most-cited?view=decade" class="nav-dropdown-item">By Decade</a>
+            <a href="/explore#cocitation" class="nav-dropdown-item">Co-Citation</a>
           </div>
         </div>
         <div class="nav-item">
@@ -185,6 +186,25 @@
       All authors with articles indexed in Pinakes, browsable by the first letter of their last name.
       Select a letter below, then click any name to view their full profile.
     </p>
+
+    <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+      <summary style="font-weight:600;">Methodology</summary>
+      <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+      <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+      <p>Author names are extracted from <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a> metadata for each article in the index. CrossRef stores author names in structured form (given name + family name), which Pinakes combines into a display name. Articles indexed via RSS feeds or web scraping may include authors extracted from different formats and are more prone to inconsistencies.</p>
+
+      <h4 style="margin:1rem 0 0.4rem;">Name handling</h4>
+      <p>Author names are stored as-is from CrossRef, with minimal normalization (whitespace trimming, consistent capitalization). No <strong>name disambiguation</strong> is performed: two different scholars with the same name are treated as one person, and the same scholar with variant name forms (e.g., &ldquo;James Paul Gee&rdquo; vs. &ldquo;J. P. Gee&rdquo;) may appear as separate entries. This is a known limitation of string-based author identification. Where available, <a href="https://orcid.org/" target="_blank" rel="noopener">ORCID</a> identifiers from CrossRef are stored and displayed on author profile pages.</p>
+
+      <h4 style="margin:1rem 0 0.4rem;">Author profiles</h4>
+      <p>Each author profile page shows all articles in the index attributed to that name, along with co-author relationships, publication timeline, topic distribution, and institutional affiliation (from <a href="https://openalex.org/" target="_blank" rel="noopener">OpenAlex</a> where available). Citation counts on author profiles reflect internal citations within this index only &mdash; not broader citation counts from Google Scholar or Web of Science.</p>
+
+      <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+      <p>The index depends entirely on publisher metadata quality. Journals that deposit incomplete author data with CrossRef produce incomplete records here. The author count includes every unique name string, so it overstates the number of real individuals when name variants exist and understates it when different people share a name. Authors who publish exclusively in journals not indexed here will not appear at all.</p>
+
+      </div>
+    </details>
 
     <!-- ── Letter picker ──────────────────────────────────── -->
     <div class="alpha-nav alpha-nav-picker">
