@@ -66,7 +66,7 @@
 
     <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing — and explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
 
-    <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
+    <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, citation trend charts, Most Cited rankings, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
 
     <h2>Two Tiers of Indexing</h2>
 
@@ -85,7 +85,7 @@
       <li><em>College English</em> (NCTE)</li>
       <li><em>Teaching English in the Two-Year College</em> (NCTE)</li>
       <li><em>Research in the Teaching of English</em> (NCTE)</li>
-      <li><em>English Journal</em> (NCTE) — full for current issues; pre-2000 content is JSTOR-only with no individual-article DOIs</li>
+      <li><em>English Journal</em> (NCTE) — full for current issues; pre-2000 content is JSTOR-only with no individual-article DOIs (see era gaps below)</li>
       <li><em>Rhetoric Society Quarterly</em> (Taylor &amp; Francis)</li>
       <li><em>Rhetoric Review</em> (Taylor &amp; Francis)</li>
       <li><em>Technical Communication Quarterly</em> (Taylor &amp; Francis)</li>
@@ -188,7 +188,7 @@
 
     <ul class="coverage-list">
       <li><strong>Publication timeline</strong> — Journals indexed via RSS or scrape appear in the timeline but may have gaps where issues weren't captured. Pre-2000 back catalog is sparse for most journals.</li>
-      <li><strong>Topic co-occurrence heatmap</strong> — Tags are assigned using title and abstract text. RSS-only articles often have no abstract, which reduces tagging accuracy for those venues.</li>
+      <li><strong>Topic co-occurrence heatmap</strong> — Tags are drawn from a 61-term disciplinary vocabulary and matched against title and abstract text, currently covering about 73% of indexed articles. RSS-only articles often have no abstract, which reduces tagging accuracy for those venues.</li>
       <li><strong>Author network</strong> — Co-authorship links depend on articles being in the index. Authors who publish primarily in venues with partial coverage will appear less connected than they actually are. Solo authors may appear as isolates even if they have collaborative work in unindexed venues.</li>
       <li><strong>Citation network</strong> — Only journals that deposit reference lists with CrossRef contribute citation edges. See the coverage table on the <a href="/explore#citations">Citations tab</a> for per-journal detail. RSS-only journals contribute zero citation edges regardless of how frequently they cite or are cited.</li>
       <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>

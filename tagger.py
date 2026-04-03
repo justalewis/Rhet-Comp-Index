@@ -1,13 +1,13 @@
 """
 tagger.py — Automatic subject-tag assignment for Pinakes (Rhet-Comp Index).
 
-Tags are drawn from a 58-term controlled vocabulary grounded in:
+Tags are drawn from a 61-term controlled vocabulary grounded in:
   - CompPile's disciplinary glossary (~6,000 terms, validated via keyword
     mapping and lemmatization across both passes, April 2026)
   - The Bedford Bibliography subject taxonomy
   - The existing Pinakes tag vocabulary (v2, March 2026)
 
-Organized into 11 families:
+Organized into 13 families:
   1. History & Theory of Rhetoric       (10 tags)
   2. Pedagogy & Curriculum              (11 tags)
   3. Writing Process & Practice          (6 tags)
@@ -19,6 +19,8 @@ Organized into 11 families:
   9. Language & Linguistics              (5 tags)
   10. Identity, Equity & Justice          (5 tags)
   11. Affect, Embodiment & Place          (3 tags)
+  12. Literary Studies                    (1 tag)
+  13. Reviews & Editorial                 (2 tags)
 
 Matching:
   - Case-insensitive, word-boundary–aware regex (\b) for single words
@@ -102,6 +104,7 @@ VOCAB = {
         "narrative criticism", "ideological criticism",
         "close reading of rhetoric",
         "rhetoric", "rhetorical",  # generic discussion of rhetoric/rhetorical concepts
+        "critical",  # Phase 3: broad catch for critical analysis/theory
     ],
 
     # Scope: Theoretical frameworks specific to composition studies.
@@ -113,6 +116,7 @@ VOCAB = {
         "post-process", "current-traditional",
         "social-epistemic", "expressivist rhetoric",
         "writing as process",
+        "composition",  # Phase 3: bare disciplinary term
     ],
 
     # Scope: Genre as social action and rhetorical response to recurring
@@ -137,6 +141,7 @@ VOCAB = {
         "pragmatics", "semantic analysis", "semantics",
         "text analysis", "textual analysis", "discourse pattern",
         "discourse",  # generic discourse discussion
+        "text", "texts",  # Phase 3: textual analysis
     ],
 
     # Scope: Feminist traditions in rhetoric and writing. Includes
@@ -177,6 +182,7 @@ VOCAB = {
         "ceremonial rhetoric", "intercultural rhetoric",
         "cross-cultural rhetoric", "culturally situated",
         "indigenous composition",
+        "culture", "cultural",  # Phase 3: broad cultural terms
     ],
 
     # Scope: Rhetoric and writing studies informed by decolonial and
@@ -206,6 +212,7 @@ VOCAB = {
         "fyc", "freshman composition", "introductory composition",
         "english 101", "general education writing",
         "gateway writing course",
+        "freshman",  # Phase 3: bare term
     ],
 
     # Scope: Approaches to teaching writing at any level. Includes
@@ -219,6 +226,8 @@ VOCAB = {
         "pedagogical approach to writing",
         "pedagogy", "pedagogical",  # generic pedagogical discussion
         "classroom", "assignment",  # context-specific pedagogy terms
+        "writing", "student", "students", "writer", "writers",  # Phase 3: aggressive broad
+        "written", "learning",
     ],
 
     # Scope: Writing courses and programs designed for underprepared
@@ -255,6 +264,7 @@ VOCAB = {
         "flash fiction", "literary nonfiction",
         "poetry writing", "fiction writing",
         "creative writing workshop",
+        "poem", "poems", "poetry", "verse", "poet", "poets",  # Phase 3: creative works
     ],
 
     # Scope: Design of writing courses and programs. Includes curriculum
@@ -359,6 +369,7 @@ VOCAB = {
         "claim and evidence", "argumentative writing",
         "argument structure", "rhetorical appeals",
         "making arguments",
+        "argument",  # Phase 3: bare term
     ],
 
     # Scope: Writing produced jointly by two or more authors. Includes
@@ -428,6 +439,7 @@ VOCAB = {
         "wpa journal", "council of writing program",
         "program administrator", "writing administrator",
         "writing program governance",
+        "program",  # Phase 3: bare term
     ],
 
 
@@ -471,6 +483,7 @@ VOCAB = {
         "technical documentation", "user experience writing",
         "ux writing", "information design", "usability",
         "technical communicator",
+        "technical", "communication",  # Phase 3: bare terms
     ],
 
     # Scope: Writing and communication in professional and workplace
@@ -484,6 +497,7 @@ VOCAB = {
         "business proposal", "technical report", "business report",
         "memo writing", "documentation writing", "organizational communication",
         "corporate writing", "professional genres",
+        "professional",  # Phase 3: bare term
     ],
 
     # Scope: Writing in scientific and STEM disciplines. Includes
@@ -496,6 +510,7 @@ VOCAB = {
         "stem writing", "imrad", "lab report",
         "scientific communication", "science writing",
         "writing in stem",
+        "science",  # Phase 3: bare term
     ],
 
     # Scope: Employment conditions, labor practices, and institutional
@@ -525,6 +540,7 @@ VOCAB = {
         "historical rhetoric", "rhetorical history", "recovery",
         "recovering voices", "archival methods",
         "historiography", "historical recovery",
+        "history", "historical",  # Phase 3: broad catch
     ],
 
     # Scope: Research using systematic evidence collection. Includes
@@ -536,6 +552,7 @@ VOCAB = {
         "randomized trial", "randomized control trial", "rct",
         "within-subject design", "between-subject design", "comparative study",
         "empirically grounded", "data-driven", "evidence-based",
+        "research",  # Phase 3: bare term
     ],
 
     # Scope: Research using observation, interview, and interpretation.
@@ -633,6 +650,7 @@ VOCAB = {
         "heritage language writer", "nonnative english",
         "non-native english", "second-language writer",
         "language development", "language learning", "language acquisition",
+        "language",  # Phase 3: bare term
     ],
 
     # Scope: Translingual orientation toward language difference in
@@ -677,6 +695,7 @@ VOCAB = {
         "vernacular literacy", "literacy sponsorship",
         "sponsorship of literacy", "literacy practices",
         "literacy as social practice",
+        "literacy", "reading", "reader", "readers",  # Phase 3: broad catch
     ],
 
 
@@ -713,6 +732,7 @@ VOCAB = {
         "lgbtq", "queer rhetoric", "transgender",
         "nonbinary", "gender and writing",
         "gender in writing",
+        "women",  # Phase 3: bare term
     ],
 
     # Scope: Disability, accessibility, and neurodiversity in writing
@@ -732,6 +752,7 @@ VOCAB = {
         "political rhetoric", "public sphere", "counterpublic",
         "rhetorical public", "public argument",
         "deliberative democracy",
+        "public",  # Phase 3: bare term
     ],
 
     # Scope: Literacy practices in community contexts outside academic
@@ -773,6 +794,74 @@ VOCAB = {
         "sense of place", "spatial rhetoric", "place-based writing",
         "geography of rhetoric", "rhetorical geography",
         "spatial turn", "place and writing", "place-based pedagogy",
+    ],
+
+
+    # ══════════════════════════════════════════════════════════════════════
+    # Family 12: Literary Studies (Phase 3)
+    # ══════════════════════════════════════════════════════════════════════
+
+    # Scope: Literary analysis, criticism, and history appearing in English
+    # studies journals. This content intersects with rhetoric and composition
+    # through shared institutional contexts and theoretical frameworks.
+    # As distinct from "creative writing" (workshop/production-oriented).
+    "literary studies": [
+        "literary", "literature", "novel", "fiction", "drama",
+        "short story", "short stories",
+        "literary criticism", "literary theory", "literary analysis",
+        "american literature", "english literature", "british literature",
+    ],
+
+
+    # ══════════════════════════════════════════════════════════════════════
+    # Family 13: Reviews & Editorial (Phase 3)
+    # ══════════════════════════════════════════════════════════════════════
+
+    # Scope: Reviews of scholarly books in rhetoric, composition, and
+    # English studies. As distinct from "editorial matter" (front/back
+    # matter and announcements).
+    "book reviews": [
+        "book review", "book reviews", "review essay", "review essays",
+        "reviewed by", "books received", "books noted",
+        "recent books", "new books", "books worth",
+        "book media review", "media review",
+        "books of interest",
+    ],
+
+    # Scope: Front matter, back matter, announcements, and other
+    # paratextual content in journals. Includes calls for papers,
+    # secretary/chair reports, editorial introductions, and indexes.
+    "editorial matter": [
+        "from the editor", "from the editors",
+        "editor's note", "editors' note",
+        "editors' introduction", "editor's introduction",
+        "editor introduction", "guest editor's introduction",
+        "editorial board", "editorial",
+        "review editor", "editor's desk", "editor desk",
+        "editors' column", "editor's column", "editor column",
+        "guest editor", "guest editors",
+        "announcements", "calls for papers",
+        "front matter", "back matter",
+        "secretary's report", "secretary report",
+        "chair's address", "chair address", "chair letter",
+        "acknowledgments", "acknowledgements",
+        "index to volume", "author index", "subject index",
+        "author-title index",
+        "errata", "corrigenda",
+        "staffroom interchange", "staffroom interchanges",
+        "ncte to you", "counciletter",
+        "bulletin board",
+        "information for authors", "guidelines for writers",
+        "guest reviewers",
+        "foreword", "preface",
+        "round table",
+        "cccc news", "ncte news",
+        "departmental memo", "annual meeting",
+        "ncte", "cccc", "ccc",
+        "news", "index",
+        "comment", "responds", "replies",  # Phase 3: response/comment sections
+        "counterstatement", "current english forum",
+        "interchanges",
     ],
 
 }
