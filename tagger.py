@@ -131,6 +131,8 @@ VOCAB = {
         "critical discourse analysis", "discourse studies",
         "conversation analysis", "speech act",
         "systemic functional", "register analysis",
+        "pragmatics", "semantic analysis", "semantics",
+        "text analysis", "textual analysis", "discourse pattern",
     ],
 
     # Scope: Feminist traditions in rhetoric and writing. Includes
@@ -221,7 +223,9 @@ VOCAB = {
         "basic writing", "developmental writing", "remedial writing",
         "underprepared writers", "basic writers",
         "shaughnessy", "errors and expectations",
-        "developmental composition",
+        "developmental composition", "struggling writers",
+        "foundational writing", "foundational composition",
+        "prep writing", "preparatory writing",
     ],
 
     # Scope: Upper-division writing courses and writing-intensive programs
@@ -231,7 +235,9 @@ VOCAB = {
         "advanced composition", "advanced writing",
         "upper-division writing", "upper division writing",
         "advanced rhetoric course", "writing major",
-        "writing minor",
+        "writing minor", "honors composition", "honors writing",
+        "accelerated writing", "accelerated composition",
+        "upper-level writing", "elective writing", "seminar writing",
     ],
 
     # Scope: Creative writing as practice and pedagogy. Includes fiction,
@@ -278,7 +284,9 @@ VOCAB = {
     # community college writing programs.
     "two-year college": [
         "two-year college", "two year college", "community college",
-        "technical college", "2-year college",
+        "technical college", "2-year college", "junior college",
+        "open-enrollment", "transfer pathway",
+        "articulation agreement", "community college system",
     ],
 
     # Scope: Writing and rhetoric in community contexts for civic purposes.
@@ -287,6 +295,8 @@ VOCAB = {
         "service learning", "service-learning",
         "community-engaged writing", "civic writing",
         "community writing project", "community-based learning",
+        "public engagement", "experiential learning",
+        "community-university partnership", "civic engagement",
     ],
 
     # Scope: Preparation and professional development of writing teachers.
@@ -368,7 +378,9 @@ VOCAB = {
     "threshold concepts": [
         "threshold concepts", "troublesome knowledge",
         "threshold concept", "threshold concept theory",
-        "liminal knowledge",
+        "liminal knowledge", "transformative learning",
+        "threshold", "liminality", "conceptual change",
+        "meyer and sinclair",
     ],
 
 
@@ -459,7 +471,10 @@ VOCAB = {
         "professional writing", "professional communication",
         "business writing", "workplace writing",
         "workplace communication", "professional discourse",
-        "business communication",
+        "business communication", "grant writing", "proposal writing",
+        "business proposal", "technical report", "business report",
+        "memo writing", "documentation writing", "organizational communication",
+        "corporate writing", "professional genres",
     ],
 
     # Scope: Writing in scientific and STEM disciplines. Includes
@@ -508,7 +523,10 @@ VOCAB = {
     # of writing.
     "empirical research": [
         "empirical research", "empirical study", "mixed methods",
-        "survey research", "longitudinal study",
+        "survey research", "longitudinal study", "experimental design",
+        "randomized trial", "randomized control trial", "rct",
+        "within-subject design", "between-subject design", "comparative study",
+        "empirically grounded", "data-driven", "evidence-based",
     ],
 
     # Scope: Research using observation, interview, and interpretation.
@@ -709,7 +727,9 @@ VOCAB = {
     "community literacy": [
         "community literacy", "community-based writing",
         "community literacy project", "neighborhood literacy",
-        "community-based literacy",
+        "community-based literacy", "community literacies",
+        "situated literacy", "local literacy",
+        "grassroots literacy", "literacy practices",
     ],
 
 
@@ -730,6 +750,9 @@ VOCAB = {
     "body and rhetoric": [
         "embodied rhetoric", "embodiment", "somatic rhetoric",
         "body rhetoric", "material rhetoric", "corporeal rhetoric",
+        "sensory rhetoric", "sensory composition", "gestural rhetoric",
+        "kinetic rhetoric", "haptic rhetoric", "visceral rhetoric",
+        "embodied experience", "physical space and rhetoric",
     ],
 
     # Scope: Place, space, and geography in rhetoric and writing.
