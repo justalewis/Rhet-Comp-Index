@@ -86,6 +86,7 @@ VOCAB = {
         "modern rhetoric", "contemporary rhetoric",
         "rhetorical agency", "rhetorical ontology",
         "rhetoric of inquiry",
+        "rhetorical theory",  # generic modern theory discussion
     ],
 
     # Scope: Methods for analyzing rhetorical artifacts, texts, and
@@ -100,6 +101,7 @@ VOCAB = {
         "pentadic analysis", "fantasy theme analysis",
         "narrative criticism", "ideological criticism",
         "close reading of rhetoric",
+        "rhetoric", "rhetorical",  # generic discussion of rhetoric/rhetorical concepts
     ],
 
     # Scope: Theoretical frameworks specific to composition studies.
@@ -121,6 +123,7 @@ VOCAB = {
         "activity theory", "uptake", "genre acquisition",
         "genre awareness", "genre-based",
         "rhetorical genre studies",
+        "genre", "genres",  # generic genre discussion
     ],
 
     # Scope: Analysis of discourse structures, communities, and practices.
@@ -133,6 +136,7 @@ VOCAB = {
         "systemic functional", "register analysis",
         "pragmatics", "semantic analysis", "semantics",
         "text analysis", "textual analysis", "discourse pattern",
+        "discourse",  # generic discourse discussion
     ],
 
     # Scope: Feminist traditions in rhetoric and writing. Includes
@@ -213,6 +217,7 @@ VOCAB = {
         "teach composition", "writing classroom",
         "process approach", "process pedagogy",
         "pedagogical approach to writing",
+        "pedagogy", "pedagogical",  # generic pedagogical discussion
     ],
 
     # Scope: Writing courses and programs designed for underprepared
@@ -399,6 +404,7 @@ VOCAB = {
         "directed self-placement", "holistic scoring",
         "analytic scoring", "writing evaluation",
         "assessing writing",
+        "assessment", "evaluation",  # generic assessment/evaluation discussion
     ],
 
     # Scope: Portfolio-based assessment and instruction. Includes
@@ -622,6 +628,7 @@ VOCAB = {
         "esol", "english as a second language",
         "heritage language writer", "nonnative english",
         "non-native english", "second-language writer",
+        "language development", "language learning", "language acquisition",
     ],
 
     # Scope: Translingual orientation toward language difference in
