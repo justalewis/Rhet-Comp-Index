@@ -2087,7 +2087,7 @@ def get_cocitation_network(min_cocitations=3, journals=None,
                 GROUP BY c1.target_article_id, c2.target_article_id
                 HAVING COUNT(*) >= ?
                 ORDER BY weight DESC
-            """, art_params + art_params + [min_cocitations]).fetchall()
+            """, art_params + [min_cocitations]).fetchall()
         else:
             pair_rows = conn.execute("""
                 SELECT c1.target_article_id AS article_a,
