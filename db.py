@@ -3424,3 +3424,278 @@ def get_main_path(min_citations=1, journals=None,
             "cycles_removed": cycles_removed,
         },
     }
+
+
+# ── Temporal network evolution ─────────────────────────────────────────────────
+
+def get_temporal_network_evolution(min_citations=1, journals=None,
+                                   year_from=None, year_to=None,
+                                   window_size=1, max_nodes_per_window=500,
+                                   snapshot_year=None):
+    """
+    Slice the citation network into time windows and compute structural
+    metrics for each window, revealing how the network evolves over time.
+
+    Returns { windows, snapshot (if requested), stats }
+    """
+    import networkx as nx
+    from networkx.algorithms.community import louvain_communities
+    from networkx.algorithms.community.quality import modularity as nx_modularity
+
+    # ── Build WHERE clause ──
+    where  = ["internal_cited_by_count >= ?"]
+    params = [min_citations]
+
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            where.append(f"journal IN ({placeholders})")
+            params.extend(journals)
+        elif isinstance(journals, str):
+            where.append("journal = ?")
+            params.append(journals)
+
+    # Auto-swap reversed year range
+    if year_from and year_to:
+        yf, yt = int(year_from), int(year_to)
+        if yf > yt:
+            year_from, year_to = str(yt), str(yf)
+
+    if year_from:
+        where.append("CAST(SUBSTR(pub_date,1,4) AS INTEGER) >= ?")
+        params.append(int(year_from))
+    if year_to:
+        where.append("CAST(SUBSTR(pub_date,1,4) AS INTEGER) <= ?")
+        params.append(int(year_to))
+
+    clause = "WHERE " + " AND ".join(where) + " AND pub_date IS NOT NULL"
+
+    with get_conn() as conn:
+        # Fetch qualifying articles
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count, internal_cites_count
+            FROM articles
+            {clause}
+            ORDER BY pub_date ASC
+        """, params).fetchall()
+
+        if not node_rows:
+            return {"windows": [], "snapshot": None,
+                    "stats": {"total_windows": 0, "year_range": [],
+                              "window_size": window_size,
+                              "total_articles": 0, "total_citations": 0}}
+
+        # Fetch citation links where both endpoints are in our set
+        link_rows = conn.execute(f"""
+            WITH filtered AS (
+                SELECT id FROM articles {clause}
+            )
+            SELECT c.source_article_id AS source,
+                   c.target_article_id AS target
+            FROM citations c
+            WHERE c.source_article_id IN (SELECT id FROM filtered)
+              AND c.target_article_id IN (SELECT id FROM filtered)
+        """, params).fetchall()
+
+    # ── Build lookup structures ──
+    node_year = {}
+    node_map  = {}
+    for r in node_rows:
+        yr_str = (r["pub_date"] or "")[:4]
+        if yr_str.isdigit():
+            yr = int(yr_str)
+            node_year[r["id"]] = yr
+            node_map[r["id"]] = dict(r)
+
+    # Edge list with the year the citation "appeared" (citing article's year)
+    edges_with_years = []
+    for r in link_rows:
+        src, tgt = r["source"], r["target"]
+        src_yr = node_year.get(src)
+        tgt_yr = node_year.get(tgt)
+        if src_yr is not None and tgt_yr is not None:
+            edges_with_years.append((src, tgt, src_yr))
+
+    all_years = sorted(set(node_year.values()))
+    if not all_years:
+        return {"windows": [], "snapshot": None,
+                "stats": {"total_windows": 0, "year_range": [],
+                          "window_size": window_size,
+                          "total_articles": 0, "total_citations": 0}}
+
+    min_yr, max_yr = all_years[0], all_years[-1]
+
+    # ── Generate time windows ──
+    window_starts = list(range(min_yr, max_yr + 1, window_size))
+
+    prev_node_set = set()
+    prev_edge_set = set()
+    cum_nodes = set()
+    cum_edges = set()
+    windows = []
+
+    for w_start in window_starts:
+        w_end = w_start + window_size - 1
+        label = str(w_start) if window_size == 1 else f"{w_start}\u2013{w_end}"
+
+        # Nodes published in this window
+        w_nodes = {nid for nid, yr in node_year.items()
+                   if w_start <= yr <= w_end}
+
+        # Edges where both endpoints published by w_end and citing article <= w_end
+        # Per-window: only among nodes in this window
+        pw_edges = set()
+        for src, tgt, eyr in edges_with_years:
+            if src in w_nodes and tgt in w_nodes:
+                pw_edges.add((src, tgt))
+
+        # Cumulative: all nodes/edges up to this window
+        cum_nodes |= w_nodes
+        for src, tgt, eyr in edges_with_years:
+            if eyr <= w_end and src in cum_nodes and tgt in cum_nodes:
+                cum_edges.add((src, tgt))
+
+        # Build per-window graph
+        G_pw = nx.Graph()
+        G_pw.add_nodes_from(w_nodes)
+        for s, t in pw_edges:
+            G_pw.add_edge(s, t)
+
+        n = G_pw.number_of_nodes()
+        m = G_pw.number_of_edges()
+
+        # Per-window metrics
+        density = nx.density(G_pw) if n > 1 else 0.0
+        avg_deg = (2.0 * m / n) if n > 0 else 0.0
+        trans = nx.transitivity(G_pw) if n >= 3 else 0.0
+
+        # Giant component
+        gcc_frac = 0.0
+        num_comp = 0
+        gcc_size = 0
+        if n > 0:
+            components = list(nx.connected_components(G_pw))
+            gcc = max(components, key=len)
+            gcc_size = len(gcc)
+            gcc_frac = gcc_size / n
+            num_comp = len(components)
+
+        # Modularity via Louvain (if enough nodes)
+        mod_score = None
+        if n >= 10 and m >= 5:
+            try:
+                comm_sets = louvain_communities(G_pw, seed=42)
+                if len(comm_sets) > 1:
+                    mod_score = round(nx_modularity(G_pw, comm_sets), 4)
+            except Exception:
+                pass
+
+        # Average path length in GCC (gate for performance)
+        avg_pl = None
+        if gcc_size >= 3 and gcc_size <= 1500:
+            try:
+                gcc_sub = G_pw.subgraph(gcc)
+                avg_pl = round(nx.average_shortest_path_length(gcc_sub), 3)
+            except Exception:
+                pass
+
+        # New nodes/edges vs previous window
+        new_n = len(w_nodes - prev_node_set)
+        new_e = len(pw_edges - prev_edge_set)
+
+        # Cumulative metrics
+        cn = len(cum_nodes)
+        cm = len(cum_edges)
+        cum_dens = (2.0 * cm / (cn * (cn - 1))) if cn > 1 else 0.0
+
+        # Cumulative giant component (build graph for it)
+        cum_gcc_frac = 0.0
+        if cn > 0 and cn <= 8000:
+            G_cum = nx.Graph()
+            G_cum.add_nodes_from(cum_nodes)
+            G_cum.add_edges_from(cum_edges)
+            cum_comps = list(nx.connected_components(G_cum))
+            cum_gcc = max(cum_comps, key=len)
+            cum_gcc_frac = len(cum_gcc) / cn
+
+        windows.append({
+            "year":                 w_start,
+            "window_label":         label,
+            "node_count":           n,
+            "edge_count":           m,
+            "density":              round(density, 6),
+            "avg_degree":           round(avg_deg, 3),
+            "transitivity":         round(trans, 4),
+            "giant_component_frac": round(gcc_frac, 4),
+            "num_components":       num_comp,
+            "modularity":           mod_score,
+            "avg_path_length":      avg_pl,
+            "new_nodes":            new_n,
+            "new_edges":            new_e,
+            "cum_node_count":       cn,
+            "cum_edge_count":       cm,
+            "cum_density":          round(cum_dens, 6),
+            "cum_giant_frac":       round(cum_gcc_frac, 4),
+        })
+
+        prev_node_set = w_nodes
+        prev_edge_set = pw_edges
+
+    # ── Optional snapshot for force-directed graph ──
+    snapshot = None
+    if snapshot_year is not None:
+        sy = int(snapshot_year)
+        snap_nodes = {nid for nid, yr in node_year.items() if yr <= sy}
+        snap_edges = [(s, t) for s, t, eyr in edges_with_years
+                      if eyr <= sy and s in snap_nodes and t in snap_nodes]
+
+        # Cap to max_nodes_per_window by highest-cited
+        if len(snap_nodes) > max_nodes_per_window:
+            ranked = sorted(snap_nodes,
+                            key=lambda nid: node_map.get(nid, {}).get(
+                                "internal_cited_by_count", 0),
+                            reverse=True)
+            snap_nodes = set(ranked[:max_nodes_per_window])
+            snap_edges = [(s, t) for s, t in snap_edges
+                          if s in snap_nodes and t in snap_nodes]
+
+        G_snap = nx.Graph()
+        G_snap.add_nodes_from(snap_nodes)
+        for s, t in snap_edges:
+            G_snap.add_edge(s, t)
+        # Remove isolates for cleaner display
+        G_snap.remove_nodes_from(list(nx.isolates(G_snap)))
+
+        snap_node_list = []
+        for nid in G_snap.nodes():
+            info = node_map.get(nid, {})
+            snap_node_list.append({
+                "id":     nid,
+                "title":  info.get("title", ""),
+                "authors": info.get("authors", ""),
+                "pub_date": info.get("pub_date", ""),
+                "journal": info.get("journal", ""),
+                "internal_cited_by_count": info.get("internal_cited_by_count", 0),
+                "degree":  G_snap.degree(nid),
+            })
+        snap_link_list = [{"source": u, "target": v}
+                          for u, v in G_snap.edges()]
+
+        snapshot = {
+            "year":  sy,
+            "nodes": snap_node_list,
+            "links": snap_link_list,
+        }
+
+    return {
+        "windows":  windows,
+        "snapshot": snapshot,
+        "stats": {
+            "total_windows":  len(windows),
+            "year_range":     [min_yr, max_yr],
+            "window_size":    window_size,
+            "total_articles": len(node_year),
+            "total_citations": len(edges_with_years),
+        },
+    }

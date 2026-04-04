@@ -55,6 +55,7 @@ from db import (
     get_journal_half_life,
     get_community_detection,
     get_main_path,
+    get_temporal_network_evolution,
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
@@ -891,6 +892,29 @@ def api_main_path():
         year_from=year_from or None,
         year_to=year_to or None,
         max_nodes=max_nodes,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/temporal-evolution")
+def api_temporal_evolution():
+    """JSON: temporal network evolution — structural metrics over time windows."""
+    min_citations = max(1, int(request.args.get("min_citations", 1)))
+    max_nodes     = min(800, max(50, int(request.args.get("max_nodes", 500))))
+    window_size   = max(1, min(10, int(request.args.get("window_size", 1))))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+    snapshot_year = request.args.get("snapshot_year", "").strip()
+
+    data = get_temporal_network_evolution(
+        min_citations=min_citations,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        window_size=window_size,
+        max_nodes_per_window=max_nodes,
+        snapshot_year=int(snapshot_year) if snapshot_year else None,
     )
     return jsonify(data)
 

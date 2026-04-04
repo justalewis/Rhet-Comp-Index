@@ -83,6 +83,7 @@
             <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
             <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
             <a href="/explore#main-path" class="nav-dropdown-item">Main Path</a>
+            <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Evolution</a>
             <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
         </div>
@@ -204,6 +205,7 @@
       <button class="explore-tab" onclick="showTab('journalflow', this)" data-hash="journal-flow">Journal Flow</button>
       <button class="explore-tab" onclick="showTab('halflife', this)" data-hash="half-life">Half-Life</button>
       <button class="explore-tab" onclick="showTab('mainpath', this)" data-hash="main-path">Main Path</button>
+      <button class="explore-tab" onclick="showTab('temporal', this)" data-hash="temporal-evolution">Temporal Evolution</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
     </div>
 
@@ -1501,6 +1503,174 @@
 
     </div><!-- /tab-mainpath -->
 
+    <!-- ── Temporal Network Evolution tab ──────────────────────── -->
+    <div id="tab-temporal" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro"><strong>Temporal network evolution</strong> tracks how the
+        citation network's structural properties change over time. The field's
+        intellectual network is sliced into yearly (or multi-year) windows, and key
+        graph metrics are computed for each slice: density, clustering, giant-component
+        size, modularity, and growth rate. This reveals phases of rapid growth,
+        consolidation, and fragmentation in the discipline's citation structure.
+        Switch to <em>Network Snapshot</em> mode and use the year slider to inspect
+        the network at any point in time.</p>
+      <p class="tab-coverage-link"><a href="/coverage"
+        class="coverage-note-link">Coverage notes: citation data depends on
+        journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">Network construction</h4>
+        <p>For each time window a subgraph is built from articles published within
+        that window and the citation links among them. An edge appears in the
+        window when the <em>citing</em> article is published. The cumulative view
+        adds each window's articles and edges to a growing graph, showing total
+        network size over time.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Metrics</h4>
+        <p><strong>Density</strong> is the fraction of possible edges that actually
+        exist (higher = more interconnected). <strong>Clustering coefficient</strong>
+        (transitivity) measures the tendency of articles to form tightly-knit
+        groups. <strong>Giant component fraction</strong> is the share of nodes in the
+        largest connected component &mdash; a high value indicates a cohesive network.
+        <strong>Modularity</strong> measures how strongly the network decomposes into
+        communities (Louvain algorithm, computed when &ge; 10 nodes).
+        <strong>Average path length</strong> in the giant component indicates how many
+        citation hops separate typical articles.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Window size</h4>
+        <p>Annual windows (size 1) provide maximum temporal resolution but may
+        produce noisy metrics for years with few articles. Wider windows (3 or 5
+        years) smooth the signal but obscure short-lived structural changes.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Barab&aacute;si, A.-L. (2016). <em>Network Science</em>.
+            Cambridge University Press.</li>
+          <li>de Solla Price, D. J. (1965). Networks of scientific papers.
+            <em>Science, 149</em>(3683), 510&ndash;515.</li>
+        </ul>
+        </div>
+      </details>
+
+      <!-- Controls -->
+      <div class="citnet-controls">
+        <div class="citnet-filters">
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">Min. citations:&nbsp;
+              <strong id="te-min-val">1</strong></label>
+            <input type="range" id="te-min-slider" class="citnet-slider"
+                   min="1" max="20" value="1"
+                   oninput="document.getElementById('te-min-val').textContent=this.value">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">Window:&nbsp;
+              <strong id="te-win-val">1 yr</strong></label>
+            <input type="range" id="te-win-slider" class="citnet-slider"
+                   min="1" max="10" step="1" value="1"
+                   oninput="document.getElementById('te-win-val').textContent=this.value==1?'1 yr':this.value+' yr'">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="te-year-from">From</label>
+            <select id="te-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="te-year-to">To</label>
+            <select id="te-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="te-journal-picker">
+              <summary class="citnet-journal-summary">
+                Journals&nbsp;<span id="te-journal-count">(all)</span>
+              </summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label">
+                  <input type="checkbox" id="te-check-all" checked
+                         onchange="toggleAllTeJournals(this)">
+                  <em>All journals</em>
+                </label>
+                {% for j in all_journals %}
+                <label class="citnet-journal-label">
+                  <input type="checkbox" class="te-journal-check"
+                         value="{{ j.name }}" checked
+                         onchange="updateTeJournalCount()">
+                  {{ j.name }}
+                </label>
+                {% endfor %}
+              </div>
+            </details>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="te-view-mode">View</label>
+            <select id="te-view-mode" class="filter-select">
+              <option value="timeseries">Time Series</option>
+              <option value="snapshot">Network Snapshot</option>
+            </select>
+          </div>
+
+          <button class="filter-apply-btn" onclick="loadTemporalEvolution()">Compute</button>
+
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="citnet-meta">
+        <span id="te-stats" class="citnet-stats-text"></span>
+      </div>
+
+      <!-- Metric toggle checkboxes (time-series view) -->
+      <div id="te-metric-toggles" style="display:none; margin-bottom:0.8rem;
+           flex-wrap:wrap; gap:0.6rem 1rem; font-size:0.82rem;"></div>
+
+      <!-- Chart container (Chart.js time series) -->
+      <div id="te-chart-container" style="min-height:420px; display:none;">
+        <canvas id="te-chart"></canvas>
+      </div>
+
+      <!-- Snapshot container (D3 force graph + year slider) -->
+      <div id="te-snapshot-container" style="display:none;">
+        <div style="margin-bottom:0.6rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+          <label class="filter-label">Year:&nbsp;
+            <strong id="te-snap-year-val">&mdash;</strong></label>
+          <input type="range" id="te-snap-year-slider" class="citnet-slider"
+                 style="flex:1; max-width:400px;"
+                 min="1970" max="2025" value="2000"
+                 oninput="onTeSnapYearChange(this.value)">
+          <span id="te-snap-stats" style="font-size:0.78rem; color:#9c9890;"></span>
+        </div>
+        <div class="citnet-container" id="te-graph-container" style="min-height:500px;">
+          <div class="loading-msg">Use the year slider above to browse network snapshots.</div>
+        </div>
+      </div>
+
+      <div id="te-placeholder" style="min-height:200px;">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to analyse temporal evolution.</div>
+      </div>
+
+    </div><!-- /tab-temporal -->
+
     <!-- ── Institutions tab ──────────────────────────────────── -->
     <div id="tab-institutions" class="tab-panel" style="display:none;">
 
@@ -1562,6 +1732,7 @@ let sleepersLoaded     = false;
 let journalflowLoaded  = false;
 let halflifeLoaded     = false;
 let mainpathLoaded     = false;
+let temporalLoaded     = false;
 let institutionsLoaded = false;
 
 function showTab(name, btn) {
@@ -1638,6 +1809,9 @@ function showTab(name, btn) {
   }
   if (name === 'mainpath' && !mainpathLoaded) {
     mainpathLoaded = true;
+  }
+  if (name === 'temporal' && !temporalLoaded) {
+    temporalLoaded = true;
   }
   if (name === 'institutions' && !institutionsLoaded) {
     institutionsLoaded = true;
@@ -4347,6 +4521,360 @@ function renderMainPath(container, data) {
   }
 
   container.appendChild(el);
+}
+
+
+// ── Temporal Network Evolution ────────────────────────────────────────────────
+
+let teChart = null;
+let teSimulation = null;
+let teData = null;
+let teSnapDebounce = null;
+
+function toggleAllTeJournals(master) {
+  document.querySelectorAll('.te-journal-check').forEach(c => c.checked = master.checked);
+  updateTeJournalCount();
+}
+function updateTeJournalCount() {
+  const checked = document.querySelectorAll('.te-journal-check:checked').length;
+  const total   = document.querySelectorAll('.te-journal-check').length;
+  document.getElementById('te-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}/${total})`;
+  document.getElementById('te-check-all').checked = (checked === total);
+}
+
+async function loadTemporalEvolution() {
+  // Clean up
+  if (teChart) { teChart.destroy(); teChart = null; }
+  if (teSimulation) { teSimulation.stop(); teSimulation = null; }
+  d3.selectAll('.te-tip').remove();
+  document.getElementById('te-stats').textContent = '';
+  document.getElementById('te-chart-container').style.display = 'none';
+  document.getElementById('te-snapshot-container').style.display = 'none';
+  document.getElementById('te-metric-toggles').style.display = 'none';
+  document.getElementById('te-placeholder').style.display = 'none';
+
+  const viewMode = document.getElementById('te-view-mode').value;
+  const minCit   = document.getElementById('te-min-slider').value;
+  const winSize  = document.getElementById('te-win-slider').value;
+  let yearFrom   = document.getElementById('te-year-from').value;
+  let yearTo     = document.getElementById('te-year-to').value;
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo))
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+  const checked = [...document.querySelectorAll('.te-journal-check:checked')]
+                    .map(c => c.value);
+  const total   = document.querySelectorAll('.te-journal-check').length;
+
+  const params = new URLSearchParams({
+    min_citations: minCit, window_size: winSize
+  });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  const statsEl = document.getElementById('te-stats');
+  statsEl.textContent = 'Computing temporal metrics\u2026';
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/temporal-evolution?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    statsEl.textContent = 'Failed to load temporal data.';
+    return;
+  }
+
+  if (!data.windows || data.windows.length === 0) {
+    statsEl.textContent = 'No data matches these filters \u2014 try lowering the minimum citation count.';
+    return;
+  }
+
+  teData = data;
+
+  statsEl.textContent =
+    `${data.stats.total_windows} windows \u00b7 ` +
+    `${data.stats.total_articles.toLocaleString()} articles \u00b7 ` +
+    `${data.stats.total_citations.toLocaleString()} citations \u00b7 ` +
+    `${data.stats.year_range[0]}\u2013${data.stats.year_range[1]}`;
+
+  if (viewMode === 'timeseries') {
+    renderTeTimeSeries(data);
+  } else {
+    renderTeSnapshotView(data);
+  }
+}
+
+/* ── Time-series multi-line chart ── */
+
+const TE_METRICS = [
+  { key: 'node_count',           label: 'Articles (window)',      color: '#608aac', yAxis: 'y2', checked: true,  fmt: 'int'   },
+  { key: 'edge_count',           label: 'Citations (window)',     color: '#ac6882', yAxis: 'y2', checked: true,  fmt: 'int'   },
+  { key: 'density',              label: 'Density',                color: '#5a3e28', yAxis: 'y',  checked: true,  fmt: 'float' },
+  { key: 'transitivity',         label: 'Clustering',             color: '#3a5a28', yAxis: 'y',  checked: true,  fmt: 'float' },
+  { key: 'giant_component_frac', label: 'Giant Comp. Fraction',   color: '#28445a', yAxis: 'y',  checked: true,  fmt: 'float' },
+  { key: 'modularity',           label: 'Modularity',             color: '#5a2840', yAxis: 'y',  checked: false, fmt: 'float' },
+  { key: 'avg_degree',           label: 'Avg. Degree',            color: '#8b6045', yAxis: 'y2', checked: false, fmt: 'float' },
+  { key: 'avg_path_length',      label: 'Avg. Path Length',       color: '#456b40', yAxis: 'y2', checked: false, fmt: 'float' },
+  { key: 'new_nodes',            label: 'New Articles',           color: '#aaaa60', yAxis: 'y2', checked: false, fmt: 'int'   },
+  { key: 'cum_node_count',       label: 'Cumulative Articles',    color: '#405c78', yAxis: 'y2', checked: false, fmt: 'int'   },
+  { key: 'cum_edge_count',       label: 'Cumulative Citations',   color: '#7a4560', yAxis: 'y2', checked: false, fmt: 'int'   },
+  { key: 'cum_density',          label: 'Cumulative Density',     color: '#6a5a8a', yAxis: 'y',  checked: false, fmt: 'float' },
+  { key: 'cum_giant_frac',       label: 'Cum. Giant Comp. Frac.', color: '#5a7a4a', yAxis: 'y',  checked: false, fmt: 'float' },
+];
+
+function renderTeTimeSeries(data) {
+  const chartContainer = document.getElementById('te-chart-container');
+  const togglesEl      = document.getElementById('te-metric-toggles');
+  chartContainer.style.display = 'block';
+  togglesEl.style.display = 'flex';
+
+  window._teWindows = data.windows;
+  window._teLabels  = data.windows.map(w => w.window_label);
+
+  // Render toggle checkboxes
+  togglesEl.innerHTML = TE_METRICS.map(m =>
+    `<label style="cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem;">` +
+      `<input type="checkbox" class="te-metric-check" data-key="${m.key}" ` +
+             `${m.checked ? 'checked' : ''} onchange="updateTeChart()">` +
+      `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;` +
+             `background:${m.color};"></span>` +
+      `<span>${m.label}</span>` +
+    `</label>`
+  ).join('');
+
+  updateTeChart();
+}
+
+function updateTeChart() {
+  const windows = window._teWindows;
+  const labels  = window._teLabels;
+  if (!windows || !labels) return;
+
+  const ctx = document.getElementById('te-chart').getContext('2d');
+  if (teChart) teChart.destroy();
+
+  const datasets = [];
+  TE_METRICS.forEach(m => {
+    const cb = document.querySelector(`.te-metric-check[data-key="${m.key}"]`);
+    if (!cb || !cb.checked) return;
+    datasets.push({
+      label: m.label,
+      data: windows.map(w => w[m.key]),
+      borderColor: m.color,
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 1.5,
+      pointHoverRadius: 5,
+      tension: 0.3,
+      yAxisID: m.yAxis,
+      spanGaps: true,
+    });
+  });
+
+  const hasY2 = datasets.some(ds => ds.yAxisID === 'y2');
+
+  teChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { family: 'system-ui, sans-serif', size: 10 }, boxWidth: 12, padding: 8 },
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx2 => {
+              const v = ctx2.parsed.y;
+              if (v === null || v === undefined) return ` ${ctx2.dataset.label}: \u2014`;
+              const m = TE_METRICS.find(mm => mm.label === ctx2.dataset.label);
+              if (m && m.fmt === 'int') return ` ${ctx2.dataset.label}: ${v.toLocaleString()}`;
+              return ` ${ctx2.dataset.label}: ${v.toFixed(4)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { font: { family: 'system-ui, sans-serif', size: 11 }, maxRotation: 45 } },
+        y: {
+          type: 'linear', position: 'left', beginAtZero: true,
+          title: { display: true, text: 'Fraction / coefficient',
+                   font: { family: 'system-ui, sans-serif', size: 11 }, color: '#5a3e28' },
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 } },
+        },
+        y2: {
+          type: 'linear', position: 'right', beginAtZero: true,
+          display: hasY2,
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Count / degree',
+                   font: { family: 'system-ui, sans-serif', size: 11 }, color: '#9c9890' },
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 }, color: '#9c9890' },
+        },
+      },
+    },
+  });
+}
+
+/* ── Network snapshot with year slider ── */
+
+function renderTeSnapshotView(data) {
+  const snapContainer = document.getElementById('te-snapshot-container');
+  snapContainer.style.display = 'block';
+
+  const slider = document.getElementById('te-snap-year-slider');
+  slider.min   = data.stats.year_range[0];
+  slider.max   = data.stats.year_range[1];
+  slider.value = data.stats.year_range[1];
+  document.getElementById('te-snap-year-val').textContent = slider.value;
+
+  // Load the initial snapshot at the most recent year
+  loadTeSnapshot(parseInt(slider.value));
+}
+
+function onTeSnapYearChange(val) {
+  document.getElementById('te-snap-year-val').textContent = val;
+  clearTimeout(teSnapDebounce);
+  teSnapDebounce = setTimeout(() => loadTeSnapshot(parseInt(val)), 400);
+}
+
+async function loadTeSnapshot(year) {
+  const container = document.getElementById('te-graph-container');
+  container.innerHTML = '<div class="loading-msg">Loading network snapshot\u2026</div>';
+  if (teSimulation) { teSimulation.stop(); teSimulation = null; }
+  d3.selectAll('.te-tip').remove();
+
+  const minCit  = document.getElementById('te-min-slider').value;
+  const checked = [...document.querySelectorAll('.te-journal-check:checked')]
+                    .map(c => c.value);
+  const total   = document.querySelectorAll('.te-journal-check').length;
+  let yearFrom  = document.getElementById('te-year-from').value;
+
+  const params = new URLSearchParams({
+    min_citations: minCit,
+    window_size: 1,
+    snapshot_year: year,
+    max_nodes: 500,
+  });
+  if (yearFrom) params.set('year_from', yearFrom);
+  params.set('year_to', year);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/temporal-evolution?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load snapshot.</p>';
+    return;
+  }
+
+  if (!data.snapshot || data.snapshot.nodes.length === 0) {
+    container.innerHTML = '<p class="explore-hint">No network data at year ' + year + '.</p>';
+    document.getElementById('te-snap-stats').textContent = '';
+    return;
+  }
+
+  const ss = data.snapshot;
+  document.getElementById('te-snap-stats').textContent =
+    `${ss.nodes.length} articles \u00b7 ${ss.links.length} citations`;
+
+  renderTeForceGraph(container, ss);
+}
+
+function renderTeForceGraph(container, snapshot) {
+  container.innerHTML = '';
+
+  const W = container.clientWidth || 820;
+  const H = 500;
+  const nodes = snapshot.nodes.map(d => ({...d}));
+  const links = snapshot.links.map(d => ({...d}));
+
+  const maxCit = d3.max(nodes, d => d.internal_cited_by_count) || 1;
+  const rScale = d3.scaleSqrt().domain([0, maxCit]).range([3, 18]);
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', W).attr('height', H)
+    .style('background', '#faf8f5');
+  const g = svg.append('g');
+
+  svg.call(d3.zoom().scaleExtent([0.15, 6])
+    .on('zoom', e => g.attr('transform', e.transform)));
+
+  const linkSel = g.append('g').selectAll('line')
+    .data(links).enter().append('line')
+    .style('stroke', '#ccc7bb').style('stroke-opacity', 0.3)
+    .style('stroke-width', 0.7);
+
+  const tip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip te-tip')
+    .style('opacity', 0).style('pointer-events', 'none');
+
+  const nodeGroup = g.append('g').selectAll('g')
+    .data(nodes).enter().append('g')
+    .style('cursor', 'pointer')
+    .on('click', (e, d) => window.open('/article/' + d.id, '_blank'))
+    .on('mouseover', (event, d) => {
+      const yr = (d.pub_date || '').substring(0, 4);
+      tip.html(
+        `<strong>${d.title || 'Untitled'}</strong><br>` +
+        `${(d.authors || '').split(',')[0].split(';')[0]}${(d.authors || '').includes(',') || (d.authors || '').includes(';') ? ' et al.' : ''} (${yr})<br>` +
+        `<em>${d.journal || ''}</em><br>` +
+        `Cited ${d.internal_cited_by_count}\u00d7 \u00b7 degree ${d.degree}`
+      ).style('left', (event.pageX + 14) + 'px')
+       .style('top',  (event.pageY - 10) + 'px')
+       .style('opacity', 1);
+    })
+    .on('mousemove', event => {
+      tip.style('left', (event.pageX + 14) + 'px')
+         .style('top',  (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', () => tip.style('opacity', 0))
+    .call(d3.drag()
+      .on('start', (e, d) => {
+        if (!e.active) teSimulation.alphaTarget(0.2).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end', (e, d) => {
+        if (!e.active) teSimulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      })
+    );
+
+  nodeGroup.append('circle')
+    .attr('r', d => rScale(d.internal_cited_by_count))
+    .style('fill', d => citnetJournalColor(d.journal))
+    .style('stroke', '#fff').style('stroke-width', 0.8)
+    .style('opacity', 0.85);
+
+  // Labels for highly cited nodes
+  const labelThreshold = Math.max(5, d3.quantile(nodes.map(d => d.internal_cited_by_count).sort(d3.ascending), 0.9));
+  nodeGroup.filter(d => d.internal_cited_by_count >= labelThreshold)
+    .append('text')
+    .text(d => {
+      const t = d.title || '';
+      return t.length > 30 ? t.substring(0, 28) + '\u2026' : t;
+    })
+    .attr('dx', d => rScale(d.internal_cited_by_count) + 3)
+    .attr('dy', '0.35em')
+    .style('font-size', '8px')
+    .style('fill', '#5a3e28')
+    .style('pointer-events', 'none');
+
+  teSimulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(40).strength(0.25))
+    .force('charge', d3.forceManyBody().strength(-40))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => rScale(d.internal_cited_by_count) + 2))
+    .on('tick', () => {
+      linkSel
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
 }
 
 
