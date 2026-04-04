@@ -74,6 +74,12 @@ def openalex_job():
 if __name__ == "__main__":
     init_db()
 
+    # Tag articles from known gold-OA journals (fast, no API calls)
+    from db import backfill_oa_status
+    oa_result = backfill_oa_status()
+    if oa_result["tagged"] > 0:
+        log.info("OA backfill: tagged %d articles as gold OA", oa_result["tagged"])
+
     log.info("Running initial fetch on startup…")
     job()
 

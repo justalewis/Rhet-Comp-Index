@@ -466,23 +466,25 @@ def _build_where(journal=None, source=None, q=None,
 # ── Writes ─────────────────────────────────────────────────────────────────────
 
 def upsert_article(url, doi, title, authors, abstract, pub_date, journal, source,
-                   keywords=None, tags=None):
+                   keywords=None, tags=None, oa_status=None, oa_url=None):
     """
     Insert article if its URL is not already present.
     Returns 1 if a new row was inserted, 0 if it was a duplicate (ignored).
 
-    authors  — semicolon-separated string or None
-    keywords — semicolon-separated CrossRef subject terms or None
-    tags     — pipe-delimited auto-tag string like "|transfer|genre theory|" or None
+    authors   — semicolon-separated string or None
+    keywords  — semicolon-separated CrossRef subject terms or None
+    tags      — pipe-delimited auto-tag string like "|transfer|genre theory|" or None
+    oa_status — 'gold', 'green', 'hybrid', 'bronze', 'closed', or None
+    oa_url    — direct URL to open-access version, or None
     """
     with get_conn() as conn:
         conn.execute("""
             INSERT OR IGNORE INTO articles
                 (url, doi, title, authors, abstract, pub_date,
-                 journal, source, keywords, tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 journal, source, keywords, tags, oa_status, oa_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (url, doi, title, authors, abstract, pub_date,
-              journal, source, keywords, tags))
+              journal, source, keywords, tags, oa_status, oa_url))
         conn.commit()
         return conn.execute("SELECT changes()").fetchone()[0]
 
@@ -523,6 +525,55 @@ def update_semantic_data(article_id, ss_id, citation_count):
             (ss_id, citation_count, article_id)
         )
         conn.commit()
+
+
+def backfill_oa_status():
+    """
+    Tag articles from known gold-OA journals with oa_status='gold'.
+
+    Uses the GOLD_OA_JOURNALS set from journals.py.  For articles with
+    a DOI, also sets oa_url to the doi.org URL if not already set.
+    For articles with a direct URL (RSS/scraped), sets oa_url to that URL.
+
+    Returns dict with counts: {tagged, already_tagged, total_gold_articles}.
+    """
+    from journals import GOLD_OA_JOURNALS
+
+    tagged = 0
+    already = 0
+    total_gold = 0
+
+    with get_conn() as conn:
+        for jname in sorted(GOLD_OA_JOURNALS):
+            rows = conn.execute(
+                "SELECT id, doi, url, oa_status, oa_url FROM articles WHERE journal = ?",
+                (jname,),
+            ).fetchall()
+
+            for r in rows:
+                total_gold += 1
+                if r["oa_status"] == "gold":
+                    already += 1
+                    continue
+
+                # Determine best OA URL
+                oa_url = r["oa_url"]
+                if not oa_url:
+                    if r["doi"]:
+                        oa_url = f"https://doi.org/{r['doi']}"
+                    elif r["url"]:
+                        oa_url = r["url"]
+
+                conn.execute(
+                    "UPDATE articles SET oa_status = 'gold', oa_url = ? WHERE id = ?",
+                    (oa_url, r["id"]),
+                )
+                tagged += 1
+
+        conn.commit()
+
+    return {"tagged": tagged, "already_tagged": already,
+            "total_gold_articles": total_gold}
 
 
 # ── Reads ──────────────────────────────────────────────────────────────────────

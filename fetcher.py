@@ -18,7 +18,7 @@ import requests
 from datetime import datetime
 
 from db import init_db, upsert_article, update_fetch_log, get_last_fetch
-from journals import CROSSREF_JOURNALS, ISSN_TO_NAME
+from journals import CROSSREF_JOURNALS, ISSN_TO_NAME, GOLD_OA_JOURNALS
 from tagger import auto_tag
 
 logging.basicConfig(
@@ -135,9 +135,14 @@ def fetch_journal(issn, since_date=None):
             keywords = "; ".join(subjects) if subjects else None
             tags = auto_tag(title, abstract)
 
+            # OA classification: known gold-OA journals get tagged at insert
+            oa_status = "gold" if jname in GOLD_OA_JOURNALS else None
+            oa_url_val = url if oa_status == "gold" else None
+
             added = upsert_article(
                 url, doi, title, authors, abstract, pub_date, jname, "crossref",
                 keywords=keywords, tags=tags,
+                oa_status=oa_status, oa_url=oa_url_val,
             )
             total_added += added
 

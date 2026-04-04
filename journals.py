@@ -187,6 +187,45 @@ MANUAL_JOURNALS = [
     },
 ]
 
+# ── Open-access classification ──────────────────────────────────────────────
+# Journals that are entirely open access (no paywall for any article).
+# Used by backfill_oa_status() in db.py to tag articles without API calls.
+# Journals NOT listed here are assumed to be subscription / mixed and need
+# per-article OA checking via OpenAlex.
+
+GOLD_OA_JOURNALS = {
+    # WAC Clearinghouse — all fully OA
+    "Across the Disciplines",
+    "The WAC Journal",
+    "Journal of Writing Analytics",
+    "Prompt: A Journal of Academic Writing Assignments",
+    "Peitho",
+    "Double Helix",
+    # Independent OA journals
+    "Kairos: A Journal of Rhetoric, Technology, and Pedagogy",
+    "Enculturation",
+    "Composition Forum",
+    "Present Tense: A Journal of Rhetoric in Society",
+    "KB Journal: The Journal of the Kenneth Burke Society",
+    "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
+    "Literacy in Composition Studies",
+    "Basic Writing e-Journal",
+    "Journal of Multimodal Rhetorics",
+    "Praxis: A Writing Center Journal",
+    "The Peer Review",
+    "Writing Center Journal",
+    "Writing Lab Newsletter",
+    "Poroi",
+    "Community Literacy Journal",
+    "Composition Studies",
+    # CDQ is ACM OA
+    "Communication Design Quarterly",
+    "Communication Design Quarterly Review",
+    # University press OA
+    "Rhetoric of Health and Medicine",
+}
+
+
 # ── Journals currently unavailable ───────────────────────────────────────────
 # Displayed in the sidebar for reference. Not fetched.
 

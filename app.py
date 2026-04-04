@@ -90,6 +90,15 @@ Compress(app)
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()
 
+# Tag articles from known gold-OA journals (fast, no API calls).
+from db import backfill_oa_status as _backfill_oa
+_oa_result = _backfill_oa()
+if _oa_result["tagged"] > 0:
+    import logging as _log_mod
+    _log_mod.getLogger(__name__).info(
+        "OA backfill: tagged %d articles as gold OA", _oa_result["tagged"]
+    )
+
 # Pre-warm the SQLite page cache so the first HTTP request isn't slow.
 # On Fly.io, the persistent volume is cold on startup; the first query that
 # touches the 89 MB DB can take 10-15 s while the OS loads pages from disk.
@@ -446,6 +455,10 @@ def trigger_fetch():
     """Kick off an incremental fetch of all sources in a background thread."""
     def _run():
         try:
+            # Tag any untagged articles from known gold-OA journals
+            from db import backfill_oa_status
+            backfill_oa_status()
+
             from fetcher     import fetch_all as crossref_fetch
             from rss_fetcher import fetch_all as rss_fetch
             from scraper     import fetch_all as scrape_fetch
