@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>What's New — Pinakes</title>
+  <title>All Tools — Pinakes</title>
   <link id="theme-css" rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/style-scandi.css">
   <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
@@ -39,6 +39,25 @@
       document.body.appendChild(scandiBtn);
     });
   </script>
+  <style>
+    /* Supplement styles from style.css for tools page specifics */
+    .tool-card-name { margin: 0 0 0.35rem 0; }
+    .tool-card-name a { color: var(--accent); text-decoration: none; }
+    .tool-card-name a:hover { text-decoration: underline; }
+    .tool-card-desc { margin: 0; }
+    .tools-footer {
+      margin-top: 2.5rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+    }
+    .tools-footer a { color: var(--link); text-decoration: none; }
+    .tools-footer a:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
 
@@ -56,8 +75,8 @@
     <nav class="journal-nav">
 
       <div class="feature-nav">
-        <div class="nav-item active">
-          <a href="/new" class="feature-nav-link active-feature-link">
+        <div class="nav-item">
+          <a href="/new" class="feature-nav-link">
             <span class="feature-nav-icon">★</span>
             What's New
             {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
@@ -184,96 +203,131 @@
   <!-- ── Main content ─────────────────────────────────────── -->
   <main class="content">
 
-    <div class="content-header new-page-header">
-      <h2>What's New</h2>
-      <span class="result-count">
-        {% if total %}{{ total }} article{% if total != 1 %}s{% endif %} added in the last 7 days{% else %}Nothing new{% endif %}
-      </span>
+    <div class="content-header">
+      <h2>All Tools</h2>
+      <span class="result-count">Every analytical tool on Pinakes, with descriptions and direct links.</span>
     </div>
 
-    <p class="page-intro">
-      Rhetoric and composition scholarship publishes continuously across more than 40 journals simultaneously. This page tracks articles ingested into the index within the last 7 days, grouped by journal — a live pulse of the field's current output.
-    </p>
-
-    {% if new_by_journal %}
-
-      {% for journal_name, articles in new_by_journal.items() %}
-      <section class="journal-new-section period-section">
-        <h3 class="period-heading">
-          {{ journal_name }}
-          <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:0.75rem;">
-            — {{ articles | length }} new
-          </span>
-        </h3>
-        <ol class="article-list">
-          {% for a in articles %}
-          <li class="article">
-
-            <div class="article-meta-top">
-              {% if a.pub_date %}
-              <span class="article-date">{{ a.pub_date | display_date }}</span>
-              {% endif %}
-              {% if a.source == 'scrape' %}
-              <span class="src-badge scrape">web</span>
-              {% elif a.source == 'rss' %}
-              <span class="src-badge rss">RSS</span>
-              {% endif %}
-              {% if a.oa_url %}
-              <a class="oa-badge" href="{{ a.oa_url }}" target="_blank" rel="noopener">OA PDF</a>
-              {% endif %}
-            </div>
-
-            <div class="article-title-row">
-              <a class="article-title" href="/article/{{ a.id }}">{{ a.title }}</a>
-              <a class="article-detail-link" href="{{ a.url }}" target="_blank" rel="noopener" title="View on publisher site">&#8599;</a>
-            </div>
-
-            {% if a.authors %}
-            <div class="article-authors">
-              {{ a.authors }}
-              {% if a.citation_count and a.citation_count > 0 %}
-              <span class="cite-count">(cited {{ a.citation_count }}&times;)</span>
-              {% endif %}
-            </div>
-            {% elif a.source == 'scrape' %}
-            <div class="article-authors no-data">Author data unavailable</div>
-            {% endif %}
-
-            {% if a.abstract %}
-            <details class="abstract-toggle">
-              <summary>Abstract</summary>
-              <p class="abstract-text">{{ a.abstract }}</p>
-            </details>
-            {% endif %}
-
-            {% if a.tags %}
-            <div class="article-tags">
-              {% for t in a.tags.strip('|').split('|') %}
-              {% if t.strip() %}
-              <a class="article-tag" href="/?tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
-              {% endif %}
-              {% endfor %}
-            </div>
-            {% endif %}
-
-            {% if a.doi %}
-            <div class="article-doi">
-              <a href="{{ a.url }}" target="_blank" rel="noopener">doi:{{ a.doi }}</a>
-            </div>
-            {% endif %}
-
-          </li>
-          {% endfor %}
-        </ol>
-      </section>
-      {% endfor %}
-
-    {% else %}
-    <div class="empty-state">
-      <p>Nothing new in the last 7 days.</p>
-      <p>Click <strong>Refresh all sources</strong> on the <a href="/">main page</a> to fetch recent publications.</p>
+    <!-- Section 1 -->
+    <div class="tools-section">
+      <h3 class="tools-section-heading">What Has the Field Published?</h3>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#timeline">Publication Timeline</a></p>
+          <p class="tool-card-desc">Article output per year across all 44 journals, filterable by venue.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#institutions">Institutions</a></p>
+          <p class="tool-card-desc">Which universities produce the most scholarship, tracked over time via OpenAlex.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/new">What's New</a></p>
+          <p class="tool-card-desc">Articles added to the index in the last seven days, grouped by journal.</p>
+        </div>
+      </div>
     </div>
-    {% endif %}
+
+    <!-- Section 2 -->
+    <div class="tools-section">
+      <h3 class="tools-section-heading">How Does the Field Cite?</h3>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#citnet">Citation Network</a></p>
+          <p class="tool-card-desc">The global directed citation network: articles as nodes, citations as edges, filterable by journal and year.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/most-cited">Most Cited</a></p>
+          <p class="tool-card-desc">Articles ranked by how often they are cited within the index, filterable by journal, topic, and decade.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#citation-trends">Citation Trends</a></p>
+          <p class="tool-card-desc">Average citations per article by publication year, showing how citation density changes over time.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#journal-flow">Journal Citation Flow</a></p>
+          <p class="tool-card-desc">Journal-to-journal citation flow as a chord diagram, showing directional intellectual trade between venues.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#half-life">Half-Life</a></p>
+          <p class="tool-card-desc">Citing and cited half-life for each journal: how far back does a journal reach, and how long does its work get cited?</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="tools-section">
+      <h3 class="tools-section-heading">What Belongs Together?</h3>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#cocitation">Article Co-Citation</a></p>
+          <p class="tool-card-desc">Articles the field treats as intellectually related, based on how often they are cited together.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#author-cocitation">Author Co-Citation</a></p>
+          <p class="tool-card-desc">Scholars the field perceives as intellectually connected, based on co-citation by others.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#bibcoupling">Bibliographic Coupling</a></p>
+          <p class="tool-card-desc">Articles that read the same things: linked by shared references.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#communities">Community Detection</a></p>
+          <p class="tool-card-desc">Clusters of densely interconnected articles identified by the Louvain algorithm.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#centrality">Centrality Analysis</a></p>
+          <p class="tool-card-desc">Structural importance: which articles are cited by influential work (PageRank) and which bridge separate communities (betweenness).</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#main-path">Main Path Analysis</a></p>
+          <p class="tool-card-desc">The backbone of knowledge flow: the single most-traversed chain from the research frontier to foundational works.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#sleeping-beauties">Sleeping Beauties</a></p>
+          <p class="tool-card-desc">Articles that went years with little citation before experiencing sudden recognition.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#temporal-evolution">Temporal Network Evolution</a></p>
+          <p class="tool-card-desc">How the citation network's density, clustering, and modularity have changed over time.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="tools-section">
+      <h3 class="tools-section-heading">Who Works With Whom?</h3>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#authors">Co-Authorship Network</a></p>
+          <p class="tool-card-desc">Authors who have published together, sized by publication count, linked by shared articles.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/authors">Author Profiles</a></p>
+          <p class="tool-card-desc">Individual profile pages with publication timeline, co-author network, topic distribution, and co-citation partners.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="tools-section">
+      <h3 class="tools-section-heading">What Is the Field About?</h3>
+      <div class="tools-grid">
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#topics">Topic Co-Occurrence</a></p>
+          <p class="tool-card-desc">How often pairs of subject tags appear together, revealing which research threads the field treats as connected.</p>
+        </div>
+        <div class="tool-card">
+          <p class="tool-card-name"><a href="/explore#reading-path">Reading Path</a></p>
+          <p class="tool-card-desc">Given one article, find what to read next: backward citations, forward citations, co-citation neighbors, and coupling neighbors ranked by relevance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer links -->
+    <div class="tools-footer">
+      <a href="/explore">&larr; Back to Explore</a>
+      <a href="/coverage">Data Coverage &amp; Methodology &rarr;</a>
+    </div>
 
   </main>
 

@@ -654,6 +654,23 @@ def explore():
     )
 
 
+@app.route("/tools")
+def tools():
+    """Browse all tools page — flat grid of every analytical tool."""
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
+    new_count = get_new_article_count(days=7)
+
+    return render_template(
+        "tools.html",
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        journal_groups=journal_groups,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=new_count,
+    )
+
+
 @app.route("/citations")
 def citation_network_page():
     """Per-article ego-network visualisation page."""

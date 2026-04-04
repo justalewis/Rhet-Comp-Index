@@ -802,10 +802,7 @@ html.scandi .author-count {
 }
 
 /* ── Explore page tabs ───────────────────────────────────────── */
-html.scandi .explore-tabs {
-  border-bottom: 0.5px solid var(--border);
-  margin-bottom: 2rem;
-}
+html.scandi .explore-tabs { display: none; }
 
 html.scandi .explore-tab {
   font-family: var(--font-body);
@@ -820,15 +817,21 @@ html.scandi .explore-tab {
   transition: color 0.1s, border-color 0.1s;
 }
 
-html.scandi .explore-tab:hover {
-  color: var(--text);
-}
+html.scandi .explore-tab:hover { color: var(--text); }
 
 html.scandi .explore-tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
   font-weight: 500;
 }
+
+/* ── Accordion nav (Scandi overrides) ────────────────────────── */
+html.scandi .accordion-nav { border-radius: 2px; }
+html.scandi .accordion-card { border-radius: 2px; }
+html.scandi .accordion-question { font-family: var(--font-ui); font-weight: 500; }
+html.scandi .accordion-card-name { font-family: var(--font-ui); font-weight: 500; }
+html.scandi .tools-section-heading { font-family: var(--font-ui); font-weight: 500; }
+html.scandi .tool-card { border-radius: 2px; }
 
 /* ── Chart and graph containers ──────────────────────────────── */
 html.scandi .network-container {

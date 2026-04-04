@@ -87,6 +87,7 @@
             <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Evolution</a>
             <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
             <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
+            <a href="/tools" class="nav-dropdown-item" style="border-top:1px solid var(--border);margin-top:0.25rem;padding-top:0.45rem;">Browse All Tools</a>
           </div>
         </div>
         <div class="nav-item" id="nav-authors">
@@ -189,10 +190,172 @@
     </div>
 
     <p class="page-intro">
-      Patterns in the literature, made visible. Use the tabs below to explore publication trends over time, topic clusters, co-authorship networks, the most-cited work in the field, and how citation activity has shifted across decades.
+      Patterns in the literature, made visible. Choose a tool below to explore publication trends, citation structure, intellectual communities, and collaborative networks across the field.
     </p>
 
-    <!-- Tabs -->
+    <!-- Accordion navigation -->
+    <div class="accordion-nav" id="accordion-nav">
+
+      <!-- Section 1: What Has the Field Published? -->
+      <div class="accordion-section" data-section="published">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">What Has the Field Published?</div>
+            <div class="accordion-orient">Publication volume, institutional output, and the current week's scholarship.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="timeline" data-hash="timeline">
+              <div class="accordion-card-name">Publication Timeline</div>
+              <div class="accordion-card-desc">Article output per year across all 44 journals, filterable by venue.</div>
+            </a>
+            <a class="accordion-card" data-tab="institutions" data-hash="institutions">
+              <div class="accordion-card-name">Institutions</div>
+              <div class="accordion-card-desc">Which universities produce the most scholarship, tracked over time via OpenAlex.</div>
+            </a>
+            <a class="accordion-card" href="/new">
+              <div class="accordion-card-name">What's New</div>
+              <div class="accordion-card-desc">Articles added to the index in the last seven days, grouped by journal.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: How Does the Field Cite? -->
+      <div class="accordion-section" data-section="cite">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">How Does the Field Cite?</div>
+            <div class="accordion-orient">Citation patterns, flows between journals, and how citation density changes over time.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="citnet" data-hash="citnet">
+              <div class="accordion-card-name">Citation Network</div>
+              <div class="accordion-card-desc">The global directed citation network: articles as nodes, citations as edges, filterable by journal and year.</div>
+            </a>
+            <a class="accordion-card" href="/most-cited">
+              <div class="accordion-card-name">Most Cited</div>
+              <div class="accordion-card-desc">Articles ranked by how often they are cited within the index, filterable by journal, topic, and decade.</div>
+            </a>
+            <a class="accordion-card" data-tab="cittrends" data-hash="citation-trends">
+              <div class="accordion-card-name">Citation Trends</div>
+              <div class="accordion-card-desc">Average citations per article by publication year, showing how citation density changes over time.</div>
+            </a>
+            <a class="accordion-card" data-tab="journalflow" data-hash="journal-flow">
+              <div class="accordion-card-name">Journal Citation Flow</div>
+              <div class="accordion-card-desc">Journal-to-journal citation flow as a chord diagram, showing directional intellectual trade between venues.</div>
+            </a>
+            <a class="accordion-card" data-tab="halflife" data-hash="half-life">
+              <div class="accordion-card-name">Half-Life</div>
+              <div class="accordion-card-desc">Citing and cited half-life for each journal: how far back does a journal reach, and how long does its work get cited?</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: What Belongs Together? -->
+      <div class="accordion-section" data-section="together">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">What Belongs Together?</div>
+            <div class="accordion-orient">Which works the field treats as related, which communities form, and how knowledge flows through time.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="cocitation" data-hash="cocitation">
+              <div class="accordion-card-name">Article Co-Citation</div>
+              <div class="accordion-card-desc">Articles the field treats as intellectually related, based on how often they are cited together.</div>
+            </a>
+            <a class="accordion-card" data-tab="authorcocit" data-hash="author-cocitation">
+              <div class="accordion-card-name">Author Co-Citation</div>
+              <div class="accordion-card-desc">Scholars the field perceives as intellectually connected, based on co-citation by others.</div>
+            </a>
+            <a class="accordion-card" data-tab="bibcoupling" data-hash="bibcoupling">
+              <div class="accordion-card-name">Bibliographic Coupling</div>
+              <div class="accordion-card-desc">Articles that read the same things: linked by shared references.</div>
+            </a>
+            <a class="accordion-card" data-tab="communities" data-hash="communities">
+              <div class="accordion-card-name">Community Detection</div>
+              <div class="accordion-card-desc">Clusters of densely interconnected articles identified by the Louvain algorithm.</div>
+            </a>
+            <a class="accordion-card" data-tab="centrality" data-hash="centrality">
+              <div class="accordion-card-name">Centrality Analysis</div>
+              <div class="accordion-card-desc">Structural importance: which articles are cited by influential work (PageRank) and which bridge separate communities (betweenness).</div>
+            </a>
+            <a class="accordion-card" data-tab="mainpath" data-hash="main-path">
+              <div class="accordion-card-name">Main Path Analysis</div>
+              <div class="accordion-card-desc">The backbone of knowledge flow: the single most-traversed chain from the research frontier to foundational works.</div>
+            </a>
+            <a class="accordion-card" data-tab="sleepers" data-hash="sleeping-beauties">
+              <div class="accordion-card-name">Sleeping Beauties</div>
+              <div class="accordion-card-desc">Articles that went years with little citation before experiencing sudden recognition.</div>
+            </a>
+            <a class="accordion-card" data-tab="temporal" data-hash="temporal-evolution">
+              <div class="accordion-card-name">Temporal Network Evolution</div>
+              <div class="accordion-card-desc">How the citation network's density, clustering, and modularity have changed over time.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Who Works With Whom? -->
+      <div class="accordion-section" data-section="collab">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Who Works With Whom?</div>
+            <div class="accordion-orient">Collaborative relationships and individual scholarly profiles.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="network" data-hash="authors">
+              <div class="accordion-card-name">Co-Authorship Network</div>
+              <div class="accordion-card-desc">Authors who have published together, sized by publication count, linked by shared articles.</div>
+            </a>
+            <a class="accordion-card" href="/authors">
+              <div class="accordion-card-name">Author Profiles</div>
+              <div class="accordion-card-desc">Individual profile pages with publication timeline, co-author network, topic distribution, and co-citation partners.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: What Is the Field About? -->
+      <div class="accordion-section" data-section="about">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">What Is the Field About?</div>
+            <div class="accordion-orient">Topic patterns, thematic connections, and how to find related reading.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="topics" data-hash="topics">
+              <div class="accordion-card-name">Topic Co-Occurrence</div>
+              <div class="accordion-card-desc">How often pairs of subject tags appear together, revealing which research threads the field treats as connected.</div>
+            </a>
+            <a class="accordion-card" data-tab="readingpath" data-hash="reading-path">
+              <div class="accordion-card-name">Reading Path</div>
+              <div class="accordion-card-desc">Given one article, find what to read next: backward citations, forward citations, co-citation neighbors, and coupling neighbors ranked by relevance.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <a href="/tools" class="accordion-browse-link">Browse all tools &rarr;</a>
+
+    </div><!-- /accordion-nav -->
+
+    <!-- Hidden tab buttons (kept for JS compatibility) -->
     <div class="explore-tabs">
       <button class="explore-tab active" onclick="showTab('network', this)" data-hash="authors">Author Network</button>
       <button class="explore-tab" onclick="showTab('authorcocit', this)" data-hash="author-cocitation">Author Co-Citation</button>
@@ -2015,6 +2178,63 @@
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 
 <script>
+// ── Accordion navigation ──────────────────────────────────────────────────────
+function toggleAccordion(headerBtn) {
+  const section = headerBtn.closest('.accordion-section');
+  const wasOpen = section.classList.contains('open');
+  // Close all sections
+  document.querySelectorAll('.accordion-section.open').forEach(s => {
+    s.classList.remove('open');
+    s.querySelector('.accordion-body').style.maxHeight = '0';
+  });
+  // Open this one if it wasn't already open
+  if (!wasOpen) {
+    section.classList.add('open');
+    const body = section.querySelector('.accordion-body');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+}
+
+function openAccordionForHash(hash) {
+  // Find the accordion card with matching data-hash
+  const card = document.querySelector('.accordion-card[data-hash="' + hash + '"]');
+  if (!card) return;
+  const section = card.closest('.accordion-section');
+  if (!section) return;
+  // Close all, open this section
+  document.querySelectorAll('.accordion-section.open').forEach(s => {
+    s.classList.remove('open');
+    s.querySelector('.accordion-body').style.maxHeight = '0';
+  });
+  section.classList.add('open');
+  const body = section.querySelector('.accordion-body');
+  body.style.maxHeight = body.scrollHeight + 'px';
+}
+
+function highlightAccordionCard(hash) {
+  // Remove active from all cards
+  document.querySelectorAll('.accordion-card.active').forEach(c => c.classList.remove('active'));
+  // Activate matching card
+  if (hash) {
+    const card = document.querySelector('.accordion-card[data-hash="' + hash + '"]');
+    if (card) card.classList.add('active');
+  }
+}
+
+// Wire up accordion card clicks
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.accordion-card[data-tab]').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      e.preventDefault();
+      const tabName = card.getAttribute('data-tab');
+      const hash = card.getAttribute('data-hash');
+      // Find the hidden explore-tab button and click it
+      const btn = document.querySelector('.explore-tab[data-hash="' + hash + '"]');
+      if (btn) btn.click();
+    });
+  });
+});
+
 // ── Tab switching ─────────────────────────────────────────────────────────────
 let topicsLoaded       = false;
 let timelineLoaded     = false;
@@ -2129,6 +2349,11 @@ function showTab(name, btn) {
     institutionsLoaded = true;
     loadInstitutions();
   }
+
+  // Sync accordion state
+  const activeHash = btn.getAttribute('data-hash') || name;
+  highlightAccordionCard(activeHash);
+  openAccordionForHash(activeHash);
 }
 
 // ── Warm palette for journals ─────────────────────────────────────────────────

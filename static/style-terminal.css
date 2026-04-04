@@ -945,12 +945,9 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 }
 
 /* ── Explore page ───────────────────────────────────────────── */
-.explore-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border);
-}
+
+/* Legacy tab buttons — hidden */
+.explore-tabs { display: none; }
 
 .explore-tab {
   font-family: var(--font-ui);
@@ -977,6 +974,101 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 }
 
 .tab-panel { min-height: 400px; }
+
+/* ── Accordion nav ────────────────────────────────────────── */
+.accordion-nav {
+  margin-bottom: 1.8rem;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.accordion-section + .accordion-section { border-top: 1px solid var(--border); }
+.accordion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 0.85rem 1.1rem;
+  background: var(--bg-sidebar); border: none; cursor: pointer; text-align: left;
+  transition: background 0.15s;
+}
+.accordion-header:hover { background: var(--active-bg); }
+.accordion-header-text { flex: 1; }
+.accordion-question {
+  font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600;
+  color: var(--accent); line-height: 1.3; text-transform: uppercase; letter-spacing: 0.06em;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+.accordion-orient {
+  font-family: var(--font-body); font-size: 0.76rem; color: var(--text-muted);
+  margin-top: 0.15rem; line-height: 1.45;
+}
+.accordion-chevron {
+  font-size: 0.7rem; color: var(--text-light); transition: transform 0.25s ease;
+  margin-left: 0.75rem; flex-shrink: 0;
+}
+.accordion-section.open .accordion-chevron { transform: rotate(180deg); }
+.accordion-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+  background: var(--bg);
+}
+.accordion-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
+  padding: 0.65rem 1rem 0.85rem;
+}
+.accordion-card {
+  display: block; padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border); background: var(--bg);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  text-decoration: none;
+}
+.accordion-card:hover {
+  border-color: var(--accent); background: var(--active-bg);
+  text-decoration: none;
+}
+.accordion-card.active {
+  border-left: 3px solid var(--accent); background: var(--active-bg);
+}
+.accordion-card-name {
+  font-family: var(--font-ui); font-size: 0.82rem; font-weight: 600;
+  color: var(--accent); line-height: 1.3; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.accordion-card.active .accordion-card-name {
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+.accordion-card-desc {
+  font-family: var(--font-body); font-size: 0.76rem; color: var(--text-muted);
+  line-height: 1.45; margin-top: 0.2rem;
+}
+.accordion-browse-link {
+  display: block; padding: 0.65rem 1.1rem;
+  font-family: var(--font-ui); font-size: 0.8rem; color: var(--link);
+  border-top: 1px solid var(--border); text-align: right;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.accordion-browse-link:hover { color: var(--link-hover); background: var(--active-bg); text-decoration: none; }
+
+@media (max-width: 640px) {
+  .accordion-cards { grid-template-columns: 1fr; }
+  .accordion-orient { display: none; }
+}
+
+/* ── Browse All Tools page ────────────────────────────────── */
+.tools-section { margin-bottom: 2rem; }
+.tools-section-heading {
+  font-family: var(--font-body); font-size: 1rem; font-weight: bold;
+  color: var(--accent); margin-bottom: 0.6rem; padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+.tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; }
+.tool-card {
+  display: block; padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border); background: var(--bg);
+  transition: border-color 0.15s, background 0.15s; text-decoration: none;
+}
+.tool-card:hover { border-color: var(--accent); background: var(--active-bg); text-decoration: none; }
+.tool-card-name { font-family: var(--font-ui); font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+.tool-card-desc { font-family: var(--font-body); font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin-top: 0.2rem; }
+@media (max-width: 900px) { .tools-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .tools-grid { grid-template-columns: 1fr; } }
 
 .chart-toolbar {
   display: flex;
