@@ -70,21 +70,21 @@
             <span class="nav-chevron">▾</span>
           </button>
           <div class="nav-dropdown">
+            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
+            <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
+            <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
+            <a href="/citations" class="nav-dropdown-item">Citation Network</a>
+            <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
+            <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
+            <a href="/explore#communities" class="nav-dropdown-item">Communities</a>
+            <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
+            <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
+            <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
+            <a href="/explore#main-path" class="nav-dropdown-item">Main Path</a>
+            <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
+            <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Evolution</a>
             <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
             <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
-            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
-            <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
-            <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
-            <a href="/citations" class="nav-dropdown-item">Citation Network</a>
-            <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
-            <a href="/explore#communities" class="nav-dropdown-item">Communities</a>
-            <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
-            <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
-            <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
-            <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
-            <a href="/explore#main-path" class="nav-dropdown-item">Main Path</a>
-            <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Evolution</a>
-            <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
         </div>
         <div class="nav-item" id="nav-authors">
@@ -191,26 +191,26 @@
 
     <!-- Tabs -->
     <div class="explore-tabs">
-      <button class="explore-tab active" onclick="showTab('timeline', this)" data-hash="timeline">Timeline</button>
-      <button class="explore-tab" onclick="showTab('topics', this)" data-hash="topics">Topics</button>
-      <button class="explore-tab" onclick="showTab('network', this)" data-hash="authors">Author Network</button>
-      <button class="explore-tab" onclick="showTab('citations', this)" data-hash="citations">Citations</button>
-      <button class="explore-tab" onclick="showTab('cittrends', this)" data-hash="citation-trends">Citation Trends</button>
-      <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
-      <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
-      <button class="explore-tab" onclick="showTab('communities', this)" data-hash="communities">Communities</button>
-      <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
+      <button class="explore-tab active" onclick="showTab('network', this)" data-hash="authors">Author Network</button>
       <button class="explore-tab" onclick="showTab('bibcoupling', this)" data-hash="bibcoupling">Bib. Coupling</button>
-      <button class="explore-tab" onclick="showTab('sleepers', this)" data-hash="sleeping-beauties">Sleeping Beauties</button>
-      <button class="explore-tab" onclick="showTab('journalflow', this)" data-hash="journal-flow">Journal Flow</button>
+      <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
+      <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
+      <button class="explore-tab" onclick="showTab('cittrends', this)" data-hash="citation-trends">Citation Trends</button>
+      <button class="explore-tab" onclick="showTab('citations', this)" data-hash="citations">Citations</button>
+      <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
+      <button class="explore-tab" onclick="showTab('communities', this)" data-hash="communities">Communities</button>
       <button class="explore-tab" onclick="showTab('halflife', this)" data-hash="half-life">Half-Life</button>
-      <button class="explore-tab" onclick="showTab('mainpath', this)" data-hash="main-path">Main Path</button>
-      <button class="explore-tab" onclick="showTab('temporal', this)" data-hash="temporal-evolution">Temporal Evolution</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
+      <button class="explore-tab" onclick="showTab('journalflow', this)" data-hash="journal-flow">Journal Flow</button>
+      <button class="explore-tab" onclick="showTab('mainpath', this)" data-hash="main-path">Main Path</button>
+      <button class="explore-tab" onclick="showTab('sleepers', this)" data-hash="sleeping-beauties">Sleeping Beauties</button>
+      <button class="explore-tab" onclick="showTab('temporal', this)" data-hash="temporal-evolution">Temporal Evolution</button>
+      <button class="explore-tab" onclick="showTab('timeline', this)" data-hash="timeline">Timeline</button>
+      <button class="explore-tab" onclick="showTab('topics', this)" data-hash="topics">Topics</button>
     </div>
 
     <!-- ── Timeline tab ──────────────────────────────────────── -->
-    <div id="tab-timeline" class="tab-panel">
+    <div id="tab-timeline" class="tab-panel" style="display:none;">
       <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: not all journals contribute equal data to this chart →</a></p>
 
@@ -269,7 +269,7 @@
     </div>
 
     <!-- ── Author Network tab ────────────────────────────────── -->
-    <div id="tab-network" class="tab-panel" style="display:none;">
+    <div id="tab-network" class="tab-panel">
 
       <div class="network-explainer">
         <p>This graph maps collaborative relationships among the most-published authors in Pinakes. Each circle represents an author — its size reflects their total article count in the index. Lines connect authors who have co-authored at least one article together; thicker lines mean more shared publications.</p>
@@ -1720,6 +1720,7 @@
 <script>
 // ── Tab switching ─────────────────────────────────────────────────────────────
 let topicsLoaded       = false;
+let timelineLoaded     = false;
 let networkLoaded      = false;
 let citationsLoaded    = false;
 let citTrendsLoaded    = false;
@@ -1744,6 +1745,10 @@ function showTab(name, btn) {
   const hash = btn.getAttribute('data-hash') || name;
   history.replaceState(null, '', '#' + hash);
 
+  if (name === 'timeline' && !timelineLoaded) {
+    timelineLoaded = true;
+    loadTimeline();
+  }
   if (name === 'topics' && !topicsLoaded) {
     topicsLoaded = true;
     loadHeatmap();
@@ -1907,8 +1912,7 @@ function toggleJournals() {
   }
 }
 
-// Load timeline immediately
-loadTimeline();
+// Timeline loads on demand when its tab is activated
 
 
 // ── Tag co-occurrence heatmap ─────────────────────────────────────────────────
@@ -5270,10 +5274,15 @@ window.addEventListener('DOMContentLoaded', function () {
 
   // Fall back to ?tab= param
   const tp = new URLSearchParams(location.search).get('tab');
-  if (!tp) return;
-  const btn = Array.from(document.querySelectorAll('.explore-tab'))
-                   .find(b => (b.getAttribute('onclick') || '').includes("'" + tp + "'"));
-  if (btn) btn.click();
+  if (tp) {
+    const btn = Array.from(document.querySelectorAll('.explore-tab'))
+                     .find(b => (b.getAttribute('onclick') || '').includes("'" + tp + "'"));
+    if (btn) { btn.click(); return; }
+  }
+
+  // No hash and no ?tab= — activate the default tab (first / Author Network)
+  const defaultBtn = document.querySelector('.explore-tab.active');
+  if (defaultBtn) defaultBtn.click();
 });
 </script>
 
