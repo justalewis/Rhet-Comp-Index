@@ -60,6 +60,8 @@ from db import (
     get_ego_network,
     search_articles_autocomplete,
     get_reading_path,
+    get_author_cocitation_network,
+    get_author_cocitation_partners,
     get_coverage_stats,
     get_article_affiliations,
     get_author_by_name,
@@ -955,6 +957,32 @@ def api_reading_path():
     if "error" in result:
         return jsonify(result), 404
     return jsonify(result)
+
+
+@app.route("/api/author-cocitation")
+def api_author_cocitation():
+    """JSON: author co-citation network — which scholars the field cites together."""
+    min_cocitations = max(1, int(request.args.get("min_cocitations", 3)))
+    max_authors     = min(500, max(25, int(request.args.get("max_authors", 200))))
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+    journals  = request.args.getlist("journal")
+
+    data = get_author_cocitation_network(
+        min_cocitations=min_cocitations,
+        max_authors=max_authors,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        journals=journals or None,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/author/<path:name>/cocitation-partners")
+def api_author_cocitation_partners(name):
+    """JSON: top co-citation partners for a specific author."""
+    limit = min(20, int(request.args.get("limit", 10)))
+    return jsonify(get_author_cocitation_partners(name, limit=limit))
 
 
 @app.route("/api/stats/most-cited")

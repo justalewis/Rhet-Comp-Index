@@ -4030,3 +4030,304 @@ def get_reading_path(article_id):
             "unique_articles": len(articles_map),
         },
     }
+
+
+# ── Author co-citation ──────────────────────────────────────────────────────
+
+def get_author_cocitation_network(min_cocitations=3, max_authors=200,
+                                  year_from=None, year_to=None,
+                                  journals=None):
+    """
+    Build an author-level co-citation network.
+
+    Two authors are co-cited when a third article cites at least one work
+    by each of them. The co-citation count for a pair (A, B) is the number
+    of distinct citing articles that reference at least one work by A and
+    at least one by B.
+
+    Author pairs who appear on the SAME cited article are excluded to
+    avoid inflating co-author co-citation counts.
+
+    Returns {nodes, edges, pairs, stats}.
+    """
+    with get_conn() as conn:
+        # ── Build optional filter on the CITING article ──
+        cite_where = []
+        cite_params = []
+        if year_from:
+            cite_where.append("citing.pub_date >= ?")
+            cite_params.append(f"{year_from}-01-01")
+        if year_to:
+            cite_where.append("citing.pub_date <= ?")
+            cite_params.append(f"{year_to}-12-31")
+        if journals:
+            if isinstance(journals, list) and journals:
+                placeholders = ",".join("?" * len(journals))
+                cite_where.append(f"citing.journal IN ({placeholders})")
+                cite_params.extend(journals)
+            elif isinstance(journals, str):
+                cite_where.append("citing.journal = ?")
+                cite_params.append(journals)
+
+        cite_clause = ""
+        if cite_where:
+            cite_clause = "AND " + " AND ".join(cite_where)
+
+        # ── Step 1: Get all (citing_article, cited_article) pairs ──
+        # Only include cited articles that have been cited at least 2 times
+        # internally (pre-filter for performance) and have known authors.
+        rows = conn.execute(f"""
+            SELECT c.source_article_id AS citing_id,
+                   c.target_article_id AS cited_id,
+                   cited.authors       AS cited_authors
+            FROM citations c
+            JOIN articles citing ON citing.id = c.source_article_id
+            JOIN articles cited  ON cited.id  = c.target_article_id
+            WHERE c.target_article_id IS NOT NULL
+              AND cited.authors IS NOT NULL
+              AND cited.authors != ''
+              AND cited.internal_cited_by_count >= 2
+              {cite_clause}
+        """, cite_params).fetchall()
+
+    if not rows:
+        return {"nodes": [], "edges": [], "pairs": [],
+                "stats": {"total_authors": 0, "total_edges": 0,
+                           "max_cocitation": 0}}
+
+    # ── Step 2: Build citing_article → set of (cited_article, author) ──
+    # For each citing article, collect which authors it cites (via which articles)
+    from collections import defaultdict
+
+    citing_to_author_articles = defaultdict(list)
+    # Map: article_id → set of author names (for same-article exclusion)
+    article_authors_map = {}
+
+    for r in rows:
+        citing_id = r["citing_id"]
+        cited_id = r["cited_id"]
+        authors_str = r["cited_authors"]
+        authors = [a.strip() for a in authors_str.split(";") if a.strip()]
+        if not authors:
+            continue
+
+        if cited_id not in article_authors_map:
+            article_authors_map[cited_id] = set(authors)
+
+        for author in authors:
+            citing_to_author_articles[citing_id].append((author, cited_id))
+
+    # ── Step 3: For each citing article, generate author co-citation pairs ──
+    # Only pair authors across DIFFERENT cited articles (same-article exclusion)
+    pair_counts = defaultdict(int)
+
+    for citing_id, author_article_list in citing_to_author_articles.items():
+        # Group by author → set of article IDs they were cited through
+        author_articles = defaultdict(set)
+        for author, article_id in author_article_list:
+            author_articles[author].add(article_id)
+
+        # Get unique authors cited by this citing article
+        authors_list = sorted(author_articles.keys())
+
+        for i in range(len(authors_list)):
+            for j in range(i + 1, len(authors_list)):
+                a1, a2 = authors_list[i], authors_list[j]
+
+                # Same-article exclusion: check if a1 and a2 ONLY co-occur
+                # on the same cited articles. If all their cited articles overlap,
+                # they're co-authors being inflated — skip.
+                a1_articles = author_articles[a1]
+                a2_articles = author_articles[a2]
+
+                # Check: is there at least one cited article for a1 that is
+                # different from all cited articles for a2?
+                # i.e., are they cited through at least one distinct article each?
+                shared_articles = a1_articles & a2_articles
+                a1_unique = a1_articles - shared_articles
+                a2_unique = a2_articles - shared_articles
+
+                # If one author only appears on shared articles, the co-citation
+                # is entirely from same-article co-authorship — skip
+                if not a1_unique and not a2_unique:
+                    continue
+
+                pair_counts[(a1, a2)] += 1
+
+    if not pair_counts:
+        return {"nodes": [], "edges": [], "pairs": [],
+                "stats": {"total_authors": 0, "total_edges": 0,
+                           "max_cocitation": 0}}
+
+    # ── Step 4: Filter by minimum co-citation threshold ──
+    filtered_pairs = {k: v for k, v in pair_counts.items() if v >= min_cocitations}
+
+    if not filtered_pairs:
+        return {"nodes": [], "edges": [], "pairs": [],
+                "stats": {"total_authors": 0, "total_edges": 0,
+                           "max_cocitation": 0}}
+
+    # ── Step 5: Compute author strength and select top authors ──
+    author_strength = defaultdict(int)
+    for (a1, a2), count in filtered_pairs.items():
+        author_strength[a1] += count
+        author_strength[a2] += count
+
+    # Count articles per author (from the data we already have)
+    author_article_count = defaultdict(set)
+    for article_id, author_set in article_authors_map.items():
+        for author in author_set:
+            author_article_count[author].add(article_id)
+    author_article_count = {a: len(ids) for a, ids in author_article_count.items()}
+
+    # Top authors by total strength
+    top_authors = sorted(author_strength.keys(),
+                         key=lambda a: author_strength[a], reverse=True)[:max_authors]
+    top_set = set(top_authors)
+
+    # ── Step 6: Build edges (only between top authors) ──
+    edges = []
+    for (a1, a2), count in filtered_pairs.items():
+        if a1 in top_set and a2 in top_set:
+            edges.append({"source": a1, "target": a2, "weight": count})
+
+    # Sort edges by weight descending
+    edges.sort(key=lambda e: e["weight"], reverse=True)
+
+    # ── Step 7: Determine each author's top journal ──
+    # Quick lookup from articles we already loaded
+    author_journal_counts = defaultdict(lambda: defaultdict(int))
+    with get_conn() as conn:
+        for author in top_set:
+            journal_rows = conn.execute("""
+                SELECT journal, COUNT(*) as cnt
+                FROM articles
+                WHERE authors LIKE ?
+                  AND journal IS NOT NULL
+                GROUP BY journal
+                ORDER BY cnt DESC
+                LIMIT 1
+            """, (f"%{author}%",)).fetchall()
+            if journal_rows:
+                author_journal_counts[author] = journal_rows[0]["journal"]
+            else:
+                author_journal_counts[author] = ""
+
+    # ── Step 8: Build nodes ──
+    nodes = []
+    for author in top_authors:
+        if author_strength[author] > 0:
+            nodes.append({
+                "id":   author,
+                "name": author,
+                "article_count": author_article_count.get(author, 0),
+                "total_cocitation_strength": author_strength[author],
+                "top_journal": author_journal_counts.get(author, ""),
+            })
+
+    # ── Step 9: Build ranked pairs list for the table ──
+    pairs_list = []
+    for (a1, a2), count in sorted(filtered_pairs.items(),
+                                    key=lambda x: -x[1])[:100]:
+        if a1 in top_set and a2 in top_set:
+            pairs_list.append({
+                "author1": a1,
+                "author2": a2,
+                "cocitation_count": count,
+            })
+
+    max_cc = max(filtered_pairs.values()) if filtered_pairs else 0
+
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "pairs": pairs_list,
+        "stats": {
+            "total_authors": len(nodes),
+            "total_edges":   len(edges),
+            "max_cocitation": max_cc,
+        },
+    }
+
+
+def get_author_cocitation_partners(author_name, limit=10):
+    """
+    Get top co-citation partners for a specific author.
+    Returns list of {partner, cocitation_count}.
+    Used on author profile pages.
+    """
+    # Compute a lightweight version — only pairs involving this author
+    with get_conn() as conn:
+        # Get articles by this author that have internal citations
+        author_articles = conn.execute("""
+            SELECT id FROM articles
+            WHERE authors LIKE ? AND internal_cited_by_count >= 2
+        """, (f"%{author_name}%",)).fetchall()
+
+        if not author_articles:
+            return []
+
+        author_article_ids = {r["id"] for r in author_articles}
+
+        # Find citing articles that cite at least one of this author's works
+        placeholders = ",".join("?" * len(author_article_ids))
+        citing_rows = conn.execute(f"""
+            SELECT DISTINCT c.source_article_id
+            FROM citations c
+            WHERE c.target_article_id IN ({placeholders})
+        """, list(author_article_ids)).fetchall()
+
+        citing_ids = [r["source_article_id"] for r in citing_rows]
+        if not citing_ids:
+            return []
+
+        # For each citing article, get all OTHER cited articles and their authors
+        cite_ph = ",".join("?" * len(citing_ids))
+        all_cited = conn.execute(f"""
+            SELECT c.source_article_id AS citing_id,
+                   a.id AS cited_id,
+                   a.authors
+            FROM citations c
+            JOIN articles a ON a.id = c.target_article_id
+            WHERE c.source_article_id IN ({cite_ph})
+              AND c.target_article_id IS NOT NULL
+              AND a.authors IS NOT NULL AND a.authors != ''
+        """, citing_ids).fetchall()
+
+    # Build partner counts
+    from collections import defaultdict
+    partner_counts = defaultdict(int)
+
+    # Group by citing article
+    citing_groups = defaultdict(list)
+    for r in all_cited:
+        citing_groups[r["citing_id"]].append(r)
+
+    for citing_id, cited_list in citing_groups.items():
+        # Check if this citing article cites the target author
+        cites_target = False
+        for r in cited_list:
+            if r["cited_id"] in author_article_ids:
+                cites_target = True
+                break
+
+        if not cites_target:
+            continue
+
+        # Collect other authors cited by this same citing article
+        other_authors = set()
+        for r in cited_list:
+            if r["cited_id"] not in author_article_ids:
+                authors = [a.strip() for a in r["authors"].split(";") if a.strip()]
+                other_authors.update(authors)
+
+        # Remove the target author themselves
+        other_authors.discard(author_name)
+
+        for partner in other_authors:
+            partner_counts[partner] += 1
+
+    # Sort by count and return top N
+    ranked = sorted(partner_counts.items(), key=lambda x: -x[1])[:limit]
+    return [{"partner": name, "cocitation_count": count}
+            for name, count in ranked if count >= 2]

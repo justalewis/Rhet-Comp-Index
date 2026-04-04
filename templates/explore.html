@@ -70,6 +70,7 @@
             <span class="nav-chevron">▾</span>
           </button>
           <div class="nav-dropdown">
+            <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
             <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
             <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
             <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
@@ -96,6 +97,7 @@
           </button>
           <div class="nav-dropdown">
             <a href="/authors" class="nav-dropdown-item">Author Index</a>
+            <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
             <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
           </div>
         </div>
@@ -193,6 +195,7 @@
     <!-- Tabs -->
     <div class="explore-tabs">
       <button class="explore-tab active" onclick="showTab('network', this)" data-hash="authors">Author Network</button>
+      <button class="explore-tab" onclick="showTab('authorcocit', this)" data-hash="author-cocitation">Author Co-Citation</button>
       <button class="explore-tab" onclick="showTab('bibcoupling', this)" data-hash="bibcoupling">Bib. Coupling</button>
       <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
       <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
@@ -296,6 +299,7 @@
         <h4 style="margin:1rem 0 0.4rem;">Interpretation and limitations</h4>
         <p>Clusters in the graph reflect collaborative communities within the indexed journals. However, the network reflects only publications <em>within this index</em>: scholars who collaborate extensively in books, edited collections, or journals not indexed here will appear less connected than their actual collaborative record warrants. Solo-authored work &mdash; still the dominant mode in rhetoric and composition &mdash; is invisible in this graph. Prolific solo authors appear as isolates (unconnected nodes), which is an accurate representation of their collaborative profile within the index but not necessarily of their broader influence.</p>
         <p>Author name disambiguation remains an unsolved problem in bibliometrics. Common names may inflate connectivity, while name variants for the same author may understate it.</p>
+        <p>The Author Network shows collaborative relationships (co-authorship). For the field&rsquo;s <em>perceived</em> intellectual relationships &mdash; which scholars are cited together regardless of whether they have collaborated &mdash; see <a href="#author-cocitation" onclick="document.querySelector('[data-hash=author-cocitation]').click();return false;">Author Co-Citation</a>.</p>
 
         </div>
       </details>
@@ -343,6 +347,162 @@
         <div class="loading-msg">Loading author data…</div>
       </div>
     </div>
+
+    <!-- ── Author Co-Citation tab ────────────────────────────── -->
+    <div id="tab-authorcocit" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro">Two scholars are <strong>co-cited</strong> when a subsequent article cites work by both of them. The more often that happens, the more strongly the field perceives them as intellectually related &mdash; as participants in the same conversation, even if they have never cited or collaborated with each other directly. This graph maps those perceived relationships across the indexed journals.</p>
+
+      <p class="tab-intro">The clusters that form are not research teams (that is the <a href="#authors" onclick="document.querySelector('[data-hash=authors]').click();return false;">Author Network</a>). They are the field&rsquo;s mental model of who belongs together: which scholars a citing author reaches for when building the theoretical frame of an argument, the methods section of a study, or the literature review of a dissertation chapter. Dense clusters often correspond to recognised schools of thought or research specialisations. Scholars positioned between clusters &mdash; visible as nodes with edges reaching into multiple groups &mdash; bridge conversations that the field otherwise treats as separate.</p>
+
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: co-citation data depends on journals that deposit reference lists with CrossRef. Authors whose work appears primarily in journals without reference deposits will be underrepresented &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What author co-citation measures</h4>
+        <p>Article-level co-citation (shown in the <a href="#cocitation" onclick="document.querySelector('[data-hash=cocitation]').click();return false;">Co-Citation</a> tab) identifies which <em>texts</em> the field treats as intellectually related. Author co-citation identifies which <em>scholars</em> the field treats as intellectually related. The distinction matters because an author&rsquo;s perceived intellectual position is not reducible to any single article. A scholar who has published twenty articles across three journals occupies a different position in the field&rsquo;s mental map than any one of those articles does individually. Author co-citation captures that aggregate perception.</p>
+        <p>Two authors are co-cited when a third article includes at least one work by each in its reference list. The <strong>co-citation count</strong> for a pair (A, B) is the number of distinct articles in the index that cite at least one work by A and at least one work by B. A high count means that many subsequent authors, independently, have treated A and B as relevant to the same argument. This is a strong signal of perceived intellectual kinship &mdash; stronger than shared topic tags, shared journal venue, or even direct citation, because it reflects the collective judgment of the citing community rather than the choice of any single author.</p>
+        <p>The method was introduced by White &amp; Griffith (1981), who used it to map the intellectual structure of information science. It has since become one of the standard tools in bibliometrics for identifying schools of thought, tracing the evolution of research fronts, and revealing how scholarly communities organise knowledge at the person level.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Relationship to other tools in this index</h4>
+        <p>The <a href="#authors" onclick="document.querySelector('[data-hash=authors]').click();return false;">Author Network</a> tab shows <strong>co-authorship</strong>: who has written together. Co-authorship is a social relationship &mdash; it reflects collaboration, mentorship, and institutional proximity. Author co-citation is an intellectual relationship &mdash; it reflects how the <em>citing community</em> perceives two scholars&rsquo; work, regardless of whether those scholars have ever met, spoken, or collaborated.</p>
+        <p>The <a href="#cocitation" onclick="document.querySelector('[data-hash=cocitation]').click();return false;">Co-Citation</a> tab shows article-level co-citation. Author co-citation is a strict aggregation of the same underlying data: every article-level co-citation pair (A, B) is rolled up to the author level by mapping each article to its author(s). The author-level view is coarser but more stable &mdash; it smooths over individual articles and reveals structural patterns that are harder to see at the article level.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">How co-citation pairs are counted</h4>
+        <p>For each article C in the index that has outbound references (a reference list deposited with CrossRef), the analysis identifies all pairs of cited articles and maps each to its author(s). If article C cites article X by author A and article Y by author B, that produces one co-citation instance for the pair (A, B). If X has two authors (A&#x2081;, A&#x2082;) and Y has three authors (B&#x2081;, B&#x2082;, B&#x2083;), one co-citation of (X, Y) produces six author-level co-citation instances.</p>
+        <p>Author pairs who appear on the <em>same</em> cited article are excluded from the count. Without this correction, co-authors would be inflated: any time one of their joint articles is co-cited with anything, both authors would register as co-cited with the same targets. The exclusion ensures that co-citation reflects the citing community&rsquo;s perception, not the authorship structure of cited works.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The visualisation displays an <em>undirected, weighted</em> graph where each node is an author and each edge connects two authors with a co-citation count above the configured threshold. Edge thickness is proportional to co-citation frequency. Node size reflects <strong>total co-citation strength</strong>: the sum of all edge weights for that node, measuring how deeply embedded the scholar is in the field&rsquo;s co-citation structure. The graph is capped at a configurable number of nodes, ranked by total co-citation strength, to keep the visualisation responsive.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Temporal filtering</h4>
+        <p>The year-range filter restricts which <em>citing</em> articles contribute co-citation instances. Filtering to 2015&ndash;2025 shows how the field has organised its intellectual map in the last decade &mdash; which may differ substantially from the all-time view, since disciplinary turns can reshape which scholars are cited together.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>Author co-citation reflects perception within <em>this index only</em>. Citations from books, dissertations, or journals not indexed here are invisible. Author name disambiguation is imperfect: common names may merge distinct scholars, while name variants may split counts. Multi-authored articles inflate co-citation counts for prolific co-authoring teams relative to solo authors. Co-citation is retrospective: recently active scholars may not yet appear prominently because their work has had less time to be co-cited.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>White, H. D., &amp; Griffith, B. C. (1981). Author cocitation: A literature measure of intellectual structure. <em>Journal of the American Society for Information Science, 32</em>(3), 163&ndash;171.</li>
+          <li>White, H. D., &amp; McCain, K. W. (1998). Visualizing a discipline: An author co-citation analysis of information science, 1972&ndash;1995. <em>Journal of the American Society for Information Science, 49</em>(4), 327&ndash;355.</li>
+          <li>Small, H. (1973). Co-citation in the scientific literature: A new measure of the relationship between two documents. <em>Journal of the American Society for Information Science, 24</em>(4), 265&ndash;269.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <!-- Controls bar -->
+      <div class="citnet-controls">
+        <div class="citnet-filters">
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">
+              Min. co-citations:&nbsp;<strong id="acocit-min-val">3</strong>
+            </label>
+            <input type="range" id="acocit-min-slider" class="citnet-slider"
+                   min="1" max="20" value="3"
+                   oninput="onAcocitSliderChange(this.value)">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="acocit-max-authors">Authors shown</label>
+            <select id="acocit-max-authors" class="filter-select">
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="150">150</option>
+              <option value="200" selected>200 (default)</option>
+              <option value="300">300</option>
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="acocit-year-from">From</label>
+            <select id="acocit-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="acocit-year-to">To</label>
+            <select id="acocit-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="acocit-journal-picker">
+              <summary class="citnet-journal-summary">
+                Journals&nbsp;<span id="acocit-journal-count">(all)</span>
+              </summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label">
+                  <input type="checkbox" id="acocit-check-all" checked
+                         onchange="toggleAllAcocitJournals(this)">
+                  <em>All journals</em>
+                </label>
+                {% for j in all_journals %}
+                <label class="citnet-journal-label">
+                  <input type="checkbox" class="acocit-journal-check"
+                         value="{{ j.name }}" checked
+                         onchange="updateAcocitJournalCount()">
+                  {{ j.name }}
+                </label>
+                {% endfor %}
+              </div>
+            </details>
+          </div>
+
+          <button class="filter-apply-btn" onclick="loadAuthorCocitation()">Compute</button>
+
+        </div>
+      </div><!-- /citnet-controls -->
+
+      <div class="citnet-meta">
+        <span id="acocit-stats" class="citnet-stats-text"></span>
+        <div class="citnet-legend" id="acocit-legend"></div>
+      </div>
+
+      <!-- Selected author info bar -->
+      <div id="acocit-infobar" class="net-infobar" style="display:none;">
+        <span id="acocit-infobar-name" class="net-infobar-name"></span>
+        <span id="acocit-infobar-detail" class="net-infobar-detail"></span>
+        <a id="acocit-infobar-link" class="net-infobar-link" href="#">View profile &rarr;</a>
+        <button id="acocit-infobar-close" class="net-infobar-close" aria-label="Clear selection">&#x2715;</button>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom:0.5rem;">
+        <input type="search" id="acocit-search" class="net-search" placeholder="Search author…" autocomplete="off" style="max-width:18rem;">
+      </div>
+
+      <div class="citnet-container" id="acocit-container">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the author co-citation graph.</div>
+      </div>
+
+      <p class="explore-hint" style="margin-top:0.5rem;">
+        Click a node to see co-citation partners &nbsp;&middot;&nbsp; scroll to zoom &nbsp;&middot;&nbsp; drag to pan &nbsp;&middot;&nbsp; thicker edges = more frequent co-citation
+      </p>
+
+      <!-- Ranked pairs table -->
+      <div id="acocit-pairs-section" style="display:none;margin-top:2rem;">
+        <h4 class="chart-section-head">Top Author Co-Citation Pairs</h4>
+        <p style="font-size:0.85rem;color:#8b6045;margin-bottom:0.8rem;">Pairs ranked by how often subsequent articles in the index cite work by both authors. Higher counts mean the field more consistently treats these two scholars as part of the same intellectual conversation.</p>
+        <div id="acocit-pairs-container"></div>
+      </div>
+
+    </div><!-- /tab-authorcocit -->
 
     <!-- ── Citations tab ─────────────────────────────────────── -->
     <div id="tab-citations" class="tab-panel" style="display:none;">
@@ -900,6 +1060,7 @@
           <li>Small, H. (1973). Co-citation in the scientific literature: A new measure of the relationship between two documents. <em>Journal of the American Society for Information Science, 24</em>(4), 265&ndash;269.</li>
           <li>White, H. D., &amp; Griffith, B. C. (1981). Author cocitation: A literature measure of intellectual structure. <em>Journal of the American Society for Information Science, 32</em>(3), 163&ndash;171.</li>
         </ul>
+        <p>This tab shows article-level co-citation. For the author-level equivalent &mdash; which <em>scholars</em> the field treats as intellectually paired &mdash; see <a href="#author-cocitation" onclick="document.querySelector('[data-hash=author-cocitation]').click();return false;">Author Co-Citation</a>.</p>
 
         </div>
       </details>
@@ -1858,6 +2019,7 @@
 let topicsLoaded       = false;
 let timelineLoaded     = false;
 let networkLoaded      = false;
+let authorcocitLoaded  = false;
 let citationsLoaded    = false;
 let citTrendsLoaded    = false;
 let citnetLoaded       = false;
@@ -1909,6 +2071,10 @@ function showTab(name, btn) {
     document.getElementById('net-infobar-close').addEventListener('click', () => {
       clearNetInfobar();
     });
+  }
+  if (name === 'authorcocit' && !authorcocitLoaded) {
+    authorcocitLoaded = true;
+    initAuthorCocitation();
   }
   if (name === 'citations' && !citationsLoaded) {
     citationsLoaded = true;
@@ -5393,6 +5559,345 @@ async function loadInstitutions() {
       },
     });
   }
+}
+
+
+// ── Author Co-Citation ───────────────────────────────────────────────────────
+
+let acocitSimulation = null;
+let acocitSvgEl = null;
+let acocitZoomBehavior = null;
+let acocitNodes = [];
+let acocitLinks = [];
+let acocitLinkSel = null;
+let acocitNodeSel = null;
+let acocitDebounce = null;
+let acocitPairsData = [];
+
+function initAuthorCocitation() {
+  document.getElementById('acocit-infobar-close').addEventListener('click', clearAcocitInfobar);
+
+  // Search filter
+  document.getElementById('acocit-search').addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    if (!acocitNodeSel) return;
+    if (!q) {
+      acocitNodeSel.style('opacity', 1);
+      if (acocitLinkSel) acocitLinkSel.style('stroke-opacity', l => 0.15 + 0.4 * (l.weight / (d3.max(acocitLinks, ll => ll.weight) || 1)));
+      return;
+    }
+    acocitNodeSel.style('opacity', d => d.name.toLowerCase().includes(q) ? 1 : 0.08);
+    if (acocitLinkSel) acocitLinkSel.style('stroke-opacity', 0.04);
+  });
+}
+
+function onAcocitSliderChange(val) {
+  document.getElementById('acocit-min-val').textContent = val;
+}
+
+function toggleAllAcocitJournals(cb) {
+  document.querySelectorAll('.acocit-journal-check').forEach(c => c.checked = cb.checked);
+  updateAcocitJournalCount();
+}
+
+function updateAcocitJournalCount() {
+  const total   = document.querySelectorAll('.acocit-journal-check').length;
+  const checked = document.querySelectorAll('.acocit-journal-check:checked').length;
+  document.getElementById('acocit-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}\u202f/\u202f${total})`;
+  const allCb = document.getElementById('acocit-check-all');
+  if (allCb) allCb.checked = (checked === total);
+  if (allCb) allCb.indeterminate = (checked > 0 && checked < total);
+}
+
+async function loadAuthorCocitation() {
+  const container = document.getElementById('acocit-container');
+  container.innerHTML = '<div class="loading-msg">Computing author co-citation network\u2026 this may take a few seconds.</div>';
+  document.getElementById('acocit-stats').textContent = '';
+  document.getElementById('acocit-legend').innerHTML  = '';
+  document.getElementById('acocit-pairs-section').style.display = 'none';
+  clearAcocitInfobar();
+
+  if (acocitSimulation) { acocitSimulation.stop(); acocitSimulation = null; }
+
+  const minCocit    = document.getElementById('acocit-min-slider').value;
+  const maxAuthors  = document.getElementById('acocit-max-authors').value;
+  let yearFrom      = document.getElementById('acocit-year-from').value;
+  let yearTo        = document.getElementById('acocit-year-to').value;
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+    document.getElementById('acocit-year-from').value = yearFrom;
+    document.getElementById('acocit-year-to').value   = yearTo;
+  }
+  const checked = [...document.querySelectorAll('.acocit-journal-check:checked')].map(c => c.value);
+  const total   = document.querySelectorAll('.acocit-journal-check').length;
+
+  const params = new URLSearchParams({ min_cocitations: minCocit, max_authors: maxAuthors });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/author-cocitation?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load author co-citation data.</p>';
+    return;
+  }
+
+  if (!data.nodes || data.nodes.length === 0) {
+    const minVal = parseInt(minCocit);
+    let hint = 'No author co-citation pairs meet the current threshold.';
+    if (minVal > 1) hint += ` Try lowering the minimum co-citations.`;
+    container.innerHTML = '<p class="explore-hint">' + hint + '</p>';
+    return;
+  }
+
+  acocitPairsData = data.pairs || [];
+  renderAuthorCocitation(container, data);
+  renderAcocitPairs(data.pairs || []);
+}
+
+function renderAuthorCocitation(container, data) {
+  container.innerHTML = '';
+  acocitNodes = data.nodes.map(d => ({ ...d }));
+  acocitLinks = data.edges.map(d => ({ ...d }));
+
+  // Stats bar
+  const maxWeight = d3.max(acocitLinks, l => l.weight) || 1;
+  document.getElementById('acocit-stats').textContent =
+    `${data.stats.total_authors} authors\u2002\u00b7\u2002${data.stats.total_edges} co-citation pairs` +
+    `\u2002\u00b7\u2002strongest pair co-cited ${data.stats.max_cocitation}\u00d7`;
+
+  // Legend — colour by top journal
+  const seenJournals = [...new Set(acocitNodes.map(n => n.top_journal).filter(Boolean))].sort();
+  const legendEl = document.getElementById('acocit-legend');
+  legendEl.innerHTML = seenJournals.map(j =>
+    `<span class="citnet-legend-item">` +
+    `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
+    `${escapeHtml(j)}</span>`
+  ).join('');
+
+  const W = container.clientWidth || 820;
+  const H = 600;
+
+  // Node radius: by co-citation strength
+  const maxStrength = d3.max(acocitNodes, n => n.total_cocitation_strength) || 1;
+  const rScale = d3.scaleSqrt().domain([0, maxStrength]).range([4, 22]);
+
+  // Edge thickness: by co-citation weight
+  const edgeScale = d3.scaleLinear().domain([1, Math.max(maxWeight, 2)]).range([0.6, 5]);
+
+  // SVG + zoom
+  acocitSvgEl = d3.select('#acocit-container')
+    .append('svg')
+    .attr('width', W)
+    .attr('height', H);
+
+  acocitZoomBehavior = d3.zoom()
+    .scaleExtent([0.1, 8])
+    .on('zoom', (event) => gRoot.attr('transform', event.transform));
+
+  acocitSvgEl.call(acocitZoomBehavior);
+  const gRoot = acocitSvgEl.append('g');
+
+  // Links
+  acocitLinkSel = gRoot.append('g').attr('class', 'acocit-links')
+    .selectAll('line')
+    .data(acocitLinks)
+    .enter().append('line')
+    .style('stroke',         '#ccc7bb')
+    .style('stroke-opacity', d => 0.15 + 0.4 * (d.weight / maxWeight))
+    .style('stroke-width',   d => edgeScale(d.weight));
+
+  // Tooltip
+  const tip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip acocit-tip')
+    .style('display',    'none')
+    .style('max-width',  '340px')
+    .style('line-height','1.45');
+
+  // Node groups
+  const nodeGroup = gRoot.append('g').attr('class', 'acocit-nodes')
+    .selectAll('g')
+    .data(acocitNodes)
+    .enter().append('g')
+    .style('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', (event, d) => {
+        if (!event.active) acocitSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end',   (event, d) => {
+        if (!event.active) acocitSimulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      })
+    );
+
+  // Circles
+  nodeGroup.append('circle')
+    .attr('r', d => rScale(d.total_cocitation_strength))
+    .attr('fill', d => citnetJournalColor(d.top_journal || ''))
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 1.5);
+
+  // Labels for large nodes
+  nodeGroup.filter(d => rScale(d.total_cocitation_strength) >= 9)
+    .append('text')
+    .attr('font-size', '8px')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => -(rScale(d.total_cocitation_strength) + 3))
+    .attr('fill', '#3a2a18')
+    .text(d => {
+      const parts = d.name.split(/\s+/);
+      return parts[parts.length - 1]; // last name only
+    });
+
+  acocitNodeSel = nodeGroup;
+
+  // Hover
+  nodeGroup.on('mouseover', (event, d) => {
+    // Top partners
+    const partners = acocitLinks
+      .filter(l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return sid === d.id || tid === d.id;
+      })
+      .map(l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        const partnerId = sid === d.id ? tid : sid;
+        const partner = acocitNodes.find(n => n.id === partnerId);
+        return { name: partner ? partner.name : '?', weight: l.weight };
+      })
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 3);
+
+    const partnerHtml = partners.length > 0
+      ? '<br><span style="font-size:0.78rem;color:#9c9890;">Top co-cited with:</span>' +
+        partners.map(p =>
+          `<br><span style="font-size:0.78rem;">\u2022 ${escapeHtml(p.name)} (${p.weight}\u00d7)</span>`
+        ).join('')
+      : '';
+
+    tip.style('display', 'block').html(
+      `<strong>${escapeHtml(d.name)}</strong><br>` +
+      `<span style="font-size:0.82rem;">${d.article_count} articles in index</span><br>` +
+      `<span style="font-size:0.82rem;">Co-citation strength: <strong>${d.total_cocitation_strength}</strong></span>` +
+      (d.top_journal ? `<br><em style="font-size:0.78rem;">${escapeHtml(d.top_journal)}</em>` : '') +
+      partnerHtml
+    );
+
+    // Highlight edges
+    acocitLinkSel.style('stroke-opacity', l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      return (sid === d.id || tid === d.id) ? 0.85 : 0.04;
+    }).style('stroke', l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      return (sid === d.id || tid === d.id) ? '#8b6045' : '#ccc7bb';
+    });
+  })
+  .on('mousemove', (event) => {
+    tip.style('left', (event.pageX + 14) + 'px')
+       .style('top',  (event.pageY - 10) + 'px');
+  })
+  .on('mouseout', () => {
+    tip.style('display', 'none');
+    acocitLinkSel.style('stroke-opacity', l => 0.15 + 0.4 * (l.weight / maxWeight))
+                  .style('stroke', '#ccc7bb');
+  })
+  .on('click', (event, d) => {
+    event.stopPropagation();
+    showAcocitInfobar(d);
+  });
+
+  // Click background to clear
+  acocitSvgEl.on('click', () => clearAcocitInfobar());
+
+  // Force simulation
+  acocitSimulation = d3.forceSimulation(acocitNodes)
+    .force('link', d3.forceLink(acocitLinks).id(d => d.id).distance(100))
+    .force('charge', d3.forceManyBody().strength(-180))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => rScale(d.total_cocitation_strength) + 2))
+    .on('tick', () => {
+      acocitLinkSel
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      nodeGroup
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+}
+
+function showAcocitInfobar(d) {
+  const infobar = document.getElementById('acocit-infobar');
+  document.getElementById('acocit-infobar-name').textContent = d.name;
+
+  // Find top partners
+  const partners = acocitLinks
+    .filter(l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      return sid === d.id || tid === d.id;
+    })
+    .map(l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      const partnerId = sid === d.id ? tid : sid;
+      const partner = acocitNodes.find(n => n.id === partnerId);
+      return { name: partner ? partner.name : '?', weight: l.weight };
+    })
+    .sort((a, b) => b.weight - a.weight);
+
+  const topStr = partners.slice(0, 5).map(p => `${p.name} (${p.weight}\u00d7)`).join(', ');
+
+  document.getElementById('acocit-infobar-detail').innerHTML =
+    `${d.article_count} articles · strength ${d.total_cocitation_strength}` +
+    (topStr ? `<br><small>Top co-cited: ${escapeHtml(topStr)}</small>` : '');
+
+  document.getElementById('acocit-infobar-link').href = '/author/' + encodeURIComponent(d.name);
+  infobar.style.display = 'flex';
+}
+
+function clearAcocitInfobar() {
+  document.getElementById('acocit-infobar').style.display = 'none';
+}
+
+function renderAcocitPairs(pairs) {
+  if (!pairs || pairs.length === 0) return;
+
+  document.getElementById('acocit-pairs-section').style.display = 'block';
+  const container = document.getElementById('acocit-pairs-container');
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:0.88rem;">';
+  html += '<thead><tr style="border-bottom:2px solid #d4bc99;text-align:left;">' +
+    '<th style="padding:0.4rem 0.6rem;width:3rem;">#</th>' +
+    '<th style="padding:0.4rem 0.6rem;">Author A</th>' +
+    '<th style="padding:0.4rem 0.6rem;">Author B</th>' +
+    '<th style="padding:0.4rem 0.6rem;width:6rem;text-align:right;">Co-cited</th>' +
+    '</tr></thead><tbody>';
+
+  pairs.slice(0, 50).forEach((p, i) => {
+    html += `<tr style="border-bottom:1px solid #ede8e0;">` +
+      `<td style="padding:0.4rem 0.6rem;color:#8b6045;font-weight:600;">${i + 1}</td>` +
+      `<td style="padding:0.4rem 0.6rem;"><a href="/author/${encodeURIComponent(p.author1)}" style="color:#3a2a18;">${escapeHtml(p.author1)}</a></td>` +
+      `<td style="padding:0.4rem 0.6rem;"><a href="/author/${encodeURIComponent(p.author2)}" style="color:#3a2a18;">${escapeHtml(p.author2)}</a></td>` +
+      `<td style="padding:0.4rem 0.6rem;text-align:right;font-weight:600;">${p.cocitation_count}\u00d7</td>` +
+      `</tr>`;
+  });
+
+  html += '</tbody></table>';
+
+  if (pairs.length > 50) {
+    html += `<p style="font-size:0.82rem;color:#8b6045;margin-top:0.5rem;">${pairs.length - 50} more pairs not shown.</p>`;
+  }
+
+  container.innerHTML = html;
 }
 
 

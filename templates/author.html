@@ -70,6 +70,7 @@
             <span class="nav-chevron">▾</span>
           </button>
           <div class="nav-dropdown">
+            <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
             <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
             <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
             <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
@@ -96,6 +97,7 @@
           </button>
           <div class="nav-dropdown">
             <a href="/authors" class="nav-dropdown-item">Author Index</a>
+            <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
             <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
           </div>
         </div>
@@ -247,6 +249,13 @@
           <div id="author-topics-container"></div>
         </div>
       </div>
+
+      <div class="insight-block" id="cocitation-block" style="display:none;">
+        <h3 class="insight-heading">Co-Cited With</h3>
+        <p style="font-size:0.82rem;color:#8b6045;margin-bottom:0.6rem;">Scholars most frequently cited alongside {{ author_name }} by subsequent articles in the index.</p>
+        <div id="author-cocitation-list"></div>
+        <a href="/explore#author-cocitation" style="font-size:0.82rem;color:#8b6045;">See full co-citation network &rarr;</a>
+      </div>
     </section>
 
     {% if articles %}
@@ -369,14 +378,16 @@ const PALETTE = [
 async function loadAuthorInsights() {
   const enc = encodeURIComponent(AUTHOR_NAME);
   try {
-    const [tl, co, tp] = await Promise.all([
+    const [tl, co, tp, cc] = await Promise.all([
       fetch(`/api/author/${enc}/timeline`).then(r => r.json()),
       fetch(`/api/author/${enc}/coauthors`).then(r => r.json()),
       fetch(`/api/author/${enc}/topics`).then(r => r.json()),
+      fetch(`/api/author/${enc}/cocitation-partners`).then(r => r.json()),
     ]);
     renderTimeline(tl);
     renderCoauthors(co);
     renderTopics(tp);
+    renderCocitationPartners(cc);
     updateNote(tl);
   } catch(e) {
     console.warn('Author insights error:', e);
@@ -573,6 +584,20 @@ function renderTopics(data) {
     ">Show all ${data.length} topics</button>`;
   }
   html += `</div>`;
+  container.innerHTML = html;
+}
+
+function renderCocitationPartners(data) {
+  const block = document.getElementById('cocitation-block');
+  const container = document.getElementById('author-cocitation-list');
+  if (!data || data.length === 0) { return; }
+  block.style.display = 'block';
+  const html = data.map((p, i) =>
+    `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid #ede8e0;font-size:0.88rem;">
+      <a href="/author/${encodeURIComponent(p.partner)}" style="color:#3a2a18;">${p.partner}</a>
+      <span style="color:#8b6045;font-weight:600;">${p.cocitation_count}&times;</span>
+    </div>`
+  ).join('');
   container.innerHTML = html;
 }
 
