@@ -2682,3 +2682,101 @@ def get_citation_centrality(min_citations=1, journals=None,
         "node_count":       len(nodes),
         "link_count":       len(links),
     }
+
+
+# ── Journal citation flow (chord diagram) ─────────────────────────────────────
+
+def get_journal_citation_flow(min_citations=1, journals=None,
+                              year_from=None, year_to=None):
+    """
+    Build a journal-to-journal citation flow matrix for a chord diagram.
+
+    Each cell matrix[i][j] = number of times articles in journal i cite
+    articles in journal j.  Diagonal = self-citations within a journal.
+
+    Filters:
+      journals   – restrict both source and target articles to these journals
+      year_from/year_to – restrict the *citing* (source) articles by pub_date
+      min_citations – exclude flows below this threshold (post-aggregation)
+
+    Returns {
+        journals:   [ordered list of journal names],
+        matrix:     [[int, …], …],   # N × N
+        total_citations: int,
+        self_citations:  int,
+    }
+    """
+    src_where = []
+    tgt_where = []
+    src_params = []
+    tgt_params = []
+
+    if journals:
+        jlist = journals if isinstance(journals, list) else [journals]
+        ph = ",".join("?" * len(jlist))
+        src_where.append(f"src.journal IN ({ph})")
+        src_params.extend(jlist)
+        tgt_where.append(f"tgt.journal IN ({ph})")
+        tgt_params.extend(jlist)
+
+    # Auto-swap reversed year range
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
+    if year_from:
+        src_where.append("src.pub_date >= ?")
+        src_params.append(f"{year_from}-01-01")
+    if year_to:
+        src_where.append("src.pub_date <= ?")
+        src_params.append(f"{year_to}-12-31")
+
+    src_clause = (" AND " + " AND ".join(src_where)) if src_where else ""
+    tgt_clause = (" AND " + " AND ".join(tgt_where)) if tgt_where else ""
+
+    params = src_params + tgt_params
+
+    with get_conn() as conn:
+        rows = conn.execute(f"""
+            SELECT src.journal  AS source_journal,
+                   tgt.journal  AS target_journal,
+                   COUNT(*)     AS cnt
+            FROM citations c
+            JOIN articles src ON c.source_article_id = src.id
+            JOIN articles tgt ON c.target_article_id = tgt.id
+            WHERE c.target_article_id IS NOT NULL
+              {src_clause}
+              {tgt_clause}
+            GROUP BY src.journal, tgt.journal
+            HAVING cnt >= ?
+            ORDER BY cnt DESC
+        """, params + [min_citations]).fetchall()
+
+    if not rows:
+        return {"journals": [], "matrix": [], "total_citations": 0,
+                "self_citations": 0}
+
+    # Collect all journal names that appear and sort alphabetically
+    jset = set()
+    for r in rows:
+        jset.add(r["source_journal"])
+        jset.add(r["target_journal"])
+    journal_list = sorted(jset)
+    idx = {name: i for i, name in enumerate(journal_list)}
+    n = len(journal_list)
+
+    # Build N × N matrix
+    matrix = [[0] * n for _ in range(n)]
+    for r in rows:
+        i = idx[r["source_journal"]]
+        j = idx[r["target_journal"]]
+        matrix[i][j] = r["cnt"]
+
+    total = sum(r["cnt"] for r in rows)
+    self_cit = sum(matrix[i][i] for i in range(n))
+
+    return {
+        "journals":         journal_list,
+        "matrix":           matrix,
+        "total_citations":  total,
+        "self_citations":   self_cit,
+    }

@@ -51,6 +51,7 @@ from db import (
     get_bibcoupling_network,
     get_citation_centrality,
     get_sleeping_beauties,
+    get_journal_citation_flow,
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
@@ -808,6 +809,23 @@ def api_sleeping_beauties():
     data = get_sleeping_beauties(
         min_total_citations=min_citations,
         max_results=max_results,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/journal-flow")
+def api_journal_citation_flow():
+    """JSON: journal-to-journal citation flow matrix for chord diagram."""
+    min_citations = max(1, int(request.args.get("min_citations", 1)))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_journal_citation_flow(
+        min_citations=min_citations,
         journals=journals or None,
         year_from=year_from or None,
         year_to=year_to or None,

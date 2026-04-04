@@ -79,6 +79,7 @@
             <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
             <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
             <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
+            <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
             <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
         </div>
@@ -196,6 +197,7 @@
       <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
       <button class="explore-tab" onclick="showTab('bibcoupling', this)" data-hash="bibcoupling">Bib. Coupling</button>
       <button class="explore-tab" onclick="showTab('sleepers', this)" data-hash="sleeping-beauties">Sleeping Beauties</button>
+      <button class="explore-tab" onclick="showTab('journalflow', this)" data-hash="journal-flow">Journal Flow</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
     </div>
 
@@ -1115,6 +1117,115 @@
 
     </div><!-- /tab-sleepers -->
 
+    <!-- ── Journal Flow tab (chord diagram) ──────────────────── -->
+    <div id="tab-journalflow" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro"><strong>Journal citation flow</strong> shows which journals cite which other journals, and how much. Each chord connects two journals; the width at each end reflects the number of citations flowing in that direction. Asymmetric widths reveal directional intellectual relationships &mdash; for instance, whether <em>TCQ</em> cites <em>JBTC</em> more than the reverse, or whether composition journals draw heavily from rhetoric venues. Self-citations (a journal citing itself) appear as loops and indicate the degree of internal conversation within a venue.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What the chord diagram measures</h4>
+        <p>Each cell in the underlying matrix counts the number of times articles published in journal A cite articles published in journal B. This is a journal-level aggregation of the article-level citation data &mdash; a macro view of the same citation network shown in other Explore tabs. The chord diagram makes the <strong>directionality</strong> and <strong>magnitude</strong> of inter-journal citation flows immediately visible.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Directionality</h4>
+        <p>Each chord has two ends of potentially different widths. The width at the source journal&rsquo;s arc indicates how many citations flow <em>from</em> that journal <em>to</em> the other; the width at the target end shows the reverse flow. When a chord is markedly wider at one end, the citation relationship is asymmetric &mdash; one journal cites the other more than it is cited in return. This can reflect status hierarchies, methodological borrowing, or cross-subdisciplinary engagement.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Self-citation</h4>
+        <p>The diagonal of the matrix (journal citing itself) appears as a chord looping back to the same arc. High self-citation can indicate a coherent internal research conversation, editorial preferences for citing the journal&rsquo;s own literature, or insularity. Most journals in the index exhibit significant self-citation because authors publishing in a venue often engage with the existing conversation in that venue.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>Citation counts are influenced by journal size: journals with more articles generate more citations. The raw counts shown here do not normalise for journal output volume. Journals that do not deposit reference lists with CrossRef are invisible as <em>citing</em> sources but may still appear as <em>cited</em> targets. Only citations between articles in this index are counted &mdash; citations to books, dissertations, or journals outside the index are not reflected.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Leydesdorff, L. (2007). Betweenness centrality as an indicator of the interdisciplinarity of scientific journals. <em>Journal of the American Society for Information Science and Technology, 58</em>(9), 1303&ndash;1319.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <!-- Controls bar -->
+      <div class="citnet-controls">
+        <div class="citnet-filters">
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">
+              Min. citations:&nbsp;<strong id="jflow-min-val">1</strong>
+            </label>
+            <input type="range" id="jflow-min-slider" class="citnet-slider"
+                   min="1" max="100" value="1"
+                   oninput="document.getElementById('jflow-min-val').textContent=this.value">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="jflow-year-from">From</label>
+            <select id="jflow-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="jflow-year-to">To</label>
+            <select id="jflow-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="jflow-journal-picker">
+              <summary class="citnet-journal-summary">
+                Journals&nbsp;<span id="jflow-journal-count">(all)</span>
+              </summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label">
+                  <input type="checkbox" id="jflow-check-all" checked
+                         onchange="toggleAllJflowJournals(this)">
+                  <em>All journals</em>
+                </label>
+                {% for j in all_journals %}
+                <label class="citnet-journal-label">
+                  <input type="checkbox" class="jflow-journal-check"
+                         value="{{ j.name }}" checked
+                         onchange="updateJflowJournalCount()">
+                  {{ j.name }}
+                </label>
+                {% endfor %}
+              </div>
+            </details>
+          </div>
+
+          <button class="filter-apply-btn" onclick="loadJournalFlow()">Compute</button>
+
+        </div>
+      </div><!-- /citnet-controls -->
+
+      <div class="citnet-meta">
+        <span id="jflow-stats" class="citnet-stats-text"></span>
+      </div>
+
+      <div class="citnet-container" id="jflow-container">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the journal citation flow diagram.</div>
+      </div>
+
+      <p class="explore-hint" style="margin-top:0.5rem;">
+        Hover over an arc to highlight that journal&rsquo;s flows &nbsp;&middot;&nbsp; hover over a chord for citation counts
+      </p>
+
+    </div><!-- /tab-journalflow -->
+
     <!-- ── Institutions tab ──────────────────────────────────── -->
     <div id="tab-institutions" class="tab-panel" style="display:none;">
 
@@ -1172,6 +1283,7 @@ let centralityLoaded   = false;
 let cocitationLoaded   = false;
 let bibcouplingLoaded  = false;
 let sleepersLoaded     = false;
+let journalflowLoaded  = false;
 let institutionsLoaded = false;
 
 function showTab(name, btn) {
@@ -1234,6 +1346,10 @@ function showTab(name, btn) {
   if (name === 'sleepers' && !sleepersLoaded) {
     // Don't auto-load — user clicks "Compute" to start
     sleepersLoaded = true;
+  }
+  if (name === 'journalflow' && !journalflowLoaded) {
+    // Don't auto-load — user clicks "Compute" to start
+    journalflowLoaded = true;
   }
   if (name === 'institutions' && !institutionsLoaded) {
     institutionsLoaded = true;
@@ -3000,6 +3116,256 @@ function renderBibcoupling(container, data) {
         .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
         .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
       nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+}
+
+
+// ── Journal Citation Flow (chord diagram) ────────────────────────────────────
+
+// Journal picker helpers
+function toggleAllJflowJournals(master) {
+  document.querySelectorAll('.jflow-journal-check').forEach(c => c.checked = master.checked);
+  updateJflowJournalCount();
+}
+function updateJflowJournalCount() {
+  const checked = document.querySelectorAll('.jflow-journal-check:checked').length;
+  const total   = document.querySelectorAll('.jflow-journal-check').length;
+  document.getElementById('jflow-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}/${total})`;
+  document.getElementById('jflow-check-all').checked = (checked === total);
+}
+
+// Short-name map for long journal titles
+const JFLOW_ABBREV = {
+  'College Composition and Communication': 'CCC',
+  'College English': 'CE',
+  'Written Communication': 'WC',
+  'Rhetoric Society Quarterly': 'RSQ',
+  'Rhetoric Review': 'RR',
+  'Technical Communication Quarterly': 'TCQ',
+  'Research in the Teaching of English': 'RTE',
+  'Journal of Business and Technical Communication': 'JBTC',
+  'Journal of Technical Writing and Communication': 'JTWC',
+  'Philosophy & Rhetoric': 'P&R',
+  'Rhetoric & Public Affairs': 'R&PA',
+  'Teaching English in the Two-Year College': 'TETYC',
+  'Pedagogy': 'Pedagogy',
+  'Community Literacy Journal': 'CLJ',
+  'Assessing Writing': 'AW',
+  'Business and Professional Communication Quarterly': 'BPCQ',
+  'Computers and Composition': 'C&C',
+  'Composition Studies': 'CS',
+  'Composition Forum': 'CF',
+  'Literacy in Composition Studies': 'LiCS',
+  'Advances in the History of Rhetoric': 'AHR',
+  'Journal of Writing Analytics': 'JWA',
+  'Communication Design Quarterly': 'CDQ',
+  'Communication Design Quarterly Review': 'CDQR',
+  'Rhetoric of Health and Medicine': 'RHM',
+  'Double Helix': 'DH',
+  'Poroi': 'Poroi',
+  'Peitho': 'Peitho',
+  'Enculturation': 'Enc',
+  'The WAC Journal': 'WAC J',
+  'Across the Disciplines': 'AtD',
+  'Writing Center Journal': 'WCJ',
+  'The Peer Review': 'TPR',
+  'Kairos: A Journal of Rhetoric, Technology, and Pedagogy': 'Kairos',
+  'KB Journal: The Journal of the Kenneth Burke Society': 'KB J',
+  'Present Tense: A Journal of Rhetoric in Society': 'PT',
+  'Reflections: A Journal of Community-Engaged Writing and Rhetoric': 'Reflections',
+  'Journal of Multimodal Rhetorics': 'JMR',
+  'Basic Writing e-Journal': 'BWe-J',
+  'Writing on the Edge': 'WoE',
+  'Praxis: A Writing Center Journal': 'Praxis',
+  'Pre/Text': 'Pre/Text',
+  'Prompt: A Journal of Academic Writing Assignments': 'Prompt',
+  'Writing Lab Newsletter': 'WLN',
+};
+function jflowAbbrev(name) { return JFLOW_ABBREV[name] || name; }
+
+async function loadJournalFlow() {
+  const container = document.getElementById('jflow-container');
+  container.innerHTML = '<div class="loading-msg">Computing journal citation flows\u2026</div>';
+  document.getElementById('jflow-stats').textContent = '';
+
+  // Remove old tooltips
+  d3.selectAll('.jflow-tip').remove();
+
+  const minCit   = document.getElementById('jflow-min-slider').value;
+  let yearFrom = document.getElementById('jflow-year-from').value;
+  let yearTo   = document.getElementById('jflow-year-to').value;
+  // Auto-swap reversed year range
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+  }
+  const checked  = [...document.querySelectorAll('.jflow-journal-check:checked')].map(c => c.value);
+  const total    = document.querySelectorAll('.jflow-journal-check').length;
+
+  const params = new URLSearchParams({ min_citations: minCit });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/journal-flow?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load journal citation flow data.</p>';
+    return;
+  }
+
+  if (!data.journals || data.journals.length === 0) {
+    container.innerHTML =
+      '<p class="explore-hint">No citation flows match these filters \u2014 try a lower minimum, ' +
+      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+    return;
+  }
+
+  document.getElementById('jflow-stats').textContent =
+    `${data.journals.length} journals \u00b7 ${data.total_citations.toLocaleString()} total citations \u00b7 ` +
+    `${data.self_citations.toLocaleString()} self-citations (${Math.round(100*data.self_citations/data.total_citations)}%)`;
+
+  renderChordDiagram(container, data);
+}
+
+function renderChordDiagram(container, data) {
+  container.innerHTML = '';
+
+  const W = container.clientWidth || 820;
+  const H = Math.min(W, 750);
+  const outerRadius = Math.min(W, H) / 2 - 60;
+  const innerRadius = outerRadius - 24;
+
+  const svg = d3.select(container).append('svg')
+    .attr('width', W).attr('height', H);
+
+  const g = svg.append('g')
+    .attr('transform', `translate(${W/2},${H/2})`);
+
+  // Chord layout
+  const chord = d3.chord()
+    .padAngle(0.04)
+    .sortSubgroups(d3.descending)
+    .sortChords(d3.descending);
+
+  const chords = chord(data.matrix);
+
+  const arc    = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+  const ribbon = d3.ribbon().radius(innerRadius);
+
+  // Colour: reuse the existing journal colour map
+  const color = name => citnetJournalColor(name);
+
+  // Tooltip
+  const tip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip jflow-tip')
+    .style('opacity', 0).style('pointer-events', 'none');
+
+  // Draw ribbons (chords) first — behind arcs
+  const ribbons = g.append('g')
+    .attr('class', 'jflow-ribbons')
+    .selectAll('path')
+    .data(chords)
+    .enter().append('path')
+    .attr('d', ribbon)
+    .style('fill', d => color(data.journals[d.source.index]))
+    .style('fill-opacity', 0.55)
+    .style('stroke', '#fff')
+    .style('stroke-width', 0.3)
+    .on('mouseover', function(event, d) {
+      // Highlight this chord
+      ribbons.style('fill-opacity', r => r === d ? 0.85 : 0.08);
+      const src = data.journals[d.source.index];
+      const tgt = data.journals[d.target.index];
+      const fwd = data.matrix[d.source.index][d.target.index];
+      const rev = data.matrix[d.target.index][d.source.index];
+      let html;
+      if (d.source.index === d.target.index) {
+        html = `<strong>${jflowAbbrev(src)}</strong> self-citations: ${fwd.toLocaleString()}`;
+      } else {
+        const net = fwd - rev;
+        const arrow = net > 0 ? '\u2192' : net < 0 ? '\u2190' : '\u2194';
+        html = `<strong>${jflowAbbrev(src)}</strong> \u2192 <strong>${jflowAbbrev(tgt)}</strong>: ${fwd.toLocaleString()}<br>` +
+               `<strong>${jflowAbbrev(tgt)}</strong> \u2192 <strong>${jflowAbbrev(src)}</strong>: ${rev.toLocaleString()}<br>` +
+               `<span style="color:#888;">Net flow ${arrow} ${Math.abs(net).toLocaleString()}</span>`;
+      }
+      tip.html(html)
+        .style('left', (event.pageX + 14) + 'px')
+        .style('top',  (event.pageY - 10) + 'px')
+        .style('opacity', 1);
+    })
+    .on('mousemove', function(event) {
+      tip.style('left', (event.pageX + 14) + 'px')
+         .style('top',  (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', function() {
+      ribbons.style('fill-opacity', 0.55);
+      tip.style('opacity', 0);
+    });
+
+  // Draw outer arcs (groups)
+  const groups = g.append('g')
+    .attr('class', 'jflow-groups')
+    .selectAll('g')
+    .data(chords.groups)
+    .enter().append('g');
+
+  groups.append('path')
+    .attr('d', arc)
+    .style('fill', d => color(data.journals[d.index]))
+    .style('stroke', '#fff')
+    .style('stroke-width', 1)
+    .style('cursor', 'pointer')
+    .on('mouseover', function(event, d) {
+      // Highlight only chords connected to this journal
+      ribbons.style('fill-opacity', r =>
+        r.source.index === d.index || r.target.index === d.index ? 0.85 : 0.06);
+      groups.selectAll('path').style('opacity', g =>
+        g.index === d.index ? 1 : 0.3);
+      const name = data.journals[d.index];
+      const sent = data.matrix[d.index].reduce((a, b) => a + b, 0);
+      const received = data.matrix.reduce((a, row) => a + row[d.index], 0);
+      const selfCit = data.matrix[d.index][d.index];
+      tip.html(
+        `<strong>${name}</strong><br>` +
+        `Citations sent: ${sent.toLocaleString()}<br>` +
+        `Citations received: ${received.toLocaleString()}<br>` +
+        `Self-citations: ${selfCit.toLocaleString()}`
+      )
+        .style('left', (event.pageX + 14) + 'px')
+        .style('top',  (event.pageY - 10) + 'px')
+        .style('opacity', 1);
+    })
+    .on('mousemove', function(event) {
+      tip.style('left', (event.pageX + 14) + 'px')
+         .style('top',  (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', function() {
+      ribbons.style('fill-opacity', 0.55);
+      groups.selectAll('path').style('opacity', 1);
+      tip.style('opacity', 0);
+    });
+
+  // Labels along arcs
+  groups.append('text')
+    .each(d => { d.angle = (d.startAngle + d.endAngle) / 2; })
+    .attr('dy', '0.35em')
+    .attr('transform', d =>
+      `rotate(${(d.angle * 180 / Math.PI - 90)})` +
+      `translate(${outerRadius + 8})` +
+      (d.angle > Math.PI ? 'rotate(180)' : '')
+    )
+    .attr('text-anchor', d => d.angle > Math.PI ? 'end' : 'start')
+    .style('font-size', '0.72rem')
+    .style('font-family', 'var(--font-ui, sans-serif)')
+    .style('fill', 'var(--text, #3a2e1f)')
+    .text(d => {
+      // Hide label if arc is too small
+      const arcLen = d.endAngle - d.startAngle;
+      if (arcLen < 0.08) return '';
+      return jflowAbbrev(data.journals[d.index]);
     });
 }
 
