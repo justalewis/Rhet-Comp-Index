@@ -913,9 +913,12 @@
         <h4 style="margin:1rem 0 0.4rem;">Sleep duration and awakening</h4>
         <p>The <strong>awakening year</strong> is identified as the first year when citations rise above a threshold of sustained activity (20% of the way from the average sleep-period rate to the peak rate, sustained for at least two consecutive years). <strong>Sleep duration</strong> is the number of years between publication and awakening.</p>
 
+        <h4 style="margin:1rem 0 0.4rem;">False-positive correction</h4>
+        <p>A na&iuml;ve application of the Beauty Coefficient to internal-only citation data would flag many genuinely influential articles as &ldquo;sleeping.&rdquo; For example, Flower &amp; Hayes&rsquo;s &ldquo;A Cognitive Process Theory of Writing&rdquo; (1981) has over 6,000 global citations but only 13 internal citations in this index &mdash; it was never sleeping, it was just being cited in books, education journals, and other venues not indexed here. To address this, the Beauty Coefficient is scaled by the ratio of internal citations to total citations (internal + global CrossRef count) when the global count substantially exceeds the internal count. This effectively removes articles whose apparent &ldquo;sleep&rdquo; is an artifact of index coverage rather than genuine delayed recognition.</p>
+
         <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
-        <p>The Beauty Coefficient depends on having enough citation history. Articles published recently (last 5&ndash;10 years) have not had time to &ldquo;sleep&rdquo; and are unlikely to appear here. Conversely, an article that was heavily cited externally (outside this index) but rarely cited within these journals may appear to sleep even though it was widely influential. The analysis also reflects only <em>internal</em> citations &mdash; references from journals that do not deposit reference lists with CrossRef are invisible.</p>
-        <p>A high B score does not necessarily mean the article was &ldquo;ignored&rdquo; in any meaningful sense. It may have been cited in books, conferences, or journals outside this index throughout its &ldquo;sleep&rdquo; period. The metric captures delayed recognition <em>within this particular set of journals</em>.</p>
+        <p>The Beauty Coefficient depends on having enough citation history. Articles published recently (last 5&ndash;10 years) have not had time to &ldquo;sleep&rdquo; and are unlikely to appear here. The analysis reflects only <em>internal</em> citations &mdash; references from journals that do not deposit reference lists with CrossRef are invisible. The false-positive correction relies on CrossRef&rsquo;s global citation count, which is itself incomplete for older articles.</p>
+        <p>A high B score here means delayed recognition <em>within this particular set of journals</em>. The article listing shows both internal and global citation counts so readers can assess each case individually.</p>
 
         <h4 style="margin:1rem 0 0.4rem;">References</h4>
         <ul style="padding-left:1.2rem;">
@@ -2679,7 +2682,7 @@ function renderSleepingBeauties(container, data) {
           <a href="/article/${art.id}" class="article-title" style="font-size:0.84rem;">${escapeHtml(art.title)}</a>
           <div style="font-size:0.76rem;color:#9c9890;margin-top:0.15rem;">
             ${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 <em>${escapeHtml(art.journal)}</em>
-            \u2002\u00b7\u2002Cited ${art.internal_cited_by_count}\u00d7 total
+            \u2002\u00b7\u2002Cited ${art.internal_cited_by_count}\u00d7 in index${art.crossref_cited_by_count ? ` (${art.crossref_cited_by_count}\u00d7 globally)` : ''}
           </div>
           <div style="font-size:0.76rem;color:#9c9890;margin-top:0.1rem;">
             Slept <strong>${art.sleep_years}</strong> years

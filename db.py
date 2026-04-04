@@ -2177,9 +2177,16 @@ def get_sleeping_beauties(min_total_citations=5, max_results=50,
     to peak) and the actual citation curve. Large B = long sleep + sharp
     awakening.
 
+    To avoid false positives, articles whose global CrossRef citation count
+    far exceeds their internal count are penalised: the Beauty Coefficient
+    is scaled down by the ratio internal / (internal + global).  This
+    prevents genuinely influential articles that are heavily cited *outside*
+    this index from appearing as "sleeping."
+
     Returns {articles: [...], count: N}.
     Each article includes: id, title, authors, pub_date, journal,
-    internal_cited_by_count, beauty_coefficient, peak_year, peak_citations,
+    internal_cited_by_count, crossref_cited_by_count,
+    beauty_coefficient, peak_year, peak_citations,
     sleep_years, awakening_year, citation_timeline [{year, count}, ...].
     """
     with get_conn() as conn:
@@ -2215,7 +2222,8 @@ def get_sleeping_beauties(min_total_citations=5, max_results=50,
         # First: get articles with enough total citations
         qualified = conn.execute(f"""
             SELECT t.id, t.title, t.authors, t.pub_date, t.journal,
-                   t.internal_cited_by_count
+                   t.internal_cited_by_count,
+                   COALESCE(t.crossref_cited_by_count, 0) AS crossref_cited_by_count
             FROM articles t
             WHERE t.internal_cited_by_count >= ?
               AND t.pub_date IS NOT NULL
@@ -2291,12 +2299,27 @@ def get_sleeping_beauties(min_total_citations=5, max_results=50,
 
         # ── Beauty Coefficient (Ke et al. 2015) ─────────────────────
         # B = Σ_{t=t0}^{tm} [ ctm * (t - t0) / (tm - t0) - c_t ]
-        B = 0.0
+        B_raw = 0.0
         span = tm - t0
         for t in range(t0, tm + 1):
             expected = ctm * (t - t0) / span
             actual = full_timeline.get(t, 0)
-            B += (expected - actual)
+            B_raw += (expected - actual)
+
+        # ── False-positive correction ───────────────────────────────
+        # Articles heavily cited *outside* this index aren't truly
+        # sleeping — they just aren't cited much internally.  Scale B
+        # by the ratio of internal to total (internal + global) citations.
+        # An article with 13 internal and 6,182 global citations gets
+        # its B multiplied by ~0.002, effectively removing it.
+        internal = art["internal_cited_by_count"] or 0
+        global_ct = art.get("crossref_cited_by_count", 0) or 0
+        if global_ct > internal * 3:
+            # Only penalise when global count dwarfs internal count
+            scaling = internal / (internal + global_ct) if (internal + global_ct) > 0 else 1
+            B = B_raw * scaling
+        else:
+            B = B_raw
 
         # ── Awakening year ──────────────────────────────────────────
         # The year when citations first exceed a threshold of sustained
@@ -2336,6 +2359,7 @@ def get_sleeping_beauties(min_total_citations=5, max_results=50,
             "pub_date": art["pub_date"],
             "journal": art["journal"],
             "internal_cited_by_count": art["internal_cited_by_count"],
+            "crossref_cited_by_count": art.get("crossref_cited_by_count", 0),
             "beauty_coefficient": round(B, 2),
             "peak_year": tm,
             "peak_citations": ctm,
