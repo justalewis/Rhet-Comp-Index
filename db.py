@@ -2780,3 +2780,221 @@ def get_journal_citation_flow(min_citations=1, journals=None,
         "total_citations":  total,
         "self_citations":   self_cit,
     }
+
+
+# ── Citation half-life by journal ──────────────────────────────────────────────
+
+def _median_from_freq(pairs):
+    """Compute median from sorted (value, count) frequency pairs."""
+    total = sum(c for _, c in pairs)
+    if total == 0:
+        return None
+    mid = total / 2.0
+    cumulative = 0
+    for val, cnt in pairs:
+        cumulative += cnt
+        if cumulative >= mid:
+            return val
+    return pairs[-1][0] if pairs else None
+
+
+def _percentile_from_freq(pairs, pct):
+    """Compute a percentile from sorted (value, count) frequency pairs."""
+    total = sum(c for _, c in pairs)
+    if total == 0:
+        return None
+    target = total * pct / 100.0
+    cumulative = 0
+    for val, cnt in pairs:
+        cumulative += cnt
+        if cumulative >= target:
+            return val
+    return pairs[-1][0] if pairs else None
+
+
+def get_journal_half_life(journals=None, year_from=None, year_to=None,
+                          include_distribution=False, include_timeseries=False):
+    """
+    Compute citing and cited half-life for each journal.
+
+    Citing half-life = median age of works a journal cites.
+    Cited half-life  = median age at which a journal's articles are cited.
+
+    Age = year_of_citing_article − year_of_cited_article.
+
+    Filters:
+        journals   – restrict both source and target to these journals
+        year_from/year_to – restrict *citing* (source) articles by pub_date
+
+    Returns {
+        journals: [{name, citing_half_life, citing_q25, citing_q75, citing_count,
+                     cited_half_life, cited_q25, cited_q75, cited_count}, ...],
+        total_citations: int,
+        distributions: {...}  (if include_distribution),
+        timeseries: {...}     (if include_timeseries),
+    }
+    """
+    src_where = []
+    tgt_where = []
+    src_params = []
+    tgt_params = []
+
+    if journals:
+        jlist = journals if isinstance(journals, list) else [journals]
+        ph = ",".join("?" * len(jlist))
+        src_where.append(f"src.journal IN ({ph})")
+        src_params.extend(jlist)
+        tgt_where.append(f"tgt.journal IN ({ph})")
+        tgt_params.extend(jlist)
+
+    # Auto-swap reversed year range
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
+    if year_from:
+        src_where.append("src.pub_date >= ?")
+        src_params.append(f"{year_from}-01-01")
+    if year_to:
+        src_where.append("src.pub_date <= ?")
+        src_params.append(f"{year_to}-12-31")
+
+    src_clause = (" AND " + " AND ".join(src_where)) if src_where else ""
+    tgt_clause = (" AND " + " AND ".join(tgt_where)) if tgt_where else ""
+
+    base_where = """
+        WHERE c.target_article_id IS NOT NULL
+          AND src.pub_date IS NOT NULL AND LENGTH(src.pub_date) >= 4
+          AND tgt.pub_date IS NOT NULL AND LENGTH(tgt.pub_date) >= 4
+          AND CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
+              >= CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER)
+    """
+
+    params = src_params + tgt_params
+
+    with get_conn() as conn:
+        # ── Citing half-life (outgoing refs, grouped by SOURCE journal) ──
+        citing_rows = conn.execute(f"""
+            SELECT src.journal AS journal,
+                   CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
+                     - CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER) AS age,
+                   COUNT(*) AS cnt
+            FROM citations c
+            JOIN articles src ON c.source_article_id = src.id
+            JOIN articles tgt ON c.target_article_id  = tgt.id
+            {base_where}
+              {src_clause}
+              {tgt_clause}
+            GROUP BY src.journal, age
+            ORDER BY src.journal, age
+        """, params).fetchall()
+
+        # ── Cited half-life (incoming refs, grouped by TARGET journal) ──
+        cited_rows = conn.execute(f"""
+            SELECT tgt.journal AS journal,
+                   CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
+                     - CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER) AS age,
+                   COUNT(*) AS cnt
+            FROM citations c
+            JOIN articles src ON c.source_article_id = src.id
+            JOIN articles tgt ON c.target_article_id  = tgt.id
+            {base_where}
+              {src_clause}
+              {tgt_clause}
+            GROUP BY tgt.journal, age
+            ORDER BY tgt.journal, age
+        """, params).fetchall()
+
+        # ── Optional: timeseries (citing half-life by source year) ──
+        ts_rows = None
+        if include_timeseries:
+            ts_rows = conn.execute(f"""
+                SELECT src.journal AS journal,
+                       CAST(SUBSTR(src.pub_date,1,4) AS INTEGER) AS cite_year,
+                       CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
+                         - CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER) AS age,
+                       COUNT(*) AS cnt
+                FROM citations c
+                JOIN articles src ON c.source_article_id = src.id
+                JOIN articles tgt ON c.target_article_id  = tgt.id
+                {base_where}
+                  {src_clause}
+                  {tgt_clause}
+                GROUP BY src.journal, cite_year, age
+                ORDER BY src.journal, cite_year, age
+            """, params).fetchall()
+
+    # ── Build citing distributions per journal ──
+    citing_dist = {}          # journal -> [(age, cnt), ...]
+    for r in citing_rows:
+        citing_dist.setdefault(r["journal"], []).append((r["age"], r["cnt"]))
+
+    cited_dist = {}
+    for r in cited_rows:
+        cited_dist.setdefault(r["journal"], []).append((r["age"], r["cnt"]))
+
+    # ── Compute per-journal metrics ──
+    all_journals = sorted(set(list(citing_dist.keys()) + list(cited_dist.keys())))
+    journal_results = []
+    total_cit = 0
+
+    for jname in all_journals:
+        citing_pairs = citing_dist.get(jname, [])
+        cited_pairs  = cited_dist.get(jname, [])
+        citing_n = sum(c for _, c in citing_pairs)
+        cited_n  = sum(c for _, c in cited_pairs)
+        total_cit += citing_n
+
+        entry = {
+            "name":             jname,
+            "citing_half_life": _median_from_freq(citing_pairs),
+            "citing_q25":       _percentile_from_freq(citing_pairs, 25),
+            "citing_q75":       _percentile_from_freq(citing_pairs, 75),
+            "citing_count":     citing_n,
+            "cited_half_life":  _median_from_freq(cited_pairs),
+            "cited_q25":        _percentile_from_freq(cited_pairs, 25),
+            "cited_q75":        _percentile_from_freq(cited_pairs, 75),
+            "cited_count":      cited_n,
+        }
+        journal_results.append(entry)
+
+    result = {
+        "journals":        journal_results,
+        "total_citations": total_cit,
+    }
+
+    # ── Optional: full distribution data ──
+    if include_distribution:
+        dists = {}
+        for jname in all_journals:
+            dists[jname] = {
+                "citing": [{"age": a, "count": c} for a, c in citing_dist.get(jname, [])],
+                "cited":  [{"age": a, "count": c} for a, c in cited_dist.get(jname, [])],
+            }
+        result["distributions"] = dists
+
+    # ── Optional: timeseries ──
+    if include_timeseries and ts_rows:
+        # Group by journal -> year -> [(age, cnt)]
+        ts_data = {}
+        for r in ts_rows:
+            jname = r["journal"]
+            yr    = r["cite_year"]
+            ts_data.setdefault(jname, {}).setdefault(yr, []).append((r["age"], r["cnt"]))
+
+        timeseries = {}
+        for jname in sorted(ts_data.keys()):
+            citing_ts = []
+            for yr in sorted(ts_data[jname].keys()):
+                pairs = ts_data[jname][yr]
+                n = sum(c for _, c in pairs)
+                if n >= 10:  # require minimum sample
+                    citing_ts.append({
+                        "year":      yr,
+                        "half_life": _median_from_freq(pairs),
+                        "count":     n,
+                    })
+            if citing_ts:
+                timeseries[jname] = {"citing": citing_ts}
+        result["timeseries"] = timeseries
+
+    return result

@@ -52,6 +52,7 @@ from db import (
     get_citation_centrality,
     get_sleeping_beauties,
     get_journal_citation_flow,
+    get_journal_half_life,
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
@@ -829,6 +830,25 @@ def api_journal_citation_flow():
         journals=journals or None,
         year_from=year_from or None,
         year_to=year_to or None,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/half-life")
+def api_citation_half_life():
+    """JSON: citing and cited half-life per journal."""
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+    include_distribution = request.args.get("distribution", "").lower() in ("1", "true")
+    include_timeseries   = request.args.get("timeseries",   "").lower() in ("1", "true")
+
+    data = get_journal_half_life(
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        include_distribution=include_distribution,
+        include_timeseries=include_timeseries,
     )
     return jsonify(data)
 
