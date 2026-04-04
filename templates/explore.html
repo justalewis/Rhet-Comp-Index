@@ -77,6 +77,7 @@
             <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
             <a href="/citations" class="nav-dropdown-item">Citation Network</a>
             <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
+            <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
             <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
         </div>
@@ -192,6 +193,7 @@
       <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
       <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
       <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
+      <button class="explore-tab" onclick="showTab('sleepers', this)" data-hash="sleeping-beauties">Sleeping Beauties</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
     </div>
 
@@ -884,6 +886,114 @@
 
     </div><!-- /tab-cocitation -->
 
+    <!-- ── Sleeping Beauties tab ──────────────────────────────── -->
+    <div id="tab-sleepers" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro"><strong>Sleeping Beauties</strong> are articles that went largely uncited for years after publication, then experienced a late surge of recognition. The concept comes from bibliometrics: some work is ahead of its time, or finds its audience only when the field&rsquo;s interests shift. This analysis ranks articles by the <strong>Beauty Coefficient</strong> (Ke et al., 2015), which quantifies how sharply an article&rsquo;s citation trajectory departs from a steady linear rise &mdash; the longer the sleep and the sharper the awakening, the higher the score.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What a Sleeping Beauty is</h4>
+        <p>The term &ldquo;Sleeping Beauty in science&rdquo; was introduced by van Raan (2004) to describe publications that receive little attention for a long period after publication, then suddenly attract a burst of citations. The metaphor: the article &ldquo;sleeps&rdquo; for years, then is &ldquo;awakened&rdquo; &mdash; often by a &ldquo;prince&rdquo; paper whose framing makes the earlier work newly relevant.</p>
+        <p>In rhetoric and composition, Sleeping Beauties often reflect disciplinary turns: an article on technology published in the 1990s may be rediscovered when digital rhetoric becomes a major research front. Foundational theoretical work can also exhibit this pattern when a new generation of scholars re-engages with older frameworks.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">The Beauty Coefficient</h4>
+        <p>This analysis uses the <strong>Beauty Coefficient (B)</strong> introduced by Ke, Ferrara, Radicchi, &amp; Flammini (2015). For an article published in year <em>t</em><sub>0</sub> with peak citations in year <em>t<sub>m</sub></em>:</p>
+        <p style="text-align:center;font-family:Georgia,serif;font-size:0.95rem;">
+          <em>B</em>&thinsp;=&thinsp;&Sigma;<sub><em>t</em>=<em>t</em><sub>0</sub></sub><sup><em>t<sub>m</sub></em></sup>&ensp;[&thinsp;<em>c<sub>t<sub>m</sub></sub></em>&thinsp;&middot;&thinsp;(<em>t</em>&thinsp;&minus;&thinsp;<em>t</em><sub>0</sub>)&thinsp;/&thinsp;(<em>t<sub>m</sub></em>&thinsp;&minus;&thinsp;<em>t</em><sub>0</sub>)&thinsp;&minus;&thinsp;<em>c<sub>t</sub></em>&thinsp;]
+        </p>
+        <p>The coefficient measures the area between a straight line from the origin to the peak and the actual citation curve. An article that accumulates citations steadily has B&thinsp;&approx;&thinsp;0. An article that sleeps (near-zero citations for years) and then wakes sharply has a large positive B. The longer the sleep and the sharper the awakening, the higher the score.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Citation timeline construction</h4>
+        <p>For each article, Pinakes counts how many times it was cited <em>per year</em>, using the publication date of each citing article. This produces a year-by-year citation trajectory from the article&rsquo;s publication year to the present. Years with zero internal citations appear as gaps in the timeline. The <strong>peak year</strong> (<em>t<sub>m</sub></em>) is the year with the most citations; <strong>peak citations</strong> is the count in that year.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Sleep duration and awakening</h4>
+        <p>The <strong>awakening year</strong> is identified as the first year when citations rise above a threshold of sustained activity (20% of the way from the average sleep-period rate to the peak rate, sustained for at least two consecutive years). <strong>Sleep duration</strong> is the number of years between publication and awakening.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>The Beauty Coefficient depends on having enough citation history. Articles published recently (last 5&ndash;10 years) have not had time to &ldquo;sleep&rdquo; and are unlikely to appear here. Conversely, an article that was heavily cited externally (outside this index) but rarely cited within these journals may appear to sleep even though it was widely influential. The analysis also reflects only <em>internal</em> citations &mdash; references from journals that do not deposit reference lists with CrossRef are invisible.</p>
+        <p>A high B score does not necessarily mean the article was &ldquo;ignored&rdquo; in any meaningful sense. It may have been cited in books, conferences, or journals outside this index throughout its &ldquo;sleep&rdquo; period. The metric captures delayed recognition <em>within this particular set of journals</em>.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Ke, Q., Ferrara, E., Radicchi, F., &amp; Flammini, A. (2015). Defining and identifying Sleeping Beauties in science. <em>Proceedings of the National Academy of Sciences, 112</em>(24), 7426&ndash;7431.</li>
+          <li>van Raan, A. F. J. (2004). Sleeping Beauties in science. <em>Scientometrics, 59</em>(3), 467&ndash;472.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <!-- Controls -->
+      <div class="citnet-controls">
+        <div class="citnet-filters">
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">
+              Min. total citations:&nbsp;<strong id="sb-min-val">5</strong>
+            </label>
+            <input type="range" id="sb-min-slider" class="citnet-slider"
+                   min="3" max="20" value="5"
+                   oninput="document.getElementById('sb-min-val').textContent=this.value">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="sb-year-from">Published from</label>
+            <select id="sb-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="sb-year-to">To</label>
+            <select id="sb-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="sb-journal">Journal</label>
+            <select id="sb-journal" class="filter-select">
+              <option value="">All journals</option>
+              {% for j in all_journals %}
+              <option value="{{ j.name }}">{{ j.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button class="filter-apply-btn" onclick="loadSleepingBeauties()">Compute</button>
+
+        </div>
+      </div><!-- /citnet-controls -->
+
+      <!-- Selected article detail chart -->
+      <div id="sb-detail" style="display:none;margin-top:1rem;">
+        <h4 class="chart-section-head" id="sb-detail-title"></h4>
+        <p id="sb-detail-meta" class="explore-hint" style="margin-top:0;"></p>
+        <div class="chart-container" style="max-height:280px;">
+          <canvas id="sb-detail-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Ranked list -->
+      <div id="sb-list-container">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to find Sleeping Beauties.</div>
+      </div>
+
+    </div><!-- /tab-sleepers -->
+
     <!-- ── Institutions tab ──────────────────────────────────── -->
     <div id="tab-institutions" class="tab-panel" style="display:none;">
 
@@ -939,6 +1049,7 @@ let citTrendsLoaded    = false;
 let citnetLoaded       = false;
 let centralityLoaded   = false;
 let cocitationLoaded   = false;
+let sleepersLoaded     = false;
 let institutionsLoaded = false;
 
 function showTab(name, btn) {
@@ -993,6 +1104,10 @@ function showTab(name, btn) {
   if (name === 'cocitation' && !cocitationLoaded) {
     // Don't auto-load — user clicks "Compute" to start
     cocitationLoaded = true;
+  }
+  if (name === 'sleepers' && !sleepersLoaded) {
+    // Don't auto-load — user clicks "Compute" to start
+    sleepersLoaded = true;
   }
   if (name === 'institutions' && !institutionsLoaded) {
     institutionsLoaded = true;
@@ -2477,6 +2592,227 @@ function renderCocitation(container, data) {
         .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
       nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
     });
+}
+
+
+// ── Sleeping Beauties ─────────────────────────────────────────────────────────
+
+let sbDetailChart = null;
+let sbData        = null;
+
+async function loadSleepingBeauties() {
+  const container = document.getElementById('sb-list-container');
+  container.innerHTML = '<div class="loading-msg">Computing Beauty Coefficients\u2026</div>';
+  document.getElementById('sb-detail').style.display = 'none';
+  if (sbDetailChart) { sbDetailChart.destroy(); sbDetailChart = null; }
+
+  const minCit   = document.getElementById('sb-min-slider').value;
+  let yearFrom = document.getElementById('sb-year-from').value;
+  let yearTo   = document.getElementById('sb-year-to').value;
+  const journal  = document.getElementById('sb-journal').value;
+
+  // Swap reversed years
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+    document.getElementById('sb-year-from').value = yearFrom;
+    document.getElementById('sb-year-to').value   = yearTo;
+  }
+
+  const params = new URLSearchParams({ min_citations: minCit, max_results: 50 });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (journal)  params.append('journal', journal);
+
+  try {
+    const resp = await fetch('/api/citations/sleeping-beauties?' + params.toString());
+    sbData = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load Sleeping Beauties data.</p>';
+    return;
+  }
+
+  if (!sbData.articles || sbData.articles.length === 0) {
+    container.innerHTML =
+      '<p class="explore-hint">No Sleeping Beauties found with these filters. ' +
+      'Try lowering the minimum citation threshold or widening the year range.</p>';
+    return;
+  }
+
+  renderSleepingBeauties(container, sbData);
+}
+
+function renderSleepingBeauties(container, data) {
+  container.innerHTML = '';
+
+  const list = document.createElement('ol');
+  list.className = 'article-list';
+  list.style.cssText = 'font-size:0.85rem;';
+
+  data.articles.forEach((art, idx) => {
+    const year = art.pub_date ? art.pub_date.slice(0, 4) : '';
+    const auth = art.authors || '';
+    const first = auth.split(';')[0].trim();
+    const last = first.split(' ').filter(Boolean).pop() || '';
+    const byline = last + (auth.includes(';') ? ' et al.' : '');
+
+    // Build a sparkline from citation timeline
+    const tl = art.citation_timeline || [];
+    const maxCount = Math.max(1, ...tl.map(t => t.count));
+    const sparkH = 24;
+    const barW = Math.max(1, Math.min(4, Math.floor(200 / tl.length)));
+    const sparkW = barW * tl.length;
+    let sparkBars = '';
+    tl.forEach(t => {
+      const h = Math.max(0.5, (t.count / maxCount) * sparkH);
+      const isAwake = t.year >= art.awakening_year;
+      const fill = isAwake ? '#b38a6a' : '#d4cec5';
+      sparkBars += `<rect x="${(t.year - tl[0].year) * barW}" y="${sparkH - h}" width="${Math.max(1, barW - 0.5)}" height="${h}" fill="${fill}"/>`;
+    });
+    const sparkSvg = `<svg width="${sparkW}" height="${sparkH}" style="vertical-align:middle;margin-left:0.5rem;" title="Citation timeline — click for detail">${sparkBars}</svg>`;
+
+    const li = document.createElement('li');
+    li.className = 'article';
+    li.style.cssText = 'padding:0.6rem 0;border-bottom:1px solid var(--border-color,#e8e4de);cursor:pointer;';
+    li.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+        <div style="min-width:0;flex:1;">
+          <a href="/article/${art.id}" class="article-title" style="font-size:0.84rem;">${escapeHtml(art.title)}</a>
+          <div style="font-size:0.76rem;color:#9c9890;margin-top:0.15rem;">
+            ${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 <em>${escapeHtml(art.journal)}</em>
+            \u2002\u00b7\u2002Cited ${art.internal_cited_by_count}\u00d7 total
+          </div>
+          <div style="font-size:0.76rem;color:#9c9890;margin-top:0.1rem;">
+            Slept <strong>${art.sleep_years}</strong> years
+            \u2002\u00b7\u2002Awakened <strong>${art.awakening_year}</strong>
+            \u2002\u00b7\u2002Peak <strong>${art.peak_citations}</strong>\u00d7 in ${art.peak_year}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.8rem;flex-shrink:0;">
+          ${sparkSvg}
+          <span style="font-weight:700;font-size:0.92rem;color:#5a3e28;font-variant-numeric:tabular-nums;min-width:3rem;text-align:right;" title="Beauty Coefficient">B\u2009=\u2009${art.beauty_coefficient.toFixed(0)}</span>
+        </div>
+      </div>
+    `;
+
+    // Click row to show detail chart (but not if clicking the title link)
+    li.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') return;
+      e.preventDefault();
+      showSleepingBeautyDetail(art);
+    });
+
+    list.appendChild(li);
+  });
+
+  container.appendChild(list);
+}
+
+function showSleepingBeautyDetail(art) {
+  const detailEl = document.getElementById('sb-detail');
+  detailEl.style.display = 'block';
+
+  const year = art.pub_date ? art.pub_date.slice(0, 4) : '';
+  const auth = art.authors || '';
+  const first = auth.split(';')[0].trim();
+  const last = first.split(' ').filter(Boolean).pop() || '';
+  const byline = last + (auth.includes(';') ? ' et al.' : '');
+
+  document.getElementById('sb-detail-title').textContent = art.title;
+  document.getElementById('sb-detail-meta').innerHTML =
+    `${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 ` +
+    `<em>${escapeHtml(art.journal)}</em> \u2002\u00b7\u2002 ` +
+    `B\u2009=\u2009${art.beauty_coefficient.toFixed(1)} \u2002\u00b7\u2002 ` +
+    `Slept ${art.sleep_years} years \u2002\u00b7\u2002 ` +
+    `Awakened ${art.awakening_year} \u2002\u00b7\u2002 ` +
+    `<a href="/article/${art.id}" style="color:#b38a6a;">View article \u2192</a>`;
+
+  const tl = art.citation_timeline || [];
+  const years  = tl.map(t => t.year);
+  const counts = tl.map(t => t.count);
+
+  // Colour bars: muted during sleep, warm brown after awakening
+  const barColors = years.map(y => y >= art.awakening_year ? '#b38a6a' : '#d4cec5');
+
+  // Compute the expected linear trajectory for overlay
+  const t0 = parseInt(year);
+  const tm = art.peak_year;
+  const ctm = art.peak_citations;
+  const linearData = years.map(y => {
+    if (y < t0 || y > tm || tm === t0) return null;
+    return ctm * (y - t0) / (tm - t0);
+  });
+
+  const ctx = document.getElementById('sb-detail-chart').getContext('2d');
+  if (sbDetailChart) sbDetailChart.destroy();
+
+  sbDetailChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'Citations in this index',
+          data: counts,
+          backgroundColor: barColors,
+          borderRadius: 2,
+          order: 2,
+        },
+        {
+          label: 'Expected linear trajectory',
+          data: linearData,
+          type: 'line',
+          borderColor: '#9c9890',
+          borderDash: [5, 3],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { font: { family: 'system-ui, sans-serif', size: 10 }, boxWidth: 12 },
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].label,
+            label: (item) => {
+              if (item.datasetIndex === 0)
+                return `${item.raw} citation${item.raw !== 1 ? 's' : ''}`;
+              return `Expected: ${item.raw.toFixed(1)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Year', font: { family: 'system-ui, sans-serif', size: 11 } },
+          ticks: {
+            font: { family: 'system-ui, sans-serif', size: 9 },
+            maxRotation: 45,
+            autoSkip: true,
+            autoSkipPadding: 8,
+          },
+        },
+        y: {
+          title: { display: true, text: 'Citations', font: { family: 'system-ui, sans-serif', size: 11 } },
+          beginAtZero: true,
+          ticks: {
+            font: { family: 'system-ui, sans-serif', size: 10 },
+            stepSize: 1,
+          },
+        },
+      },
+    },
+  });
+
+  // Scroll the detail chart into view
+  detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 

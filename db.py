@@ -2160,6 +2160,197 @@ def get_cocitation_network(min_cocitations=3, journals=None,
     }
 
 
+# ── Sleeping Beauties (delayed recognition) ──────────────────────────────────
+
+def get_sleeping_beauties(min_total_citations=5, max_results=50,
+                          journals=None, year_from=None, year_to=None):
+    """
+    Identify 'Sleeping Beauty' articles — work that went uncited for years
+    before experiencing a late citation surge.
+
+    Uses the Beauty Coefficient (B) from Ke et al. (2015):
+      B = Σ_{t=t₀}^{t_m} [ c_{t_m} · (t - t₀) / (t_m - t₀) - c_t ]
+    where t₀ = publication year, t_m = peak citation year,
+    c_t = citations in year t, c_{t_m} = citations in peak year.
+
+    B measures the area between the expected linear trajectory (from zero
+    to peak) and the actual citation curve. Large B = long sleep + sharp
+    awakening.
+
+    Returns {articles: [...], count: N}.
+    Each article includes: id, title, authors, pub_date, journal,
+    internal_cited_by_count, beauty_coefficient, peak_year, peak_citations,
+    sleep_years, awakening_year, citation_timeline [{year, count}, ...].
+    """
+    with get_conn() as conn:
+        # ── Build year-by-year citation timelines ────────────────────────
+        # For each cited article, count how many times it was cited per year
+        # (based on the citing article's publication date)
+        art_where = ["c.target_article_id IS NOT NULL",
+                      "t.pub_date IS NOT NULL",
+                      "s.pub_date IS NOT NULL"]
+        art_params = []
+
+        if journals:
+            if isinstance(journals, list) and journals:
+                ph = ",".join("?" * len(journals))
+                art_where.append(f"t.journal IN ({ph})")
+                art_params.extend(journals)
+            elif isinstance(journals, str):
+                art_where.append("t.journal = ?")
+                art_params.append(journals)
+        if year_from:
+            art_where.append("SUBSTR(t.pub_date,1,4) >= ?")
+            art_params.append(str(year_from))
+        if year_to:
+            art_where.append("SUBSTR(t.pub_date,1,4) <= ?")
+            art_params.append(str(year_to))
+
+        # Swap year_from/year_to if reversed
+        if year_from and year_to and str(year_from) > str(year_to):
+            year_from, year_to = year_to, year_from
+
+        where_clause = " AND ".join(art_where)
+
+        # First: get articles with enough total citations
+        qualified = conn.execute(f"""
+            SELECT t.id, t.title, t.authors, t.pub_date, t.journal,
+                   t.internal_cited_by_count
+            FROM articles t
+            WHERE t.internal_cited_by_count >= ?
+              AND t.pub_date IS NOT NULL
+              {"AND t.journal IN (" + ",".join("?" * len(journals)) + ")"
+               if isinstance(journals, list) and journals else
+               "AND t.journal = ?" if isinstance(journals, str) else ""}
+              {"AND SUBSTR(t.pub_date,1,4) >= ?" if year_from else ""}
+              {"AND SUBSTR(t.pub_date,1,4) <= ?" if year_to else ""}
+            ORDER BY t.internal_cited_by_count DESC
+        """, ([min_total_citations] +
+              (journals if isinstance(journals, list) and journals else
+               [journals] if isinstance(journals, str) else []) +
+              ([str(year_from)] if year_from else []) +
+              ([str(year_to)] if year_to else []))).fetchall()
+
+        if not qualified:
+            return {"articles": [], "count": 0}
+
+        qualified_ids = {r["id"]: dict(r) for r in qualified}
+
+        # Get year-by-year citation data for all qualified articles at once
+        id_list = list(qualified_ids.keys())
+        ph = ",".join("?" * len(id_list))
+        timeline_rows = conn.execute(f"""
+            SELECT c.target_article_id AS article_id,
+                   SUBSTR(s.pub_date, 1, 4) AS cite_year,
+                   COUNT(*) AS cnt
+            FROM citations c
+            JOIN articles s ON c.source_article_id = s.id
+            WHERE c.target_article_id IN ({ph})
+              AND s.pub_date IS NOT NULL
+            GROUP BY c.target_article_id, cite_year
+            ORDER BY c.target_article_id, cite_year
+        """, id_list).fetchall()
+
+    # ── Build timelines and compute Beauty Coefficient ───────────────
+    from collections import defaultdict
+    timelines = defaultdict(dict)  # {article_id: {year_str: count}}
+    for r in timeline_rows:
+        timelines[r["article_id"]][r["cite_year"]] = r["cnt"]
+
+    results = []
+    for art_id, art in qualified_ids.items():
+        tl = timelines.get(art_id, {})
+        if not tl:
+            continue
+
+        pub_year_str = art["pub_date"][:4] if art["pub_date"] else None
+        if not pub_year_str:
+            continue
+        t0 = int(pub_year_str)
+
+        # Build a complete year-by-year series from pub year to last citing year
+        years_with_cites = {int(y): c for y, c in tl.items() if y.isdigit()}
+        if not years_with_cites:
+            continue
+
+        max_year = max(years_with_cites.keys())
+        min_cite_year = min(years_with_cites.keys())
+
+        # Fill in zeros for years with no citations
+        full_timeline = {}
+        for y in range(t0, max_year + 1):
+            full_timeline[y] = years_with_cites.get(y, 0)
+
+        # Find peak year (year with most citations)
+        tm = max(full_timeline, key=lambda y: full_timeline[y])
+        ctm = full_timeline[tm]
+
+        if tm <= t0 or ctm <= 0:
+            # No meaningful trajectory — peak is at publication year
+            continue
+
+        # ── Beauty Coefficient (Ke et al. 2015) ─────────────────────
+        # B = Σ_{t=t0}^{tm} [ ctm * (t - t0) / (tm - t0) - c_t ]
+        B = 0.0
+        span = tm - t0
+        for t in range(t0, tm + 1):
+            expected = ctm * (t - t0) / span
+            actual = full_timeline.get(t, 0)
+            B += (expected - actual)
+
+        # ── Awakening year ──────────────────────────────────────────
+        # The year when citations first exceed a threshold of sustained
+        # activity. We use the approach: first year where the running
+        # citation count exceeds 20% of the way from sleep average to peak.
+        sleep_avg = 0
+        awakening_year = tm  # default to peak if we can't find one
+        sleep_years_count = 0
+
+        # Calculate average citations in the sleep period (t0 to tm-1)
+        sleep_cites = [full_timeline.get(y, 0) for y in range(t0, tm)]
+        if sleep_cites:
+            sleep_avg = sum(sleep_cites) / len(sleep_cites)
+
+        # Awakening = first year after t0 where citations rise above
+        # max(1, sleep_avg + 0.2 * (ctm - sleep_avg)) for 2+ consecutive years
+        threshold = max(1, sleep_avg + 0.2 * (ctm - sleep_avg))
+        for y in range(t0, tm + 1):
+            ct = full_timeline.get(y, 0)
+            if ct >= threshold:
+                # Check if next year also meets threshold (sustained rise)
+                next_ct = full_timeline.get(y + 1, 0)
+                if next_ct >= threshold or y == tm:
+                    awakening_year = y
+                    break
+
+        sleep_years_count = max(0, awakening_year - t0)
+
+        # Build the timeline list for the response
+        timeline_list = [{"year": y, "count": full_timeline[y]}
+                         for y in sorted(full_timeline.keys())]
+
+        results.append({
+            "id": art_id,
+            "title": art["title"],
+            "authors": art["authors"],
+            "pub_date": art["pub_date"],
+            "journal": art["journal"],
+            "internal_cited_by_count": art["internal_cited_by_count"],
+            "beauty_coefficient": round(B, 2),
+            "peak_year": tm,
+            "peak_citations": ctm,
+            "sleep_years": sleep_years_count,
+            "awakening_year": awakening_year,
+            "citation_timeline": timeline_list,
+        })
+
+    # Sort by Beauty Coefficient descending
+    results.sort(key=lambda x: x["beauty_coefficient"], reverse=True)
+    results = results[:max_results]
+
+    return {"articles": results, "count": len(results)}
+
+
 # ── Citation centrality (eigenvector + betweenness) ────────────────────────────
 
 def _pagerank_python(G, alpha=0.85, max_iter=500, tol=1e-06):

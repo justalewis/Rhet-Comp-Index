@@ -49,6 +49,7 @@ from db import (
     get_citation_network,
     get_cocitation_network,
     get_citation_centrality,
+    get_sleeping_beauties,
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
@@ -771,6 +772,25 @@ def api_citation_centrality():
         year_from=year_from or None,
         year_to=year_to or None,
         max_nodes=max_nodes,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/sleeping-beauties")
+def api_sleeping_beauties():
+    """JSON: articles with delayed citation recognition (Sleeping Beauties)."""
+    min_citations = max(3, int(request.args.get("min_citations", 5)))
+    max_results   = min(100, max(10, int(request.args.get("max_results", 50))))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_sleeping_beauties(
+        min_total_citations=min_citations,
+        max_results=max_results,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
     )
     return jsonify(data)
 
