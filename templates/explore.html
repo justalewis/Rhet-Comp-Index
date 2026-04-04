@@ -2232,8 +2232,14 @@ async function loadCocitation() {
   d3.selectAll('.cocit-tip').remove();
 
   const minCocit = document.getElementById('cocit-min-slider').value;
-  const yearFrom = document.getElementById('cocit-year-from').value;
-  const yearTo   = document.getElementById('cocit-year-to').value;
+  let yearFrom = document.getElementById('cocit-year-from').value;
+  let yearTo   = document.getElementById('cocit-year-to').value;
+  // Swap if user entered years in reverse order
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+    document.getElementById('cocit-year-from').value = yearFrom;
+    document.getElementById('cocit-year-to').value   = yearTo;
+  }
   const checked  = [...document.querySelectorAll('.cocit-journal-check:checked')].map(c => c.value);
   const total    = document.querySelectorAll('.cocit-journal-check').length;
 
@@ -2252,9 +2258,17 @@ async function loadCocitation() {
   }
 
   if (!data.nodes || data.nodes.length === 0) {
-    container.innerHTML =
-      '<p class="explore-hint">No co-citation pairs match these filters \u2014 try a lower minimum, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+    const minVal = parseInt(document.getElementById('cocit-min-slider').value);
+    let hint = 'No co-citation pairs meet the current threshold.';
+    if (minVal > 1) {
+      hint += ` Try lowering the minimum co-citations \u2014 recent articles and smaller journals often haven\u2019t accumulated enough co-citations to appear at ${minVal}+.`;
+    }
+    const yearFrom = document.getElementById('cocit-year-from').value;
+    const yearTo   = document.getElementById('cocit-year-to').value;
+    if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+      hint += ' <strong>Note:</strong> your \u201cFrom\u201d year is later than your \u201cTo\u201d year \u2014 the server swapped them automatically, but double-check the range.';
+    }
+    container.innerHTML = '<p class="explore-hint">' + hint + '</p>';
     return;
   }
 

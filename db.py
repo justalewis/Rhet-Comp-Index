@@ -2039,6 +2039,10 @@ def get_cocitation_network(min_cocitations=3, journals=None,
     Returns {nodes, links, node_count, link_count}.
     """
     # ── Optional filters on the *cited* articles ──────────────────────────
+    # Swap year_from/year_to if supplied in reverse order
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
     art_where = []
     art_params = []
     if journals:
