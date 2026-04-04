@@ -2998,3 +2998,429 @@ def get_journal_half_life(journals=None, year_from=None, year_to=None,
         result["timeseries"] = timeseries
 
     return result
+
+
+# ── Community detection (Louvain) ──────────────────────────────────────────────
+
+def get_community_detection(min_citations=2, journals=None,
+                            year_from=None, year_to=None,
+                            max_nodes=600, resolution=1.0):
+    """
+    Run Louvain community detection on the citation network.
+
+    Builds an undirected, weighted graph from citations (weight = number of
+    citation links between two articles), then partitions into communities
+    that maximise Newman-Girvan modularity.
+
+    Returns {
+        nodes, links, communities (with top articles/journals/topics),
+        modularity, community_count, node_count, link_count, resolution
+    }
+    """
+    import networkx as nx
+    from networkx.algorithms.community import louvain_communities, modularity
+    from collections import Counter
+    import re
+
+    where  = ["internal_cited_by_count >= ?"]
+    params = [min_citations]
+
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            where.append(f"journal IN ({placeholders})")
+            params.extend(journals)
+        elif isinstance(journals, str):
+            where.append("journal = ?")
+            params.append(journals)
+
+    # Auto-swap reversed year range
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
+    if year_from:
+        where.append("pub_date >= ?")
+        params.append(f"{year_from}-01-01")
+    if year_to:
+        where.append("pub_date <= ?")
+        params.append(f"{year_to}-12-31")
+
+    clause = "WHERE " + " AND ".join(where)
+
+    with get_conn() as conn:
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count, internal_cites_count
+            FROM articles
+            {clause}
+            ORDER BY internal_cited_by_count DESC
+            LIMIT ?
+        """, params + [max_nodes]).fetchall()
+
+        if not node_rows:
+            return {"nodes": [], "links": [], "communities": [],
+                    "modularity": 0, "community_count": 0,
+                    "node_count": 0, "link_count": 0, "resolution": resolution}
+
+        node_ids = {r["id"] for r in node_rows}
+        node_map = {r["id"]: dict(r) for r in node_rows}
+
+        link_rows = conn.execute(f"""
+            WITH filtered AS (
+                SELECT id FROM articles {clause}
+                ORDER BY internal_cited_by_count DESC LIMIT ?
+            )
+            SELECT c.source_article_id AS source,
+                   c.target_article_id AS target
+            FROM citations c
+            WHERE c.source_article_id IN (SELECT id FROM filtered)
+              AND c.target_article_id IN (SELECT id FROM filtered)
+        """, params + [max_nodes]).fetchall()
+
+    # ── Build undirected weighted graph ──
+    G = nx.Graph()
+    G.add_nodes_from(node_ids)
+    for r in link_rows:
+        s, t = r["source"], r["target"]
+        if G.has_edge(s, t):
+            G[s][t]["weight"] += 1
+        else:
+            G.add_edge(s, t, weight=1)
+
+    # Remove isolates for cleaner community detection
+    isolates = list(nx.isolates(G))
+    G.remove_nodes_from(isolates)
+
+    if G.number_of_nodes() < 3:
+        return {"nodes": [], "links": [], "communities": [],
+                "modularity": 0, "community_count": 0,
+                "node_count": 0, "link_count": 0, "resolution": resolution}
+
+    # ── Louvain community detection ──
+    communities_sets = louvain_communities(G, weight="weight",
+                                          resolution=resolution, seed=42)
+    mod_score = modularity(G, communities_sets, weight="weight")
+
+    # Sort communities by size descending, assign IDs
+    communities_sets = sorted(communities_sets, key=len, reverse=True)
+    node_community = {}
+    for cid, members in enumerate(communities_sets):
+        for nid in members:
+            node_community[nid] = cid
+
+    # ── Stopwords for topic extraction ──
+    STOP = {
+        "the", "a", "an", "and", "or", "of", "in", "on", "to", "for", "is",
+        "are", "was", "were", "be", "been", "with", "from", "by", "at", "as",
+        "its", "it", "this", "that", "these", "those", "not", "but", "if",
+        "so", "how", "what", "who", "which", "their", "our", "we", "they",
+        "about", "into", "over", "more", "than", "between", "through",
+        "toward", "towards", "beyond", "within", "among", "across",
+        "new", "study", "analysis", "case", "using", "approach", "journal",
+        "review", "research", "article", "introduction", "essay",
+    }
+
+    # Global word frequency (for TF-IDF-like topic extraction)
+    global_words = Counter()
+    comm_words = {}
+    for cid, members in enumerate(communities_sets):
+        wc = Counter()
+        for nid in members:
+            title = node_map.get(nid, {}).get("title", "") or ""
+            words = re.findall(r'[a-z]{3,}', title.lower())
+            words = [w for w in words if w not in STOP]
+            wc.update(words)
+            global_words.update(words)
+        comm_words[cid] = wc
+
+    total_docs = G.number_of_nodes()
+
+    # ── Build community summaries ──
+    community_list = []
+    for cid, members in enumerate(communities_sets):
+        if len(members) < 2:
+            continue
+        # Top journals
+        journal_counter = Counter()
+        for nid in members:
+            j = node_map.get(nid, {}).get("journal", "")
+            if j:
+                journal_counter[j] += 1
+        top_journals = [{"name": n, "count": c}
+                        for n, c in journal_counter.most_common(3)]
+
+        # Top articles by citation count
+        member_articles = [node_map[nid] for nid in members if nid in node_map]
+        member_articles.sort(key=lambda a: a.get("internal_cited_by_count", 0),
+                             reverse=True)
+        top_articles = []
+        for a in member_articles[:5]:
+            top_articles.append({
+                "id": a["id"], "title": a["title"], "authors": a["authors"],
+                "pub_date": a["pub_date"], "journal": a["journal"],
+                "internal_cited_by_count": a["internal_cited_by_count"],
+            })
+
+        # Topics via TF-IDF-like scoring
+        wc = comm_words.get(cid, Counter())
+        topics = []
+        for word, count in wc.items():
+            if count < 2:
+                continue
+            tf = count / max(len(members), 1)
+            idf = total_docs / max(global_words.get(word, 1), 1)
+            score = tf * (idf ** 0.5)
+            topics.append((word, score))
+        topics.sort(key=lambda x: -x[1])
+        topic_words = [w for w, _ in topics[:5]]
+
+        community_list.append({
+            "id":            cid,
+            "size":          len(members),
+            "top_journals":  top_journals,
+            "top_articles":  top_articles,
+            "topics":        topic_words,
+        })
+
+    # ── Build node/link lists ──
+    nodes = []
+    for nid in G.nodes():
+        info = node_map.get(nid, {})
+        nodes.append({
+            "id":    nid,
+            "title": info.get("title", ""),
+            "authors": info.get("authors", ""),
+            "pub_date": info.get("pub_date", ""),
+            "journal": info.get("journal", ""),
+            "internal_cited_by_count": info.get("internal_cited_by_count", 0),
+            "community": node_community.get(nid, 0),
+        })
+
+    links = [{"source": u, "target": v, "weight": d.get("weight", 1)}
+             for u, v, d in G.edges(data=True)]
+
+    return {
+        "nodes":           nodes,
+        "links":           links,
+        "communities":     community_list,
+        "modularity":      round(mod_score, 4),
+        "community_count": len(community_list),
+        "node_count":      len(nodes),
+        "link_count":      len(links),
+        "resolution":      resolution,
+    }
+
+
+# ── Main path analysis (SPC) ──────────────────────────────────────────────────
+
+def get_main_path(min_citations=1, journals=None,
+                  year_from=None, year_to=None, max_nodes=800):
+    """
+    Main path analysis via Search Path Count (SPC).
+
+    Builds a citation DAG, computes SPC for each edge, then traces the
+    global main path by greedily following highest-SPC edges from the
+    most-connected source to a sink.
+
+    Returns { path, edges, stats }
+    """
+    import networkx as nx
+
+    where  = ["internal_cited_by_count >= ?"]
+    params = [min_citations]
+
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            where.append(f"journal IN ({placeholders})")
+            params.extend(journals)
+        elif isinstance(journals, str):
+            where.append("journal = ?")
+            params.append(journals)
+
+    # Auto-swap reversed year range
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
+    if year_from:
+        where.append("pub_date >= ?")
+        params.append(f"{year_from}-01-01")
+    if year_to:
+        where.append("pub_date <= ?")
+        params.append(f"{year_to}-12-31")
+
+    clause = "WHERE " + " AND ".join(where)
+
+    with get_conn() as conn:
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count, internal_cites_count
+            FROM articles
+            {clause}
+            ORDER BY internal_cited_by_count DESC
+            LIMIT ?
+        """, params + [max_nodes]).fetchall()
+
+        if not node_rows:
+            return {"path": [], "edges": [], "stats": {
+                "dag_nodes": 0, "dag_edges": 0, "source_count": 0,
+                "sink_count": 0, "path_length": 0, "max_spc": 0,
+                "cycles_removed": 0}}
+
+        node_map = {r["id"]: dict(r) for r in node_rows}
+
+        link_rows = conn.execute(f"""
+            WITH filtered AS (
+                SELECT id FROM articles {clause}
+                ORDER BY internal_cited_by_count DESC LIMIT ?
+            )
+            SELECT c.source_article_id AS source,
+                   c.target_article_id AS target
+            FROM citations c
+            WHERE c.source_article_id IN (SELECT id FROM filtered)
+              AND c.target_article_id IN (SELECT id FROM filtered)
+        """, params + [max_nodes]).fetchall()
+
+    # ── Build directed graph (source→target = citer→cited) ──
+    G = nx.DiGraph()
+    for nid in node_map:
+        G.add_node(nid)
+    for r in link_rows:
+        G.add_edge(r["source"], r["target"])
+
+    # ── Remove cycles by dropping edges from older to newer ──
+    cycles_removed = 0
+    while not nx.is_directed_acyclic_graph(G):
+        try:
+            cycle = nx.find_cycle(G)
+        except nx.NetworkXNoCycle:
+            break
+        # Find the edge with the "wrong" direction (older→newer)
+        worst_edge = None
+        worst_score = -1
+        for u, v in cycle:
+            u_year = node_map.get(u, {}).get("pub_date", "9999")[:4]
+            v_year = node_map.get(v, {}).get("pub_date", "9999")[:4]
+            # Remove edges where source is older than target
+            if u_year <= v_year:
+                score = int(v_year) - int(u_year)
+                if score > worst_score:
+                    worst_score = score
+                    worst_edge = (u, v)
+        if worst_edge is None:
+            # All same year — just remove first edge
+            worst_edge = cycle[0]
+        G.remove_edge(*worst_edge)
+        cycles_removed += 1
+
+    # Remove isolates
+    G.remove_nodes_from(list(nx.isolates(G)))
+
+    if G.number_of_nodes() < 2:
+        return {"path": [], "edges": [], "stats": {
+            "dag_nodes": 0, "dag_edges": 0, "source_count": 0,
+            "sink_count": 0, "path_length": 0, "max_spc": 0,
+            "cycles_removed": cycles_removed}}
+
+    # ── Identify sources (in_degree=0) and sinks (out_degree=0) ──
+    sources = [n for n in G.nodes() if G.in_degree(n) == 0]
+    sinks   = [n for n in G.nodes() if G.out_degree(n) == 0]
+
+    if not sources or not sinks:
+        return {"path": [], "edges": [], "stats": {
+            "dag_nodes": G.number_of_nodes(), "dag_edges": G.number_of_edges(),
+            "source_count": len(sources), "sink_count": len(sinks),
+            "path_length": 0, "max_spc": 0,
+            "cycles_removed": cycles_removed}}
+
+    # ── Compute SPC weights ──
+    topo_order = list(nx.topological_sort(G))
+    # Edges go source→target (citer→cited), so topological order goes
+    # from sources (recent, citing, in_degree=0) toward sinks (old, cited,
+    # out_degree=0).
+
+    # paths_from_source[n] = number of paths from any source to n
+    paths_from_source = {}
+    for n in topo_order:
+        preds = list(G.predecessors(n))
+        if not preds:
+            paths_from_source[n] = 1  # source node
+        else:
+            paths_from_source[n] = sum(paths_from_source.get(p, 0) for p in preds)
+
+    # paths_to_sink[n] = number of paths from n to any sink
+    paths_to_sink = {}
+    for n in reversed(topo_order):
+        succs = list(G.successors(n))
+        if not succs:
+            paths_to_sink[n] = 1  # sink node
+        else:
+            paths_to_sink[n] = sum(paths_to_sink.get(s, 0) for s in succs)
+
+    # SPC for each edge
+    edge_spc = {}
+    max_spc = 0
+    for u, v in G.edges():
+        spc = paths_from_source.get(u, 0) * paths_to_sink.get(v, 0)
+        edge_spc[(u, v)] = spc
+        if spc > max_spc:
+            max_spc = spc
+
+    # ── Trace main path (greedy from best source) ──
+    # Start from the source whose outgoing edges have highest total SPC
+    best_source = max(sources,
+                      key=lambda s: sum(edge_spc.get((s, t), 0)
+                                        for t in G.successors(s)))
+
+    path = [best_source]
+    visited = {best_source}
+    current = best_source
+    while G.out_degree(current) > 0:
+        succs = list(G.successors(current))
+        # Pick the successor with highest SPC on the connecting edge
+        best_next = max(succs, key=lambda t: edge_spc.get((current, t), 0))
+        if best_next in visited:
+            break
+        path.append(best_next)
+        visited.add(best_next)
+        current = best_next
+
+    # ── Build response ──
+    path_nodes = []
+    for i, nid in enumerate(path):
+        info = node_map.get(nid, {})
+        path_nodes.append({
+            "id":       nid,
+            "title":    info.get("title", ""),
+            "authors":  info.get("authors", ""),
+            "pub_date": info.get("pub_date", ""),
+            "journal":  info.get("journal", ""),
+            "internal_cited_by_count": info.get("internal_cited_by_count", 0),
+            "internal_cites_count":    info.get("internal_cites_count", 0),
+            "position": i,
+        })
+
+    path_edges = []
+    for i in range(len(path) - 1):
+        u, v = path[i], path[i + 1]
+        spc = edge_spc.get((u, v), 0)
+        path_edges.append({
+            "source":         u,
+            "target":         v,
+            "spc_weight":     spc,
+            "spc_normalized": round(spc / max_spc, 4) if max_spc > 0 else 0,
+        })
+
+    return {
+        "path":  path_nodes,
+        "edges": path_edges,
+        "stats": {
+            "dag_nodes":      G.number_of_nodes(),
+            "dag_edges":      G.number_of_edges(),
+            "source_count":   len(sources),
+            "sink_count":     len(sinks),
+            "path_length":    len(path),
+            "max_spc":        max_spc,
+            "cycles_removed": cycles_removed,
+        },
+    }

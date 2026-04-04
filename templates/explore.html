@@ -77,10 +77,12 @@
             <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
             <a href="/citations" class="nav-dropdown-item">Citation Network</a>
             <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
+            <a href="/explore#communities" class="nav-dropdown-item">Communities</a>
             <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
             <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
             <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
             <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
+            <a href="/explore#main-path" class="nav-dropdown-item">Main Path</a>
             <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
         </div>
@@ -195,11 +197,13 @@
       <button class="explore-tab" onclick="showTab('cittrends', this)" data-hash="citation-trends">Citation Trends</button>
       <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
       <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
+      <button class="explore-tab" onclick="showTab('communities', this)" data-hash="communities">Communities</button>
       <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
       <button class="explore-tab" onclick="showTab('bibcoupling', this)" data-hash="bibcoupling">Bib. Coupling</button>
       <button class="explore-tab" onclick="showTab('sleepers', this)" data-hash="sleeping-beauties">Sleeping Beauties</button>
       <button class="explore-tab" onclick="showTab('journalflow', this)" data-hash="journal-flow">Journal Flow</button>
       <button class="explore-tab" onclick="showTab('halflife', this)" data-hash="half-life">Half-Life</button>
+      <button class="explore-tab" onclick="showTab('mainpath', this)" data-hash="main-path">Main Path</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
     </div>
 
@@ -773,6 +777,92 @@
 
     </div><!-- /tab-centrality -->
 
+    <!-- ── Communities tab ──────────────────────────────────── -->
+    <div id="tab-communities" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro"><strong>Community detection</strong> identifies clusters of articles that cite each other more densely than they cite work outside their group. These clusters correspond to research fronts, schools of thought, or topical specialisations. The algorithm (Louvain modularity optimisation) automatically discovers how many communities exist and which articles belong to each, without requiring predefined categories. Node colour indicates community membership; hover for details.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What community detection measures</h4>
+        <p>Community detection partitions a network into groups (communities) such that the density of edges within groups is significantly higher than the density of edges between groups. The measure used is <strong>modularity Q</strong> (Newman, 2006), which compares observed within-group edge density to what would be expected in a random network with the same degree sequence. Values of Q above 0.3 indicate meaningful community structure.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Algorithm</h4>
+        <p>The Louvain method (Blondel et al., 2008) is a greedy agglomerative algorithm that iteratively moves nodes to neighbouring communities when doing so increases modularity. The <strong>resolution</strong> parameter controls granularity: values below 1.0 produce fewer, larger communities; values above 1.0 produce more, smaller ones.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The citation network is converted to an undirected weighted graph. If article A cites article B, an edge is created between them with weight 1; if the citation is reciprocal, the weight is 2. Community detection operates on this undirected representation because intellectual affinity is symmetric.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Blondel, V. D., Guillaume, J.-L., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks. <em>Journal of Statistical Mechanics, 2008</em>(10), P10008.</li>
+          <li>Newman, M. E. J. (2006). Modularity and community structure in networks. <em>PNAS, 103</em>(23), 8577&ndash;8582.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <div class="citnet-controls">
+        <div class="citnet-filters">
+          <div class="citnet-filter-group">
+            <label class="filter-label">Min. citations:&nbsp;<strong id="comm-min-val">2</strong></label>
+            <input type="range" id="comm-min-slider" class="citnet-slider"
+                   min="1" max="20" value="2"
+                   oninput="document.getElementById('comm-min-val').textContent=this.value">
+          </div>
+          <div class="citnet-filter-group">
+            <label class="filter-label">Resolution:&nbsp;<strong id="comm-res-val">1.0</strong></label>
+            <input type="range" id="comm-res-slider" class="citnet-slider"
+                   min="0.5" max="2.0" step="0.1" value="1.0"
+                   oninput="document.getElementById('comm-res-val').textContent=parseFloat(this.value).toFixed(1)">
+          </div>
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="comm-year-from">From</label>
+            <select id="comm-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}{% for y in range(max_year, min_year - 1, -1) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}{% endif %}
+            </select>
+          </div>
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="comm-year-to">To</label>
+            <select id="comm-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}{% for y in range(max_year, min_year - 1, -1) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}{% endif %}
+            </select>
+          </div>
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="comm-journal-picker">
+              <summary class="citnet-journal-summary">Journals&nbsp;<span id="comm-journal-count">(all)</span></summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label"><input type="checkbox" id="comm-check-all" checked onchange="toggleAllCommJournals(this)"><em>All journals</em></label>
+                {% for j in all_journals %}<label class="citnet-journal-label"><input type="checkbox" class="comm-journal-check" value="{{ j.name }}" checked onchange="updateCommJournalCount()">{{ j.name }}</label>{% endfor %}
+              </div>
+            </details>
+          </div>
+          <button class="filter-apply-btn" onclick="loadCommunities()">Compute</button>
+        </div>
+      </div>
+
+      <div class="citnet-meta">
+        <span id="comm-stats" class="citnet-stats-text"></span>
+        <div class="citnet-legend" id="comm-legend"></div>
+      </div>
+
+      <div class="citnet-container" id="comm-container">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to detect communities.</div>
+      </div>
+
+      <p class="explore-hint" style="margin-top:0.5rem;">
+        Click any node to open that article &nbsp;&middot;&nbsp; scroll to zoom &nbsp;&middot;&nbsp; drag to pan &nbsp;&middot;&nbsp; click a community in the legend to highlight
+      </p>
+
+      <div id="comm-tables" style="display:none; margin-top:1.5rem;"></div>
+
+    </div><!-- /tab-communities -->
+
     <!-- ── Co-Citation tab ──────────────────────────────────────── -->
     <div id="tab-cocitation" class="tab-panel" style="display:none;">
 
@@ -1338,6 +1428,79 @@
 
     </div><!-- /tab-halflife -->
 
+    <!-- ── Main Path tab ────────────────────────────────────── -->
+    <div id="tab-mainpath" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro"><strong>Main path analysis</strong> identifies the backbone of knowledge flow through the citation network &mdash; the single most-traversed chain of articles connecting the field&rsquo;s current frontier to its foundational works. Each edge in the citation graph is weighted by <em>Search Path Count</em> (SPC): the number of all possible source-to-sink paths that pass through it. The resulting main path highlights the articles that serve as critical conduits for the transmission of ideas across decades.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What main path analysis reveals</h4>
+        <p>Introduced by Hummon &amp; Doreian (1989) to study the development of DNA theory, main path analysis identifies the most significant citation chains in a research field. Where centrality scores individual articles, main path analysis scores <em>edges</em> (citation links) and traces the single most-traversed route through the network from its newest to its oldest articles.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">DAG construction</h4>
+        <p>The citation network is treated as a directed acyclic graph (DAG) with edges flowing from citing (newer) to cited (older) articles. Any cycles (rare, caused by publication lag) are broken by removing edges that point from older to newer work. <strong>Source nodes</strong> (in-degree 0) are the current frontier &mdash; articles that cite others but are not themselves cited. <strong>Sink nodes</strong> (out-degree 0) are foundational works that cite nothing else in the network.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Search Path Count (SPC)</h4>
+        <p>Each edge (u, v) is weighted by SPC(u, v) = (number of source&rarr;u paths) &times; (number of v&rarr;sink paths). Edges on the backbone carry high SPC because they are traversed by many source-to-sink paths; peripheral edges carry low SPC. The main path is then extracted by greedily following the highest-SPC edge at each step.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Hummon, N. P., &amp; Doreian, P. (1989). Connectivity in a citation network: The development of DNA theory. <em>Social Networks, 11</em>(1), 39&ndash;63.</li>
+          <li>Liu, J. S., &amp; Lu, L. Y. Y. (2012). An integrated approach for main path analysis. <em>JASIST, 63</em>(3), 528&ndash;542.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <div class="citnet-controls">
+        <div class="citnet-filters">
+          <div class="citnet-filter-group">
+            <label class="filter-label">Min. citations:&nbsp;<strong id="mp-min-val">2</strong></label>
+            <input type="range" id="mp-min-slider" class="citnet-slider"
+                   min="1" max="20" value="2"
+                   oninput="document.getElementById('mp-min-val').textContent=this.value">
+          </div>
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="mp-year-from">From</label>
+            <select id="mp-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}{% for y in range(max_year, min_year - 1, -1) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}{% endif %}
+            </select>
+          </div>
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="mp-year-to">To</label>
+            <select id="mp-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}{% for y in range(max_year, min_year - 1, -1) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}{% endif %}
+            </select>
+          </div>
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="mp-journal-picker">
+              <summary class="citnet-journal-summary">Journals&nbsp;<span id="mp-journal-count">(all)</span></summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label"><input type="checkbox" id="mp-check-all" checked onchange="toggleAllMpJournals(this)"><em>All journals</em></label>
+                {% for j in all_journals %}<label class="citnet-journal-label"><input type="checkbox" class="mp-journal-check" value="{{ j.name }}" checked onchange="updateMpJournalCount()">{{ j.name }}</label>{% endfor %}
+              </div>
+            </details>
+          </div>
+          <button class="filter-apply-btn" onclick="loadMainPath()">Compute</button>
+        </div>
+      </div>
+
+      <div class="citnet-meta">
+        <span id="mp-stats" class="citnet-stats-text"></span>
+      </div>
+
+      <div id="mp-container" style="min-height:200px;">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to trace the main path.</div>
+      </div>
+
+    </div><!-- /tab-mainpath -->
+
     <!-- ── Institutions tab ──────────────────────────────────── -->
     <div id="tab-institutions" class="tab-panel" style="display:none;">
 
@@ -1392,11 +1555,13 @@ let citationsLoaded    = false;
 let citTrendsLoaded    = false;
 let citnetLoaded       = false;
 let centralityLoaded   = false;
+let communitiesLoaded  = false;
 let cocitationLoaded   = false;
 let bibcouplingLoaded  = false;
 let sleepersLoaded     = false;
 let journalflowLoaded  = false;
 let halflifeLoaded     = false;
+let mainpathLoaded     = false;
 let institutionsLoaded = false;
 
 function showTab(name, btn) {
@@ -1448,6 +1613,9 @@ function showTab(name, btn) {
     // Don't auto-load — user clicks "Compute" to start
     centralityLoaded = true;
   }
+  if (name === 'communities' && !communitiesLoaded) {
+    communitiesLoaded = true;
+  }
   if (name === 'cocitation' && !cocitationLoaded) {
     // Don't auto-load — user clicks "Compute" to start
     cocitationLoaded = true;
@@ -1467,6 +1635,9 @@ function showTab(name, btn) {
   if (name === 'halflife' && !halflifeLoaded) {
     // Don't auto-load — user clicks "Compute" to start
     halflifeLoaded = true;
+  }
+  if (name === 'mainpath' && !mainpathLoaded) {
+    mainpathLoaded = true;
   }
   if (name === 'institutions' && !institutionsLoaded) {
     institutionsLoaded = true;
@@ -3841,6 +4012,341 @@ function renderHalfLifeDistribution(container, data) {
       },
     },
   });
+}
+
+
+// ── Community Detection ──────────────────────────────────────────────────────
+
+const COMM_PALETTE = [
+  '#8b6045','#3a5a28','#4a6a8a','#8a4a5a','#6a5a8a',
+  '#5a7a4a','#8a7a3a','#3a6a6a','#7a4a3a','#5a5a6a',
+  '#7a6a2a','#3a4a7a',
+];
+
+let commSimulation = null;
+
+function toggleAllCommJournals(master) {
+  document.querySelectorAll('.comm-journal-check').forEach(c => c.checked = master.checked);
+  updateCommJournalCount();
+}
+function updateCommJournalCount() {
+  const checked = document.querySelectorAll('.comm-journal-check:checked').length;
+  const total   = document.querySelectorAll('.comm-journal-check').length;
+  document.getElementById('comm-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}/${total})`;
+  document.getElementById('comm-check-all').checked = (checked === total);
+}
+
+async function loadCommunities() {
+  const container = document.getElementById('comm-container');
+  container.innerHTML = '<div class="loading-msg">Running community detection\u2026</div>';
+  document.getElementById('comm-stats').textContent = '';
+  document.getElementById('comm-legend').innerHTML = '';
+  document.getElementById('comm-tables').style.display = 'none';
+  if (commSimulation) { commSimulation.stop(); commSimulation = null; }
+  d3.selectAll('.comm-tip').remove();
+
+  const minCit = document.getElementById('comm-min-slider').value;
+  const resolution = document.getElementById('comm-res-slider').value;
+  let yearFrom = document.getElementById('comm-year-from').value;
+  let yearTo   = document.getElementById('comm-year-to').value;
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo))
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+  const checked = [...document.querySelectorAll('.comm-journal-check:checked')].map(c => c.value);
+  const total   = document.querySelectorAll('.comm-journal-check').length;
+
+  const params = new URLSearchParams({ min_citations: minCit, resolution });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/communities?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load community data.</p>';
+    return;
+  }
+
+  if (!data.nodes || data.nodes.length === 0) {
+    container.innerHTML =
+      '<p class="explore-hint">No articles match these filters \u2014 try a lower minimum.</p>';
+    return;
+  }
+
+  document.getElementById('comm-stats').textContent =
+    `${data.node_count} articles \u00b7 ${data.link_count} citation links \u00b7 ` +
+    `${data.community_count} communities \u00b7 modularity Q\u2009=\u2009${data.modularity}`;
+
+  renderCommunities(container, data);
+  renderCommunityTables(data);
+}
+
+function renderCommunities(container, data) {
+  container.innerHTML = '';
+  const commColor = i => COMM_PALETTE[i % COMM_PALETTE.length];
+
+  // Legend
+  const legendEl = document.getElementById('comm-legend');
+  legendEl.innerHTML = data.communities.map(c => {
+    const label = c.topics.length ? c.topics.slice(0,2).join(', ') : `Community ${c.id}`;
+    return `<span class="citnet-legend-item" data-comm="${c.id}" style="cursor:pointer;">` +
+      `<span class="citnet-legend-dot" style="background:${commColor(c.id)}"></span>` +
+      `${label} (${c.size})</span>`;
+  }).join('');
+
+  const W = container.clientWidth || 820;
+  const H = 600;
+  const nodes = data.nodes.map(d => ({ ...d }));
+  const links = data.links.map(d => ({ ...d }));
+
+  const citExtent = d3.extent(nodes, d => d.internal_cited_by_count);
+  const rScale = d3.scaleSqrt().domain([0, citExtent[1] || 1]).range([3, 18]);
+
+  const svg = d3.select(container).append('svg').attr('width', W).attr('height', H);
+  const g = svg.append('g');
+
+  const zoom = d3.zoom().scaleExtent([0.2, 5])
+    .on('zoom', e => g.attr('transform', e.transform));
+  svg.call(zoom);
+
+  const linkSel = g.append('g').selectAll('line')
+    .data(links).enter().append('line')
+    .style('stroke', '#ccc7bb').style('stroke-opacity', 0.4)
+    .style('stroke-width', d => Math.max(0.5, Math.min(d.weight * 1.5, 4)));
+
+  const tip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip comm-tip')
+    .style('opacity', 0).style('pointer-events', 'none');
+
+  const nodeGroup = g.append('g').selectAll('g')
+    .data(nodes).enter().append('g')
+    .style('cursor', 'pointer')
+    .on('click', (e, d) => window.open('/article/' + d.id, '_blank'))
+    .on('mouseover', (event, d) => {
+      const yr = (d.pub_date || '').substring(0, 4);
+      const comm = data.communities.find(c => c.id === d.community);
+      const commLabel = comm && comm.topics.length ? comm.topics.slice(0,3).join(', ') : `Community ${d.community}`;
+      tip.html(
+        `<strong>${d.title || 'Untitled'}</strong><br>` +
+        `${d.authors || ''} (${yr})<br>` +
+        `<em>${d.journal || ''}</em><br>` +
+        `Cited ${d.internal_cited_by_count}\u00d7 internally<br>` +
+        `<span style="color:${commColor(d.community)};">\u25CF</span> ${commLabel}`
+      ).style('left', (event.pageX + 14) + 'px')
+       .style('top',  (event.pageY - 10) + 'px')
+       .style('opacity', 1);
+    })
+    .on('mousemove', event => {
+      tip.style('left', (event.pageX + 14) + 'px')
+         .style('top',  (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', () => tip.style('opacity', 0))
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) commSimulation.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (!e.active) commSimulation.alphaTarget(0); d.fx = null; d.fy = null; })
+    );
+
+  nodeGroup.append('circle')
+    .attr('r', d => rScale(d.internal_cited_by_count))
+    .style('fill', d => commColor(d.community))
+    .style('stroke', '#fff').style('stroke-width', 0.8);
+
+  // Build link-strength function: stronger within community
+  const nodeIdx = {};
+  nodes.forEach((n, i) => nodeIdx[n.id] = i);
+
+  commSimulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links)
+      .id(d => d.id)
+      .distance(60)
+      .strength(d => {
+        const sComm = nodes.find(n => n.id === (d.source.id || d.source))?.community;
+        const tComm = nodes.find(n => n.id === (d.target.id || d.target))?.community;
+        return sComm === tComm ? 0.4 : 0.05;
+      }))
+    .force('charge', d3.forceManyBody().strength(-60))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => rScale(d.internal_cited_by_count) + 2))
+    .on('tick', () => {
+      linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+             .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+  // Legend click to highlight a community
+  legendEl.querySelectorAll('.citnet-legend-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const cid = parseInt(el.dataset.comm);
+      const active = el.classList.toggle('comm-highlight');
+      if (active) {
+        nodeGroup.style('opacity', d => d.community === cid ? 1 : 0.08);
+        linkSel.style('stroke-opacity', d => {
+          const s = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
+          const t = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
+          return (s?.community === cid || t?.community === cid) ? 0.6 : 0.02;
+        });
+        legendEl.querySelectorAll('.citnet-legend-item').forEach(e => {
+          if (e !== el) e.classList.remove('comm-highlight');
+        });
+      } else {
+        nodeGroup.style('opacity', 1);
+        linkSel.style('stroke-opacity', 0.4);
+      }
+    });
+  });
+}
+
+function renderCommunityTables(data) {
+  const tablesEl = document.getElementById('comm-tables');
+  if (!data.communities.length) { tablesEl.style.display = 'none'; return; }
+  const commColor = i => COMM_PALETTE[i % COMM_PALETTE.length];
+
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">';
+  for (const c of data.communities) {
+    const topics = c.topics.map(t =>
+      `<span style="display:inline-block;padding:0.1rem 0.45rem;font-size:0.72rem;background:#f5f0e8;border-radius:3px;color:#5a3e28;margin:0.1rem 0.15rem;">${t}</span>`
+    ).join('');
+    const journals = c.top_journals.map(j => `${j.name} (${j.count})`).join(', ');
+    const articles = c.top_articles.map(a => {
+      const yr = (a.pub_date || '').substring(0, 4);
+      return `<li style="margin-bottom:0.3rem;"><a href="/article/${a.id}" style="color:#5a3e28;">${a.title || 'Untitled'}</a> <span style="color:#999;">${yr} &middot; cited ${a.internal_cited_by_count}&times;</span></li>`;
+    }).join('');
+
+    html += `<div style="border:1px solid #e5ddd0;border-radius:6px;padding:0.8rem;background:#faf8f4;">
+      <h4 style="margin:0 0 0.4rem;font-size:0.9rem;">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${commColor(c.id)};margin-right:0.3rem;"></span>
+        Community ${c.id + 1} <span style="font-weight:normal;color:#999;">(${c.size} articles)</span>
+      </h4>
+      <div style="margin-bottom:0.4rem;">${topics}</div>
+      <div style="font-size:0.78rem;color:#888;margin-bottom:0.4rem;">${journals}</div>
+      <ol style="font-size:0.82rem;padding-left:1.2rem;margin:0;">${articles}</ol>
+    </div>`;
+  }
+  html += '</div>';
+  tablesEl.innerHTML = html;
+  tablesEl.style.display = 'block';
+}
+
+
+// ── Main Path Analysis ───────────────────────────────────────────────────────
+
+function toggleAllMpJournals(master) {
+  document.querySelectorAll('.mp-journal-check').forEach(c => c.checked = master.checked);
+  updateMpJournalCount();
+}
+function updateMpJournalCount() {
+  const checked = document.querySelectorAll('.mp-journal-check:checked').length;
+  const total   = document.querySelectorAll('.mp-journal-check').length;
+  document.getElementById('mp-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}/${total})`;
+  document.getElementById('mp-check-all').checked = (checked === total);
+}
+
+async function loadMainPath() {
+  const container = document.getElementById('mp-container');
+  container.innerHTML = '<div class="loading-msg">Building citation DAG and computing main path\u2026</div>';
+  document.getElementById('mp-stats').textContent = '';
+
+  const minCit = document.getElementById('mp-min-slider').value;
+  let yearFrom = document.getElementById('mp-year-from').value;
+  let yearTo   = document.getElementById('mp-year-to').value;
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo))
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+  const checked = [...document.querySelectorAll('.mp-journal-check:checked')].map(c => c.value);
+  const total   = document.querySelectorAll('.mp-journal-check').length;
+
+  const params = new URLSearchParams({ min_citations: minCit });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/main-path?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load main path data.</p>';
+    return;
+  }
+
+  if (!data.path || data.path.length < 2) {
+    container.innerHTML =
+      '<p class="explore-hint">No main path found \u2014 the citation DAG may be too sparse. ' +
+      'Try lowering the minimum citation threshold or widening the year range.</p>';
+    return;
+  }
+
+  const s = data.stats;
+  document.getElementById('mp-stats').textContent =
+    `DAG: ${s.dag_nodes} articles, ${s.dag_edges} citation links \u00b7 ` +
+    `Main path: ${s.path_length} articles \u00b7 ` +
+    `${s.source_count} frontier \u00b7 ${s.sink_count} foundational` +
+    (s.cycles_removed ? ` \u00b7 ${s.cycles_removed} cycles removed` : '');
+
+  renderMainPath(container, data);
+}
+
+function renderMainPath(container, data) {
+  container.innerHTML = '';
+
+  const path = data.path;
+  const edges = data.edges;
+
+  // Render as a vertical timeline of article cards
+  const el = document.createElement('div');
+  el.style.cssText = 'max-width:44rem;margin:0 auto;padding:1rem 0;';
+
+  for (let i = 0; i < path.length; i++) {
+    const node = path[i];
+    const yr = (node.pub_date || '').substring(0, 4);
+    const authors = node.authors || '';
+    const firstAuthor = authors.split(',')[0].split(';')[0].trim();
+    const title = node.title || 'Untitled';
+    const jColor = citnetJournalColor(node.journal);
+
+    // Edge weight bar (between nodes)
+    if (i > 0 && edges[i - 1]) {
+      const e = edges[i - 1];
+      const barW = Math.max(8, Math.round(e.spc_normalized * 100));
+      const edgeDiv = document.createElement('div');
+      edgeDiv.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:0.3rem 0;';
+      edgeDiv.innerHTML =
+        `<div style="width:2px;height:20px;background:#b38a6a;"></div>` +
+        `<span style="font-size:0.68rem;color:#999;margin-left:0.5rem;">SPC ${e.spc_weight.toLocaleString()}</span>`;
+      el.appendChild(edgeDiv);
+    }
+
+    // Article card
+    const card = document.createElement('a');
+    card.href = '/article/' + node.id;
+    card.target = '_blank';
+    card.style.cssText =
+      'display:block;border:1px solid #e5ddd0;border-left:4px solid ' + jColor +
+      ';border-radius:6px;padding:0.7rem 1rem;background:#faf8f4;' +
+      'text-decoration:none;color:#3a2e1f;transition:box-shadow 0.15s;';
+    card.onmouseover = () => card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+    card.onmouseout  = () => card.style.boxShadow = 'none';
+
+    const posLabel = i === 0 ? '<span style="color:#3a5a28;font-weight:600;font-size:0.72rem;">FRONTIER</span> ' :
+                     i === path.length - 1 ? '<span style="color:#8b6045;font-weight:600;font-size:0.72rem;">FOUNDATION</span> ' : '';
+
+    card.innerHTML =
+      `<div style="display:flex;justify-content:space-between;align-items:baseline;">` +
+        `<div style="font-weight:600;font-size:0.92rem;line-height:1.35;flex:1;">${posLabel}${title}</div>` +
+        `<span style="font-size:0.78rem;color:#999;white-space:nowrap;margin-left:0.8rem;">cited ${node.internal_cited_by_count}\u00d7</span>` +
+      `</div>` +
+      `<div style="font-size:0.8rem;color:#777;margin-top:0.25rem;">` +
+        `${firstAuthor}${authors.includes(',') || authors.includes(';') ? ' et al.' : ''} \u00b7 ${yr} \u00b7 ` +
+        `<span style="color:${jColor};">${jflowAbbrev(node.journal)}</span>` +
+      `</div>`;
+
+    el.appendChild(card);
+  }
+
+  container.appendChild(el);
 }
 
 

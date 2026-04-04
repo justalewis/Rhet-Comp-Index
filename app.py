@@ -53,6 +53,8 @@ from db import (
     get_sleeping_beauties,
     get_journal_citation_flow,
     get_journal_half_life,
+    get_community_detection,
+    get_main_path,
     get_citation_trends,
     get_ego_network,
     get_coverage_stats,
@@ -849,6 +851,46 @@ def api_citation_half_life():
         year_to=year_to or None,
         include_distribution=include_distribution,
         include_timeseries=include_timeseries,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/communities")
+def api_citation_communities():
+    """JSON: community detection via Louvain modularity optimization."""
+    min_citations = max(1, int(request.args.get("min_citations", 2)))
+    max_nodes     = min(800, max(50, int(request.args.get("max_nodes", 600))))
+    resolution    = max(0.1, min(3.0, float(request.args.get("resolution", 1.0))))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_community_detection(
+        min_citations=min_citations,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        max_nodes=max_nodes,
+        resolution=resolution,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/main-path")
+def api_main_path():
+    """JSON: main path analysis — the backbone of knowledge flow."""
+    min_citations = max(1, int(request.args.get("min_citations", 2)))
+    max_nodes     = min(1000, max(50, int(request.args.get("max_nodes", 800))))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_main_path(
+        min_citations=min_citations,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        max_nodes=max_nodes,
     )
     return jsonify(data)
 
