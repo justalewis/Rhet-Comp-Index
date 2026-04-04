@@ -2591,6 +2591,10 @@ def get_citation_centrality(min_citations=1, journals=None,
             where.append("journal = ?")
             params.append(journals)
 
+    # Auto-swap reversed year range
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
     if year_from:
         where.append("pub_date >= ?")
         params.append(f"{year_from}-01-01")

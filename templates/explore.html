@@ -2173,8 +2173,12 @@ async function loadCentrality() {
   d3.selectAll('.cent-tip').remove();
 
   const minCit   = document.getElementById('cent-min-slider').value;
-  const yearFrom = document.getElementById('cent-year-from').value;
-  const yearTo   = document.getElementById('cent-year-to').value;
+  let yearFrom = document.getElementById('cent-year-from').value;
+  let yearTo   = document.getElementById('cent-year-to').value;
+  // Auto-swap reversed year range
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+  }
   const checked  = [...document.querySelectorAll('.cent-journal-check:checked')].map(c => c.value);
   const total    = document.querySelectorAll('.cent-journal-check').length;
 
