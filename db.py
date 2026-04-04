@@ -2160,6 +2160,148 @@ def get_cocitation_network(min_cocitations=3, journals=None,
     }
 
 
+# ── Bibliographic coupling ───────────────────────────────────────────────────
+
+def get_bibcoupling_network(min_coupling=3, journals=None,
+                            year_from=None, year_to=None, max_nodes=400):
+    """
+    Build an undirected bibliographic-coupling network.
+
+    Two articles are bibliographically coupled when they both cite the same
+    third article.  Edge weight = number of shared references.
+
+    This is the inverse of co-citation: co-citation links articles that
+    *are cited together*; bibliographic coupling links articles that
+    *cite the same things*.
+
+    Nodes  = articles that participate in at least one coupling pair
+             meeting the threshold (capped at max_nodes, ranked by total
+             coupling strength).
+    Links  = coupling pairs where both endpoints are in the node set.
+
+    Returns {nodes, links, node_count, link_count}.
+    """
+    # ── Optional filters on the *citing* (source) articles ───────────────
+    if year_from and year_to and str(year_from) > str(year_to):
+        year_from, year_to = year_to, year_from
+
+    art_where = []
+    art_params = []
+    if journals:
+        if isinstance(journals, list) and journals:
+            placeholders = ",".join("?" * len(journals))
+            art_where.append(f"journal IN ({placeholders})")
+            art_params.extend(journals)
+        elif isinstance(journals, str):
+            art_where.append("journal = ?")
+            art_params.append(journals)
+    if year_from:
+        art_where.append("pub_date >= ?")
+        art_params.append(f"{year_from}-01-01")
+    if year_to:
+        art_where.append("pub_date <= ?")
+        art_params.append(f"{year_to}-12-31")
+
+    art_clause = ""
+    if art_where:
+        art_clause = "WHERE " + " AND ".join(art_where)
+
+    with get_conn() as conn:
+        if art_clause:
+            filtered_ids = conn.execute(f"""
+                SELECT id FROM articles {art_clause}
+            """, art_params).fetchall()
+            id_set = {r["id"] for r in filtered_ids}
+            if not id_set:
+                return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+            # Bibliographic coupling pairs among filtered source articles
+            pair_rows = conn.execute(f"""
+                WITH eligible AS (
+                    SELECT id FROM articles {art_clause}
+                )
+                SELECT c1.source_article_id AS article_a,
+                       c2.source_article_id AS article_b,
+                       COUNT(*)             AS weight
+                FROM citations c1
+                JOIN citations c2
+                  ON c1.target_article_id = c2.target_article_id
+                 AND c1.source_article_id < c2.source_article_id
+                WHERE c1.source_article_id IN (SELECT id FROM eligible)
+                  AND c2.source_article_id IN (SELECT id FROM eligible)
+                  AND c1.target_article_id IS NOT NULL
+                GROUP BY c1.source_article_id, c2.source_article_id
+                HAVING COUNT(*) >= ?
+                ORDER BY weight DESC
+            """, art_params + [min_coupling]).fetchall()
+        else:
+            pair_rows = conn.execute("""
+                SELECT c1.source_article_id AS article_a,
+                       c2.source_article_id AS article_b,
+                       COUNT(*)             AS weight
+                FROM citations c1
+                JOIN citations c2
+                  ON c1.target_article_id = c2.target_article_id
+                 AND c1.source_article_id < c2.source_article_id
+                WHERE c1.target_article_id IS NOT NULL
+                  AND c2.target_article_id IS NOT NULL
+                GROUP BY c1.source_article_id, c2.source_article_id
+                HAVING COUNT(*) >= ?
+                ORDER BY weight DESC
+            """, (min_coupling,)).fetchall()
+
+        if not pair_rows:
+            return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+        # Collect all node IDs and their total coupling strength
+        strength = {}
+        for r in pair_rows:
+            strength[r["article_a"]] = strength.get(r["article_a"], 0) + r["weight"]
+            strength[r["article_b"]] = strength.get(r["article_b"], 0) + r["weight"]
+
+        # Keep top max_nodes by strength
+        top_ids = sorted(strength.keys(), key=lambda k: strength[k], reverse=True)[:max_nodes]
+        top_set = set(top_ids)
+
+        # Filter links to only those where both ends are in top_set
+        links = []
+        for r in pair_rows:
+            if r["article_a"] in top_set and r["article_b"] in top_set:
+                links.append({
+                    "source": r["article_a"],
+                    "target": r["article_b"],
+                    "weight": r["weight"],
+                })
+
+        # Fetch article metadata for nodes
+        if not top_ids:
+            return {"nodes": [], "links": [], "node_count": 0, "link_count": 0}
+
+        placeholders = ",".join("?" * len(top_ids))
+        node_rows = conn.execute(f"""
+            SELECT id, title, authors, pub_date, journal,
+                   internal_cited_by_count, internal_cites_count
+            FROM articles
+            WHERE id IN ({placeholders})
+        """, top_ids).fetchall()
+
+    nodes = []
+    for r in node_rows:
+        node = dict(r)
+        node["coupling_strength"] = strength.get(r["id"], 0)
+        nodes.append(node)
+
+    # Sort by strength descending for consistent ordering
+    nodes.sort(key=lambda n: n["coupling_strength"], reverse=True)
+
+    return {
+        "nodes":      nodes,
+        "links":      links,
+        "node_count": len(nodes),
+        "link_count": len(links),
+    }
+
+
 # ── Sleeping Beauties (delayed recognition) ──────────────────────────────────
 
 def get_sleeping_beauties(min_total_citations=5, max_results=50,

@@ -48,6 +48,7 @@ from db import (
     get_most_cited,
     get_citation_network,
     get_cocitation_network,
+    get_bibcoupling_network,
     get_citation_centrality,
     get_sleeping_beauties,
     get_citation_trends,
@@ -749,6 +750,25 @@ def api_cocitation_network():
 
     data = get_cocitation_network(
         min_cocitations=min_cocitations,
+        journals=journals or None,
+        year_from=year_from or None,
+        year_to=year_to or None,
+        max_nodes=max_nodes,
+    )
+    return jsonify(data)
+
+
+@app.route("/api/citations/bibcoupling")
+def api_bibcoupling_network():
+    """JSON: bibliographic coupling network — articles linked by shared references."""
+    min_coupling = max(1, int(request.args.get("min_coupling", 3)))
+    max_nodes    = min(600, max(50, int(request.args.get("max_nodes", 400))))
+    journals  = request.args.getlist("journal")
+    year_from = request.args.get("year_from", "").strip()
+    year_to   = request.args.get("year_to",   "").strip()
+
+    data = get_bibcoupling_network(
+        min_coupling=min_coupling,
         journals=journals or None,
         year_from=year_from or None,
         year_to=year_to or None,

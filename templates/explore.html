@@ -77,6 +77,7 @@
             <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
             <a href="/citations" class="nav-dropdown-item">Citation Network</a>
             <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
+            <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
             <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
             <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
           </div>
@@ -193,6 +194,7 @@
       <button class="explore-tab" onclick="showTab('citnet', this)" data-hash="citnet">Citation Network</button>
       <button class="explore-tab" onclick="showTab('centrality', this)" data-hash="centrality">Centrality</button>
       <button class="explore-tab" onclick="showTab('cocitation', this)" data-hash="cocitation">Co-Citation</button>
+      <button class="explore-tab" onclick="showTab('bibcoupling', this)" data-hash="bibcoupling">Bib. Coupling</button>
       <button class="explore-tab" onclick="showTab('sleepers', this)" data-hash="sleeping-beauties">Sleeping Beauties</button>
       <button class="explore-tab" onclick="showTab('institutions', this)" data-hash="institutions">Institutions</button>
     </div>
@@ -886,6 +888,122 @@
 
     </div><!-- /tab-cocitation -->
 
+    <!-- ── Bibliographic Coupling tab ─────────────────────────── -->
+    <div id="tab-bibcoupling" class="tab-panel" style="display:none;">
+
+      <p class="tab-intro"><strong>Bibliographic coupling</strong> links articles that cite the same references. Where <a href="#cocitation">co-citation</a> reveals which articles the field treats as intellectually related (cited <em>together</em> by later work), bibliographic coupling reveals which articles <em>draw on the same foundations</em>. Two articles with many shared references are reading &mdash; and building on &mdash; the same body of prior work, even if neither cites the other directly. This is the inverse of co-citation: it measures similarity of intellectual <em>input</em> rather than <em>reception</em>.</p>
+      <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: bibliographic coupling requires reference lists deposited with CrossRef &rarr;</a></p>
+
+      <details class="abstract-toggle" style="margin-bottom:1.2rem;">
+        <summary style="font-weight:600;">Methodology</summary>
+        <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+
+        <h4 style="margin:1rem 0 0.4rem;">What bibliographic coupling measures</h4>
+        <p>Bibliographic coupling was introduced by Kessler (1963) as one of the earliest methods for quantifying the intellectual relationship between scientific papers. Two articles are bibliographically coupled when they both cite the same third article. The <strong>coupling strength</strong> of a pair is the number of references they share. A high coupling strength means two articles are drawing heavily on the same prior literature &mdash; they are engaged with the same conversation, use the same theoretical foundations, or address the same body of empirical work.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Relationship to co-citation</h4>
+        <p>Bibliographic coupling and co-citation are complementary. Co-citation asks: &ldquo;Which articles does later scholarship treat as related?&rdquo; Bibliographic coupling asks: &ldquo;Which articles read the same things?&rdquo; Co-citation is <strong>retrospective</strong> and changes over time as new citing articles appear. Bibliographic coupling is <strong>fixed at publication</strong> &mdash; an article&rsquo;s reference list doesn&rsquo;t change, so coupling relationships are stable from the moment of publication. This makes bibliographic coupling especially useful for mapping recent work that hasn&rsquo;t had time to be co-cited yet.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Graph construction</h4>
+        <p>The visualization displays an <em>undirected, weighted</em> graph. Each node is an article that cites other work in the index; each edge connects two articles that share at least <em>n</em> references (configurable via the &ldquo;Min. shared refs&rdquo; slider). Edge thickness reflects coupling strength &mdash; thicker edges mean more shared references. Node size reflects <strong>total coupling strength</strong>: the sum of all edge weights for that node, measuring how deeply embedded it is in the coupling network overall.</p>
+        <p>The graph is capped at 400 nodes, ranked by coupling strength, to keep the visualization responsive. Edges are included only when both endpoints appear in the filtered node set. Only references to articles <em>within this index</em> are counted &mdash; shared references to external work are invisible.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">How to read the clusters</h4>
+        <p>Clusters of tightly coupled articles represent groups of scholars reading the same foundational literature. These clusters often correspond to research specialisations, methodological schools, or topical communities. Unlike co-citation clusters (which reflect how the field <em>receives</em> earlier work), bibliographic coupling clusters reflect how authors <em>position</em> their own work relative to prior scholarship.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+        <p>Bibliographic coupling depends on reference list deposits with CrossRef. Journals that do not deposit reference lists are invisible to this analysis. Only references to articles <em>within this index</em> are matched, so two articles that share many references to books, dissertations, or external journals will appear less coupled than they actually are. Coupling strength is also influenced by reference list length: articles with long reference lists have more opportunities for coupling, biasing toward literature reviews and empirical studies with extensive citations.</p>
+
+        <h4 style="margin:1rem 0 0.4rem;">References</h4>
+        <ul style="padding-left:1.2rem;">
+          <li>Kessler, M. M. (1963). Bibliographic coupling between scientific papers. <em>American Documentation, 14</em>(1), 10&ndash;25.</li>
+        </ul>
+
+        </div>
+      </details>
+
+      <!-- Controls bar -->
+      <div class="citnet-controls">
+
+        <div class="citnet-filters">
+
+          <div class="citnet-filter-group">
+            <label class="filter-label">
+              Min. shared refs:&nbsp;<strong id="bibcoup-min-val">3</strong>
+            </label>
+            <input type="range" id="bibcoup-min-slider" class="citnet-slider"
+                   min="1" max="20" value="3"
+                   oninput="onBibcoupSliderChange(this.value)">
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="bibcoup-year-from">From</label>
+            <select id="bibcoup-year-from" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <label class="filter-label" for="bibcoup-year-to">To</label>
+            <select id="bibcoup-year-to" class="filter-select">
+              <option value="">Any year</option>
+              {% if min_year and max_year %}
+              {% for y in range(max_year, min_year - 1, -1) %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="citnet-filter-group">
+            <details class="citnet-journal-picker" id="bibcoup-journal-picker">
+              <summary class="citnet-journal-summary">
+                Journals&nbsp;<span id="bibcoup-journal-count">(all)</span>
+              </summary>
+              <div class="citnet-journal-list">
+                <label class="citnet-journal-label">
+                  <input type="checkbox" id="bibcoup-check-all" checked
+                         onchange="toggleAllBibcoupJournals(this)">
+                  <em>All journals</em>
+                </label>
+                {% for j in all_journals %}
+                <label class="citnet-journal-label">
+                  <input type="checkbox" class="bibcoup-journal-check"
+                         value="{{ j.name }}" checked
+                         onchange="updateBibcoupJournalCount()">
+                  {{ j.name }}
+                </label>
+                {% endfor %}
+              </div>
+            </details>
+          </div>
+
+          <button class="filter-apply-btn" onclick="loadBibcoupling()">Compute</button>
+
+        </div>
+
+      </div><!-- /citnet-controls -->
+
+      <div class="citnet-meta">
+        <span id="bibcoup-stats" class="citnet-stats-text"></span>
+        <div class="citnet-legend" id="bibcoup-legend"></div>
+      </div>
+
+      <div class="citnet-container" id="bibcoup-container">
+        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the bibliographic coupling graph.</div>
+      </div>
+
+      <p class="explore-hint" style="margin-top:0.5rem;">
+        Click any node to open that article &nbsp;&middot;&nbsp; scroll to zoom &nbsp;&middot;&nbsp; drag to pan &nbsp;&middot;&nbsp; thicker edges = more shared references
+      </p>
+
+    </div><!-- /tab-bibcoupling -->
+
     <!-- ── Sleeping Beauties tab ──────────────────────────────── -->
     <div id="tab-sleepers" class="tab-panel" style="display:none;">
 
@@ -1052,6 +1170,7 @@ let citTrendsLoaded    = false;
 let citnetLoaded       = false;
 let centralityLoaded   = false;
 let cocitationLoaded   = false;
+let bibcouplingLoaded  = false;
 let sleepersLoaded     = false;
 let institutionsLoaded = false;
 
@@ -1107,6 +1226,10 @@ function showTab(name, btn) {
   if (name === 'cocitation' && !cocitationLoaded) {
     // Don't auto-load — user clicks "Compute" to start
     cocitationLoaded = true;
+  }
+  if (name === 'bibcoupling' && !bibcouplingLoaded) {
+    // Don't auto-load — user clicks "Compute" to start
+    bibcouplingLoaded = true;
   }
   if (name === 'sleepers' && !sleepersLoaded) {
     // Don't auto-load — user clicks "Compute" to start
@@ -2591,6 +2714,285 @@ function renderCocitation(container, data) {
     .alphaDecay(0.025)
     .on('tick', () => {
       cocitLinkSel
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+}
+
+
+// ── Bibliographic Coupling ────────────────────────────────────────────────────
+
+let bibcoupSimulation   = null;
+let bibcoupZoomBehavior = null;
+let bibcoupSvgEl        = null;
+let bibcoupNodeSel      = null;
+let bibcoupLinkSel      = null;
+let bibcoupNodes        = [];
+let bibcoupLinks        = [];
+let bibcoupDebounce     = null;
+
+function onBibcoupSliderChange(val) {
+  document.getElementById('bibcoup-min-val').textContent = val;
+  clearTimeout(bibcoupDebounce);
+  bibcoupDebounce = setTimeout(loadBibcoupling, 700);
+}
+
+function toggleAllBibcoupJournals(cb) {
+  document.querySelectorAll('.bibcoup-journal-check').forEach(c => c.checked = cb.checked);
+  updateBibcoupJournalCount();
+}
+
+function updateBibcoupJournalCount() {
+  const total   = document.querySelectorAll('.bibcoup-journal-check').length;
+  const checked = document.querySelectorAll('.bibcoup-journal-check:checked').length;
+  document.getElementById('bibcoup-journal-count').textContent =
+    checked === total ? '(all)' : `(${checked}\u202f/\u202f${total})`;
+  const allCb = document.getElementById('bibcoup-check-all');
+  if (allCb) allCb.checked = (checked === total);
+  if (allCb) allCb.indeterminate = (checked > 0 && checked < total);
+}
+
+async function loadBibcoupling() {
+  clearTimeout(bibcoupDebounce);
+
+  const container = document.getElementById('bibcoup-container');
+  container.innerHTML = '<div class="loading-msg">Computing bibliographic coupling\u2026</div>';
+  document.getElementById('bibcoup-stats').textContent = '';
+  document.getElementById('bibcoup-legend').innerHTML  = '';
+
+  if (bibcoupSimulation) { bibcoupSimulation.stop(); bibcoupSimulation = null; }
+  d3.selectAll('.bibcoup-tip').remove();
+
+  const minCoup  = document.getElementById('bibcoup-min-slider').value;
+  let yearFrom = document.getElementById('bibcoup-year-from').value;
+  let yearTo   = document.getElementById('bibcoup-year-to').value;
+  if (yearFrom && yearTo && parseInt(yearFrom) > parseInt(yearTo)) {
+    [yearFrom, yearTo] = [yearTo, yearFrom];
+    document.getElementById('bibcoup-year-from').value = yearFrom;
+    document.getElementById('bibcoup-year-to').value   = yearTo;
+  }
+  const checked  = [...document.querySelectorAll('.bibcoup-journal-check:checked')].map(c => c.value);
+  const total    = document.querySelectorAll('.bibcoup-journal-check').length;
+
+  const params = new URLSearchParams({ min_coupling: minCoup });
+  if (yearFrom) params.set('year_from', yearFrom);
+  if (yearTo)   params.set('year_to',   yearTo);
+  if (checked.length < total) checked.forEach(j => params.append('journal', j));
+
+  let data;
+  try {
+    const resp = await fetch('/api/citations/bibcoupling?' + params.toString());
+    data = await resp.json();
+  } catch (e) {
+    container.innerHTML = '<p class="explore-hint">Failed to load bibliographic coupling data.</p>';
+    return;
+  }
+
+  if (!data.nodes || data.nodes.length === 0) {
+    const minVal = parseInt(document.getElementById('bibcoup-min-slider').value);
+    let hint = 'No bibliographic coupling pairs meet the current threshold.';
+    if (minVal > 1) {
+      hint += ` Try lowering the minimum shared references \u2014 articles need reference lists deposited with CrossRef to appear here.`;
+    }
+    container.innerHTML = '<p class="explore-hint">' + hint + '</p>';
+    return;
+  }
+
+  renderBibcoupling(container, data);
+}
+
+function renderBibcoupling(container, data) {
+  container.innerHTML = '';
+  bibcoupNodes = data.nodes.map(d => ({ ...d }));
+  bibcoupLinks = data.links.map(d => ({ ...d }));
+
+  const maxWeight = d3.max(bibcoupLinks, l => l.weight) || 1;
+  document.getElementById('bibcoup-stats').textContent =
+    `${data.node_count} articles\u2002\u00b7\u2002${data.link_count} coupling pairs` +
+    `\u2002\u00b7\u2002strongest pair shares ${maxWeight} references`;
+
+  // Legend — colour by journal
+  const seenJournals = [...new Set(bibcoupNodes.map(n => n.journal))].sort();
+  const legendEl = document.getElementById('bibcoup-legend');
+  legendEl.innerHTML = seenJournals.map(j =>
+    `<span class="citnet-legend-item">` +
+    `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
+    `${escapeHtml(j)}</span>`
+  ).join('');
+
+  const W = container.clientWidth || 820;
+  const H = 600;
+
+  const maxStrength = d3.max(bibcoupNodes, n => n.coupling_strength) || 1;
+  const rScale = d3.scaleSqrt().domain([0, maxStrength]).range([3, 20]);
+
+  const edgeScale = d3.scaleLinear().domain([1, Math.max(maxWeight, 2)]).range([0.8, 5]);
+
+  bibcoupSvgEl = d3.select('#bibcoup-container')
+    .append('svg')
+    .attr('width', W)
+    .attr('height', H);
+
+  bibcoupZoomBehavior = d3.zoom()
+    .scaleExtent([0.1, 8])
+    .on('zoom', (event) => gRoot.attr('transform', event.transform));
+
+  bibcoupSvgEl.call(bibcoupZoomBehavior);
+  const gRoot = bibcoupSvgEl.append('g');
+
+  // Links
+  bibcoupLinkSel = gRoot.append('g').attr('class', 'bibcoup-links')
+    .selectAll('line')
+    .data(bibcoupLinks)
+    .enter().append('line')
+    .style('stroke',         '#ccc7bb')
+    .style('stroke-opacity', d => 0.15 + 0.55 * (d.weight / maxWeight))
+    .style('stroke-width',   d => edgeScale(d.weight));
+
+  // Tooltip
+  const tip = d3.select('body').append('div')
+    .attr('class', 'heatmap-tooltip bibcoup-tip')
+    .style('display',    'none')
+    .style('max-width',  '320px')
+    .style('line-height','1.45');
+
+  // Node groups
+  const nodeGroup = gRoot.append('g').attr('class', 'bibcoup-nodes')
+    .selectAll('g')
+    .data(bibcoupNodes)
+    .enter().append('g')
+    .style('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', (event, d) => {
+        if (!event.active) bibcoupSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end',   (event, d) => {
+        if (!event.active) bibcoupSimulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      })
+    )
+    .on('click', (event, d) => {
+      event.stopPropagation();
+      window.location = '/article/' + d.id;
+    })
+    .on('mouseover', (event, d) => {
+      const year  = d.pub_date ? d.pub_date.slice(0, 4) : '';
+      const auth  = d.authors || '';
+      const first = auth.split(';')[0].trim();
+      const last  = first.split(' ').filter(Boolean).pop() || '';
+      const byline = last
+        + (auth.includes(';') ? ' et al.' : '')
+        + (year ? ` (${year})` : '');
+
+      // Top coupling partners
+      const partners = bibcoupLinks
+        .filter(l => {
+          const sid = typeof l.source === 'object' ? l.source.id : l.source;
+          const tid = typeof l.target === 'object' ? l.target.id : l.target;
+          return sid === d.id || tid === d.id;
+        })
+        .map(l => {
+          const sid = typeof l.source === 'object' ? l.source.id : l.source;
+          const tid = typeof l.target === 'object' ? l.target.id : l.target;
+          const partnerId = sid === d.id ? tid : sid;
+          const partner = bibcoupNodes.find(n => n.id === partnerId);
+          return { name: partner ? partner.title : '?', weight: l.weight };
+        })
+        .sort((a, b) => b.weight - a.weight)
+        .slice(0, 5);
+
+      const partnerHtml = partners.length > 0
+        ? '<br><span style="font-size:0.78rem;color:#9c9890;">Most coupled with:</span>' +
+          partners.map(p =>
+            `<br><span style="font-size:0.78rem;">\u2022 ${escapeHtml(p.name.length > 60 ? p.name.slice(0, 57) + '\u2026' : p.name)} (${p.weight} shared)</span>`
+          ).join('')
+        : '';
+
+      tip.style('display', 'block').html(
+        `<strong>${escapeHtml(d.title)}</strong><br>` +
+        (byline ? `${escapeHtml(byline)}<br>` : '') +
+        `<em>${escapeHtml(d.journal)}</em><br>` +
+        `Coupling strength: <strong>${d.coupling_strength}</strong>` +
+        (d.internal_cites_count ? ` \u2002\u00b7\u2002 ${d.internal_cites_count} refs in index` : '') +
+        partnerHtml
+      );
+
+      // Highlight connected edges
+      bibcoupLinkSel.style('stroke-opacity', l => {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        return (sid === d.id || tid === d.id) ? 0.8 : 0.06;
+      });
+      nodeGroup.select('circle').style('fill-opacity', n => {
+        if (n.id === d.id) return 1;
+        const connected = bibcoupLinks.some(l => {
+          const sid = typeof l.source === 'object' ? l.source.id : l.source;
+          const tid = typeof l.target === 'object' ? l.target.id : l.target;
+          return (sid === d.id && tid === n.id) || (tid === d.id && sid === n.id);
+        });
+        return connected ? 0.9 : 0.15;
+      });
+    })
+    .on('mousemove', (event) => {
+      tip.style('left', (event.pageX + 14) + 'px')
+         .style('top',  (event.pageY - 38) + 'px');
+    })
+    .on('mouseout', () => {
+      tip.style('display', 'none');
+      bibcoupLinkSel.style('stroke-opacity', l => 0.15 + 0.55 * (l.weight / maxWeight));
+      nodeGroup.select('circle').style('fill-opacity', 0.88);
+    });
+
+  bibcoupNodeSel = nodeGroup;
+
+  // Circles
+  nodeGroup.append('circle')
+    .attr('r', d => rScale(d.coupling_strength))
+    .style('fill',         d => citnetJournalColor(d.journal))
+    .style('fill-opacity', 0.88)
+    .style('stroke',       '#fff')
+    .style('stroke-width', 1.5);
+
+  // Labels for top 20 nodes by coupling strength
+  const sortedByStrength = [...bibcoupNodes].sort((a, b) => b.coupling_strength - a.coupling_strength);
+  const labelIds = new Set(sortedByStrength.slice(0, 20).map(n => n.id));
+
+  nodeGroup.filter(d => labelIds.has(d.id))
+    .append('text')
+    .text(d => {
+      const auth  = d.authors || '';
+      const first = auth.split(';')[0].trim();
+      return first.split(' ').filter(Boolean).pop() || '';
+    })
+    .attr('dy',           d => rScale(d.coupling_strength) + 10)
+    .attr('text-anchor',  'middle')
+    .style('font-family', 'system-ui, sans-serif')
+    .style('font-size',   '9px')
+    .style('fill',        '#5a3e28')
+    .style('pointer-events', 'none');
+
+  // Dismiss tooltip on background click
+  bibcoupSvgEl.on('click', () => {
+    tip.style('display', 'none');
+    bibcoupLinkSel.style('stroke-opacity', l => 0.15 + 0.55 * (l.weight / maxWeight));
+    nodeGroup.select('circle').style('fill-opacity', 0.88);
+  });
+
+  // Force simulation
+  bibcoupSimulation = d3.forceSimulation(bibcoupNodes)
+    .force('link', d3.forceLink(bibcoupLinks)
+      .id(d => d.id)
+      .distance(d => Math.max(20, 80 - d.weight * 3))
+      .strength(d => 0.2 + 0.6 * (d.weight / maxWeight)))
+    .force('charge',    d3.forceManyBody().strength(-80))
+    .force('center',    d3.forceCenter(W / 2, H / 2))
+    .force('collision', d3.forceCollide().radius(d => rScale(d.coupling_strength) + 2))
+    .alphaDecay(0.025)
+    .on('tick', () => {
+      bibcoupLinkSel
         .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
         .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
       nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
