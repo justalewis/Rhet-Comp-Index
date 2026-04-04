@@ -58,6 +58,8 @@ from db import (
     get_temporal_network_evolution,
     get_citation_trends,
     get_ego_network,
+    search_articles_autocomplete,
+    get_reading_path,
     get_coverage_stats,
     get_article_affiliations,
     get_author_by_name,
@@ -930,6 +932,29 @@ def api_temporal_evolution():
         snapshot_year=int(snapshot_year) if snapshot_year else None,
     )
     return jsonify(data)
+
+
+@app.route("/api/articles/search")
+def api_article_search():
+    """JSON: autocomplete article search for reading path seed selection."""
+    q = request.args.get("q", "").strip()
+    limit = min(20, int(request.args.get("limit", 10)))
+    if not q:
+        return jsonify([])
+    return jsonify(search_articles_autocomplete(q, limit=limit))
+
+
+@app.route("/api/citations/reading-path")
+@cache_response(seconds=600)
+def api_reading_path():
+    """JSON: reading path around a seed article — cites, cited-by, co-citation, bib coupling."""
+    article_id = request.args.get("article", type=int)
+    if not article_id:
+        return jsonify({"error": "article parameter required"}), 400
+    result = get_reading_path(article_id)
+    if "error" in result:
+        return jsonify(result), 404
+    return jsonify(result)
 
 
 @app.route("/api/stats/most-cited")

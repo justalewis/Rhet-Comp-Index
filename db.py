@@ -3750,3 +3750,283 @@ def get_temporal_network_evolution(min_citations=1, journals=None,
             "total_citations": len(edges_with_years),
         },
     }
+
+
+# ── Reading path ───────────────────────────────────────────────────────────────
+
+def search_articles_autocomplete(q, limit=10):
+    """
+    Fast article search for autocomplete.  Returns a small set of
+    fields: id, title, authors, journal, pub_date, doi.
+    """
+    q = (q or "").strip()
+    if not q:
+        return []
+    safe = _sanitize_fts(q)
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT a.id, a.title, a.authors, a.journal, a.pub_date, a.doi
+            FROM articles a
+            WHERE a.id IN (
+                SELECT rowid FROM articles_fts WHERE articles_fts MATCH ?
+            )
+            ORDER BY a.internal_cited_by_count DESC
+            LIMIT ?
+        """, (safe, limit)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_reading_path(article_id):
+    """
+    Build a reading path around a seed article.
+
+    Assembles four relationship sets (backward citations, forward
+    citations, co-citation neighbours, bibliographic coupling neighbours),
+    computes a relevance score for each unique article, and returns
+    a ranked reading list plus a graph structure for D3 rendering.
+
+    Returns { seed, cites, cited_by, cocited, coupled,
+              reading_list, graph, stats }
+    """
+    with get_conn() as conn:
+        # ── Seed article ──
+        seed_row = conn.execute(
+            "SELECT * FROM articles WHERE id = ?", (article_id,)
+        ).fetchone()
+        if not seed_row:
+            return {"error": "Article not found"}
+        seed = dict(seed_row)
+        seed_tags = set((seed.get("tags") or "").strip("|").split("|"))
+        seed_tags.discard("")
+
+        # ── 3a. Backward citations (what the seed cites) ──
+        cites_rows = conn.execute("""
+            SELECT a.id, a.title, a.authors, a.journal, a.pub_date,
+                   a.doi, a.url, a.internal_cited_by_count, a.tags
+            FROM articles a
+            JOIN citations c ON c.target_article_id = a.id
+            WHERE c.source_article_id = ?
+            ORDER BY a.pub_date DESC
+        """, (article_id,)).fetchall()
+        cites = [dict(r) for r in cites_rows]
+
+        # ── 3b. Forward citations (what cites the seed) ──
+        cited_by_rows = conn.execute("""
+            SELECT a.id, a.title, a.authors, a.journal, a.pub_date,
+                   a.doi, a.url, a.internal_cited_by_count, a.tags
+            FROM articles a
+            JOIN citations c ON c.source_article_id = a.id
+            WHERE c.target_article_id = ?
+            ORDER BY a.internal_cited_by_count DESC
+        """, (article_id,)).fetchall()
+        cited_by = [dict(r) for r in cited_by_rows]
+
+        # ── 3c. Co-citation neighbours ──
+        # Articles X where some article C cites both seed and X
+        cocited_rows = conn.execute("""
+            SELECT a.id, a.title, a.authors, a.journal, a.pub_date,
+                   a.doi, a.url, a.internal_cited_by_count, a.tags,
+                   COUNT(DISTINCT c1.source_article_id) AS cocitation_count
+            FROM citations c1
+            JOIN citations c2
+              ON c1.source_article_id = c2.source_article_id
+             AND c2.target_article_id = ?
+            JOIN articles a ON a.id = c1.target_article_id
+            WHERE c1.target_article_id != ?
+              AND c1.target_article_id IS NOT NULL
+            GROUP BY c1.target_article_id
+            ORDER BY cocitation_count DESC
+            LIMIT 20
+        """, (article_id, article_id)).fetchall()
+        cocited = [dict(r) for r in cocited_rows]
+
+        # ── 3d. Bibliographic coupling neighbours ──
+        # Articles X where both seed and X cite the same article R
+        coupled_rows = conn.execute("""
+            SELECT a.id, a.title, a.authors, a.journal, a.pub_date,
+                   a.doi, a.url, a.internal_cited_by_count, a.tags,
+                   COUNT(DISTINCT c1.target_article_id) AS coupling_count
+            FROM citations c1
+            JOIN citations c2
+              ON c1.target_article_id = c2.target_article_id
+             AND c2.source_article_id = ?
+            JOIN articles a ON a.id = c1.source_article_id
+            WHERE c1.source_article_id != ?
+              AND c1.target_article_id IS NOT NULL
+            GROUP BY c1.source_article_id
+            ORDER BY coupling_count DESC
+            LIMIT 20
+        """, (article_id, article_id)).fetchall()
+        coupled = [dict(r) for r in coupled_rows]
+
+    # ── 3e. Deduplication and scoring ──
+    articles_map = {}  # id → {article data + score info}
+
+    def _add(art, rel_type, weight=1):
+        aid = art["id"]
+        if aid == article_id:
+            return
+        if aid not in articles_map:
+            art_tags = set((art.get("tags") or "").strip("|").split("|"))
+            art_tags.discard("")
+            articles_map[aid] = {
+                "id":       aid,
+                "title":    art.get("title", ""),
+                "authors":  art.get("authors", ""),
+                "journal":  art.get("journal", ""),
+                "pub_date": art.get("pub_date", ""),
+                "doi":      art.get("doi", ""),
+                "url":      art.get("url", ""),
+                "internal_cited_by_count": art.get("internal_cited_by_count", 0),
+                "relationships": [],
+                "score":    0,
+                "shared_tags": bool(seed_tags & art_tags),
+                "same_journal": (art.get("journal") or "") == (seed.get("journal") or ""),
+            }
+        entry = articles_map[aid]
+        entry["relationships"].append({"type": rel_type, "weight": weight})
+
+    # Add each set
+    for art in cites:
+        _add(art, "cites")
+    for art in cited_by:
+        _add(art, "cited_by")
+    for art in cocited:
+        _add(art, "cocited", art.get("cocitation_count", 1))
+    for art in coupled:
+        _add(art, "coupled", art.get("coupling_count", 1))
+
+    # Compute scores
+    for entry in articles_map.values():
+        score = 0
+        for rel in entry["relationships"]:
+            if rel["type"] == "cites":
+                score += 2
+            elif rel["type"] == "cited_by":
+                score += 2
+            elif rel["type"] == "cocited":
+                score += min(rel["weight"], 5)
+            elif rel["type"] == "coupled":
+                score += min(rel["weight"], 5)
+        if entry["shared_tags"]:
+            score += 1
+        if entry["same_journal"]:
+            score += 1
+        entry["score"] = score
+
+    # Build reading list sorted by score
+    reading_list = sorted(articles_map.values(), key=lambda x: -x["score"])
+
+    # Build reason strings
+    for entry in reading_list:
+        parts = []
+        rel_types = {r["type"] for r in entry["relationships"]}
+        for rel in entry["relationships"]:
+            if rel["type"] == "cites":
+                parts.append("Cited by this article")
+            elif rel["type"] == "cited_by":
+                parts.append("Cites this article")
+            elif rel["type"] == "cocited":
+                parts.append(f"Co-cited {rel['weight']}×")
+            elif rel["type"] == "coupled":
+                parts.append(f"Shares {rel['weight']} reference{'s' if rel['weight'] != 1 else ''}")
+        if entry["shared_tags"]:
+            parts.append("shared topic")
+        if entry["same_journal"]:
+            parts.append("same journal")
+        entry["reason"] = "; ".join(parts)
+        entry["rel_types"] = sorted(rel_types)
+
+    # ── Build graph ──
+    nodes = [{
+        "id":    seed["id"],
+        "title": seed.get("title", ""),
+        "authors": seed.get("authors", ""),
+        "journal": seed.get("journal", ""),
+        "pub_date": seed.get("pub_date", ""),
+        "internal_cited_by_count": seed.get("internal_cited_by_count", 0),
+        "is_seed": True,
+        "rel_types": ["seed"],
+    }]
+    node_ids = {seed["id"]}
+
+    for entry in reading_list:
+        if entry["id"] not in node_ids:
+            nodes.append({
+                "id":    entry["id"],
+                "title": entry["title"],
+                "authors": entry["authors"],
+                "journal": entry["journal"],
+                "pub_date": entry["pub_date"],
+                "internal_cited_by_count": entry["internal_cited_by_count"],
+                "is_seed": False,
+                "rel_types": entry["rel_types"],
+                "score": entry["score"],
+            })
+            node_ids.add(entry["id"])
+
+    links = []
+    for art in cites:
+        if art["id"] in node_ids:
+            links.append({
+                "source": article_id, "target": art["id"],
+                "type": "cites", "weight": 1,
+            })
+    for art in cited_by:
+        if art["id"] in node_ids:
+            links.append({
+                "source": art["id"], "target": article_id,
+                "type": "cited_by", "weight": 1,
+            })
+    for art in cocited:
+        if art["id"] in node_ids:
+            links.append({
+                "source": article_id, "target": art["id"],
+                "type": "cocited", "weight": art.get("cocitation_count", 1),
+            })
+    for art in coupled:
+        if art["id"] in node_ids:
+            links.append({
+                "source": article_id, "target": art["id"],
+                "type": "coupled", "weight": art.get("coupling_count", 1),
+            })
+
+    return {
+        "seed": {
+            "id":       seed["id"],
+            "title":    seed.get("title", ""),
+            "authors":  seed.get("authors", ""),
+            "journal":  seed.get("journal", ""),
+            "pub_date": seed.get("pub_date", ""),
+            "doi":      seed.get("doi", ""),
+            "url":      seed.get("url", ""),
+            "abstract": seed.get("abstract", ""),
+            "tags":     seed.get("tags", ""),
+            "internal_cited_by_count": seed.get("internal_cited_by_count", 0),
+        },
+        "cites":        [{"id": a["id"], "title": a["title"], "authors": a["authors"],
+                          "journal": a["journal"], "pub_date": a["pub_date"],
+                          "doi": a["doi"]} for a in cites],
+        "cited_by":     [{"id": a["id"], "title": a["title"], "authors": a["authors"],
+                          "journal": a["journal"], "pub_date": a["pub_date"],
+                          "doi": a["doi"],
+                          "internal_cited_by_count": a["internal_cited_by_count"]}
+                         for a in cited_by],
+        "cocited":      [{"id": a["id"], "title": a["title"], "authors": a["authors"],
+                          "journal": a["journal"], "pub_date": a["pub_date"],
+                          "doi": a["doi"],
+                          "cocitation_count": a["cocitation_count"]} for a in cocited],
+        "coupled":      [{"id": a["id"], "title": a["title"], "authors": a["authors"],
+                          "journal": a["journal"], "pub_date": a["pub_date"],
+                          "doi": a["doi"],
+                          "coupling_count": a["coupling_count"]} for a in coupled],
+        "reading_list": reading_list,
+        "graph":        {"nodes": nodes, "links": links},
+        "stats": {
+            "cites_count":     len(cites),
+            "cited_by_count":  len(cited_by),
+            "cocited_count":   len(cocited),
+            "coupled_count":   len(coupled),
+            "unique_articles": len(articles_map),
+        },
+    }
