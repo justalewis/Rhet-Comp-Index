@@ -230,6 +230,7 @@ JOURNAL_GROUPS = [
         "Present Tense: A Journal of Rhetoric in Society",
         "KB Journal: The Journal of the Kenneth Burke Society",
         "Enculturation",
+        "Written Communication",
     ]),
     ("Technical Communication", [
         "Technical Communication Quarterly",
@@ -250,8 +251,6 @@ JOURNAL_GROUPS = [
     ("WAC / Writing Across the Curriculum", [
         "Across the Disciplines",
         "The WAC Journal",
-        "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
-        "Written Communication",
     ]),
     ("Digital & Multimodal", [
         "Computers and Composition",
@@ -260,6 +259,7 @@ JOURNAL_GROUPS = [
     ]),
     ("Community Literacy", [
         "Community Literacy Journal",
+        "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
     ]),
 ]
 
