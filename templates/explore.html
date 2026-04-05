@@ -2537,9 +2537,7 @@ async function loadHeatmap() {
           }
         })
         .on('mousemove', function(event) {
-          tooltip
-            .style('left', (event.pageX + 12) + 'px')
-            .style('top',  (event.pageY - 28) + 'px');
+          positionTooltip(tooltip, event, { pad: 12, vPad: -28 });
         })
         .on('mouseout', function() {
           tooltip.style('display', 'none');
@@ -2698,7 +2696,7 @@ async function loadNetwork(minPapers, topN) {
         .html(`<strong>${d.id}</strong><br>${d.count} article${d.count !== 1 ? 's' : ''} · ${nb} co-author${nb !== 1 ? 's' : ''}<br><em style="font-size:0.8em;opacity:0.7">Click to highlight · Click again to open profile</em>`);
     })
     .on('mousemove', function(event) {
-      tooltip.style('left', (event.pageX + 12) + 'px').style('top', (event.pageY - 28) + 'px');
+      positionTooltip(tooltip, event, { pad: 12, vPad: -28 });
     })
     .on('mouseout', function() { tooltip.style('display', 'none'); });
 
@@ -2826,6 +2824,46 @@ async function loadCitations() {
 function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * Position a tooltip near the cursor, clamped to the viewport so it never
+ * overflows off-screen.  Uses clientX/clientY (viewport-relative) because
+ * all tooltips use `position: fixed`.
+ */
+function positionTooltip(tipSel, event, opts) {
+  const pad  = opts && opts.pad  != null ? opts.pad  : 14;   // gap between cursor and tooltip
+  const vPad = opts && opts.vPad != null ? opts.vPad : -10;  // vertical offset from cursor
+  const margin = 8;                          // min distance from viewport edge
+
+  // Make sure the tooltip is visible before measuring
+  const el = tipSel.node();
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const tw = rect.width  || 200;   // fallback if still hidden
+  const th = rect.height || 60;
+
+  let x = event.clientX + pad;
+  let y = event.clientY + vPad;
+
+  // Right edge: flip to left of cursor
+  if (x + tw + margin > window.innerWidth) {
+    x = event.clientX - tw - pad;
+  }
+  // Bottom edge: push up
+  if (y + th + margin > window.innerHeight) {
+    y = window.innerHeight - th - margin;
+  }
+  // Top edge: push down
+  if (y < margin) {
+    y = margin;
+  }
+  // Left edge: push right
+  if (x < margin) {
+    x = margin;
+  }
+
+  tipSel.style('left', x + 'px').style('top', y + 'px');
 }
 
 
@@ -3128,8 +3166,7 @@ function renderCitationNetwork(container, data) {
       );
     })
     .on('mousemove', (event) => {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 38) + 'px');
+      positionTooltip(tip, event, { pad: 14, vPad: -38 });
     })
     .on('mouseout', () => tip.style('display', 'none'));
 
@@ -3444,8 +3481,7 @@ function renderCentrality(container, data) {
       );
     })
     .on('mousemove', (event) => {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 38) + 'px');
+      positionTooltip(tip, event, { pad: 14, vPad: -38 });
     })
     .on('mouseout', () => tip.style('display', 'none'));
 
@@ -3775,8 +3811,7 @@ function renderCocitation(container, data) {
       });
     })
     .on('mousemove', (event) => {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 38) + 'px');
+      positionTooltip(tip, event, { pad: 14, vPad: -38 });
     })
     .on('mouseout', () => {
       tip.style('display', 'none');
@@ -4055,8 +4090,7 @@ function renderBibcoupling(container, data) {
       });
     })
     .on('mousemove', (event) => {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 38) + 'px');
+      positionTooltip(tip, event, { pad: 14, vPad: -38 });
     })
     .on('mouseout', () => {
       tip.style('display', 'none');
@@ -4289,14 +4323,11 @@ function renderChordDiagram(container, data) {
                `<strong>${jflowAbbrev(tgt)}</strong> \u2192 <strong>${jflowAbbrev(src)}</strong>: ${rev.toLocaleString()}<br>` +
                `<span style="color:#888;">Net flow ${arrow} ${Math.abs(net).toLocaleString()}</span>`;
       }
-      tip.html(html)
-        .style('left', (event.pageX + 14) + 'px')
-        .style('top',  (event.pageY - 10) + 'px')
-        .style('opacity', 1);
+      tip.html(html).style('opacity', 1);
+      positionTooltip(tip, event);
     })
     .on('mousemove', function(event) {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 10) + 'px');
+      positionTooltip(tip, event);
     })
     .on('mouseout', function() {
       ribbons.style('fill-opacity', 0.55);
@@ -4331,14 +4362,11 @@ function renderChordDiagram(container, data) {
         `Citations sent: ${sent.toLocaleString()}<br>` +
         `Citations received: ${received.toLocaleString()}<br>` +
         `Self-citations: ${selfCit.toLocaleString()}`
-      )
-        .style('left', (event.pageX + 14) + 'px')
-        .style('top',  (event.pageY - 10) + 'px')
-        .style('opacity', 1);
+      ).style('opacity', 1);
+      positionTooltip(tip, event);
     })
     .on('mousemove', function(event) {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 10) + 'px');
+      positionTooltip(tip, event);
     })
     .on('mouseout', function() {
       ribbons.style('fill-opacity', 0.55);
@@ -4844,13 +4872,11 @@ function renderCommunities(container, data) {
         `<em>${d.journal || ''}</em><br>` +
         `Cited ${d.internal_cited_by_count}\u00d7 internally<br>` +
         `<span style="color:${commColor(d.community)};">\u25CF</span> ${commLabel}`
-      ).style('left', (event.pageX + 14) + 'px')
-       .style('top',  (event.pageY - 10) + 'px')
-       .style('opacity', 1);
+      ).style('opacity', 1);
+      positionTooltip(tip, event);
     })
     .on('mousemove', event => {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 10) + 'px');
+      positionTooltip(tip, event);
     })
     .on('mouseout', () => tip.style('opacity', 0))
     .call(d3.drag()
@@ -5359,13 +5385,11 @@ function renderTeForceGraph(container, snapshot) {
         `${(d.authors || '').split(',')[0].split(';')[0]}${(d.authors || '').includes(',') || (d.authors || '').includes(';') ? ' et al.' : ''} (${yr})<br>` +
         `<em>${d.journal || ''}</em><br>` +
         `Cited ${d.internal_cited_by_count}\u00d7 \u00b7 degree ${d.degree}`
-      ).style('left', (event.pageX + 14) + 'px')
-       .style('top',  (event.pageY - 10) + 'px')
-       .style('opacity', 1);
+      ).style('opacity', 1);
+      positionTooltip(tip, event);
     })
     .on('mousemove', event => {
-      tip.style('left', (event.pageX + 14) + 'px')
-         .style('top',  (event.pageY - 10) + 'px');
+      positionTooltip(tip, event);
     })
     .on('mouseout', () => tip.style('opacity', 0))
     .call(d3.drag()
@@ -6028,8 +6052,7 @@ function renderAuthorCocitation(container, data) {
     });
   })
   .on('mousemove', (event) => {
-    tip.style('left', (event.pageX + 14) + 'px')
-       .style('top',  (event.pageY - 10) + 'px');
+    positionTooltip(tip, event);
   })
   .on('mouseout', () => {
     tip.style('display', 'none');

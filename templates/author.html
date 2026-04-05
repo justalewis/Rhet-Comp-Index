@@ -366,6 +366,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script>
+// ── Shared tooltip positioning ───────────────────────────────────────────────
+function positionTooltip(tipSel, event, opts) {
+  const pad  = opts && opts.pad  != null ? opts.pad  : 14;
+  const vPad = opts && opts.vPad != null ? opts.vPad : -10;
+  const margin = 8;
+  const el = tipSel.node();
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const tw = rect.width  || 200;
+  const th = rect.height || 60;
+  let x = event.clientX + pad;
+  let y = event.clientY + vPad;
+  if (x + tw + margin > window.innerWidth)  x = event.clientX - tw - pad;
+  if (y + th + margin > window.innerHeight) y = window.innerHeight - th - margin;
+  if (y < margin) y = margin;
+  if (x < margin) x = margin;
+  tipSel.style('left', x + 'px').style('top', y + 'px');
+}
+
 // ── Author page visualizations ────────────────────────────────────────────────
 const AUTHOR_NAME = {{ author_name | tojson }};
 const PALETTE = [
@@ -533,7 +552,7 @@ function renderCoauthors(data) {
         : `<strong>${d.id}</strong><br>${d.shared} shared · ${d.count} total in index`;
       tip.style('display','block').html(html);
     })
-    .on('mousemove', e => tip.style('left',(e.pageX+12)+'px').style('top',(e.pageY-28)+'px'))
+    .on('mousemove', e => positionTooltip(tip, e, { pad: 12, vPad: -28 }))
     .on('mouseout',  () => tip.style('display','none'));
 
   link
@@ -541,7 +560,7 @@ function renderCoauthors(data) {
       const titles = (d.titles||[]).map(t=>`· ${t}`).join('<br>');
       tip.style('display','block').html(`<strong>${d.value} shared article${d.value!==1?'s':''}</strong>${titles?'<br>'+titles:''}`);
     })
-    .on('mousemove', e => tip.style('left',(e.pageX+12)+'px').style('top',(e.pageY-28)+'px'))
+    .on('mousemove', e => positionTooltip(tip, e, { pad: 12, vPad: -28 }))
     .on('mouseout',  () => tip.style('display','none'));
 
   sim.on('tick', () => {
