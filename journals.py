@@ -169,6 +169,23 @@ SCRAPE_JOURNALS = [
     },
 ]
 
+# ── Scraped digital presses ─────────────────────────────────────────────────
+# Open-access digital book publishers without CrossRef DOIs or RSS.
+# Metadata scraped from public catalog pages via custom scraper scripts.
+# source='scrape' in the articles table. No live refresh — re-run scraper.
+
+DIGITAL_PRESS_JOURNALS = [
+    {
+        "name": "Computers and Composition Digital Press",
+        "url": "https://ccdigitalpress.org/books",
+        "strategy": "ccdp",
+        "notes": "Open-access digital books (monographs + edited collections). "
+                 "27 books, ~280 chapters. Scraped via scrape_ccdp.py. "
+                 "No Dublin Core metadata; parsed from page content. "
+                 "All CC-licensed (gold OA).",
+    },
+]
+
 # ── Manually indexed print journals ──────────────────────────────────────────
 # No web presence, no CrossRef DOIs, no RSS. Records inserted via one-off
 # ingestion scripts (e.g. ingest_pretext.py) from hand-compiled indexes.
@@ -310,5 +327,6 @@ ALL_JOURNAL_NAMES = (
     [j["name"] for j in CROSSREF_JOURNALS]
     + [j["name"] for j in RSS_JOURNALS]
     + [j["name"] for j in SCRAPE_JOURNALS]
+    + [j["name"] for j in DIGITAL_PRESS_JOURNALS]
     + [j["name"] for j in MANUAL_JOURNALS]
 )
