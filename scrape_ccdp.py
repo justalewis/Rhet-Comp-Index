@@ -474,28 +474,28 @@ def save_json(books: list[dict], path: str = OUTPUT_FILE):
 
 def ingest(books: list[dict]):
     """
-    Ingest scraped CCDP data into the Pinakes articles table.
+    Ingest scraped CCDP data into BOTH the articles and books tables.
 
-    Strategy:
-      - Each book gets a book-level entry (editors as authors, description
-        as abstract).
-      - Each chapter gets its own entry (chapter authors if known, otherwise
-        the book editors; no abstract).
+    Articles table (for main search, tagging, FTS):
+      - Each book → article entry (editors as authors, description as abstract)
+      - Each chapter → article entry (chapter authors, no abstract)
       - journal = "Computers and Composition Digital Press"
-      - source = "scrape"
-      - oa_status = "gold" (CCDP is fully open access, CC-licensed)
+      - source = "scrape", oa_status = "gold"
+
+    Books table (for /books monograph UI):
+      - Each book → record_type='book', book_type='edited collection' or 'monograph'
+      - Each chapter → record_type='chapter' with parent_id linking to book
     """
-    # Import here so scraping works without the DB module
-    from db import init_db, upsert_article
+    from db import init_db, upsert_article, upsert_book
     from tagger import auto_tag
 
     init_db()
 
-    added_books = 0
-    added_chapters = 0
+    added_articles = 0
+    added_book_records = 0
 
     for book in books:
-        # Book-level entry
+        # ── Articles table ───────────────────────────────────────
         tags = auto_tag(book["title"], book.get("description"))
         result = upsert_article(
             url=book["url"],
@@ -511,9 +511,8 @@ def ingest(books: list[dict]):
             oa_status="gold",
             oa_url=book["url"],
         )
-        added_books += result
+        added_articles += result
 
-        # Chapter-level entries
         for chapter in book.get("chapters", []):
             chapter_tags = auto_tag(chapter["title"], None)
             result = upsert_article(
@@ -530,10 +529,57 @@ def ingest(books: list[dict]):
                 oa_status="gold",
                 oa_url=chapter["url"],
             )
-            added_chapters += result
+            added_articles += result
 
-    log.info("Ingested: %d new books, %d new chapters", added_books, added_chapters)
-    return added_books + added_chapters
+        # ── Books table ──────────────────────────────────────────
+        # Determine book type: if chapters exist, it's an edited collection
+        has_chapters = len(book.get("chapters", [])) > 0
+        book_type = "edited collection" if has_chapters else "monograph"
+
+        # Extract year from date string (YYYY-MM-DD → YYYY)
+        year = None
+        if book.get("date"):
+            try:
+                year = int(book["date"][:4])
+            except (ValueError, TypeError):
+                pass
+
+        book_id, is_new = upsert_book(
+            doi=None,
+            isbn=book.get("isbn"),
+            title=book["title"],
+            record_type="book",
+            book_type=book_type,
+            editors=book.get("authors"),
+            authors=None,
+            publisher="Computers and Composition Digital Press / Utah State University Press",
+            year=year,
+            abstract=book.get("description"),
+            source="scrape",
+        )
+        if is_new:
+            added_book_records += 1
+
+        # Insert chapters into books table with parent_id
+        for chapter in book.get("chapters", []):
+            _, ch_new = upsert_book(
+                doi=None,
+                isbn=None,
+                title=chapter["title"],
+                record_type="chapter",
+                book_type=None,
+                editors=None,
+                authors=chapter.get("authors") or book.get("authors"),
+                publisher="Computers and Composition Digital Press / Utah State University Press",
+                year=year,
+                parent_id=book_id,
+                source="scrape",
+            )
+            if ch_new:
+                added_book_records += 1
+
+    log.info("Ingested: %d new article entries, %d new book records",
+             added_articles, added_book_records)
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
