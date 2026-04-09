@@ -2,6 +2,37 @@
 
 {% block title %}{{ article.title }} — Pinakes{% endblock %}
 
+{% block head_extra %}
+{# ── Highwire Press / Dublin Core meta tags for Zotero, Mendeley, Google Scholar ── #}
+<meta name="citation_title" content="{{ article.title }}">
+{% if article.authors %}
+{% for author in article.authors.split(';') %}
+{% set a = author.strip() %}
+{% if a %}<meta name="citation_author" content="{{ a }}">
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if article.pub_date %}<meta name="citation_date" content="{{ article.pub_date }}">{% endif %}
+<meta name="citation_journal_title" content="{{ article.journal }}">
+{% if article.doi %}<meta name="citation_doi" content="{{ article.doi }}">{% endif %}
+{% if article.url %}<meta name="citation_fulltext_html_url" content="{{ article.url }}">{% endif %}
+{% if article.oa_url %}<meta name="citation_pdf_url" content="{{ article.oa_url }}">{% endif %}
+{% if article.abstract %}<meta name="citation_abstract" content="{{ article.abstract | e }}">{% endif %}
+{% if article.keywords %}<meta name="citation_keywords" content="{{ article.keywords }}">{% endif %}
+<meta name="DC.title" content="{{ article.title }}">
+{% if article.authors %}
+{% for author in article.authors.split(';') %}
+{% set a = author.strip() %}
+{% if a %}<meta name="DC.creator" content="{{ a }}">
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if article.pub_date %}<meta name="DC.date" content="{{ article.pub_date }}">{% endif %}
+<meta name="DC.publisher" content="{{ article.journal }}">
+{% if article.doi %}<meta name="DC.identifier" content="doi:{{ article.doi }}">{% endif %}
+<meta name="DC.type" content="article">
+{% endblock %}
+
 {% block sidebar_footer %}
     <div class="sidebar-comppile">
       Looking for books, dissertations, or edited collections?<br>
@@ -17,6 +48,9 @@
 {% block main_class %}detail-page{% endblock %}
 
 {% block content %}
+
+    {# ── COinS span for Zotero browser connector auto-detection ── #}
+    <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ article.title | urlencode }}&amp;rft.jtitle={{ article.journal | urlencode }}{% if article.pub_date %}&amp;rft.date={{ article.pub_date | urlencode }}{% endif %}{% if article.doi %}&amp;rft_id=info%3Adoi%2F{{ article.doi | urlencode }}{% endif %}{% if article.authors %}&amp;rft.au={{ article.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
 
     <div class="detail-header">
       <div class="article-meta-top">
@@ -144,6 +178,12 @@
           </div>
         </dd>
         {% endif %}
+
+        <dt>Export</dt>
+        <dd class="export-links">
+          <a href="/export?format=bibtex&amp;article_id={{ article.id }}" class="export-btn" title="Download BibTeX">BibTeX</a>
+          <a href="/export?format=ris&amp;article_id={{ article.id }}" class="export-btn" title="Download RIS (Zotero, Mendeley, EndNote)">RIS</a>
+        </dd>
 
       </dl>
 

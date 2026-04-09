@@ -555,6 +555,7 @@ def trigger_fetch():
 @app.route("/export")
 def export():
     """Export all matching articles as BibTeX or RIS."""
+    article_id = request.args.get("article_id", "").strip()
     journal   = request.args.get("journal",   "").strip()
     source    = request.args.get("source",    "").strip()
     q         = request.args.get("q",         "").strip()
@@ -563,16 +564,21 @@ def export():
     tag       = request.args.get("tag",       "").strip()
     fmt       = request.args.get("format", "bibtex").strip().lower()
 
-    articles = get_articles(
-        journal=journal or None,
-        source=source or None,
-        q=q or None,
-        year_from=year_from or None,
-        year_to=year_to or None,
-        tag=tag or None,
-        limit=5000,
-        offset=0,
-    )
+    # Single-article export
+    if article_id:
+        article = get_article_by_id(int(article_id))
+        articles = [article] if article else []
+    else:
+        articles = get_articles(
+            journal=journal or None,
+            source=source or None,
+            q=q or None,
+            year_from=year_from or None,
+            year_to=year_to or None,
+            tag=tag or None,
+            limit=5000,
+            offset=0,
+        )
 
     if fmt == "ris":
         content = _to_ris(articles)

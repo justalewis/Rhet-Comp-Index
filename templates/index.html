@@ -222,6 +222,9 @@
           {% for a in articles %}
           <li class="article">
 
+            {# COinS for Zotero/Mendeley auto-detection #}
+            <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ a.title | urlencode }}&amp;rft.jtitle={{ a.journal | urlencode }}{% if a.pub_date %}&amp;rft.date={{ a.pub_date | urlencode }}{% endif %}{% if a.doi %}&amp;rft_id=info%3Adoi%2F{{ a.doi | urlencode }}{% endif %}{% if a.authors %}&amp;rft.au={{ a.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
+
             <!-- Journal + date line -->
             <div class="article-meta-top">
               {% if not active_journals or active_journals|length > 1 %}
