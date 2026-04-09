@@ -1195,6 +1195,16 @@ def most_cited_page():
         limit=200,
     )
 
+    # For decade view, sort by decade (descending) then citation count within decade
+    if view == "decade":
+        def _decade_sort_key(a):
+            try:
+                decade = int(a["pub_date"][:4]) // 10 * 10
+            except (TypeError, ValueError, KeyError):
+                decade = 0
+            return (-decade, -(a.get("internal_cited_by_count") or 0))
+        articles = sorted(articles, key=_decade_sort_key)
+
     return render_template(
         "most-cited.html",
         articles=articles,
