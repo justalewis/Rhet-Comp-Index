@@ -22,6 +22,8 @@ def retag_all():
     init_db()
 
     with get_conn() as conn:
+        conn.execute("PRAGMA busy_timeout = 60000")
+
         rows = conn.execute(
             "SELECT id, title, abstract FROM articles"
         ).fetchall()
@@ -29,14 +31,16 @@ def retag_all():
         log.info("Tagging %d articles…", len(rows))
 
         tagged = 0
-        for r in rows:
+        for i, r in enumerate(rows):
             t = auto_tag(r["title"], r["abstract"])
+            conn.execute(
+                "UPDATE articles SET tags = ? WHERE id = ?",
+                (t, r["id"])
+            )
             if t:
-                conn.execute(
-                    "UPDATE articles SET tags = ? WHERE id = ?",
-                    (t, r["id"])
-                )
                 tagged += 1
+            if (i + 1) % 500 == 0:
+                conn.commit()
 
         conn.commit()
         log.info("Tagged %d of %d articles.", tagged, len(rows))
