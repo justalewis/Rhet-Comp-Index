@@ -208,6 +208,10 @@ VOCAB = {
         "fyc", "freshman composition", "introductory composition",
         "english 101", "general education writing",
         "gateway writing course",
+        "freshman english", "freshman writing",
+        "college writing", "college writing course",
+        "introductory writing", "required writing",
+        "writing requirement", "composition i",
     ],
 
     # Scope: Approaches to teaching writing at any level. Includes
@@ -220,6 +224,11 @@ VOCAB = {
         "process approach", "process pedagogy",
         "pedagogical approach to writing",
         "pedagogy", "pedagogical",  # generic pedagogical discussion
+        "writing course", "writing class", "writing skills",
+        "composition course", "composition class",
+        "english composition", "writing ability",
+        "composition classroom", "writing assignment",
+        "writing assignments", "writing exercises",
     ],
 
     # Scope: Writing courses and programs designed for underprepared
@@ -274,6 +283,8 @@ VOCAB = {
         "wac program", "wac pedagogy", "wac curriculum",
         "wac initiative", "discipline-specific writing",
         "writing-intensive", "writing to learn",
+        "wac", "wid", "writing across disciplines",
+        "writing enriched", "writing in the major",
     ],
 
     # Scope: Writing education at the graduate level. Includes doctoral
@@ -284,6 +295,9 @@ VOCAB = {
         "graduate writing", "ta training", "teaching assistants",
         "graduate seminar", "graduate curriculum", "doctoral writing",
         "graduate level writing",
+        "graduate student", "doctoral student",
+        "dissertation", "master's thesis",
+        "phd student", "doctoral candidate",
     ],
 
     # Scope: Writing instruction in two-year and community colleges.
@@ -359,6 +373,9 @@ VOCAB = {
         "claim and evidence", "argumentative writing",
         "argument structure", "rhetorical appeals",
         "making arguments",
+        "persuasion", "debate", "critical thinking",
+        "logical fallacy", "logical fallacies",
+        "counterargument", "practical reasoning",
     ],
 
     # Scope: Writing produced jointly by two or more authors. Includes
@@ -369,6 +386,9 @@ VOCAB = {
         "group writing", "co-authorship", "co-writing",
         "collaborative composition", "collaborative authorship",
         "team writing", "writing collaboration",
+        "collaborative", "collaboration",
+        "group work", "coauthoring",
+        "joint authorship", "writing together",
     ],
 
     # Scope: Transfer of writing knowledge and skills across contexts.
@@ -484,6 +504,9 @@ VOCAB = {
         "business proposal", "technical report", "business report",
         "memo writing", "documentation writing", "organizational communication",
         "corporate writing", "professional genres",
+        "workplace literacy", "managerial communication",
+        "corporate communication", "business correspondence",
+        "report writing", "professional development",
     ],
 
     # Scope: Writing in scientific and STEM disciplines. Includes
@@ -510,6 +533,10 @@ VOCAB = {
         "faculty working conditions", "academic capitalism",
         "labor in higher education", "academic job market",
         "contingent labor",
+        "adjunct", "tenure", "job market",
+        "working conditions", "labor market",
+        "precarious employment", "faculty labor",
+        "academic workforce", "untenured",
     ],
 
 
@@ -546,6 +573,8 @@ VOCAB = {
         "thematic analysis", "interview study",
         "qualitative methods", "qualitative case study",
         "participant observation",
+        "ethnographic", "case study", "interview-based",
+        "focus group", "narrative inquiry",
     ],
 
     # Scope: Research using statistical analysis and corpus methods.
@@ -570,6 +599,11 @@ VOCAB = {
         "digital composing", "networked writing",
         "computational rhetoric", "digital humanities",
         "internet rhetoric", "hypertext rhetoric",
+        "computer", "computers", "electronic writing",
+        "electronic communication", "hypertext",
+        "blog", "blogging", "weblog",
+        "e-mail", "email writing",
+        "web-based writing", "word processing",
     ],
 
     # Scope: Communication using multiple modes (visual, audio, spatial,
@@ -600,6 +634,10 @@ VOCAB = {
         "online composition", "distance writing", "hybrid writing",
         "online writing pedagogy", "learning management system",
         "lms", "canvas lms", "blackboard",
+        "distance education", "distance learning",
+        "asynchronous", "synchronous instruction",
+        "remote instruction", "online course",
+        "online learning", "virtual classroom",
     ],
 
     # Scope: AI tools and their applications in writing and writing
@@ -626,12 +664,16 @@ VOCAB = {
         "multilingual writer", "multilingual student",
         "multilingual composition", "multilingual writing",
         "second language writing", "l2 writing", "l2 writer",
-        "esl writing", "efl writing",
+        "esl writing", "efl writing", "esl student", "efl student",
         "english language learner", "generation 1.5",
         "esol", "english as a second language",
         "heritage language writer", "nonnative english",
         "non-native english", "second-language writer",
         "language development", "language learning", "language acquisition",
+        "esl", "bilingual", "immigrant student",
+        "immigrant writer", "non-native speaker", "nonnative speaker",
+        "foreign language", "foreign student",
+        "international student", "language minority",
     ],
 
     # Scope: Translingual orientation toward language difference in
@@ -666,6 +708,10 @@ VOCAB = {
         "grammatical instruction", "teaching grammar",
         "mechanical errors", "correctness in writing",
         "error patterns", "syntactic complexity",
+        "grammar", "syntax", "punctuation",
+        "spelling", "sentence structure",
+        "usage error", "usage errors",
+        "parts of speech", "verb tense",
     ],
 
     # Scope: New Literacy Studies, multiple literacies, and literacy as
@@ -676,6 +722,8 @@ VOCAB = {
         "vernacular literacy", "literacy sponsorship",
         "sponsorship of literacy", "literacy practices",
         "literacy as social practice",
+        "literacy", "literate", "literacies",
+        "reading and writing", "reading-writing",
     ],
 
 
@@ -700,6 +748,11 @@ VOCAB = {
         "critical race theory and writing",
         "equity in writing", "white supremacy and writing",
         "social justice", "equity",  # broader social context
+        "african american", "racial", "racism",
+        "multicultural", "diversity",
+        "black students", "hispanic", "latino",
+        "ethnic", "ethnicity", "minority student",
+        "students of color",
     ],
 
     # Scope: Gender and sexuality in writing and rhetoric. Includes
@@ -712,6 +765,9 @@ VOCAB = {
         "lgbtq", "queer rhetoric", "transgender",
         "nonbinary", "gender and writing",
         "gender in writing",
+        "feminist", "feminism", "gender",
+        "sexism", "patriarchy", "masculinity",
+        "women in ", "women and ",
     ],
 
     # Scope: Disability, accessibility, and neurodiversity in writing
@@ -722,6 +778,9 @@ VOCAB = {
         "neurodiversity", "dyslexia", "disability rhetoric",
         "ableism", "crip theory", "disability studies",
         "accessible writing",
+        "deaf", "blind", "accommodation",
+        "learning disability", "adhd", "autism",
+        "disabled student", "disabled writer",
     ],
 
     # Scope: Rhetoric in public life. Includes civic discourse, political
@@ -731,6 +790,10 @@ VOCAB = {
         "political rhetoric", "public sphere", "counterpublic",
         "rhetorical public", "public argument",
         "deliberative democracy",
+        "public speaking", "speech communication",
+        "oratory", "propaganda", "political discourse",
+        "civic discourse", "public debate",
+        "presidential rhetoric", "congressional rhetoric",
     ],
 
     # Scope: Literacy practices in community contexts outside academic
@@ -803,6 +866,8 @@ VOCAB = {
         "recent books", "new books", "books worth",
         "book media review", "media review",
         "books of interest",
+        "review: ", "review of ",
+        "a review", "reviews of",
     ],
 
     # Scope: Front matter, back matter, announcements, and other
@@ -811,20 +876,21 @@ VOCAB = {
     "editorial matter": [
         "from the editor", "from the editors",
         "editor's note", "editors' note",
+        "editor's notes", "editors' notes",
         "editors' introduction", "editor's introduction",
         "editor introduction", "guest editor's introduction",
         "editorial board",
         "review editor", "editor's desk", "editor desk",
         "editors' column", "editor's column", "editor column",
         "guest editor", "guest editors",
-        "announcements", "calls for papers",
+        "announcements", "calls for papers", "call for papers",
         "front matter", "back matter",
         "secretary's report", "secretary report",
         "chair's address", "chair address", "chair letter",
         "acknowledgments", "acknowledgements",
         "index to volume", "author index", "subject index",
         "author-title index",
-        "errata", "corrigenda",
+        "errata", "erratum", "corrigenda", "corrigendum",
         "staffroom interchange", "staffroom interchanges",
         "ncte to you", "counciletter",
         "bulletin board",
@@ -835,6 +901,13 @@ VOCAB = {
         "departmental memo", "annual meeting",
         "counterstatement", "current english forum",
         "interchanges",
+        "response to ", "reply to ", "rejoinder",
+        "comment on ", "comments on ",
+        "in memoriam", "symposium: ",
+        "letter to the editor", "letters to the editor",
+        "contributors", "notes on contributors",
+        "in this issue", "about this issue",
+        "special issue introduction",
     ],
 
 }
