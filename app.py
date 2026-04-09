@@ -91,6 +91,50 @@ log = logging.getLogger(__name__)
 app = Flask(__name__)
 Compress(app)
 
+
+# ── Input-validation helpers ──────────────────────────────────────────────────
+
+def _safe_int(val, default, lo=None, hi=None):
+    """Convert *val* to int, returning *default* on failure.  Clamp to [lo, hi]."""
+    try:
+        n = int(val)
+    except (TypeError, ValueError):
+        return default
+    if lo is not None:
+        n = max(lo, n)
+    if hi is not None:
+        n = min(hi, n)
+    return n
+
+
+def _safe_float(val, default, lo=None, hi=None):
+    """Convert *val* to float, returning *default* on failure.  Clamp to [lo, hi]."""
+    try:
+        n = float(val)
+    except (TypeError, ValueError):
+        return default
+    if lo is not None:
+        n = max(lo, n)
+    if hi is not None:
+        n = min(hi, n)
+    return n
+
+# ── Static asset versioning ────────────────────────────────────────────────────
+import subprocess as _sp
+try:
+    APP_VERSION = _sp.check_output(
+        ["git", "rev-parse", "--short", "HEAD"], stderr=_sp.DEVNULL
+    ).decode().strip()
+except Exception:
+    APP_VERSION = "dev"
+
+
+@app.context_processor
+def inject_globals():
+    """Make version string available to all templates for cache-busting."""
+    return {"version": APP_VERSION}
+
+
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()
 
@@ -118,6 +162,37 @@ try:
     log.info("DB page cache warmed in %.2f s", time.time() - _t0)
 except Exception as _e:
     log.warning("DB warmup failed (non-fatal): %s", _e)
+
+
+# ── Error handlers ─────────────────────────────────────────────────────────────
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("error.html", code=404, message="Page not found"), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("error.html", code=500, message="Internal server error"), 500
+
+
+# ── HTTP security headers ─────────────────────────────────────────────────────
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net gc.zgo.at; "
+        "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
+        "font-src fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self'"
+    )
+    return response
 
 
 # ── HTTP cache decorator ────────────────────────────────────────────────────────
@@ -340,7 +415,7 @@ def index():
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
     tag       = request.args.get("tag",       "").strip()
-    page      = max(1, int(request.args.get("page", 1)))
+    page      = _safe_int(request.args.get("page", 1), 1, lo=1)
     per_page  = 50
 
     # Build a query-string fragment preserving all active filters except 'page'.
@@ -430,8 +505,8 @@ def api_articles():
     year_from = request.args.get("year_from", "")
     year_to   = request.args.get("year_to",   "")
     tag       = request.args.get("tag",       "")
-    limit     = min(200, int(request.args.get("limit", 50)))
-    offset    = int(request.args.get("offset", 0))
+    limit     = _safe_int(request.args.get("limit", 50), 50, lo=1, hi=200)
+    offset    = _safe_int(request.args.get("offset", 0), 0, lo=0)
 
     articles = get_articles(
         journal=journal or None,
@@ -741,15 +816,13 @@ def api_tag_cooccurrence():
 
 
 @app.route("/api/stats/author-network")
+@cache_response(seconds=600)
 def api_author_network():
     """JSON: author co-authorship network nodes and links.
     Accepts: ?min_papers=3&top_n=150
     """
-    try:
-        min_papers = max(2, min(int(request.args.get("min_papers", 3)), 25))
-        top_n      = max(25, min(int(request.args.get("top_n",      150)), 350))
-    except (TypeError, ValueError):
-        min_papers, top_n = 3, 150
+    min_papers = _safe_int(request.args.get("min_papers", 3), 3, lo=2, hi=25)
+    top_n      = _safe_int(request.args.get("top_n",      150), 150, lo=25, hi=350)
     return jsonify(get_author_network(min_papers=min_papers, top_n=top_n))
 
 
@@ -762,9 +835,10 @@ def api_citation_trends():
 
 
 @app.route("/api/citations/network")
+@cache_response(seconds=600)
 def api_citations_network():
     """JSON: force-graph nodes and directed edges for the citation network."""
-    min_citations = max(1, int(request.args.get("min_citations", 5)))
+    min_citations = _safe_int(request.args.get("min_citations", 5), 5, lo=1)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -779,10 +853,11 @@ def api_citations_network():
 
 
 @app.route("/api/citations/cocitation")
+@cache_response(seconds=600)
 def api_cocitation_network():
     """JSON: co-citation network — undirected weighted graph of articles co-cited together."""
-    min_cocitations = max(1, int(request.args.get("min_cocitations", 3)))
-    max_nodes       = min(600, max(50, int(request.args.get("max_nodes", 400))))
+    min_cocitations = _safe_int(request.args.get("min_cocitations", 3), 3, lo=1)
+    max_nodes       = _safe_int(request.args.get("max_nodes", 400), 400, lo=50, hi=600)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -798,10 +873,11 @@ def api_cocitation_network():
 
 
 @app.route("/api/citations/bibcoupling")
+@cache_response(seconds=600)
 def api_bibcoupling_network():
     """JSON: bibliographic coupling network — articles linked by shared references."""
-    min_coupling = max(1, int(request.args.get("min_coupling", 3)))
-    max_nodes    = min(600, max(50, int(request.args.get("max_nodes", 400))))
+    min_coupling = _safe_int(request.args.get("min_coupling", 3), 3, lo=1)
+    max_nodes    = _safe_int(request.args.get("max_nodes", 400), 400, lo=50, hi=600)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -817,10 +893,11 @@ def api_bibcoupling_network():
 
 
 @app.route("/api/citations/centrality")
+@cache_response(seconds=600)
 def api_citation_centrality():
     """JSON: citation network with eigenvector and betweenness centrality scores."""
-    min_citations = max(1, int(request.args.get("min_citations", 2)))
-    max_nodes     = min(800, max(50, int(request.args.get("max_nodes", 600))))
+    min_citations = _safe_int(request.args.get("min_citations", 2), 2, lo=1)
+    max_nodes     = _safe_int(request.args.get("max_nodes", 600), 600, lo=50, hi=800)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -836,10 +913,11 @@ def api_citation_centrality():
 
 
 @app.route("/api/citations/sleeping-beauties")
+@cache_response(seconds=600)
 def api_sleeping_beauties():
     """JSON: articles with delayed citation recognition (Sleeping Beauties)."""
-    min_citations = max(3, int(request.args.get("min_citations", 5)))
-    max_results   = min(100, max(10, int(request.args.get("max_results", 50))))
+    min_citations = _safe_int(request.args.get("min_citations", 5), 5, lo=3)
+    max_results   = _safe_int(request.args.get("max_results", 50), 50, lo=10, hi=100)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -855,9 +933,10 @@ def api_sleeping_beauties():
 
 
 @app.route("/api/citations/journal-flow")
+@cache_response(seconds=600)
 def api_journal_citation_flow():
     """JSON: journal-to-journal citation flow matrix for chord diagram."""
-    min_citations = max(1, int(request.args.get("min_citations", 1)))
+    min_citations = _safe_int(request.args.get("min_citations", 1), 1, lo=1)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -872,6 +951,7 @@ def api_journal_citation_flow():
 
 
 @app.route("/api/citations/half-life")
+@cache_response(seconds=600)
 def api_citation_half_life():
     """JSON: citing and cited half-life per journal."""
     journals  = request.args.getlist("journal")
@@ -891,11 +971,12 @@ def api_citation_half_life():
 
 
 @app.route("/api/citations/communities")
+@cache_response(seconds=600)
 def api_citation_communities():
     """JSON: community detection via Louvain modularity optimization."""
-    min_citations = max(1, int(request.args.get("min_citations", 2)))
-    max_nodes     = min(800, max(50, int(request.args.get("max_nodes", 600))))
-    resolution    = max(0.1, min(3.0, float(request.args.get("resolution", 1.0))))
+    min_citations = _safe_int(request.args.get("min_citations", 2), 2, lo=1)
+    max_nodes     = _safe_int(request.args.get("max_nodes", 600), 600, lo=50, hi=800)
+    resolution    = _safe_float(request.args.get("resolution", 1.0), 1.0, lo=0.1, hi=3.0)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -912,10 +993,11 @@ def api_citation_communities():
 
 
 @app.route("/api/citations/main-path")
+@cache_response(seconds=600)
 def api_main_path():
     """JSON: main path analysis — the backbone of knowledge flow."""
-    min_citations = max(1, int(request.args.get("min_citations", 2)))
-    max_nodes     = min(1000, max(50, int(request.args.get("max_nodes", 800))))
+    min_citations = _safe_int(request.args.get("min_citations", 2), 2, lo=1)
+    max_nodes     = _safe_int(request.args.get("max_nodes", 800), 800, lo=50, hi=1000)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -931,11 +1013,12 @@ def api_main_path():
 
 
 @app.route("/api/citations/temporal-evolution")
+@cache_response(seconds=600)
 def api_temporal_evolution():
     """JSON: temporal network evolution — structural metrics over time windows."""
-    min_citations = max(1, int(request.args.get("min_citations", 1)))
-    max_nodes     = min(800, max(50, int(request.args.get("max_nodes", 500))))
-    window_size   = max(1, min(10, int(request.args.get("window_size", 1))))
+    min_citations = _safe_int(request.args.get("min_citations", 1), 1, lo=1)
+    max_nodes     = _safe_int(request.args.get("max_nodes", 500), 500, lo=50, hi=800)
+    window_size   = _safe_int(request.args.get("window_size", 1), 1, lo=1, hi=10)
     journals  = request.args.getlist("journal")
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
@@ -957,7 +1040,7 @@ def api_temporal_evolution():
 def api_article_search():
     """JSON: autocomplete article search for reading path seed selection."""
     q = request.args.get("q", "").strip()
-    limit = min(20, int(request.args.get("limit", 10)))
+    limit = _safe_int(request.args.get("limit", 10), 10, lo=1, hi=20)
     if not q:
         return jsonify([])
     return jsonify(search_articles_autocomplete(q, limit=limit))
@@ -977,10 +1060,11 @@ def api_reading_path():
 
 
 @app.route("/api/author-cocitation")
+@cache_response(seconds=600)
 def api_author_cocitation():
     """JSON: author co-citation network — which scholars the field cites together."""
-    min_cocitations = max(1, int(request.args.get("min_cocitations", 3)))
-    max_authors     = min(500, max(25, int(request.args.get("max_authors", 200))))
+    min_cocitations = _safe_int(request.args.get("min_cocitations", 3), 3, lo=1)
+    max_authors     = _safe_int(request.args.get("max_authors", 200), 200, lo=25, hi=500)
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
     journals  = request.args.getlist("journal")
@@ -998,7 +1082,7 @@ def api_author_cocitation():
 @app.route("/api/author/<path:name>/cocitation-partners")
 def api_author_cocitation_partners(name):
     """JSON: top co-citation partners for a specific author."""
-    limit = min(20, int(request.args.get("limit", 10)))
+    limit = _safe_int(request.args.get("limit", 10), 10, lo=1, hi=20)
     return jsonify(get_author_cocitation_partners(name, limit=limit))
 
 
@@ -1009,7 +1093,7 @@ def api_most_cited():
     year_to   = request.args.get("year_to",   "").strip()
     journal   = request.args.get("journal",   "").strip()
     tag       = request.args.get("tag",       "").strip()
-    limit     = min(100, int(request.args.get("limit", 50)))
+    limit     = _safe_int(request.args.get("limit", 50), 50, lo=1, hi=100)
 
     results = get_most_cited(
         year_from=year_from or None,
@@ -1146,7 +1230,7 @@ def books():
     year_from = request.args.get("year_from", "").strip()
     year_to   = request.args.get("year_to",   "").strip()
     q         = request.args.get("q",         "").strip()
-    page      = max(1, int(request.args.get("page", 1) or 1))
+    page      = _safe_int(request.args.get("page", 1), 1, lo=1)
     per_page  = 48
 
     total = get_book_count(

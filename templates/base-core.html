@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pinakes{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css?v={{ version }}">
+  <link rel="stylesheet" href="/static/style-scandi.css?v={{ version }}">
+  <link rel="stylesheet" href="/static/style-terminal.css?v={{ version }}">
+  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.documentElement.classList.add('terminal');}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
+  <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var termBtn=document.createElement('button');
+      termBtn.className='theme-toggle-btn';
+      var scandiBtn=document.createElement('button');
+      scandiBtn.className='scandi-toggle-btn';
+      function updateBtns(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        termBtn.textContent=cur==='terminal'?'\u25d1 Default':'\u25d0 Terminal';
+        scandiBtn.textContent=cur==='scandi'?'\u25c7 Default':'\u25c7 Scandi';
+      }
+      updateBtns();
+      termBtn.addEventListener('click',function(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        var next=cur==='terminal'?'normal':'terminal';
+        localStorage.setItem('rc-theme',next);
+        document.documentElement.classList.remove('terminal','scandi');
+        if(next==='terminal') document.documentElement.classList.add('terminal');
+        updateBtns();
+      });
+      scandiBtn.addEventListener('click',function(){
+        var cur=localStorage.getItem('rc-theme')||'normal';
+        var next=cur==='scandi'?'normal':'scandi';
+        localStorage.setItem('rc-theme',next);
+        document.documentElement.classList.remove('terminal','scandi');
+        if(next==='scandi') document.documentElement.classList.add('scandi');
+        updateBtns();
+      });
+      document.body.appendChild(termBtn);
+      document.body.appendChild(scandiBtn);
+    });
+  </script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body{% block body_attrs %}{% endblock %}>
+{% block body %}{% endblock %}
+{% block body_scripts %}{% endblock %}
+<script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

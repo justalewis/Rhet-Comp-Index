@@ -1,272 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Most Cited — Pinakes</title>
-  <link id="theme-css" rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/style-scandi.css">
-  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
-  <script>
-    document.addEventListener('DOMContentLoaded',function(){
-      var termBtn=document.createElement('button');
-      termBtn.className='theme-toggle-btn';
-      var scandiBtn=document.createElement('button');
-      scandiBtn.className='scandi-toggle-btn';
-      function updateBtns(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        termBtn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
-        scandiBtn.textContent=cur==='scandi'?'◇ Default':'◇ Scandi';
-      }
-      updateBtns();
-      termBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='terminal'?'normal':'terminal';
-        localStorage.setItem('rc-theme',next);
-        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
-        document.documentElement.classList.remove('scandi');
-        updateBtns();
-      });
-      scandiBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='scandi'?'normal':'scandi';
-        localStorage.setItem('rc-theme',next);
-        if(next==='scandi'){document.getElementById('theme-css').href='/static/style.css';document.documentElement.classList.add('scandi');}
-        else{document.documentElement.classList.remove('scandi');}
-        updateBtns();
-      });
-      document.body.appendChild(termBtn);
-      document.body.appendChild(scandiBtn);
-    });
-  </script>
-</head>
-<body>
+{% extends "base.html" %}
 
-<div class="layout">
+{% block title %}Most Cited — Pinakes{% endblock %}
 
-  <!-- ── Sidebar ─────────────────────────────────────────── -->
-  <aside class="sidebar">
+{% block head_extra %}
+<meta name="description" content="The most cited articles in rhetoric and composition, ranked by internal citation counts across the field's own journals. Filter by journal, topic, or decade.">
+{% endblock %}
 
-    <div class="sidebar-header">
-      <h1>Pinakes<br>
-        <span class="subtitle">Curating Disciplinary Knowledge</span>
-      </h1>
-    </div>
-
-    <nav class="journal-nav">
-
-      <!-- ── Feature navigation ─────────────────────────── -->
-      <nav class="feature-nav" id="feature-nav">
-
-        <!-- What's New — no dropdown -->
-        <a href="/new" class="nav-item-trigger feature-nav-link">
-          <span class="feature-nav-icon">★</span>
-          What's New
-          {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
-        </a>
-
-        <!-- Explore ▾ -->
-        <div class="nav-item" id="nav-explore">
-          <button class="nav-item-trigger"
-                  aria-haspopup="true" aria-expanded="false"
-                  data-href="/explore">
-            <span class="feature-nav-icon">◎</span>
-            Explore
-            <span class="nav-chevron">▾</span>
-          </button>
-          <div class="nav-dropdown" role="menu">
-            <div class="nav-dropdown-section">
-              <div class="nav-dropdown-head">Visualizations</div>
-              <a class="nav-dropdown-item" href="/explore#citations" role="menuitem">Citation network</a>
-              <a class="nav-dropdown-item" href="/explore#author-cocitation" role="menuitem">Author Co-Citation</a>
-              <a class="nav-dropdown-item" href="/explore#authors"   role="menuitem">Co-authorship network</a>
-              <a class="nav-dropdown-item" href="/explore#timeline"  role="menuitem">Publication timeline</a>
-              <a class="nav-dropdown-item" href="/explore#topics"    role="menuitem">Topic co-occurrence</a>
-              <a class="nav-dropdown-item" href="/tools" role="menuitem" style="border-top:1px solid var(--border);margin-top:0.25rem;padding-top:0.45rem;">Browse All Tools</a>
-            </div>
-            <div class="nav-dropdown-divider"></div>
-            <div class="nav-dropdown-section">
-              <div class="nav-dropdown-head">Trends</div>
-              <a class="nav-dropdown-item" href="/explore#bibcoupling" role="menuitem">Bib. Coupling</a>
-              <a class="nav-dropdown-item" href="/explore#citation-trends" role="menuitem">Citation trends</a>
-              <a class="nav-dropdown-item" href="/explore#half-life" role="menuitem">Half-Life</a>
-              <a class="nav-dropdown-item" href="/explore#journal-flow" role="menuitem">Journal Flow</a>
-              <a class="nav-dropdown-item" href="/explore#main-path" role="menuitem">Main Path</a>
-              <a class="nav-dropdown-item" href="/explore#reading-path" role="menuitem">Reading Path</a>
-              <a class="nav-dropdown-item" href="/explore#sleeping-beauties" role="menuitem">Sleeping Beauties</a>
-              <a class="nav-dropdown-item" href="/explore#temporal-evolution" role="menuitem">Temporal Evolution</a>
-              <a class="nav-dropdown-item placeholder" href="/explore" role="menuitem">Topics over time</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Authors ▾ -->
-        <div class="nav-item" id="nav-authors">
-          <button class="nav-item-trigger"
-                  aria-haspopup="true" aria-expanded="false"
-                  data-href="/authors">
-            <span class="feature-nav-icon">◈</span>
-            Authors
-            <span class="nav-chevron">▾</span>
-          </button>
-          <div class="nav-dropdown" role="menu">
-            <a class="nav-dropdown-item" href="/authors"        role="menuitem">Author index</a>
-            <a class="nav-dropdown-item" href="/explore#author-cocitation" role="menuitem">Author Co-Citation</a>
-            <a class="nav-dropdown-item" href="/explore#authors" role="menuitem">Co-authorship network</a>
-          </div>
-        </div>
-
-        <!-- Citations ▾ -->
-        <div class="nav-item" id="nav-most-cited">
-          <button class="nav-item-trigger active-feature-link"
-                  aria-haspopup="true" aria-expanded="false"
-                  data-href="/most-cited">
-            <span class="feature-nav-icon">⬡</span>
-            Citations
-            <span class="nav-chevron">▾</span>
-          </button>
-          <div class="nav-dropdown" role="menu">
-            <a class="nav-dropdown-item" href="/most-cited"          role="menuitem">Most cited in this index</a>
-            <a class="nav-dropdown-item" href="/explore#citations"   role="menuitem">Citation network map</a>
-            <a class="nav-dropdown-item" href="/explore#cocitation"   role="menuitem">Co-Citation</a>
-            <a class="nav-dropdown-item" href="/explore#bibcoupling" role="menuitem">Bib. Coupling</a>
-            <a class="nav-dropdown-item" href="/explore#communities" role="menuitem">Communities</a>
-            <div class="nav-dropdown-divider"></div>
-            <div class="nav-dropdown-head">Filter by</div>
-            <a class="nav-dropdown-item" href="/most-cited?view=journal" role="menuitem">By journal</a>
-            <a class="nav-dropdown-item" href="/most-cited?view=topic"   role="menuitem">By topic</a>
-            <a class="nav-dropdown-item" href="/most-cited?view=decade"  role="menuitem">By decade</a>
-          </div>
-        </div>
-
-        <!-- Books — no dropdown -->
-        <a href="/books" class="nav-item-trigger feature-nav-link">
-          <span class="feature-nav-icon">&#9723;</span>
-          Books
-        </a>
-
-        <!-- Coverage — no dropdown -->
-        <a href="/coverage" class="nav-item-trigger feature-nav-link">
-          <span class="feature-nav-icon">◫</span>
-          Coverage
-        </a>
-
-        <!-- About — no dropdown -->
-        <a href="/about" class="nav-item-trigger feature-nav-link">
-          <span class="feature-nav-icon">ℹ</span>
-          About
-        </a>
-
-      </nav>
-
-      <script>
-      (function(){
-        var nav = document.getElementById('feature-nav');
-        if (!nav) return;
-        var items = nav.querySelectorAll('.nav-item');
-        function closeAll(except) {
-          items.forEach(function(item) {
-            if (item === except) return;
-            item.classList.remove('open');
-            var btn = item.querySelector('[aria-expanded]');
-            if (btn) btn.setAttribute('aria-expanded','false');
-          });
-        }
-        function openItem(item) {
-          closeAll(item);
-          item.classList.add('open');
-          var btn = item.querySelector('[aria-expanded]');
-          if (btn) btn.setAttribute('aria-expanded','true');
-        }
-        items.forEach(function(item) {
-          var btn = item.querySelector('.nav-item-trigger');
-          if (!btn) return;
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var href = btn.getAttribute('data-href');
-            var dropdown = item.querySelector('.nav-dropdown');
-            if (!dropdown) return;
-            if (item.classList.contains('open')) {
-              if (href) window.location.href = href;
-            } else {
-              openItem(item);
-            }
-          });
-          var hoverTimer = null;
-          item.addEventListener('mouseenter', function() {
-            hoverTimer = setTimeout(function() { openItem(item); }, 120);
-          });
-          item.addEventListener('mouseleave', function() {
-            clearTimeout(hoverTimer);
-            setTimeout(function() {
-              if (!item.matches(':hover')) {
-                item.classList.remove('open');
-                var b = item.querySelector('[aria-expanded]');
-                if (b) b.setAttribute('aria-expanded','false');
-              }
-            }, 200);
-          });
-          btn.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') { closeAll(); btn.focus(); }
-            if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              openItem(item);
-              var first = item.querySelector('.nav-dropdown-item');
-              if (first) first.focus();
-            }
-          });
-        });
-        nav.querySelectorAll('.nav-dropdown').forEach(function(dd) {
-          dd.addEventListener('keydown', function(e) {
-            var links = Array.from(dd.querySelectorAll('.nav-dropdown-item:not(.placeholder)'));
-            var idx = links.indexOf(document.activeElement);
-            if (e.key === 'ArrowDown') { e.preventDefault(); if (links[idx+1]) links[idx+1].focus(); }
-            if (e.key === 'ArrowUp')   { e.preventDefault(); if (links[idx-1]) links[idx-1].focus(); }
-            if (e.key === 'Escape')    { closeAll(); }
-            if (e.key === 'Tab')       { closeAll(); }
-          });
-        });
-        document.addEventListener('click', function() { closeAll(); });
-      })();
-      </script>
-
-      <a href="/" class="journal-link">
-        <span class="jname">All journals</span>
-      </a>
-
-      {% for group in journal_groups %}
-      <div class="nav-section-head">{{ group.label }}</div>
-      {% for j in group.journals %}
-      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
-        <span class="jname">{{ j.name }}</span>
-        <span class="jmeta">
-          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
-          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
-          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
-        </span>
-      </a>
-      {% endfor %}
-      {% endfor %}
-
-      {% if unavailable %}
-      <div class="nav-section-head unavailable-head">Unavailable</div>
-      {% for j in unavailable %}
-      <span class="journal-link unavailable" title="{{ j.note }}">
-        <span class="jname">{{ j.name }}</span>
-      </span>
-      {% endfor %}
-      {% endif %}
-
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="/" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to index</a>
-    </div>
-
-  </aside>
-
-  <!-- ── Main content ─────────────────────────────────────── -->
-  <main class="content">
+{% block content %}
 
     <div class="content-header">
       <h2>Most cited in this index</h2>
@@ -274,23 +14,23 @@
 
     <p class="page-intro">What does the field treat as foundational — and is that different from what we assume? These rankings reflect citation counts within the discipline's own journals, not Google Scholar's cross-disciplinary totals. An article cited 200 times across CCC, College English, and Written Communication tells a different story than one cited 200 times from linguistics or education. This is the field citing itself — the closest approximation we have to what rhetoric and composition actually considers essential reading.</p>
 
-    <details class="abstract-toggle" style="margin-bottom:1.2rem;">
-      <summary style="font-weight:600;">Methodology</summary>
-      <div style="font-size:0.88rem;line-height:1.65;color:#5a3e28;max-width:52rem;">
+    <details class="abstract-toggle methodology-section">
+      <summary class="methodology-summary">Methodology</summary>
+      <div class="methodology-body">
 
-      <h4 style="margin:1rem 0 0.4rem;">Data source</h4>
+      <h4 class="methodology-heading">Data source</h4>
       <p>Citation data is derived from reference lists deposited by publishers with <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a>. Pinakes retrieves the full reference list for each article that has one available, then matches referenced DOIs against DOIs in the article index. When article A&rsquo;s reference list contains article B&rsquo;s DOI, that constitutes one internal citation of B by A. Only citations between articles <em>both</em> present in this index are counted.</p>
 
-      <h4 style="margin:1rem 0 0.4rem;">Counting method</h4>
+      <h4 class="methodology-heading">Counting method</h4>
       <p>The &ldquo;Most Cited&rdquo; count for each article is the number of distinct indexed articles that cite it &mdash; a simple count of incoming edges in the citation network. Self-citations are included when they appear in the deposited reference list. Duplicate citations (the same article referencing the same target multiple times) are counted once.</p>
 
-      <h4 style="margin:1rem 0 0.4rem;">View modes</h4>
+      <h4 class="methodology-heading">View modes</h4>
       <p><strong>All:</strong> A single ranked list of the most-cited articles across the full index. <strong>By Journal:</strong> Articles grouped by the journal they were published in, showing the most-cited articles within each venue. <strong>By Topic:</strong> Articles grouped by their topic tags, showing the most-cited articles for each research area. <strong>By Decade:</strong> Articles grouped by publication decade, revealing how citation influence is distributed across time periods.</p>
 
-      <h4 style="margin:1rem 0 0.4rem;">Filters</h4>
+      <h4 class="methodology-heading">Filters</h4>
       <p>The journal filter restricts which <em>cited</em> articles are displayed (not which <em>citing</em> articles contribute to the count). The topic filter restricts to articles carrying a particular tag. Year range filters restrict by publication year of the cited article. All filters interact additively.</p>
 
-      <h4 style="margin:1rem 0 0.4rem;">Limitations</h4>
+      <h4 class="methodology-heading">Limitations</h4>
       <p>These are <em>internal</em> citation counts only. An article with 5 citations here may have 500 in Google Scholar; its ranking here reflects its influence within the rhetoric and composition journals indexed by Pinakes specifically. Not all journals deposit reference lists with CrossRef &mdash; those that do not can be cited but cannot contribute citations, creating an asymmetry in the data. Older articles have had more time to accumulate citations, giving them a structural advantage over recent work. See the coverage panel below for per-journal reference deposit rates.</p>
 
       </div>
@@ -299,7 +39,7 @@
     <!-- Coverage data panel -->
     <div style="margin-bottom:1.25rem;">
       <button class="coverage-toggle" id="coverage-toggle-main" aria-expanded="false">
-        <span class="coverage-chevron" id="coverage-chevron-main">▸</span>
+        <span class="coverage-chevron" id="coverage-chevron-main">&#9656;</span>
         About this data: which journals have citation coverage?
       </button>
       <div class="coverage-panel" id="coverage-panel-main">
@@ -549,10 +289,9 @@
 
     {% endif %}
 
-  </main>
+{% endblock %}
 
-</div>
-
+{% block body_scripts %}
 <script>
 // Show more button
 var showBtn = document.getElementById('show-more-btn');
@@ -571,11 +310,8 @@ if (covToggle && covPanel) {
   covToggle.addEventListener('click', function() {
     var open = covPanel.classList.toggle('open');
     covToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (covChev) covChev.textContent = open ? '▾' : '▸';
+    if (covChev) covChev.textContent = open ? '\u25be' : '\u25b8';
   });
 }
 </script>
-
-<script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-</body>
-</html>
+{% endblock %}

@@ -58,16 +58,7 @@ RSS_JOURNALS = [
         # RSS kept as fallback for new issues; scraper handles historical archive.
         "strategy": "enculturation",
     },
-    {
-        "name": "Composition Forum",
-        "url":  "https://compositionforum.com/",
-        "feed_url": "https://compositionforum.com/feed/",
-        # WordPress REST API gives full archive (48 articles) vs RSS cap of 10.
-        # Server blocks non-browser User-Agents, so wp_api_url triggers a
-        # separate harvester that uses a browser UA. Author/abstract not exposed
-        # via the API — title, date, and URL only.
-        "wp_api_url": "https://compositionforum.com/wp-json/wp/v2/posts",
-    },
+    # Composition Forum — moved to SCRAPE_JOURNALS (two-era full-archive scraper)
     {
         "name": "Present Tense: A Journal of Rhetoric in Society",
         "url":  "https://www.presenttensejournal.org/",
@@ -82,14 +73,14 @@ RSS_JOURNALS = [
         # RSS only returns ~9 recent items. Full archive scraped via scraper.py.
         "strategy": "kb_journal",
     },
-    {
-        "name": "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
-        "url":  "https://reflectionsjournal.net/",
-        "feed_url": "https://reflectionsjournal.net/feed/",
-        # WordPress REST API: 554 posts available vs RSS cap of 10.
-        # Posts are organized by volume.issue categories; all appear to be articles.
-        "wp_api_url": "https://reflectionsjournal.net/wp-json/wp/v2/posts",
-    },
+    # Reflections — moved to SCRAPE_JOURNALS (archive page scraper supersedes WP API).
+    # WP API captured title+date only; scraper adds authors+abstracts from /archive/.
+    # {
+    #     "name": "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
+    #     "url":  "https://reflectionsjournal.net/",
+    #     "feed_url": "https://reflectionsjournal.net/feed/",
+    #     "wp_api_url": "https://reflectionsjournal.net/wp-json/wp/v2/posts",
+    # },
     {
         "name": "Literacy in Composition Studies",
         "url":  "https://licsjournal.org/",
@@ -166,6 +157,22 @@ SCRAPE_JOURNALS = [
         "strategy": "peer_review",
         "notes": "IWCA WordPress site. Issues listed at /issues/. "
                  "Article slugs at root level.",
+    },
+    {
+        "name": "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
+        "url": "https://reflectionsjournal.net/",
+        "strategy": "reflections",
+        "notes": "WordPress. Archive page at /archive/ lists all articles with pipe-separated "
+                 "title|author format. Article pages have abstracts for ~2022+. "
+                 "Older issues (pre-Vol 21) link to PDFs — metadata from archive page only.",
+    },
+    {
+        "name": "Composition Forum",
+        "url": "https://compositionforum.com/",
+        "strategy": "comp_forum",
+        "notes": "Two-era site: old PHP (vols 14.2–54) and new WordPress (55+). "
+                 "Server blocks bot UAs; scraper uses browser-like headers. "
+                 "Full archive: ~500 articles with titles, authors, abstracts.",
     },
 ]
 

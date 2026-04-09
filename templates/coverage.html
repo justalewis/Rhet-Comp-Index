@@ -1,47 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Index Coverage — Pinakes</title>
-  <link id="theme-css" rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/style-scandi.css">
-  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
-  <script>
-    document.addEventListener('DOMContentLoaded',function(){
-      var termBtn=document.createElement('button');
-      termBtn.className='theme-toggle-btn';
-      var scandiBtn=document.createElement('button');
-      scandiBtn.className='scandi-toggle-btn';
-      function updateBtns(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        termBtn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
-        scandiBtn.textContent=cur==='scandi'?'◇ Default':'◇ Scandi';
-      }
-      updateBtns();
-      termBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='terminal'?'normal':'terminal';
-        localStorage.setItem('rc-theme',next);
-        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
-        document.documentElement.classList.remove('scandi');
-        updateBtns();
-      });
-      scandiBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='scandi'?'normal':'scandi';
-        localStorage.setItem('rc-theme',next);
-        if(next==='scandi'){document.getElementById('theme-css').href='/static/style.css';document.documentElement.classList.add('scandi');}
-        else{document.documentElement.classList.remove('scandi');}
-        updateBtns();
-      });
-      document.body.appendChild(termBtn);
-      document.body.appendChild(scandiBtn);
-    });
-  </script>
-</head>
-<body>
+{% extends "base-core.html" %}
 
+{% block title %}Index Coverage — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="What Pinakes covers and what it doesn't: a transparent breakdown of journal and book indexing completeness, CrossRef coverage, and data limitations.">
+{% endblock %}
+
+{% block body %}
 <div class="about-page-wrap">
 
   <!-- ── Top nav ───────────────────────────────────────────── -->
@@ -194,7 +159,7 @@
       <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>
     </ul>
 
-    <p>← <a href="/about">Back to About</a></p>
+    <p>&larr; <a href="/about">Back to About</a></p>
 
   </main>
 
@@ -213,7 +178,4 @@
   </footer>
 
 </div><!-- /about-page-wrap -->
-
-<script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-</body>
-</html>
+{% endblock %}

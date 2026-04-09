@@ -39,6 +39,11 @@ def get_conn():
     # Wait up to 10 s if another connection holds a write lock rather than
     # immediately raising "database is locked".
     conn.execute("PRAGMA busy_timeout=10000")
+    # Performance PRAGMAs — safe with WAL and single-writer architecture.
+    conn.execute("PRAGMA cache_size = -20000")       # 20 MB page cache (default ~2 MB)
+    conn.execute("PRAGMA mmap_size = 134217728")     # 128 MB memory-mapped I/O
+    conn.execute("PRAGMA synchronous = NORMAL")      # safe with WAL, avoids extra fsync
+    conn.execute("PRAGMA temp_store = MEMORY")       # temp tables in memory
     return conn
 
 
@@ -692,11 +697,14 @@ def get_related_articles(article_id, limit=5):
         if not tags:
             return []
 
-        # Build a score expression using CASE for each tag
-        cases = " + ".join(
-            f"CASE WHEN tags LIKE '%|{t}|%' THEN 1 ELSE 0 END"
-            for t in tags
-        )
+        # Build a score expression using parameterized CASE for each tag
+        case_parts = []
+        case_params = []
+        for t in tags:
+            case_parts.append("CASE WHEN tags LIKE ? THEN 1 ELSE 0 END")
+            case_params.append(f"%|{t}|%")
+        cases = " + ".join(case_parts)
+        # case_params appear twice: once in SELECT, once in WHERE
         rows = conn.execute(f"""
             SELECT *, ({cases}) AS shared_count
             FROM articles
@@ -704,7 +712,7 @@ def get_related_articles(article_id, limit=5):
               AND ({cases}) > 0
             ORDER BY shared_count DESC, pub_date DESC
             LIMIT ?
-        """, (article_id, limit)).fetchall()
+        """, case_params + [article_id] + case_params + [limit]).fetchall()
         return [dict(r) for r in rows]
 
 

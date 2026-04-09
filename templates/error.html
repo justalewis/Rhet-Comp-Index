@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ code }} — Pinakes</title>
+  <link id="theme-css" rel="stylesheet" href="/static/style.css?v={{ version }}">
+  <link rel="stylesheet" href="/static/style-scandi.css?v={{ version }}">
+  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css?v={{ version }}';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
+  <style>
+    .error-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      padding: 2rem;
+    }
+    .error-code {
+      font-size: 5rem;
+      font-weight: 700;
+      opacity: 0.25;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .error-message {
+      font-size: 1.3rem;
+      margin-bottom: 2rem;
+    }
+    .error-home {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border, #ccc);
+      text-decoration: none;
+      color: var(--text, #333);
+      border-radius: 3px;
+    }
+    .error-home:hover {
+      background: var(--hover-bg, #f5f5f5);
+    }
+  </style>
+</head>
+<body>
+  <div class="error-page">
+    <div class="error-code">{{ code }}</div>
+    <div class="error-message">{{ message }}</div>
+    <a href="/" class="error-home">&larr; Back to Pinakes</a>
+  </div>
+</body>
+</html>

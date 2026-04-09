@@ -1,46 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>All Tools — Pinakes</title>
-  <link id="theme-css" rel="stylesheet" href="/static/style.css">
-  <link rel="stylesheet" href="/static/style-scandi.css">
-  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.getElementById('theme-css').href='/static/style-terminal.css';}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
-  <script>
-    document.addEventListener('DOMContentLoaded',function(){
-      var termBtn=document.createElement('button');
-      termBtn.className='theme-toggle-btn';
-      var scandiBtn=document.createElement('button');
-      scandiBtn.className='scandi-toggle-btn';
-      function updateBtns(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        termBtn.textContent=cur==='terminal'?'◑ Default':'◐ Terminal';
-        scandiBtn.textContent=cur==='scandi'?'◇ Default':'◇ Scandi';
-      }
-      updateBtns();
-      termBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='terminal'?'normal':'terminal';
-        localStorage.setItem('rc-theme',next);
-        document.getElementById('theme-css').href=next==='terminal'?'/static/style-terminal.css':'/static/style.css';
-        document.documentElement.classList.remove('scandi');
-        updateBtns();
-      });
-      scandiBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='scandi'?'normal':'scandi';
-        localStorage.setItem('rc-theme',next);
-        if(next==='scandi'){document.getElementById('theme-css').href='/static/style.css';document.documentElement.classList.add('scandi');}
-        else{document.documentElement.classList.remove('scandi');}
-        updateBtns();
-      });
-      document.body.appendChild(termBtn);
-      document.body.appendChild(scandiBtn);
-    });
-  </script>
+{% extends "base.html" %}
+
+{% block title %}All Tools — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="description" content="All analytical tools in Pinakes: citation networks, co-authorship graphs, topic heatmaps, centrality analysis, community detection, and more.">
   <style>
-    /* Supplement styles from style.css for tools page specifics */
     .tool-card-name { margin: 0 0 0.35rem 0; }
     .tool-card-name a { color: var(--accent); text-decoration: none; }
     .tool-card-name a:hover { text-decoration: underline; }
@@ -58,150 +22,9 @@
     .tools-footer a { color: var(--link); text-decoration: none; }
     .tools-footer a:hover { text-decoration: underline; }
   </style>
-</head>
-<body>
+{% endblock %}
 
-<div class="layout">
-
-  <!-- ── Sidebar ─────────────────────────────────────────── -->
-  <aside class="sidebar">
-
-    <div class="sidebar-header">
-      <h1>Pinakes<br>
-        <span class="subtitle">Curating Disciplinary Knowledge</span>
-      </h1>
-    </div>
-
-    <nav class="journal-nav">
-
-      <div class="feature-nav">
-        <div class="nav-item">
-          <a href="/new" class="feature-nav-link">
-            <span class="feature-nav-icon">★</span>
-            What's New
-            {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
-          </a>
-        </div>
-        <div class="nav-item" id="nav-explore">
-          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
-            <span class="feature-nav-icon">◎</span>
-            Explore
-            <span class="nav-chevron">▾</span>
-          </button>
-          <div class="nav-dropdown">
-            <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
-            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
-            <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
-            <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
-            <a href="/citations" class="nav-dropdown-item">Citation Network</a>
-            <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
-            <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
-            <a href="/explore#communities" class="nav-dropdown-item">Communities</a>
-            <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
-            <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
-            <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
-            <a href="/explore#main-path" class="nav-dropdown-item">Main Path</a>
-            <a href="/explore#reading-path" class="nav-dropdown-item">Reading Path</a>
-            <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
-            <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Evolution</a>
-            <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
-            <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
-            <a href="/tools" class="nav-dropdown-item" style="border-top:1px solid var(--border);margin-top:0.25rem;padding-top:0.45rem;">Browse All Tools</a>
-          </div>
-        </div>
-        <div class="nav-item" id="nav-authors">
-          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
-            <span class="feature-nav-icon">◈</span>
-            Authors
-            <span class="nav-chevron">▾</span>
-          </button>
-          <div class="nav-dropdown">
-            <a href="/authors" class="nav-dropdown-item">Author Index</a>
-            <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
-            <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
-          </div>
-        </div>
-        <div class="nav-item" id="nav-most-cited">
-          <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
-            <span class="feature-nav-icon">⬡</span>
-            Citations
-            <span class="nav-chevron">▾</span>
-          </button>
-          <div class="nav-dropdown">
-            <a href="/most-cited" class="nav-dropdown-item">Most Cited</a>
-            <a href="/most-cited?view=journal" class="nav-dropdown-item">By Journal</a>
-            <a href="/most-cited?view=topic" class="nav-dropdown-item">By Topic</a>
-            <a href="/most-cited?view=decade" class="nav-dropdown-item">By Decade</a>
-            <a href="/explore#cocitation" class="nav-dropdown-item">Co-Citation</a>
-          </div>
-        </div>
-        <div class="nav-item">
-          <a href="/books" class="feature-nav-link">
-            <span class="feature-nav-icon">&#9723;</span>
-            Books
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="/coverage" class="feature-nav-link">
-            <span class="feature-nav-icon">◫</span>
-            Coverage
-          </a>
-        </div>
-        <div class="nav-item">
-          <a href="/about" class="feature-nav-link">
-            <span class="feature-nav-icon">&#9432;</span>
-            About
-          </a>
-        </div>
-      </div>
-      <script>
-      (function(){
-        function closeAll(except){document.querySelectorAll('.nav-item').forEach(function(el){if(el!==except)el.classList.remove('open');});}
-        document.querySelectorAll('.nav-item-trigger').forEach(function(btn){
-          btn.addEventListener('click',function(e){var item=btn.closest('.nav-item');var isOpen=item.classList.contains('open');closeAll();if(!isOpen)item.classList.add('open');e.stopPropagation();});
-        });
-        document.addEventListener('click',function(){closeAll();});
-        document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
-      })();
-      </script>
-
-      <a href="/" class="journal-link">
-        <span class="jname">All journals</span>
-      </a>
-
-      {% for group in journal_groups %}
-      <div class="nav-section-head">{{ group.label }}</div>
-      {% for j in group.journals %}
-      <a href="/?journal={{ j.name | urlencode }}" class="journal-link">
-        <span class="jname">{{ j.name }}</span>
-        <span class="jmeta">
-          {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
-          {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
-          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
-        </span>
-      </a>
-      {% endfor %}
-      {% endfor %}
-
-      {% if unavailable %}
-      <div class="nav-section-head unavailable-head">Unavailable</div>
-      {% for j in unavailable %}
-      <span class="journal-link unavailable" title="{{ j.note }}">
-        <span class="jname">{{ j.name }}</span>
-      </span>
-      {% endfor %}
-      {% endif %}
-
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="/" class="fetch-btn" style="display:block;text-align:center;text-decoration:none;">&larr; Back to index</a>
-    </div>
-
-  </aside>
-
-  <!-- ── Main content ─────────────────────────────────────── -->
-  <main class="content">
+{% block content %}
 
     <div class="content-header">
       <h2>All Tools</h2>
@@ -329,10 +152,4 @@
       <a href="/coverage">Data Coverage &amp; Methodology &rarr;</a>
     </div>
 
-  </main>
-
-</div>
-
-<script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-</body>
-</html>
+{% endblock %}

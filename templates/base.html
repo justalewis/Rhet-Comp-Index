@@ -1,0 +1,37 @@
+{% extends "base-core.html" %}
+
+{% block body %}
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h1>Pinakes<br>
+        <span class="subtitle">Curating Disciplinary Knowledge</span>
+      </h1>
+    </div>
+
+    <nav class="journal-nav">
+      {% include "_feature_nav.html" %}
+
+      {% block sidebar_content %}
+      {% include "_journal_list.html" %}
+      {% endblock %}
+    </nav>
+
+    {% block sidebar_footer %}
+    <div class="sidebar-footer">
+      <a href="/" class="fetch-btn sidebar-back-link">&larr; Back to index</a>
+    </div>
+    {% endblock %}
+
+  </aside>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="content {% block main_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+{% endblock %}

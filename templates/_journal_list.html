@@ -1,0 +1,26 @@
+<a href="/" class="journal-link">
+  <span class="jname">All journals</span>
+</a>
+
+{% for group in journal_groups %}
+<div class="nav-section-head">{{ group.label }}</div>
+{% for j in group.journals %}
+<a href="/?journal={{ j.name | urlencode }}" class="journal-link">
+  <span class="jname">{{ j.name }}</span>
+  <span class="jmeta">
+    {% if j.source == 'rss' %}<span class="src-badge rss">RSS</span>{% endif %}
+    {% if j.source == 'scrape' %}<span class="src-badge scrape">web</span>{% endif %}
+    {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+  </span>
+</a>
+{% endfor %}
+{% endfor %}
+
+{% if unavailable %}
+<div class="nav-section-head unavailable-head">Unavailable</div>
+{% for j in unavailable %}
+<span class="journal-link unavailable" title="{{ j.note }}">
+  <span class="jname">{{ j.name }}</span>
+</span>
+{% endfor %}
+{% endif %}

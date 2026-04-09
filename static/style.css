@@ -3284,6 +3284,65 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .author-book-role { font-style: italic; }
 .author-book-series { color: var(--text-light); }
 
+/* ── Sidebar back-links ────────────────────────────────────────── */
+.sidebar-back-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ── Methodology disclosure sections ──────────────────────────── */
+.methodology-section {
+  margin-bottom: 1.2rem;
+}
+.methodology-summary {
+  font-weight: 600;
+}
+.methodology-body {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text, #5a3e28);
+  max-width: 52rem;
+}
+.methodology-heading {
+  margin: 1rem 0 0.4rem;
+}
+.methodology-refs {
+  padding-left: 1.2rem;
+}
+
+/* ── Institution author list ──────────────────────────────────── */
+.inst-author-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.inst-author-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--border-color, #e8e4de);
+}
+
+/* ── Feature nav dropdown divider ─────────────────────────────── */
+.nav-dropdown-divider {
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+  padding-top: 0.45rem;
+}
+
+/* ── Misc helper classes ──────────────────────────────────────── */
+.cocitation-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8b6045);
+  margin-bottom: 0.6rem;
+}
+.cocitation-link {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8b6045);
+}
+
 @media (max-width: 720px) {
   .insight-row { flex-direction: column; }
   #author-network-container { height: 260px; }
