@@ -17,9 +17,11 @@ Usage:
 """
 
 import argparse
+import hashlib
 import logging
 import re
 import time
+import unicodedata
 
 import requests
 from bs4 import BeautifulSoup
@@ -206,6 +208,68 @@ def _extract_doi_from_ref(ref_text: str) -> str | None:
     return None
 
 
+def _make_ref_key(ref_text: str) -> str:
+    """
+    Generate a unique key for a reference without a DOI.
+    Uses a short hash of the normalized text so each reference
+    gets its own row in the citations table.
+    """
+    return "ref:" + hashlib.md5(ref_text.encode("utf-8")).hexdigest()[:12]
+
+
+def _normalize_for_match(s: str) -> str:
+    """Normalize a string for fuzzy title matching."""
+    s = unicodedata.normalize("NFKD", s)
+    s = re.sub(r"<[^>]+>", "", s)
+    s = re.sub(r"[^a-z0-9 ]", "", s.lower())
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _build_title_index() -> dict[str, int]:
+    """
+    Build a lookup of normalized article titles -> article IDs.
+    For matching scraped references against the database.
+    """
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, title FROM articles WHERE title IS NOT NULL"
+        ).fetchall()
+
+    index = {}
+    for row in rows:
+        norm = _normalize_for_match(row["title"])
+        if norm and len(norm) > 15:
+            index[norm] = row["id"]
+    return index
+
+
+def _match_ref_to_article(ref_text: str, title_index: dict) -> int | None:
+    """
+    Try to match a reference string to an article in the database
+    by extracting the quoted title and looking it up.
+    """
+    # Extract title in quotes: "Title Here" or \u201cTitle Here\u201d
+    m = re.search(r'[\u201c"]\s*(.+?)\s*[\u201d"]', ref_text)
+    if not m:
+        return None
+
+    ref_title = _normalize_for_match(m.group(1))
+    if len(ref_title) < 15:
+        return None
+
+    # Exact match
+    if ref_title in title_index:
+        return title_index[ref_title]
+
+    # Substring match: check if ref title is contained in any DB title
+    for db_title, article_id in title_index.items():
+        if ref_title in db_title or db_title in ref_title:
+            return article_id
+
+    return None
+
+
 # ── Main processing ─────────────────────────────────────────────────────────
 
 def get_articles_to_process(article_id: int | None = None) -> list[dict]:
@@ -223,24 +287,22 @@ def get_articles_to_process(article_id: int | None = None) -> list[dict]:
                 WHERE id = ? AND doi IS NOT NULL
             """, (article_id,)).fetchall()
         else:
-            # Articles with DOI under LiCS prefix, where we haven't
-            # stored any citations yet
+            # All LiCS articles with DOIs that need scraping:
+            # either no citations at all, or only scraped refs (ref:xxx keys)
+            # that need re-matching with the title index
             rows = conn.execute("""
                 SELECT a.id, a.title, a.doi
                 FROM articles a
                 WHERE a.journal LIKE '%Literacy in Composition%'
                   AND a.doi IS NOT NULL
                   AND a.doi LIKE '10.21623/%'
-                  AND NOT EXISTS (
-                      SELECT 1 FROM citations c WHERE c.source_article_id = a.id
-                  )
                 ORDER BY a.doi
             """).fetchall()
 
     return [dict(r) for r in rows]
 
 
-def process_article(article: dict, doi_map: dict, dry_run: bool = False) -> int:
+def process_article(article: dict, doi_map: dict, title_index: dict, dry_run: bool = False) -> int:
     """
     Scrape references for one article. Returns count of references found.
     """
@@ -288,20 +350,43 @@ def process_article(article: dict, doi_map: dict, dry_run: bool = False) -> int:
             log.info("    ... and %d more", len(refs) - 5)
         return len(refs)
 
-    # Step 5: Store citations
+    # Step 5: Clear old scraped citations (ref:xxx keys) so we can re-insert with matches
+    with get_conn() as conn:
+        conn.execute(
+            "DELETE FROM citations WHERE source_article_id = ? AND target_doi LIKE 'ref:%'",
+            (article_id,),
+        )
+        conn.commit()
+
+    # Step 6: Store citations
     citations_inserted = 0
+    internal_matches = 0
     for ref in refs:
         ref_doi = _extract_doi_from_ref(ref)
         target_id = None
+
+        # Try DOI-based match first
         if ref_doi:
             target_id = doi_map.get(ref_doi)
 
+        # Fall back to title-based match
+        if target_id is None:
+            target_id = _match_ref_to_article(ref, title_index)
+
+        if target_id is not None:
+            internal_matches += 1
+
+        # Use a hash-based key for refs without DOIs so each gets its own row
+        cite_doi = ref_doi or _make_ref_key(ref)
+
         citations_inserted += upsert_citation(
             source_article_id=article_id,
-            target_doi=ref_doi or "",
+            target_doi=cite_doi,
             target_article_id=target_id,
             raw_reference={"unstructured": ref},
         )
+
+    log.info("  Internal matches: %d", internal_matches)
 
     # Step 6: Update references_fetched_at
     mark_references_fetched(article_id, crossref_cited_by_count=None)
@@ -323,13 +408,16 @@ def run(article_id=None, dry_run=False):
     doi_map = get_doi_to_article_id_map()
     log.info("DOI map loaded: %d entries", len(doi_map))
 
+    title_index = _build_title_index()
+    log.info("Title index loaded: %d entries", len(title_index))
+
     total_refs = 0
     processed = 0
     skipped = 0
 
     for article in articles:
         try:
-            count = process_article(article, doi_map, dry_run=dry_run)
+            count = process_article(article, doi_map, title_index, dry_run=dry_run)
             if count > 0:
                 total_refs += count
                 processed += 1
