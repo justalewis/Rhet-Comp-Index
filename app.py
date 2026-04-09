@@ -1195,7 +1195,7 @@ def most_cited_page():
         limit=200,
     )
 
-    # For decade view, sort by decade (descending) then citation count within decade
+    # For grouped views, sort by group then citation count within group
     if view == "decade":
         def _decade_sort_key(a):
             try:
@@ -1204,6 +1204,16 @@ def most_cited_page():
                 decade = 0
             return (-decade, -(a.get("internal_cited_by_count") or 0))
         articles = sorted(articles, key=_decade_sort_key)
+    elif view == "journal":
+        articles = sorted(articles,
+                          key=lambda a: (a.get("journal") or "",
+                                         -(a.get("internal_cited_by_count") or 0)))
+    elif view == "topic":
+        def _topic_sort_key(a):
+            tags = a.get("tags") or ""
+            first = tags.strip("|").split("|")[0] if tags else "\xff"
+            return (first, -(a.get("internal_cited_by_count") or 0))
+        articles = sorted(articles, key=_topic_sort_key)
 
     return render_template(
         "most-cited.html",
