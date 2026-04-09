@@ -1936,12 +1936,39 @@ def get_institution_top_authors(institution_id, limit=10):
         return [(r["author_name"], r["count"]) for r in rows]
 
 
+def _normalized_institutions_fresh():
+    """Check if the normalized institution tables have reasonably current data."""
+    import datetime
+    with get_conn() as conn:
+        count = conn.execute("SELECT COUNT(*) FROM institutions").fetchone()[0]
+        if count == 0:
+            return False
+        max_year = conn.execute("""
+            SELECT MAX(SUBSTR(a.pub_date, 1, 4))
+            FROM article_author_institutions aai
+            JOIN articles a ON a.id = aai.article_id
+            WHERE a.pub_date IS NOT NULL
+        """).fetchone()[0]
+    if max_year is None:
+        return False
+    return int(max_year) >= datetime.datetime.now().year - 5
+
+
 def get_top_institutions_v2(limit=25):
     """
     Return list of dicts: {id, display_name, article_count, country_code, type}
     from the normalized institutions table.
-    Falls back to the flat author_article_affiliations table if new tables are empty.
+    Falls back to the flat author_article_affiliations table if new tables are
+    empty or stale (data doesn't extend to recent years).
     """
+    if not _normalized_institutions_fresh():
+        old = get_top_institutions(limit=limit)
+        return [
+            {"id": None, "display_name": name, "article_count": count,
+             "country_code": None, "type": None}
+            for name, count in old
+        ]
+
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT i.id, i.display_name, i.country_code, i.type,
@@ -1965,12 +1992,10 @@ def get_top_institutions_v2(limit=25):
 
 def get_institution_timeline_v2(top_n=10):
     """
-    Timeline for top institutions. Uses normalized tables when populated;
-    falls back to get_institution_timeline() if new tables are empty.
+    Timeline for top institutions. Uses normalized tables when populated
+    and current; falls back to get_institution_timeline() otherwise.
     """
-    with get_conn() as conn:
-        count = conn.execute("SELECT COUNT(*) FROM institutions").fetchone()[0]
-    if count == 0:
+    if not _normalized_institutions_fresh():
         return get_institution_timeline(top_n=top_n)
 
     top = get_top_institutions_v2(limit=top_n)
