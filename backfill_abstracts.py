@@ -138,7 +138,9 @@ def enrich_batch(limit=None):
         "oa_status_set": 0,
         "affiliations_written": 0,
         "tags_updated": 0,
+        "skipped_429": 0,
     }
+    consecutive_429s = 0
 
     for row in rows:
         article_id  = row["id"]
@@ -159,10 +161,29 @@ def enrich_batch(limit=None):
             continue
 
         if data is None:
+            if status == 429:
+                # Don't mark as done — leave in queue for next run
+                consecutive_429s += 1
+                stats["skipped_429"] += 1
+                if consecutive_429s >= 10:
+                    wait = min(300, 30 * (consecutive_429s // 10))
+                    log.warning("Hit %d consecutive 429s — pausing %ds…",
+                                consecutive_429s, wait)
+                    time.sleep(wait)
+                    if consecutive_429s >= 50:
+                        log.error("50+ consecutive 429s — aborting to avoid burning queue.")
+                        break
+                stats["processed"] += 1
+                time.sleep(REQUEST_DELAY)
+                continue
+            # 404 or other error — mark as done so we don't re-query
             _mark_done(article_id)
+            consecutive_429s = 0
             stats["processed"] += 1
             time.sleep(REQUEST_DELAY)
             continue
+
+        consecutive_429s = 0
 
         # ── Extract fields ──────────────────────────────────────────
         openalex_id = data.get("id") or None
