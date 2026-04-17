@@ -346,19 +346,38 @@ def write_markdown_summary(per_journal, totals, path):
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def build_snapshot(conn):
+    """Compute the full coverage snapshot against an open sqlite connection.
+    Returns a dict with keys: generated_at, totals, per_journal, per_era.
+    Used by both the standalone script and db.get_detailed_coverage() so
+    production and development each report against their own live DB."""
+    base     = fetch_per_journal_base(conn)
+    outbound = fetch_outbound_by_journal(conn)
+    inbound  = fetch_inbound_by_journal(conn)
+    self_cit = fetch_self_citation_by_journal(conn)
+    topo     = fetch_topology_by_journal(conn)
+    era_map  = fetch_era_breakdown(conn)
+
+    per_journal = build_per_journal(base, outbound, inbound, self_cit, topo)
+    era_rows    = build_era_rows(era_map)
+    totals      = corpus_totals(conn, per_journal)
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "totals":       totals,
+        "per_journal":  per_journal,
+        "per_era":      era_rows,
+    }
+
+
 def main():
     print(f"Reading from {DB_PATH}")
     with connect() as conn:
-        base     = fetch_per_journal_base(conn)
-        outbound = fetch_outbound_by_journal(conn)
-        inbound  = fetch_inbound_by_journal(conn)
-        self_cit = fetch_self_citation_by_journal(conn)
-        topo     = fetch_topology_by_journal(conn)
-        era_map  = fetch_era_breakdown(conn)
+        snapshot = build_snapshot(conn)
 
-        per_journal = build_per_journal(base, outbound, inbound, self_cit, topo)
-        era_rows    = build_era_rows(era_map)
-        totals      = corpus_totals(conn, per_journal)
+    per_journal = snapshot["per_journal"]
+    era_rows    = snapshot["per_era"]
+    totals      = snapshot["totals"]
 
     write_csv(per_journal, OUT_DIR / "per_journal.csv")
     write_csv(era_rows,    OUT_DIR / "per_journal_era.csv")
@@ -366,13 +385,6 @@ def main():
     (OUT_DIR / "corpus_totals.json").write_text(
         json.dumps(totals, indent=2), encoding="utf-8"
     )
-
-    snapshot = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "totals":       totals,
-        "per_journal":  per_journal,
-        "per_era":      era_rows,
-    }
     (OUT_DIR / "coverage_snapshot.json").write_text(
         json.dumps(snapshot, indent=2), encoding="utf-8"
     )

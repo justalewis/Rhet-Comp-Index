@@ -1415,10 +1415,32 @@ def get_coverage_stats():
     return sorted(result, key=lambda x: (-x["coverage_pct"], x["journal"]))
 
 
+_DETAILED_COVERAGE_CACHE = {"ts": 0.0, "data": None}
+_DETAILED_COVERAGE_TTL = 3600  # 1 hour
+
+
 def get_detailed_coverage():
-    """Read the snapshot produced by coverage_report.py and return it for the
-    /coverage page. Returns None if the snapshot hasn't been generated yet,
-    so the caller can fall back to the static prose sections."""
+    """Return the per-journal coverage snapshot computed against the live
+    DB. Each server (production or development) reports against its own
+    articles.db. Result is cached in-process for one hour to keep the
+    /coverage page cheap. Falls back to the committed snapshot file, then
+    to None, so the template degrades gracefully."""
+    import time
+    now = time.time()
+    if _DETAILED_COVERAGE_CACHE["data"] is not None and \
+       now - _DETAILED_COVERAGE_CACHE["ts"] < _DETAILED_COVERAGE_TTL:
+        return _DETAILED_COVERAGE_CACHE["data"]
+
+    try:
+        from coverage_report import build_snapshot
+        with get_conn() as conn:
+            snap = build_snapshot(conn)
+        _DETAILED_COVERAGE_CACHE["data"] = snap
+        _DETAILED_COVERAGE_CACHE["ts"]   = now
+        return snap
+    except Exception as exc:
+        log.warning("Live coverage snapshot failed, falling back to file: %s", exc)
+
     path = os.path.join(
         os.path.dirname(__file__), "data_exports", "coverage", "coverage_snapshot.json"
     )
