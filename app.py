@@ -63,6 +63,7 @@ from db import (
     get_author_cocitation_network,
     get_author_cocitation_partners,
     get_coverage_stats,
+    get_detailed_coverage,
     get_article_affiliations,
     get_author_by_name,
     get_all_authors_with_institutions,
@@ -1173,7 +1174,8 @@ def about():
 @app.route("/coverage")
 def coverage():
     """Index coverage page — what's fully indexed, what's partial, what's missing."""
-    return render_template("coverage.html")
+    detailed = get_detailed_coverage()
+    return render_template("coverage.html", detailed=detailed)
 
 
 @app.route("/most-cited")

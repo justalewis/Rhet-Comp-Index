@@ -1415,6 +1415,23 @@ def get_coverage_stats():
     return sorted(result, key=lambda x: (-x["coverage_pct"], x["journal"]))
 
 
+def get_detailed_coverage():
+    """Read the snapshot produced by coverage_report.py and return it for the
+    /coverage page. Returns None if the snapshot hasn't been generated yet,
+    so the caller can fall back to the static prose sections."""
+    path = os.path.join(
+        os.path.dirname(__file__), "data_exports", "coverage", "coverage_snapshot.json"
+    )
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError) as exc:
+        log.warning("Could not read coverage snapshot at %s: %s", path, exc)
+        return None
+
+
 # ── OpenAlex / author affiliation reads ────────────────────────────────────────
 
 def get_article_affiliations(article_id):

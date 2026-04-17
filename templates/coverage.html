@@ -33,6 +33,35 @@
 
     <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, citation trend charts, Most Cited rankings, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
 
+    {% if detailed %}
+    <h2>Corpus Snapshot</h2>
+
+    <p class="coverage-snapshot-meta">Live counts generated
+       <time datetime="{{ detailed.generated_at }}">{{ detailed.generated_at[:10] }}</time>.
+       Run <code>python coverage_report.py</code> to refresh.</p>
+
+    <ul class="coverage-stats-grid">
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.articles_total) }}</span>
+          <span class="stat-label">articles indexed</span></li>
+      <li><span class="stat-num">{{ detailed.totals.journals_total }}</span>
+          <span class="stat-label">journals</span></li>
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.books_total) }}</span>
+          <span class="stat-label">books</span></li>
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.citations_total) }}</span>
+          <span class="stat-label">citation edges</span></li>
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.citations_resolved_total) }}</span>
+          <span class="stat-label">edges resolved to index ({{ detailed.totals.citations_resolved_pct }}%)</span></li>
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.articles_with_outbound) }}</span>
+          <span class="stat-label">articles with outbound citations</span></li>
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.articles_with_inbound) }}</span>
+          <span class="stat-label">articles cited from inside the index</span></li>
+      <li><span class="stat-num">{{ "{:,}".format(detailed.totals.articles_openalex_enriched) }}</span>
+          <span class="stat-label">OpenAlex-enriched ({{ detailed.totals.articles_openalex_enriched_pct }}%)</span></li>
+    </ul>
+
+    <p>The vocabulary used below: <em>outbound</em> means an article's own reference list is in the index — the article cites others. <em>Inbound</em> means at least one other article in the index cites it. <em>Resolved edges</em> are citations whose target DOI matched an article already indexed in Pinakes; the unresolved remainder are citations to books, conference proceedings, other journals, or works outside the corpus. <em>Intra-journal</em> edges are citations where source and target are in the same journal — a measure of within-journal self-reference.</p>
+    {% endif %}
+
     <h2>Two Tiers of Indexing</h2>
 
     <p>Pinakes draws from two kinds of sources. The distinction matters for everything downstream — citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
@@ -158,6 +187,82 @@
       <li><strong>Citation network</strong> — Only journals that deposit reference lists with CrossRef contribute citation edges. See the coverage table on the <a href="/explore#citations">Citations tab</a> for per-journal detail. RSS-only journals contribute zero citation edges regardless of how frequently they cite or are cited.</li>
       <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>
     </ul>
+
+    {% if detailed %}
+    <h2>Per-Journal Accounting</h2>
+
+    <p>The table below is the authoritative, live accounting of what's indexed. Columns: total article count; publication-year range; articles whose reference list was returned by CrossRef (<em>with outbound</em>); raw outbound edges and the fraction that resolved to indexed articles; articles cited from inside the corpus (<em>with inbound</em>); within-journal self-citation share of resolved outbound edges; OpenAlex enrichment rate; network topology (<em>isolates</em> have neither in- nor outbound edges; <em>pure sinks</em> are cited from inside the corpus but their own references were never deposited; <em>hubs</em> have both).</p>
+
+    <div class="coverage-table-wrap">
+      <table class="coverage-table">
+        <thead>
+          <tr>
+            <th>Journal</th>
+            <th class="n">Articles</th>
+            <th>Years</th>
+            <th class="n">With outbound</th>
+            <th class="n">Raw edges</th>
+            <th class="n">Resolved</th>
+            <th class="n">With inbound</th>
+            <th class="n">Internal inbound edges</th>
+            <th class="n">Intra-journal %</th>
+            <th class="n">OpenAlex %</th>
+            <th class="n">Isolates</th>
+            <th class="n">Pure sinks</th>
+            <th class="n">Hubs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in detailed.per_journal %}
+          <tr>
+            <td class="journal">{{ r.journal }}</td>
+            <td class="n">{{ "{:,}".format(r.article_count) }}</td>
+            <td>{% if r.year_min %}{{ r.year_min }}&ndash;{{ r.year_max }}{% else %}&mdash;{% endif %}</td>
+            <td class="n">{{ "{:,}".format(r.articles_with_outbound) }}</td>
+            <td class="n">{{ "{:,}".format(r.raw_outbound_edges) }}</td>
+            <td class="n">{{ "{:,}".format(r.resolved_outbound_edges) }} <span class="pct">({{ r.outbound_resolution_pct }}%)</span></td>
+            <td class="n">{{ "{:,}".format(r.articles_with_inbound) }}</td>
+            <td class="n">{{ "{:,}".format(r.internal_inbound_edges) }}</td>
+            <td class="n">{{ r.intra_journal_pct }}%</td>
+            <td class="n">{{ r.openalex_enriched_pct }}%</td>
+            <td class="n">{{ "{:,}".format(r.isolates) }}</td>
+            <td class="n">{{ "{:,}".format(r.pure_sinks) }}</td>
+            <td class="n">{{ "{:,}".format(r.hubs) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Era breakdown: outbound-citation yield by decade</h3>
+
+    <p>The era breakdown is where CrossRef's deposit history becomes legible. For most of the NCTE and NCTE-era journals, pre-2000 articles have no outbound citation data at all — not because the work doesn't cite anything, but because reference lists for those volumes were never deposited with CrossRef. Coverage climbs sharply through the 2010s and approaches parity for 2020+ issues.</p>
+
+    <div class="coverage-table-wrap">
+      <table class="coverage-table coverage-table--era">
+        <thead>
+          <tr>
+            <th>Journal</th>
+            <th>Era</th>
+            <th class="n">Articles</th>
+            <th class="n">With outbound</th>
+            <th class="n">Yield %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in detailed.per_era %}
+          <tr>
+            <td class="journal">{{ r.journal }}</td>
+            <td>{{ r.era }}</td>
+            <td class="n">{{ "{:,}".format(r.articles) }}</td>
+            <td class="n">{{ "{:,}".format(r.with_outbound) }}</td>
+            <td class="n">{{ r.outbound_yield_pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
 
     <p>&larr; <a href="/about">Back to About</a></p>
 

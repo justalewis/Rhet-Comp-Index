@@ -2702,6 +2702,109 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .coverage-list--partial li::marker { color: #b07a30; }
 .coverage-list--gap li::marker { color: var(--text-muted); }
 
+/* Coverage snapshot — live corpus totals */
+.coverage-snapshot-meta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: -0.5rem;
+}
+.coverage-snapshot-meta code {
+  font-size: 0.9em;
+  background: var(--bg-subtle, rgba(0,0,0,0.04));
+  padding: 0 0.3em;
+  border-radius: 2px;
+}
+.coverage-stats-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 1.25rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem 1rem;
+}
+.coverage-stats-grid li {
+  border-left: 2px solid var(--accent);
+  padding: 0.25rem 0 0.25rem 0.7rem;
+  margin: 0;
+}
+.coverage-stats-grid .stat-num {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 1.3rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+.coverage-stats-grid .stat-label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 0.1rem;
+}
+
+/* Coverage tables — break out of the narrow about-content column and allow
+   horizontal scroll on narrow viewports. */
+.coverage-table-wrap {
+  margin: 1rem 0 1.75rem 0;
+  margin-left: calc((700px - 100vw) / 2);
+  margin-right: calc((700px - 100vw) / 2);
+  max-width: 100vw;
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 900px) {
+  .coverage-table-wrap {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+.coverage-table {
+  border-collapse: collapse;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0 auto;
+}
+.coverage-table th,
+.coverage-table td {
+  padding: 0.35rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.coverage-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg, #fff);
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+}
+.coverage-table td.n,
+.coverage-table th.n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.coverage-table td.journal {
+  max-width: 22em;
+  white-space: normal;
+  color: var(--text);
+}
+.coverage-table tbody tr:hover {
+  background: var(--bg-subtle, rgba(0,0,0,0.025));
+}
+.coverage-table .pct {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+.coverage-table--era td.journal {
+  color: var(--text-muted);
+}
+
 /* Coverage link in visualization tab-intros */
 .coverage-note-link {
   font-family: var(--font-ui);

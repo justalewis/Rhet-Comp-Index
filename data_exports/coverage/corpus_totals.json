@@ -1,0 +1,13 @@
+{
+  "articles_total": 51843,
+  "journals_total": 51,
+  "books_total": 3495,
+  "citations_total": 202929,
+  "citations_resolved_total": 44885,
+  "citations_resolved_pct": 22.1,
+  "articles_openalex_enriched": 46061,
+  "articles_openalex_enriched_pct": 88.8,
+  "articles_refs_attempted": 46566,
+  "articles_with_outbound": 12297,
+  "articles_with_inbound": 10399
+}
