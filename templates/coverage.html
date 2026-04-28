@@ -210,40 +210,40 @@
       {% if since %}
       <p class="coverage-filter-active-note">Showing articles published <strong>{{ since }} or later</strong>. Each row's metrics — article count, outbound edges, inbound edges, intra-journal share, OpenAlex %, topology — are scoped to articles in this journal published in that range.</p>
       {% endif %}
-      <table class="coverage-table">
+      <table class="coverage-table" data-sortable>
         <thead>
           <tr>
-            <th>Journal</th>
-            <th class="n">Articles</th>
-            <th>Years</th>
-            <th class="n">With outbound</th>
-            <th class="n">Raw edges</th>
-            <th class="n">Resolved</th>
-            <th class="n">With inbound</th>
-            <th class="n">Internal inbound edges</th>
-            <th class="n">Intra-journal %</th>
-            <th class="n">OpenAlex %</th>
-            <th class="n">Isolates</th>
-            <th class="n">Pure sinks</th>
-            <th class="n">Hubs</th>
+            <th class="sortable" data-type="string" aria-sort="none">Journal</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Articles</th>
+            <th class="sortable" data-type="number" aria-sort="none">Years</th>
+            <th class="n sortable" data-type="number" aria-sort="none">With outbound</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Raw edges</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Resolved</th>
+            <th class="n sortable" data-type="number" aria-sort="none">With inbound</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Internal inbound edges</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Intra-journal %</th>
+            <th class="n sortable" data-type="number" aria-sort="none">OpenAlex %</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Isolates</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Pure sinks</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Hubs</th>
           </tr>
         </thead>
         <tbody>
           {% for r in detailed.per_journal %}
           <tr>
             <td class="journal">{{ r.journal }}</td>
-            <td class="n">{{ "{:,}".format(r.article_count) }}</td>
-            <td>{% if r.year_min %}{{ r.year_min }}&ndash;{{ r.year_max }}{% else %}&mdash;{% endif %}</td>
-            <td class="n">{{ "{:,}".format(r.articles_with_outbound) }}</td>
-            <td class="n">{{ "{:,}".format(r.raw_outbound_edges) }}</td>
-            <td class="n">{{ "{:,}".format(r.resolved_outbound_edges) }} <span class="pct">({{ r.outbound_resolution_pct }}%)</span></td>
-            <td class="n">{{ "{:,}".format(r.articles_with_inbound) }}</td>
-            <td class="n">{{ "{:,}".format(r.internal_inbound_edges) }}</td>
-            <td class="n">{{ r.intra_journal_pct }}%</td>
-            <td class="n">{{ r.openalex_enriched_pct }}%</td>
-            <td class="n">{{ "{:,}".format(r.isolates) }}</td>
-            <td class="n">{{ "{:,}".format(r.pure_sinks) }}</td>
-            <td class="n">{{ "{:,}".format(r.hubs) }}</td>
+            <td class="n" data-sort="{{ r.article_count }}">{{ "{:,}".format(r.article_count) }}</td>
+            <td data-sort="{{ r.year_min or 0 }}">{% if r.year_min %}{{ r.year_min }}&ndash;{{ r.year_max }}{% else %}&mdash;{% endif %}</td>
+            <td class="n" data-sort="{{ r.articles_with_outbound }}">{{ "{:,}".format(r.articles_with_outbound) }}</td>
+            <td class="n" data-sort="{{ r.raw_outbound_edges }}">{{ "{:,}".format(r.raw_outbound_edges) }}</td>
+            <td class="n" data-sort="{{ r.resolved_outbound_edges }}">{{ "{:,}".format(r.resolved_outbound_edges) }} <span class="pct">({{ r.outbound_resolution_pct }}%)</span></td>
+            <td class="n" data-sort="{{ r.articles_with_inbound }}">{{ "{:,}".format(r.articles_with_inbound) }}</td>
+            <td class="n" data-sort="{{ r.internal_inbound_edges }}">{{ "{:,}".format(r.internal_inbound_edges) }}</td>
+            <td class="n" data-sort="{{ r.intra_journal_pct }}">{{ r.intra_journal_pct }}%</td>
+            <td class="n" data-sort="{{ r.openalex_enriched_pct }}">{{ r.openalex_enriched_pct }}%</td>
+            <td class="n" data-sort="{{ r.isolates }}">{{ "{:,}".format(r.isolates) }}</td>
+            <td class="n" data-sort="{{ r.pure_sinks }}">{{ "{:,}".format(r.pure_sinks) }}</td>
+            <td class="n" data-sort="{{ r.hubs }}">{{ "{:,}".format(r.hubs) }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -255,24 +255,24 @@
     <p>The era breakdown is where CrossRef's deposit history becomes legible. For most of the NCTE and NCTE-era journals, pre-2000 articles have no outbound citation data at all — not because the work doesn't cite anything, but because reference lists for those volumes were never deposited with CrossRef. Coverage climbs sharply through the 2010s and approaches parity for 2020+ issues.</p>
 
     <div class="coverage-table-wrap">
-      <table class="coverage-table coverage-table--era">
+      <table class="coverage-table coverage-table--era" data-sortable>
         <thead>
           <tr>
-            <th>Journal</th>
-            <th>Era</th>
-            <th class="n">Articles</th>
-            <th class="n">With outbound</th>
-            <th class="n">Yield %</th>
+            <th class="sortable" data-type="string" aria-sort="none">Journal</th>
+            <th class="sortable" data-type="number" aria-sort="none">Era</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Articles</th>
+            <th class="n sortable" data-type="number" aria-sort="none">With outbound</th>
+            <th class="n sortable" data-type="number" aria-sort="none">Yield %</th>
           </tr>
         </thead>
         <tbody>
           {% for r in detailed.per_era %}
           <tr>
             <td class="journal">{{ r.journal }}</td>
-            <td>{{ r.era }}</td>
-            <td class="n">{{ "{:,}".format(r.articles) }}</td>
-            <td class="n">{{ "{:,}".format(r.with_outbound) }}</td>
-            <td class="n">{{ r.outbound_yield_pct }}%</td>
+            <td data-sort="{% if r.era == 'pre-2000' %}0{% elif r.era == '2000s' %}1{% elif r.era == '2010s' %}2{% elif r.era == '2020+' %}3{% else %}9{% endif %}">{{ r.era }}</td>
+            <td class="n" data-sort="{{ r.articles }}">{{ "{:,}".format(r.articles) }}</td>
+            <td class="n" data-sort="{{ r.with_outbound }}">{{ "{:,}".format(r.with_outbound) }}</td>
+            <td class="n" data-sort="{{ r.outbound_yield_pct }}">{{ r.outbound_yield_pct }}%</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -299,4 +299,52 @@
   </footer>
 
 </div><!-- /about-page-wrap -->
+{% endblock %}
+
+{% block body_scripts %}
+<script>
+(function(){
+  document.querySelectorAll('table[data-sortable]').forEach(function(table){
+    var tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    var headers = table.querySelectorAll('thead th.sortable');
+    headers.forEach(function(th, idx){
+      th.setAttribute('tabindex', '0');
+      th.setAttribute('role', 'button');
+      function activate(){
+        var current = th.getAttribute('aria-sort');
+        var dir = (current === 'ascending') ? 'descending' : 'ascending';
+        headers.forEach(function(h){ h.setAttribute('aria-sort', 'none'); });
+        th.setAttribute('aria-sort', dir);
+        var type = th.getAttribute('data-type') || 'string';
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+        rows.sort(function(a, b){
+          var ca = a.children[idx], cb = b.children[idx];
+          var va = ca.getAttribute('data-sort');
+          if (va === null) va = (ca.textContent || '').trim();
+          var vb = cb.getAttribute('data-sort');
+          if (vb === null) vb = (cb.textContent || '').trim();
+          if (type === 'number'){
+            var na = parseFloat(String(va).replace(/,/g, ''));
+            var nb = parseFloat(String(vb).replace(/,/g, ''));
+            if (isNaN(na)) na = -Infinity;
+            if (isNaN(nb)) nb = -Infinity;
+            return dir === 'ascending' ? na - nb : nb - na;
+          }
+          return dir === 'ascending'
+            ? String(va).localeCompare(String(vb), undefined, {sensitivity:'base'})
+            : String(vb).localeCompare(String(va), undefined, {sensitivity:'base'});
+        });
+        var frag = document.createDocumentFragment();
+        rows.forEach(function(r){ frag.appendChild(r); });
+        tbody.appendChild(frag);
+      }
+      th.addEventListener('click', activate);
+      th.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); activate(); }
+      });
+    });
+  });
+})();
+</script>
 {% endblock %}
