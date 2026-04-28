@@ -2805,6 +2805,50 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   color: var(--text-muted);
 }
 
+/* Year-range filter chips above the per-journal table */
+.coverage-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.5rem;
+  margin: 1rem 0 0.5rem 0;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+}
+.coverage-filter-label {
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+.coverage-filter-chip {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  text-decoration: none;
+  background: transparent;
+  line-height: 1.4;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.coverage-filter-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.coverage-filter-chip.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg, #fff);
+}
+.coverage-filter-active-note {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0.7rem;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-subtle, rgba(0,0,0,0.025));
+}
+
 /* Coverage link in visualization tab-intros */
 .coverage-note-link {
   font-family: var(--font-ui);

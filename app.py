@@ -1171,11 +1171,28 @@ def about():
     return render_template("about.html")
 
 
+COVERAGE_SINCE_PRESETS = (None, 2000, 2010, 2020)
+
+
 @app.route("/coverage")
 def coverage():
-    """Index coverage page — what's fully indexed, what's partial, what's missing."""
-    detailed = get_detailed_coverage()
-    return render_template("coverage.html", detailed=detailed)
+    """Index coverage page — what's fully indexed, what's partial, what's missing.
+    Accepts an optional `?since=YYYY` filter that scopes the per-journal
+    table to articles published in [YYYY, ∞)."""
+    raw = request.args.get("since", "").strip()
+    try:
+        since = int(raw) if raw else None
+    except ValueError:
+        since = None
+    if since not in COVERAGE_SINCE_PRESETS:
+        since = None
+    detailed = get_detailed_coverage(year_min=since)
+    return render_template(
+        "coverage.html",
+        detailed=detailed,
+        since=since,
+        since_presets=COVERAGE_SINCE_PRESETS,
+    )
 
 
 @app.route("/most-cited")

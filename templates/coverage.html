@@ -193,7 +193,23 @@
 
     <p>The table below is the authoritative, live accounting of what's indexed. Columns: total article count; publication-year range; articles whose reference list was returned by CrossRef (<em>with outbound</em>); raw outbound edges and the fraction that resolved to indexed articles; articles cited from inside the corpus (<em>with inbound</em>); within-journal self-citation share of resolved outbound edges; OpenAlex enrichment rate; network topology (<em>isolates</em> have neither in- nor outbound edges; <em>pure sinks</em> are cited from inside the corpus but their own references were never deposited; <em>hubs</em> have both).</p>
 
+    <p>CrossRef deposit history is uneven across decades. Most NCTE journals have no machine-readable reference lists before 2000, and OpenAlex enrichment requires a DOI — which much pre-2000 content lacks. Use the year filter to scope the table to articles published from a given year onward; the corpus snapshot above and the era breakdown below remain unfiltered.</p>
+
+    <nav class="coverage-filter" aria-label="Filter per-journal table by publication year">
+      <span class="coverage-filter-label">Articles published</span>
+      {% for preset in since_presets %}
+        {% if preset is none %}
+          <a href="/coverage" class="coverage-filter-chip{% if since is none %} is-active{% endif %}"{% if since is none %} aria-current="page"{% endif %}>All years</a>
+        {% else %}
+          <a href="/coverage?since={{ preset }}" class="coverage-filter-chip{% if since == preset %} is-active{% endif %}"{% if since == preset %} aria-current="page"{% endif %}>{{ preset }}+</a>
+        {% endif %}
+      {% endfor %}
+    </nav>
+
     <div class="coverage-table-wrap">
+      {% if since %}
+      <p class="coverage-filter-active-note">Showing articles published <strong>{{ since }} or later</strong>. Each row's metrics — article count, outbound edges, inbound edges, intra-journal share, OpenAlex %, topology — are scoped to articles in this journal published in that range.</p>
+      {% endif %}
       <table class="coverage-table">
         <thead>
           <tr>

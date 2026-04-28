@@ -51,10 +51,21 @@ def connect():
     return conn
 
 
-def fetch_per_journal_base(conn):
+def _year_clause(year_min, alias=""):
+    """Return (sql_fragment, params) for a `pub_date >= year_min` filter on
+    the given table alias (e.g. 'a' or 's' or 't'). Empty fragment if no
+    filter is set."""
+    if not year_min:
+        return "", []
+    prefix = f"{alias}." if alias else ""
+    return f"AND CAST(substr({prefix}pub_date,1,4) AS INTEGER) >= ?", [year_min]
+
+
+def fetch_per_journal_base(conn, year_min=None):
     """One row per journal: counts, date range, source/doi/abstract rates,
     ref-fetch attempts, openalex enrichment."""
-    rows = conn.execute("""
+    where, params = _year_clause(year_min)
+    sql = f"""
         SELECT
             journal,
             COUNT(*)                                                AS article_count,
@@ -71,16 +82,20 @@ def fetch_per_journal_base(conn):
             COALESCE(SUM(crossref_cited_by_count),  0)              AS ext_crossref_citedby,
             COALESCE(SUM(openalex_cited_by_count),  0)              AS ext_openalex_citedby
         FROM articles
+        WHERE 1=1 {where}
         GROUP BY journal
         ORDER BY journal
-    """).fetchall()
+    """
+    rows = conn.execute(sql, params).fetchall()
     return {r["journal"]: dict(r) for r in rows}
 
 
-def fetch_outbound_by_journal(conn):
+def fetch_outbound_by_journal(conn, year_min=None):
     """For each journal (as source), count articles that actually returned
-    any citation data and the raw/resolved edge totals."""
-    rows = conn.execute("""
+    any citation data and the raw/resolved edge totals. Filtered by source
+    article pub year if year_min is set."""
+    where, params = _year_clause(year_min, "s")
+    sql = f"""
         SELECT
             s.journal                                             AS journal,
             COUNT(DISTINCT c.source_article_id)                   AS articles_with_outbound,
@@ -89,44 +104,58 @@ def fetch_outbound_by_journal(conn):
                                                                   AS resolved_outbound_edges
         FROM citations c
         JOIN articles s ON c.source_article_id = s.id
+        WHERE 1=1 {where}
         GROUP BY s.journal
-    """).fetchall()
+    """
+    rows = conn.execute(sql, params).fetchall()
     return {r["journal"]: dict(r) for r in rows}
 
 
-def fetch_inbound_by_journal(conn):
+def fetch_inbound_by_journal(conn, year_min=None):
     """For each journal (as target), count articles that are cited from
-    inside the corpus and total internal inbound edges."""
-    rows = conn.execute("""
+    inside the corpus and total internal inbound edges. Filtered by target
+    article pub year if year_min is set — so each row describes the
+    inbound footprint of articles in that journal published in [range]."""
+    where, params = _year_clause(year_min, "t")
+    sql = f"""
         SELECT
             t.journal                                             AS journal,
             COUNT(DISTINCT c.target_article_id)                   AS articles_with_inbound,
             COUNT(*)                                              AS internal_inbound_edges
         FROM citations c
         JOIN articles t ON c.target_article_id = t.id
+        WHERE 1=1 {where}
         GROUP BY t.journal
-    """).fetchall()
+    """
+    rows = conn.execute(sql, params).fetchall()
     return {r["journal"]: dict(r) for r in rows}
 
 
-def fetch_self_citation_by_journal(conn):
-    rows = conn.execute("""
+def fetch_self_citation_by_journal(conn, year_min=None):
+    """Intra-journal edges where the source is in the year range — matches
+    the outbound denominator so intra_journal_pct stays interpretable."""
+    where, params = _year_clause(year_min, "s")
+    sql = f"""
         SELECT
             s.journal                                             AS journal,
             COUNT(*)                                              AS intra_journal_edges
         FROM citations c
         JOIN articles s ON c.source_article_id = s.id
         JOIN articles t ON c.target_article_id = t.id
-        WHERE s.journal = t.journal
+        WHERE s.journal = t.journal {where}
         GROUP BY s.journal
-    """).fetchall()
+    """
+    rows = conn.execute(sql, params).fetchall()
     return {r["journal"]: r["intra_journal_edges"] for r in rows}
 
 
-def fetch_topology_by_journal(conn):
+def fetch_topology_by_journal(conn, year_min=None):
     """Per-article network topology counted by journal. Uses the full
-    citations table (not just intra-journal)."""
-    rows = conn.execute("""
+    citations table (not just intra-journal). When year_min is set, only
+    articles in that range are classified — but their edges can connect
+    anywhere in the corpus."""
+    where, params = _year_clause(year_min, "a")
+    sql = f"""
         WITH out_counts AS (
             SELECT source_article_id AS aid, COUNT(*) AS n
             FROM citations
@@ -147,8 +176,10 @@ def fetch_topology_by_journal(conn):
         FROM articles a
         LEFT JOIN out_counts o ON o.aid = a.id
         LEFT JOIN in_counts  i ON i.aid = a.id
+        WHERE 1=1 {where}
         GROUP BY a.journal
-    """).fetchall()
+    """
+    rows = conn.execute(sql, params).fetchall()
     return {r["journal"]: dict(r) for r in rows}
 
 
@@ -346,16 +377,18 @@ def write_markdown_summary(per_journal, totals, path):
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def build_snapshot(conn):
+def build_snapshot(conn, year_min=None):
     """Compute the full coverage snapshot against an open sqlite connection.
-    Returns a dict with keys: generated_at, totals, per_journal, per_era.
-    Used by both the standalone script and db.get_detailed_coverage() so
-    production and development each report against their own live DB."""
-    base     = fetch_per_journal_base(conn)
-    outbound = fetch_outbound_by_journal(conn)
-    inbound  = fetch_inbound_by_journal(conn)
-    self_cit = fetch_self_citation_by_journal(conn)
-    topo     = fetch_topology_by_journal(conn)
+    Returns a dict with keys: generated_at, totals, per_journal, per_era,
+    year_min. When year_min is set, the per-journal table is filtered so
+    each row describes only articles published in [year_min, ∞). Era
+    breakdown and totals remain unfiltered — they're the global baseline.
+    Used by both the standalone script and db.get_detailed_coverage()."""
+    base     = fetch_per_journal_base(conn, year_min=year_min)
+    outbound = fetch_outbound_by_journal(conn, year_min=year_min)
+    inbound  = fetch_inbound_by_journal(conn, year_min=year_min)
+    self_cit = fetch_self_citation_by_journal(conn, year_min=year_min)
+    topo     = fetch_topology_by_journal(conn, year_min=year_min)
     era_map  = fetch_era_breakdown(conn)
 
     per_journal = build_per_journal(base, outbound, inbound, self_cit, topo)
@@ -364,6 +397,7 @@ def build_snapshot(conn):
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "year_min":     year_min,
         "totals":       totals,
         "per_journal":  per_journal,
         "per_era":      era_rows,
