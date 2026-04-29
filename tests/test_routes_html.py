@@ -88,6 +88,20 @@ def test_404_renders_custom_error_template(client):
     assert "404" in body or "not found" in body.lower()
 
 
+def test_404_inherits_from_base_core(client):
+    """error.html extends base-core.html — confirm the theme-switcher
+    script and CSS hooks inherited from the base template come through.
+    Doesn't assert sidebar markup: error.html intentionally extends
+    base-core.html (no sidebar) so a DB outage doesn't cascade into a
+    second failure trying to render the journal list."""
+    resp = client.get("/this-path-does-not-exist")
+    body = resp.get_data(as_text=True)
+    assert "rc-theme" in body, "base-core.html theme-toggle script missing"
+    assert "/static/style.css" in body, "base-core.html style include missing"
+    # error-specific content is still there
+    assert "error-page" in body
+
+
 def test_coverage_with_since_filter(client):
     resp = client.get("/coverage?since=2020")
     assert resp.status_code == 200

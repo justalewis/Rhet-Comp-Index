@@ -26,6 +26,7 @@ Usage:
     python scrape_ccdp.py --ingest     # scrape + ingest into Pinakes DB
 """
 
+import os
 import re
 import html
 import json
@@ -49,7 +50,7 @@ BASE_URL = "https://ccdigitalpress.org"
 JOURNAL_NAME = "Computers and Composition Digital Press"
 REQUEST_DELAY = 5        # seconds between requests (principle #2)
 USER_AGENT = "Pinakes/1.0 (scholarly-index; mailto:justalewis1@gmail.com)"
-OUTPUT_FILE = "ccdp_scraped.json"
+OUTPUT_FILE = os.path.join("data", "seeds", "ccdp_scraped.json")
 
 
 # ── HTTP helper ──────────────────────────────────────────────────────────────

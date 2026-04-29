@@ -1,3 +1,14 @@
+# Fly.io continuous deployment.
+#
+# Trigger:  fires only when the Tests workflow (.github/workflows/test.yml)
+#           completes successfully on `main`. We use workflow_run rather
+#           than `push` so a failing test run blocks deploy.
+# Strategy: --strategy immediate replaces the running machine in place,
+#           which is what we want since gunicorn is single-worker and
+#           rolling deploys would briefly serve from two instances racing
+#           on the same SQLite file.
+# Concurrency: only one Fly deploy may run at a time across this repo.
+#
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
@@ -10,7 +21,7 @@ jobs:
   deploy:
     name: Deploy app
     runs-on: ubuntu-latest
-    concurrency: deploy-group    # optional: ensure only one action runs at a time
+    concurrency: deploy-group
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
