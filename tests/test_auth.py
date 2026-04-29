@@ -170,16 +170,5 @@ def test_fetch_endpoint_succeeds_with_correct_token(client, monkeypatch):
     assert resp.get_json() == {"status": "fetch started"}
 
 
-# ── /health reports admin_auth status ───────────────────────────────────────
-
-
-def test_health_reports_admin_auth_configured(client, monkeypatch):
-    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "anything")
-    resp = client.get("/health")
-    assert resp.get_json()["admin_auth"] == "configured"
-
-
-def test_health_reports_admin_auth_missing(client, monkeypatch):
-    monkeypatch.delenv("PINAKES_ADMIN_TOKEN", raising=False)
-    resp = client.get("/health")
-    assert resp.get_json()["admin_auth"] == "missing"
+# /health's admin_auth surfacing is exercised in tests/test_health.py
+# (test_liveness_includes_admin_auth_status). Don't duplicate here.

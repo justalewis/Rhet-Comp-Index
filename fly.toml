@@ -6,6 +6,12 @@
 #   PINAKES_ADMIN_TOKEN  — bearer token for /fetch and other mutating endpoints
 #                          (see auth.py). When unset, mutating endpoints
 #                          return HTTP 503; read endpoints continue to work.
+#
+# Process groups (see [processes] below):
+#   app        — gunicorn web server. Receives all HTTP traffic.
+#   scheduler  — APScheduler BlockingScheduler running scheduler.py. No HTTP.
+# After deploying, scale the scheduler to one machine ONCE:
+#   flyctl scale count app=1 scheduler=1
 
 app = 'rhet-comp-index'
 primary_region = 'iad'
@@ -16,6 +22,17 @@ primary_region = 'iad'
   PORT = '8080'
   FLASK_ENV = 'production'
   DB_PATH = '/data/articles.db'
+
+[processes]
+  # The web process. Same gunicorn invocation that the Dockerfile uses as
+  # its CMD fallback; the [processes] entry overrides CMD on Fly.
+  app = "gunicorn --bind 0.0.0.0:8080 --workers 1 --timeout 120 --capture-output --log-level info app:app"
+  # The scheduler process. Standalone APScheduler BlockingScheduler. Writes
+  # /data/scheduler.heartbeat every cycle so /health/deep can verify it is
+  # actually running. With min_machines_running=1 and one machine per
+  # process group, there is exactly one scheduler at any time, so no
+  # double-fetch coordination is needed.
+  scheduler = "python scheduler.py"
 
 [[mounts]]
   source = 'rhet_comp_data'
@@ -28,6 +45,10 @@ primary_region = 'iad'
   auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
+  # Only the app process group serves HTTP. The scheduler does not bind a
+  # port, so excluding it here prevents Fly from health-checking it as a
+  # web service.
+  processes = ["app"]
 
   [http_service.concurrency]
     type = 'connections'
@@ -35,14 +56,15 @@ primary_region = 'iad'
     soft_limit = 20
 
   [[http_service.checks]]
-    # /health is exempt from rate limiting — see rate_limit.py.
-    # Without this exemption, Fly's 15s checks would consume ~4/min from the
-    # 60/min default budget for whatever IP the proxy presents itself as.
+    # Fly's check is a *readiness* concern — should this machine receive
+    # traffic? — not a liveness concern. /health/ready confirms the SQLite
+    # file is reachable; /health is the bare liveness probe used elsewhere.
+    # Both are exempt from rate limiting (see rate_limit.py).
     interval = "15s"
     timeout = "5s"
     grace_period = "10s"
     method = "GET"
-    path = "/health"
+    path = "/health/ready"
 
 [[vm]]
   memory = '1gb'

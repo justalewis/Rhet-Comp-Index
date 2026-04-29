@@ -20,6 +20,7 @@ import logging
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from db import init_db
+from health import write_heartbeat
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,6 +59,9 @@ def job():
         log.error("Scrape fetch failed: %s", e)
 
     log.info("=== Fetch complete — %d total new articles ===", total)
+    # Heartbeat — let /health/deep confirm the scheduler is actually running.
+    # Wrapped inside health.write_heartbeat itself; no further try/except.
+    write_heartbeat()
 
 
 def openalex_job():
@@ -75,10 +79,15 @@ def openalex_job():
         )
     except Exception as e:
         log.error("OpenAlex enrichment failed: %s", e)
+    write_heartbeat()
 
 
 if __name__ == "__main__":
     init_db()
+
+    # Initial heartbeat — a freshly-deployed scheduler is observable to
+    # /health/deep before the first job() call completes.
+    write_heartbeat()
 
     # Tag articles from known gold-OA journals (fast, no API calls)
     from db import backfill_oa_status
@@ -92,6 +101,11 @@ if __name__ == "__main__":
     scheduler = BlockingScheduler()
     scheduler.add_job(job, "interval", hours=24, id="daily_fetch")
     scheduler.add_job(openalex_job, "interval", weeks=1, id="weekly_openalex")
+    # Frequent heartbeat so /health/deep stays accurate between job runs.
+    # Heartbeat staleness threshold in health.py is 25h, but pinging every
+    # 5 minutes keeps the file's mtime fresh and surfaces a wedged scheduler
+    # within minutes rather than hours.
+    scheduler.add_job(write_heartbeat, "interval", minutes=5, id="heartbeat")
     log.info("Scheduler running — daily fetch every 24 h, OpenAlex enrichment every 7 days. Ctrl+C to stop.")
     try:
         scheduler.start()

@@ -26,6 +26,7 @@ import pytest  # noqa: E402
 # Now safe to import — app.py at import time creates the session DB schema.
 import db as _db  # noqa: E402
 import app as _app_module  # noqa: E402
+import health as _health_module  # noqa: E402
 from rate_limit import limiter as _limiter  # noqa: E402
 from tests._seed import seed_database  # noqa: E402
 
@@ -46,11 +47,12 @@ def fixture_db(tmp_path, monkeypatch):
     monkeypatch.setattr(_db, "DB_PATH", str(db_file))
     monkeypatch.setenv("DB_PATH", str(db_file))
     _db.init_db()
-    # Module-level caches in app.py and db.py must be reset so they don't
-    # leak state between tests.
+    # Module-level caches in app.py / db.py / health.py must be reset so
+    # they don't leak state between tests.
     _app_module._sidebar_cache = None
     _app_module._sidebar_ts = 0.0
     _db._DETAILED_COVERAGE_CACHE.clear()
+    _health_module.clear_integrity_cache()
     yield db_file
 
 
@@ -62,6 +64,7 @@ def seeded_db(fixture_db):
     _app_module._sidebar_cache = None
     _app_module._sidebar_ts = 0.0
     _db._DETAILED_COVERAGE_CACHE.clear()
+    _health_module.clear_integrity_cache()
     yield fixture_db
 
 

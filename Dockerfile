@@ -32,6 +32,12 @@ ENV PORT=8080
 
 EXPOSE 8080
 
+# On Fly, fly.toml's [processes] block defines two entry points (app =
+# gunicorn, scheduler = python scheduler.py) and overrides this CMD. The
+# default below applies to plain `docker run pinakes` and to local dev.
+# To run the scheduler in a non-Fly container, override CMD:
+#   docker run pinakes python scheduler.py
+#
 # Use gunicorn for production; 1 worker keeps SQLite writes safe.
 # --preload is intentionally omitted: it imports app.py (and runs init_db) in the
 # master process before forking, which conflicts with any background SQLite writer

@@ -89,6 +89,8 @@ from db import (
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, MANUAL_JOURNALS, UNAVAILABLE_JOURNALS, JOURNAL_GROUPS
 from auth import require_admin_token, admin_token_configured
 from rate_limit import limiter, LIMITS, fetch_auth_failing
+import health as _health
+from health import APP_VERSION
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -124,14 +126,9 @@ def _safe_float(val, default, lo=None, hi=None):
     return n
 
 # ── Static asset versioning ────────────────────────────────────────────────────
-import subprocess as _sp
-try:
-    APP_VERSION = _sp.check_output(
-        ["git", "rev-parse", "--short", "HEAD"], stderr=_sp.DEVNULL
-    ).decode().strip()
-except Exception:
-    APP_VERSION = "dev"
-
+# APP_VERSION (the short git SHA, or "dev" when git isn't available) is
+# computed once in health.py and re-exported here for templates' cache-busting
+# query string. Single source of truth.
 
 @app.context_processor
 def inject_globals():
@@ -1240,12 +1237,29 @@ def new_articles():
 @app.route("/health")
 @limiter.exempt
 def health():
-    """Lightweight health check — no DB queries, returns immediately.
-    Reports admin-token configuration so deployment status is observable."""
-    return jsonify({
-        "status": "ok",
-        "admin_auth": "configured" if admin_token_configured() else "missing",
-    }), 200
+    """Liveness probe — process is up. No DB query; returns in <1ms.
+    This is what Fly hits every 15 seconds. Stays unauthenticated because
+    Fly's checker can't carry tokens."""
+    return jsonify(_health.liveness()), 200
+
+
+@app.route("/health/ready")
+@limiter.exempt
+def health_ready():
+    """Readiness probe — DB reachable. Used by Fly as a deployment gate
+    and by external monitoring. 503 if the SQLite file is missing or a
+    `SELECT 1 FROM articles LIMIT 1` doesn't return within 250ms."""
+    body, status = _health.readiness()
+    return jsonify(body), status
+
+
+@app.route("/health/deep")
+@require_admin_token
+def health_deep():
+    """Full diagnostic: counts, last-fetch, disk, scheduler heartbeat,
+    integrity check (cached for 6h), security-header configuration.
+    Admin-protected because it exposes operational metadata."""
+    return jsonify(_health.deep_diagnostic()), 200
 
 
 @app.route("/about")

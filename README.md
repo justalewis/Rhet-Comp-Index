@@ -77,6 +77,42 @@ curl -X POST https://pinakes.xyz/fetch \
 
 `GET /health` reports the configuration status as `{"admin_auth": "configured" | "missing"}` so you can verify the secret landed without leaking its value.
 
+## Production deployment (Fly.io)
+
+Pinakes runs as **two process groups** on Fly:
+
+| Process | Entry point | Purpose |
+|---|---|---|
+| `app` | `gunicorn ... app:app` | Web server. Receives all HTTP traffic. |
+| `scheduler` | `python scheduler.py` | Daily fetch + weekly OpenAlex enrichment. No HTTP. Writes `/data/scheduler.heartbeat` so `GET /health/deep` can verify it's alive. |
+
+After the first deploy, scale each process group to one machine (one-time):
+
+```bash
+flyctl scale count app=1 scheduler=1
+```
+
+Subsequent deploys preserve the scaling. Verify both groups are running:
+
+```bash
+flyctl status
+flyctl machine list
+```
+
+### Health endpoints
+
+| Endpoint | Auth | Purpose |
+|---|---|---|
+| `GET /health` | none | Liveness — process is up. <50ms, no DB. |
+| `GET /health/ready` | none | Readiness — DB is reachable. Used by Fly's check loop. |
+| `GET /health/deep` | admin token | Full diagnostic — counts, last-fetch, disk, scheduler heartbeat, integrity check. |
+
+Example deep-health probe from your laptop:
+
+```bash
+curl -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.xyz/health/deep | jq
+```
+
 ## Running tests
 
 ```bash
