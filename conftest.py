@@ -26,7 +26,17 @@ import pytest  # noqa: E402
 # Now safe to import — app.py at import time creates the session DB schema.
 import db as _db  # noqa: E402
 import app as _app_module  # noqa: E402
+from rate_limit import limiter as _limiter  # noqa: E402
 from tests._seed import seed_database  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Clear Flask-Limiter's in-memory storage between tests so accumulated
+    counts from earlier tests don't leak into the next one's budget."""
+    _limiter.reset()
+    yield
+    _limiter.reset()
 
 
 @pytest.fixture

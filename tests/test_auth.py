@@ -164,8 +164,7 @@ def test_fetch_endpoint_503_when_token_missing(client, monkeypatch):
 
 def test_fetch_endpoint_succeeds_with_correct_token(client, monkeypatch):
     monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
-    fake_thread = MagicMock()
-    with patch("app.threading.Thread", return_value=fake_thread):
+    with patch("app._run_background_fetch", MagicMock()):
         resp = client.post("/fetch", headers={"Authorization": "Bearer real"})
     assert resp.status_code == 200
     assert resp.get_json() == {"status": "fetch started"}

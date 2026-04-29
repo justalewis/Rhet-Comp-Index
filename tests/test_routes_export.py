@@ -73,24 +73,24 @@ def test_export_unknown_article_id(client):
 # ── /fetch (POST) ───────────────────────────────────────────────────────────
 
 
-def test_fetch_route_starts_thread_does_not_run(client, monkeypatch):
-    """POST /fetch must spawn a daemon thread targeting _run, but the
-    background work must NOT execute during the test (no network calls).
+def test_fetch_route_starts_background_work(client, monkeypatch):
+    """POST /fetch returns 200 immediately and dispatches the background
+    worker. We patch the module-level _run_background_fetch so the daemon
+    thread runs harmlessly (no network) and we can assert it was invoked.
     Auth-specific behavior is covered in test_auth.py."""
+    import time
     monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "test-token")
-    fake_thread = MagicMock()
-    with patch("app.threading.Thread", return_value=fake_thread) as ThreadCls:
+    mock_run = MagicMock()
+    with patch("app._run_background_fetch", mock_run):
         resp = client.post("/fetch", headers={"Authorization": "Bearer test-token"})
+        # Daemon thread fires almost immediately; give it up to 200ms.
+        for _ in range(20):
+            if mock_run.called:
+                break
+            time.sleep(0.01)
     assert resp.status_code == 200
-    body = resp.get_json()
-    assert body == {"status": "fetch started"}
-    # Thread was constructed with target=_run, daemon=True
-    ThreadCls.assert_called_once()
-    kwargs = ThreadCls.call_args.kwargs
-    assert kwargs.get("daemon") is True
-    assert callable(kwargs.get("target"))
-    # And start() was invoked
-    fake_thread.start.assert_called_once()
+    assert resp.get_json() == {"status": "fetch started"}
+    assert mock_run.called
 
 
 def test_fetch_route_get_returns_405(client):

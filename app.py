@@ -88,10 +88,12 @@ from db import (
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, MANUAL_JOURNALS, UNAVAILABLE_JOURNALS, JOURNAL_GROUPS
 from auth import require_admin_token, admin_token_configured
+from rate_limit import limiter, LIMITS, fetch_auth_failing
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
 Compress(app)
+limiter.init_app(app)
 
 
 # ── Input-validation helpers ──────────────────────────────────────────────────
@@ -183,6 +185,48 @@ def not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return render_template("error.html", code=500, message="Internal server error"), 500
+
+
+@app.errorhandler(429)
+def rate_limit_exceeded(e):
+    """Friendly 429 for rate-limit hits. JSON for /api/* and explicit
+    JSON Accept; HTML otherwise."""
+    # Compute retry_after: prefer the limit's reset_at; fall back to 60s.
+    retry_after = 60
+    try:
+        if getattr(e, "retry_after", None):
+            retry_after = int(e.retry_after)
+        elif getattr(e, "limit", None) is not None:
+            reset = int(e.limit.reset_at - time.time())
+            retry_after = max(1, reset)
+    except Exception:
+        pass
+
+    log.debug(
+        "rate limit hit: ip=%s path=%s description=%s",
+        request.headers.get("Fly-Client-IP") or request.remote_addr,
+        request.path, getattr(e, "description", ""),
+    )
+
+    wants_json = (
+        request.path.startswith("/api/")
+        or "application/json" in request.headers.get("Accept", "")
+    )
+    if wants_json:
+        body = jsonify({"error": "rate limit exceeded", "retry_after": retry_after})
+        body.headers["Retry-After"] = str(retry_after)
+        return body, 429
+
+    response = make_response(
+        render_template(
+            "error.html",
+            code=429,
+            message=f"Rate limit exceeded — please retry in {retry_after} seconds.",
+        ),
+        429,
+    )
+    response.headers["Retry-After"] = str(retry_after)
+    return response
 
 
 # ── HTTP security headers ─────────────────────────────────────────────────────
@@ -538,27 +582,32 @@ def api_articles():
     return jsonify({"articles": articles, "total": total})
 
 
+def _run_background_fetch():
+    """Background-thread target for /fetch. Module-level so tests can patch
+    it directly rather than mocking threading.Thread (which would also
+    intercept Flask-Limiter's internal Timer use)."""
+    try:
+        # Tag any untagged articles from known gold-OA journals
+        from db import backfill_oa_status
+        backfill_oa_status()
+
+        from fetcher     import fetch_all as crossref_fetch
+        from rss_fetcher import fetch_all as rss_fetch
+        from scraper     import fetch_all as scrape_fetch
+        crossref_fetch(incremental=True)
+        rss_fetch()
+        scrape_fetch()
+    except Exception as e:
+        log.error("Background fetch error: %s", e)
+
+
 @app.route("/fetch", methods=["POST"])
+@limiter.limit(LIMITS["fetch"], exempt_when=fetch_auth_failing)
 @require_admin_token
 def trigger_fetch():
     """Kick off an incremental fetch of all sources in a background thread.
     Requires `Authorization: Bearer <PINAKES_ADMIN_TOKEN>`."""
-    def _run():
-        try:
-            # Tag any untagged articles from known gold-OA journals
-            from db import backfill_oa_status
-            backfill_oa_status()
-
-            from fetcher     import fetch_all as crossref_fetch
-            from rss_fetcher import fetch_all as rss_fetch
-            from scraper     import fetch_all as scrape_fetch
-            crossref_fetch(incremental=True)
-            rss_fetch()
-            scrape_fetch()
-        except Exception as e:
-            log.error("Background fetch error: %s", e)
-
-    t = threading.Thread(target=_run, daemon=True)
+    t = threading.Thread(target=_run_background_fetch, daemon=True)
     t.start()
     return jsonify({"status": "fetch started"})
 
@@ -790,6 +839,7 @@ def citation_network_page():
 
 
 @app.route("/api/citations/ego")
+@limiter.limit(LIMITS["citations"])
 def api_ego_network():
     """JSON: 2-degree ego network around a specific article."""
     article_id = request.args.get("article", type=int)
@@ -799,6 +849,7 @@ def api_ego_network():
 
 
 @app.route("/api/stats/timeline")
+@limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_timeline():
     """JSON: article counts per year per journal, 1990–present."""
@@ -826,6 +877,7 @@ def api_timeline():
 
 
 @app.route("/api/stats/tag-cooccurrence")
+@limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_tag_cooccurrence():
     """JSON: tag co-occurrence matrix."""
@@ -833,6 +885,7 @@ def api_tag_cooccurrence():
 
 
 @app.route("/api/stats/author-network")
+@limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_author_network():
     """JSON: author co-authorship network nodes and links.
@@ -844,6 +897,7 @@ def api_author_network():
 
 
 @app.route("/api/stats/citation-trends")
+@limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_citation_trends():
     """JSON: avg internal citations per article per year, filtered by optional journal."""
@@ -852,6 +906,7 @@ def api_citation_trends():
 
 
 @app.route("/api/citations/network")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_citations_network():
     """JSON: force-graph nodes and directed edges for the citation network."""
@@ -870,6 +925,7 @@ def api_citations_network():
 
 
 @app.route("/api/citations/cocitation")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_cocitation_network():
     """JSON: co-citation network — undirected weighted graph of articles co-cited together."""
@@ -890,6 +946,7 @@ def api_cocitation_network():
 
 
 @app.route("/api/citations/bibcoupling")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_bibcoupling_network():
     """JSON: bibliographic coupling network — articles linked by shared references."""
@@ -910,6 +967,7 @@ def api_bibcoupling_network():
 
 
 @app.route("/api/citations/centrality")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_citation_centrality():
     """JSON: citation network with eigenvector and betweenness centrality scores."""
@@ -930,6 +988,7 @@ def api_citation_centrality():
 
 
 @app.route("/api/citations/sleeping-beauties")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_sleeping_beauties():
     """JSON: articles with delayed citation recognition (Sleeping Beauties)."""
@@ -950,6 +1009,7 @@ def api_sleeping_beauties():
 
 
 @app.route("/api/citations/journal-flow")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_journal_citation_flow():
     """JSON: journal-to-journal citation flow matrix for chord diagram."""
@@ -968,6 +1028,7 @@ def api_journal_citation_flow():
 
 
 @app.route("/api/citations/half-life")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_citation_half_life():
     """JSON: citing and cited half-life per journal."""
@@ -988,6 +1049,7 @@ def api_citation_half_life():
 
 
 @app.route("/api/citations/communities")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_citation_communities():
     """JSON: community detection via Louvain modularity optimization."""
@@ -1010,6 +1072,7 @@ def api_citation_communities():
 
 
 @app.route("/api/citations/main-path")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_main_path():
     """JSON: main path analysis — the backbone of knowledge flow."""
@@ -1030,6 +1093,7 @@ def api_main_path():
 
 
 @app.route("/api/citations/temporal-evolution")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_temporal_evolution():
     """JSON: temporal network evolution — structural metrics over time windows."""
@@ -1054,6 +1118,7 @@ def api_temporal_evolution():
 
 
 @app.route("/api/articles/search")
+@limiter.limit(LIMITS["search"])
 def api_article_search():
     """JSON: autocomplete article search for reading path seed selection."""
     q = request.args.get("q", "").strip()
@@ -1064,6 +1129,7 @@ def api_article_search():
 
 
 @app.route("/api/citations/reading-path")
+@limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_reading_path():
     """JSON: reading path around a seed article — cites, cited-by, co-citation, bib coupling."""
@@ -1104,6 +1170,7 @@ def api_author_cocitation_partners(name):
 
 
 @app.route("/api/stats/most-cited")
+@limiter.limit(LIMITS["stats"])
 def api_most_cited():
     """JSON: top articles by internal citation count, with optional filters."""
     year_from = request.args.get("year_from", "").strip()
@@ -1123,6 +1190,7 @@ def api_most_cited():
 
 
 @app.route("/api/stats/institutions")
+@limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_institutions():
     """JSON: top institutions by article count + top-10 timeline."""
@@ -1170,6 +1238,7 @@ def new_articles():
 
 
 @app.route("/health")
+@limiter.exempt
 def health():
     """Lightweight health check — no DB queries, returns immediately.
     Reports admin-token configuration so deployment status is observable."""

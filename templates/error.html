@@ -42,9 +42,16 @@
   </style>
 </head>
 <body>
+  {# Per-code default messages, used when the handler does not pass one. #}
+  {% set default_messages = {
+      404: "The page you're looking for doesn't exist.",
+      429: "Rate limit exceeded — please slow down and try again in a moment.",
+      500: "Something went wrong on our end.",
+  } %}
+  {% set display_message = message or default_messages.get(code) or "An error occurred." %}
   <div class="error-page">
     <div class="error-code">{{ code }}</div>
-    <div class="error-message">{{ message }}</div>
+    <div class="error-message">{{ display_message }}</div>
     <a href="/" class="error-home">&larr; Back to Pinakes</a>
   </div>
 </body>

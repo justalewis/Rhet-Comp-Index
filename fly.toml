@@ -35,6 +35,9 @@ primary_region = 'iad'
     soft_limit = 20
 
   [[http_service.checks]]
+    # /health is exempt from rate limiting — see rate_limit.py.
+    # Without this exemption, Fly's 15s checks would consume ~4/min from the
+    # 60/min default budget for whatever IP the proxy presents itself as.
     interval = "15s"
     timeout = "5s"
     grace_period = "10s"
