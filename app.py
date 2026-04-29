@@ -87,6 +87,7 @@ from db import (
     get_book_publishers,
 )
 from journals import CROSSREF_JOURNALS, RSS_JOURNALS, SCRAPE_JOURNALS, MANUAL_JOURNALS, UNAVAILABLE_JOURNALS, JOURNAL_GROUPS
+from auth import require_admin_token, admin_token_configured
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -138,6 +139,13 @@ def inject_globals():
 
 # Initialise DB at import time so gunicorn workers find the schema on startup.
 init_db()
+
+# Surface a missing admin token at startup. Read endpoints continue to work;
+# mutating endpoints will reject all requests with 503 until the secret is set.
+if not admin_token_configured():
+    log.critical(
+        "PINAKES_ADMIN_TOKEN is not set; mutating endpoints will reject all requests"
+    )
 
 # Tag articles from known gold-OA journals (fast, no API calls).
 from db import backfill_oa_status as _backfill_oa
@@ -531,8 +539,10 @@ def api_articles():
 
 
 @app.route("/fetch", methods=["POST"])
+@require_admin_token
 def trigger_fetch():
-    """Kick off an incremental fetch of all sources in a background thread."""
+    """Kick off an incremental fetch of all sources in a background thread.
+    Requires `Authorization: Bearer <PINAKES_ADMIN_TOKEN>`."""
     def _run():
         try:
             # Tag any untagged articles from known gold-OA journals
@@ -1161,8 +1171,12 @@ def new_articles():
 
 @app.route("/health")
 def health():
-    """Lightweight health check — no DB queries, returns immediately."""
-    return "ok", 200
+    """Lightweight health check — no DB queries, returns immediately.
+    Reports admin-token configuration so deployment status is observable."""
+    return jsonify({
+        "status": "ok",
+        "admin_auth": "configured" if admin_token_configured() else "missing",
+    }), 200
 
 
 @app.route("/about")

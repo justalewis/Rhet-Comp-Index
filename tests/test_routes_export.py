@@ -73,12 +73,14 @@ def test_export_unknown_article_id(client):
 # ── /fetch (POST) ───────────────────────────────────────────────────────────
 
 
-def test_fetch_route_starts_thread_does_not_run(client):
+def test_fetch_route_starts_thread_does_not_run(client, monkeypatch):
     """POST /fetch must spawn a daemon thread targeting _run, but the
-    background work must NOT execute during the test (no network calls)."""
+    background work must NOT execute during the test (no network calls).
+    Auth-specific behavior is covered in test_auth.py."""
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "test-token")
     fake_thread = MagicMock()
     with patch("app.threading.Thread", return_value=fake_thread) as ThreadCls:
-        resp = client.post("/fetch")
+        resp = client.post("/fetch", headers={"Authorization": "Bearer test-token"})
     assert resp.status_code == 200
     body = resp.get_json()
     assert body == {"status": "fetch started"}
@@ -99,11 +101,14 @@ def test_fetch_route_get_returns_405(client):
 # ── /health ─────────────────────────────────────────────────────────────────
 
 
-def test_health_returns_ok_quickly(client):
+def test_health_returns_json_status_quickly(client):
     t0 = time.time()
     resp = client.get("/health")
     elapsed_ms = (time.time() - t0) * 1000
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == "ok"
+    assert resp.headers["Content-Type"].startswith("application/json")
+    body = resp.get_json()
+    assert body["status"] == "ok"
+    assert body["admin_auth"] in {"configured", "missing"}
     # The route does NO db queries, so it should be fast.
     assert elapsed_ms < 50, f"/health took {elapsed_ms:.1f}ms (>50ms)"

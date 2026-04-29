@@ -2,6 +2,10 @@
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
+# Required secrets (set with `flyctl secrets set`, NOT in [env] below):
+#   PINAKES_ADMIN_TOKEN  — bearer token for /fetch and other mutating endpoints
+#                          (see auth.py). When unset, mutating endpoints
+#                          return HTTP 503; read endpoints continue to work.
 
 app = 'rhet-comp-index'
 primary_region = 'iad'

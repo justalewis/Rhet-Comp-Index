@@ -6,6 +6,12 @@ then repeats every 24 hours.
 
 Also runs the OpenAlex enrichment job weekly (every 7 days).
 
+This process invokes fetch_all() on each ingester directly (in-process),
+not through the /fetch HTTP endpoint, so it does not pass through the
+admin-token authentication added in auth.py. If the scheduler is ever
+moved to HTTP-triggered fetches, the PINAKES_ADMIN_TOKEN env var must
+be read here and sent as `Authorization: Bearer <token>`.
+
 Usage:
     python scheduler.py
 """

@@ -53,6 +53,30 @@ You can also click **Refresh from CrossRef** in the sidebar to trigger a manual 
 └── requirements.txt
 ```
 
+## Deployment secrets
+
+The app reads sensitive configuration from environment variables. On Fly.io,
+set them as secrets (NOT in `fly.toml`'s `[env]` block):
+
+| Secret | Purpose | Required? |
+|---|---|---|
+| `PINAKES_ADMIN_TOKEN` | Bearer token for `POST /fetch` and other mutating endpoints (see `auth.py`). When unset, mutating endpoints return HTTP 503. | Yes for production; optional for read-only local dev. |
+
+Generate and set the admin token:
+
+```bash
+flyctl secrets set PINAKES_ADMIN_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+```
+
+To trigger a manual fetch from the production server:
+
+```bash
+curl -X POST https://pinakes.xyz/fetch \
+  -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN"
+```
+
+`GET /health` reports the configuration status as `{"admin_auth": "configured" | "missing"}` so you can verify the secret landed without leaking its value.
+
 ## Running tests
 
 ```bash
