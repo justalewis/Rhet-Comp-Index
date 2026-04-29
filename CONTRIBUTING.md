@@ -22,7 +22,7 @@ A new scraper is reviewed against this list before it merges. If it fails any of
 
 The harness lives in `tests/`; conventions are documented in [`docs/refactor-notes/01-test-harness.md`](docs/refactor-notes/01-test-harness.md). For most changes:
 
-- **Any new database query function** in [`db.py`](db.py): add a unit test in `tests/test_db_*.py` covering one happy path and one edge case (empty input, missing DB, etc.).
+- **Any new database query function** in the [database layer](db/) (organized by concern under `db/`: `articles.py`, `authors.py`, `citations.py`, `books.py`, `institutions.py`, `coverage.py`, `core.py`, `fetch_log.py`): add a unit test in `tests/test_db_*.py` covering one happy path and one edge case (empty input, missing DB, etc.).
 - **Any new route in [`app.py`](app.py)**: add a smoke test in `tests/test_routes_*.py` that exercises a 200 response and asserts a content marker.
 - **Any new ingester or parser**: add a test that uses a captured fixture in `tests/fixtures/` and stubs the HTTP layer with `responses` or `feedparser` mocks. Never make a network call from the test suite.
 
@@ -42,7 +42,7 @@ Python code is checked informally — no required formatter today, but follow th
 
 - Imperative function names; type hints on new functions where they aid clarity.
 - Comments only where the *why* isn't obvious; never narrate the code.
-- Match the existing two-blank-line / module-docstring conventions in [`db.py`](db.py) and [`app.py`](app.py).
+- Match the existing two-blank-line / module-docstring conventions in the [database layer](db/) and [`app.py`](app.py).
 
 For HTML / Jinja: extend `templates/base.html` (full layout) or `templates/base-core.html` (minimal — used for fail states like `error.html`); don't duplicate the `<head>`.
 

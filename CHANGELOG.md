@@ -19,6 +19,7 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 
 ### Changed
 
+- `db.py` (4,405 lines, 96 functions) decomposed into a `db/` package — submodules `core`, `articles`, `authors`, `citations`, `books`, `institutions`, `coverage`, `fetch_log`. Public API preserved exactly via re-exports in `db/__init__.py`; every import site outside the package keeps working with no edits. Internals moved verbatim — no SQL, docstring, or type-hint changes. See [`docs/refactor-notes/09-db-split-inventory.md`](docs/refactor-notes/09-db-split-inventory.md).
 - `templates/error.html` now extends `base-core.html` (theme switcher and CSS inherited; sidebar intentionally omitted because a DB outage would otherwise cascade into a second failure).
 - README rewritten end-to-end to reflect the actual scope of the project (44+ journals, 50,000+ articles, four data sources).
 - Fly health-check path moved from `/health` to `/health/ready` — readiness is the right semantics for "should this machine receive traffic."

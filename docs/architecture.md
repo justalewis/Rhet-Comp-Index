@@ -16,7 +16,7 @@ Both processes share the SQLite file at `/data/articles.db` on a Fly volume. SQL
 | Concern | Module(s) | Documented in |
 |---|---|---|
 | Routes & request handling | [`app.py`](../app.py) | this file (placeholder) |
-| Database layer | [`db.py`](../db.py) | [refactor-notes/01](refactor-notes/01-test-harness.md) (testing) |
+| Database layer | [`db/`](../db/) (package: core, articles, authors, citations, books, institutions, coverage, fetch_log) | [refactor-notes/09](refactor-notes/09-db-split-inventory.md) (split rationale) |
 | Auth on mutating endpoints | [`auth.py`](../auth.py) | [refactor-notes/02](refactor-notes/02-admin-auth.md) |
 | Rate limiting | [`rate_limit.py`](../rate_limit.py) | [refactor-notes/03](refactor-notes/03-rate-limiting.md) |
 | Health checks | [`health.py`](../health.py) | [refactor-notes/04](refactor-notes/04-health-and-scheduler.md) |
@@ -29,7 +29,7 @@ Both processes share the SQLite file at `/data/articles.db` on a Fly volume. SQL
 ## Data flow
 
 ```
-External sources → Ingesters → upsert_article (db.py) → SQLite
+External sources → Ingesters → upsert_article (db.articles) → SQLite
                                        │
        OpenAlex enrichment ────────────┤
                                        ▼
@@ -42,7 +42,7 @@ External sources → Ingesters → upsert_article (db.py) → SQLite
                   HTML (Jinja) / JSON / BibTeX / RIS exports
 ```
 
-Citation networks, co-citation graphs, sleeping-beauty detection, and other analytics are computed on demand in `db.py` using NetworkX. None of these are precomputed; they're cheap enough on the current corpus (~50 k articles, ~ 30 k citation edges) that on-demand computation is fine and avoids a stale-cache problem.
+Citation networks, co-citation graphs, sleeping-beauty detection, and other analytics are computed on demand in `db.citations` using NetworkX. None of these are precomputed; they're cheap enough on the current corpus (~50 k articles, ~ 30 k citation edges) that on-demand computation is fine and avoids a stale-cache problem.
 
 ## Why SQLite
 
