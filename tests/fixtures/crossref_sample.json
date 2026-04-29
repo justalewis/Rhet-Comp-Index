@@ -1,0 +1,58 @@
+{
+  "status": "ok",
+  "message-type": "work-list",
+  "message": {
+    "next-cursor": "AoIxBy0wMS0wMVQwMDowMDowMFo=",
+    "total-results": 5,
+    "items": [
+      {
+        "DOI": "10.1234/test.00001",
+        "title": ["The rhetoric of the unknown: notes on uncertainty"],
+        "author": [
+          {"given": "Jane", "family": "Smith"},
+          {"given": "John", "family": "Adams"}
+        ],
+        "abstract": "<jats:p>This article examines how composition theory accounts for <jats:italic>uncertainty</jats:italic> in writing.</jats:p>",
+        "published-print": {"date-parts": [[2024, 3, 15]]},
+        "container-title": ["College English"],
+        "subject": ["Rhetoric", "Composition"]
+      },
+      {
+        "DOI": "10.1234/test.00002",
+        "title": ["Genre theory revisited"],
+        "author": [{"given": "Aisha", "family": "Bell"}],
+        "abstract": "<jats:p>A re-reading of genre theory in the wake of digital practice.</jats:p>",
+        "published-online": {"date-parts": [[2024, 2, 1]]},
+        "container-title": ["College English"],
+        "subject": ["Genre"]
+      },
+      {
+        "DOI": "10.1234/test.00003",
+        "title": ["Revision strategies in undergraduate writing"],
+        "author": [
+          {"given": "Carlos", "family": "Diaz"},
+          {"given": "Emma", "family": "Frost"},
+          {"family": "Anonymous"}
+        ],
+        "abstract": "An empirical study of revision strategies.",
+        "issued": {"date-parts": [[2023, 11]]},
+        "container-title": ["College English"]
+      },
+      {
+        "DOI": "10.1234/test.00004",
+        "title": ["No abstract here"],
+        "author": [{"given": "George", "family": "Hu"}],
+        "published-print": {"date-parts": [[2023, 10, 15]]},
+        "container-title": ["College English"]
+      },
+      {
+        "DOI": "10.1234/test.00005",
+        "title": ["A note on assessment"],
+        "author": [],
+        "abstract": "<jats:p>Assessment matters. <jats:bold>Always.</jats:bold></jats:p>",
+        "issued": {"date-parts": [[2023, 8]]},
+        "container-title": ["College English"]
+      }
+    ]
+  }
+}

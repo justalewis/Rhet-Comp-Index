@@ -47,5 +47,11 @@ Desktop.ini
 *.log
 logs/
 
+# Test artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
 # Misc
 headers.txt

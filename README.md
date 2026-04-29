@@ -53,6 +53,17 @@ You can also click **Refresh from CrossRef** in the sidebar to trigger a manual 
 └── requirements.txt
 ```
 
+## Running tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest                    # full suite (fast tests only)
+pytest -m "not slow"      # explicit fast suite
+pytest --cov=. --cov-report=term-missing  # with coverage
+```
+
+The harness uses an isolated SQLite file per test (no production data is touched) and stubs all HTTP via `responses` and `feedparser` mocks. CI runs the suite on every push and pull request, and the Fly deploy is gated on test passage.
+
 ## Notes
 
 - The CrossRef API is free and requires no API key

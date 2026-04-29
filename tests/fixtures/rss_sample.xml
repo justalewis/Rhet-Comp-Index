@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Present Tense: A Journal of Rhetoric in Society</title>
+    <link>https://www.presenttensejournal.org/</link>
+    <description>Test feed</description>
+    <item>
+      <title>Public memory and the digital archive</title>
+      <link>https://www.presenttensejournal.org/post/2024-04-01-memory</link>
+      <pubDate>Mon, 01 Apr 2024 12:00:00 +0000</pubDate>
+      <dc:creator>Aisha Bell</dc:creator>
+      <description>&lt;p&gt;This essay explores public memory in digital archives.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Disability, access, and writing infrastructure</title>
+      <link>https://www.presenttensejournal.org/post/2024-03-15-access</link>
+      <pubDate>Fri, 15 Mar 2024 12:00:00 +0000</pubDate>
+      <dc:creator>Hannah Iyer</dc:creator>
+      <description>An argument about access and infrastructure in writing studies.</description>
+    </item>
+    <item>
+      <title>Notes on first-year composition</title>
+      <link>https://www.presenttensejournal.org/post/2024-02-10-fyc</link>
+      <pubDate>Sat, 10 Feb 2024 09:30:00 +0000</pubDate>
+      <dc:creator>Kira Lee</dc:creator>
+      <description>&lt;p&gt;Reflections on FYC after twenty years.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
