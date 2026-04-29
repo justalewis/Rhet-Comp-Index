@@ -90,6 +90,52 @@ def openalex_job():
     write_heartbeat()
 
 
+def backup_job():
+    """Nightly online SQLite backup → zstd → age → S3-compatible bucket.
+    Self-reports failures via Sentry; never raises (would otherwise abort
+    APScheduler's interval thread)."""
+    log.info("=== Nightly backup starting ===")
+    try:
+        from backup import run_backup
+        summary = run_backup()
+    except Exception as e:
+        log.error("Backup orchestrator crashed: %s", e)
+        capture_fetcher_error("backup", "system", e)
+        write_heartbeat()
+        return
+    if summary["success"]:
+        log.info(
+            "Backup OK: snapshot=%s bytes, compressed=%s bytes, key=%s, pruned=%d in %ss",
+            summary["snapshot_bytes"], summary["compressed_bytes"],
+            summary["uploaded_to"], len(summary["pruned_keys"]),
+            summary["duration_seconds"],
+        )
+    else:
+        log.error("Backup FAILED: %s", summary.get("error"))
+    write_heartbeat()
+
+
+def verify_backup_job():
+    """Weekly verification: download the latest backup and confirm it's
+    age-formatted and non-zero. Without a private key on Fly, this catches
+    upload-pipeline rot but not in-blob bit-rot. Full integrity-check
+    drills are operator-driven via restore.py."""
+    log.info("=== Weekly backup verification starting ===")
+    try:
+        from backup import verify_latest_backup
+        result = verify_latest_backup()
+    except Exception as e:
+        log.error("Backup verify orchestrator crashed: %s", e)
+        capture_fetcher_error("backup", "verify", e)
+        write_heartbeat()
+        return
+    if result["success"]:
+        log.info("Verify OK: key=%s checks=%s", result["key"], result["checks_run"])
+    else:
+        log.error("Verify FAILED: %s", result.get("error"))
+    write_heartbeat()
+
+
 if __name__ == "__main__":
     init_db()
 
@@ -109,12 +155,20 @@ if __name__ == "__main__":
     scheduler = BlockingScheduler()
     scheduler.add_job(job, "interval", hours=24, id="daily_fetch")
     scheduler.add_job(openalex_job, "interval", weeks=1, id="weekly_openalex")
+    # Daily backup at 03:00 UTC — chosen to be after most newly-deposited
+    # CrossRef DOIs have settled but well before US-AM weekday traffic.
+    scheduler.add_job(backup_job, "cron", hour=3, minute=0, id="daily_backup")
+    # Weekly verify at 04:00 UTC Sunday — separates the verify download
+    # from the daily backup upload so an outage on either side is
+    # diagnosable independently.
+    scheduler.add_job(verify_backup_job, "cron", day_of_week="sun",
+                      hour=4, minute=0, id="weekly_verify")
     # Frequent heartbeat so /health/deep stays accurate between job runs.
     # Heartbeat staleness threshold in health.py is 25h, but pinging every
     # 5 minutes keeps the file's mtime fresh and surfaces a wedged scheduler
     # within minutes rather than hours.
     scheduler.add_job(write_heartbeat, "interval", minutes=5, id="heartbeat")
-    log.info("Scheduler running — daily fetch every 24 h, OpenAlex enrichment every 7 days. Ctrl+C to stop.")
+    log.info("Scheduler running — daily fetch + nightly backup + weekly OpenAlex + weekly verify. Ctrl+C to stop.")
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):

@@ -9,3 +9,8 @@ apscheduler>=3.10.0
 gunicorn>=21.2.0
 networkx>=3.2
 sentry-sdk[flask]>=2.0
+# Backup pipeline (D2). pyrage produces standard age binary format so the
+# operator can decrypt with the regular `age` CLI in a disaster.
+boto3>=1.34
+zstandard>=0.22
+pyrage>=1.2

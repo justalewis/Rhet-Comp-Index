@@ -12,6 +12,18 @@
 #                          error reporting is silently disabled. The free
 #                          Sentry tier is sufficient for current traffic.
 #
+# Backup secrets (all six required for backup.py to run; missing any one
+# causes the daily backup job to log CRITICAL and skip):
+#   PINAKES_BACKUP_BUCKET           e.g. "pinakes-backup"
+#   PINAKES_BACKUP_ENDPOINT         e.g. "https://s3.us-west-002.backblazeb2.com"
+#   PINAKES_BACKUP_REGION           e.g. "us-west-002"
+#   PINAKES_BACKUP_ACCESS_KEY_ID    (B2 / S3 application key id)
+#   PINAKES_BACKUP_SECRET_KEY       (B2 / S3 secret)
+#   PINAKES_BACKUP_AGE_PUBLIC_KEY   age recipient (age1...). The matching
+#                                   PRIVATE key MUST stay off the Fly
+#                                   machine — it is the operator's only
+#                                   path back from a disaster.
+#
 # Process groups (see [processes] below):
 #   app        — gunicorn web server. Receives all HTTP traffic.
 #   scheduler  — APScheduler BlockingScheduler running scheduler.py. No HTTP.

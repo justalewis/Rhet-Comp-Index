@@ -83,6 +83,37 @@ flyctl scale count app=1 scheduler=1
 
 The Sentry DSN is optional. Without it, [`monitoring.py`](monitoring.py) is a no-op and errors only surface in `flyctl logs`. With it, both the web process and the scheduler report errors with `component=web` / `component=scheduler` tags; ingestion errors are additionally tagged with `source=crossref|rss|scrape|openalex|citations` and (when known) `journal=<name>`.
 
+### Backups (recommended)
+
+The scheduler runs an online SQLite backup nightly at 03:00 UTC. The pipeline is `sqlite3 .backup` → zstd → age-encrypt → S3-compatible bucket. See [`docs/runbooks/disaster-recovery.md`](docs/runbooks/disaster-recovery.md) for the restoration procedure.
+
+```bash
+# 1. Generate an age key pair locally; KEEP the private key off Fly.
+age-keygen -o ~/.pinakes/age.key
+PUB=$(grep '^# public key:' ~/.pinakes/age.key | cut -d' ' -f4)
+
+# 2. Create a Backblaze B2 bucket "pinakes-backup" and an application key
+#    scoped to that bucket. Note its keyID and applicationKey.
+
+# 3. Set six Fly secrets:
+flyctl secrets set \
+  PINAKES_BACKUP_BUCKET=pinakes-backup \
+  PINAKES_BACKUP_ENDPOINT=https://s3.us-west-002.backblazeb2.com \
+  PINAKES_BACKUP_REGION=us-west-002 \
+  PINAKES_BACKUP_ACCESS_KEY_ID=<keyID> \
+  PINAKES_BACKUP_SECRET_KEY=<applicationKey> \
+  PINAKES_BACKUP_AGE_PUBLIC_KEY=$PUB
+```
+
+**The age private key is the most important secret in this project.** Store it in a password manager AND a paper backup. If you lose it, every backup becomes unrecoverable.
+
+To restore manually:
+
+```bash
+python restore.py --list
+python restore.py --latest --out ./restored.db --age-key ~/.pinakes/age.key
+```
+
 ### Health endpoints
 
 | Endpoint | Auth | Purpose |
