@@ -16,6 +16,11 @@ if _SESSION_DB.exists():
     _SESSION_DB.unlink()
 os.environ["DB_PATH"] = str(_SESSION_DB)
 
+# Tell monitoring.init_sentry() this is a test environment so it short-circuits
+# even if SENTRY_DSN happens to be set in the developer's shell. Belt and
+# suspenders: monitoring.py also checks PYTEST_CURRENT_TEST.
+os.environ.setdefault("FLASK_ENV", "testing")
+
 # Make sure repo root is importable (pytest adds it via rootdir, but be explicit).
 _REPO_ROOT = pathlib.Path(__file__).resolve().parent
 if str(_REPO_ROOT) not in sys.path:

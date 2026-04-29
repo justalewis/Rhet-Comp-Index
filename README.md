@@ -71,12 +71,17 @@ Pinakes deploys to Fly.io as **two process groups**:
 ### One-time setup
 
 ```bash
-# Generate and store the admin token (used by /fetch and /health/deep)
+# Required: generate and store the admin token (used by /fetch and /health/deep)
 flyctl secrets set PINAKES_ADMIN_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+
+# Optional: hook up Sentry error monitoring (free tier is fine)
+flyctl secrets set SENTRY_DSN='https://...@...ingest.sentry.io/...'
 
 # After the first deploy, scale each process group to one machine
 flyctl scale count app=1 scheduler=1
 ```
+
+The Sentry DSN is optional. Without it, [`monitoring.py`](monitoring.py) is a no-op and errors only surface in `flyctl logs`. With it, both the web process and the scheduler report errors with `component=web` / `component=scheduler` tags; ingestion errors are additionally tagged with `source=crossref|rss|scrape|openalex|citations` and (when known) `journal=<name>`.
 
 ### Health endpoints
 

@@ -17,6 +17,10 @@ Usage:
 """
 
 import logging
+
+from monitoring import init_sentry, capture_fetcher_error
+init_sentry("scheduler")
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from db import init_db
@@ -41,6 +45,7 @@ def job():
         total += n
     except Exception as e:
         log.error("CrossRef fetch failed: %s", e)
+        capture_fetcher_error("crossref", None, e)
 
     try:
         from rss_fetcher import fetch_all as rss_fetch
@@ -49,6 +54,7 @@ def job():
         total += n
     except Exception as e:
         log.error("RSS fetch failed: %s", e)
+        capture_fetcher_error("rss", None, e)
 
     try:
         from scraper import fetch_all as scrape_fetch
@@ -57,6 +63,7 @@ def job():
         total += n
     except Exception as e:
         log.error("Scrape fetch failed: %s", e)
+        capture_fetcher_error("scrape", None, e)
 
     log.info("=== Fetch complete — %d total new articles ===", total)
     # Heartbeat — let /health/deep confirm the scheduler is actually running.
@@ -79,6 +86,7 @@ def openalex_job():
         )
     except Exception as e:
         log.error("OpenAlex enrichment failed: %s", e)
+        capture_fetcher_error("openalex", None, e)
     write_heartbeat()
 
 

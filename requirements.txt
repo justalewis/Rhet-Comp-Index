@@ -8,3 +8,4 @@ lxml>=5.0.0
 apscheduler>=3.10.0
 gunicorn>=21.2.0
 networkx>=3.2
+sentry-sdk[flask]>=2.0

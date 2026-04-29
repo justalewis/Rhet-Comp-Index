@@ -20,6 +20,9 @@ from datetime import datetime
 from db import init_db, upsert_article, update_fetch_log, get_last_fetch
 from journals import CROSSREF_JOURNALS, ISSN_TO_NAME, GOLD_OA_JOURNALS
 from tagger import auto_tag
+from monitoring import capture_fetcher_error
+
+SOURCE_NAME = "crossref"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -107,6 +110,7 @@ def fetch_journal(issn, since_date=None):
             resp.raise_for_status()
         except requests.RequestException as e:
             log.error("Request failed for %s: %s", issn, e)
+            capture_fetcher_error(SOURCE_NAME, journal_name, e)
             break
 
         data = resp.json().get("message", {})

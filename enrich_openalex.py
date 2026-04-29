@@ -32,6 +32,9 @@ import json
 from datetime import datetime
 
 from db import get_conn, init_db
+from monitoring import capture_fetcher_error
+
+SOURCE_NAME = "openalex"
 
 log = logging.getLogger(__name__)
 logging.basicConfig(
@@ -170,6 +173,7 @@ def enrich_openalex():
             data, status = _fetch_with_retry(url)
         except Exception as exc:
             log.error("Unexpected error fetching article %d (doi=%s): %s", article_id, doi, exc)
+            capture_fetcher_error(SOURCE_NAME, None, exc)
             _mark_enriched(article_id)
             stats["processed"] += 1
             time.sleep(REQUEST_DELAY)

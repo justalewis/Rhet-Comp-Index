@@ -28,6 +28,9 @@ from bs4 import BeautifulSoup
 from db import init_db, get_conn, upsert_article, update_fetch_log
 from journals import SCRAPE_JOURNALS, RSS_JOURNALS
 from tagger import auto_tag
+from monitoring import capture_fetcher_error
+
+SOURCE_NAME = "scrape"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -4188,6 +4191,7 @@ def fetch_all():
                 total += fn()
             except Exception as e:
                 log.error("Scraper error [%s]: %s", journal["name"], e)
+                capture_fetcher_error(SOURCE_NAME, journal["name"], e)
         else:
             log.warning("No scraper registered for strategy: %s", strategy)
     log.info("Scrape fetch complete. Total new: %d", total)

@@ -20,6 +20,9 @@ import feedparser
 from db import init_db, upsert_article, update_fetch_log, get_last_fetch
 from journals import RSS_JOURNALS
 from tagger import auto_tag
+from monitoring import capture_fetcher_error
+
+SOURCE_NAME = "rss"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -418,6 +421,7 @@ def fetch_all():
             total += fetch_rss_journal(journal)
         except Exception as e:
             log.error("RSS fetch error for %s: %s", journal["name"], e)
+            capture_fetcher_error(SOURCE_NAME, journal["name"], e)
     log.info("RSS fetch complete. Total new: %d", total)
     return total
 

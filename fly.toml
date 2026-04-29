@@ -7,6 +7,11 @@
 #                          (see auth.py). When unset, mutating endpoints
 #                          return HTTP 503; read endpoints continue to work.
 #
+# Optional secrets:
+#   SENTRY_DSN           — error monitoring (see monitoring.py). When unset,
+#                          error reporting is silently disabled. The free
+#                          Sentry tier is sufficient for current traffic.
+#
 # Process groups (see [processes] below):
 #   app        — gunicorn web server. Receives all HTTP traffic.
 #   scheduler  — APScheduler BlockingScheduler running scheduler.py. No HTTP.

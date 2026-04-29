@@ -34,6 +34,12 @@ import logging
 from functools import wraps
 from urllib.parse import urlencode
 
+# Sentry must be initialised before any code that might raise at import
+# time (init_db, the OA backfill, prewarm queries) so those errors reach
+# the dashboard. Silently no-ops if SENTRY_DSN is unset.
+from monitoring import init_sentry
+init_sentry("web")
+
 from flask import Flask, render_template, request, jsonify, Response, redirect, make_response
 from flask_compress import Compress
 

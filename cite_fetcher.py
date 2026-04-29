@@ -34,6 +34,9 @@ from db import (
     update_citation_counts,
     upsert_citation,
 )
+from monitoring import capture_fetcher_error
+
+SOURCE_NAME = "citations"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -190,6 +193,7 @@ def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
                 "  Unexpected error — article %d (%s): %s",
                 article["id"], article.get("doi", ""), exc,
             )
+            capture_fetcher_error(SOURCE_NAME, None, exc)
             errors += 1
             # Stamp fetched so a one-off error doesn't block the whole queue
             try:
