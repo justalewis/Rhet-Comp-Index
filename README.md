@@ -190,6 +190,16 @@ Rhet-Comp-Index/
 └── articles.db                  SQLite database (gitignored; on /data in prod)
 ```
 
+## Documentation
+
+| Document | For |
+|---|---|
+| [Architecture](docs/architecture.md) | How Pinakes is built — system overview, data flow, ingestion, deployment |
+| [Methodology](docs/methodology.md) | What each Explore tool measures, how it's computed, and the scholarly references |
+| [Journal coverage](docs/journal-coverage.md) | Every venue indexed by Pinakes with its ingestion path |
+| [Disaster recovery runbook](docs/runbooks/disaster-recovery.md) | Restoring from off-machine backups |
+| [Refactor notes](docs/refactor-notes/) | Audit trail for the structural improvements (sessions A1 through G1) |
+
 ## Contributing
 
 External contributions are rare; the project is maintained by one person, but bug reports and small PRs are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the testing requirements and the scraping-ethics review that applies to any new scraper.
