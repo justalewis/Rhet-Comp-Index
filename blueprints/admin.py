@@ -56,3 +56,29 @@ def health_deep():
     Admin-protected because it exposes operational metadata."""
     return jsonify(_health.deep_diagnostic()), 200
 
+
+@bp.route("/api/admin/run-backup", methods=["POST"])
+@require_admin_token
+def run_backup_now():
+    """Run the SQLite backup pipeline synchronously: snapshot → zstd →
+    age-encrypt → upload to S3-compatible bucket → prune retention.
+
+    Called by .github/workflows/cron.yml at 03:00 UTC daily, hitting
+    pinakes.xyz with the PINAKES_ADMIN_TOKEN GitHub secret. Synchronous
+    so the GitHub Action sees real success/failure and so the resulting
+    JSON response carries the full summary for log/audit.
+
+    Writes /data/scheduler.heartbeat on success — that file is what
+    /health/deep reads to report `scheduler_healthy`. With the
+    standalone scheduler.py removed (see refactor-notes/13), the
+    heartbeat is now the cron job's signal."""
+    from backup import run_backup
+    summary = run_backup()
+    if summary.get("success"):
+        try:
+            _health.write_heartbeat()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("heartbeat write after backup failed: %s", exc)
+    status = 200 if summary.get("success") else 500
+    return jsonify(summary), status
+

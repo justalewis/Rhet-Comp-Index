@@ -18,8 +18,8 @@ Client ── HTTPS ──▶ Fly.io edge ──▶ gunicorn (1 worker) ──�
                                               SQLite (WAL) ◀──┤
                                               /data/articles.db
                                                               │
-APScheduler ──▶ scheduler.py ──▶ fetcher.py / rss_fetcher.py / scraper.py
-                                       └──▶ CrossRef · OpenAlex · journal sites
+GitHub Actions cron (03:00 UTC) ──▶ POST /fetch ──▶ fetcher / rss / scraper
+                                ──▶ POST /api/admin/run-backup ──▶ B2
 ```
 
 ## Local development
@@ -43,11 +43,7 @@ python rss_fetcher.py    # RSS / OAI / WordPress feed journals
 python scraper.py        # custom HTML scrapers
 ```
 
-These can take a long time on a cold corpus. To run all three on a daily cadence locally:
-
-```bash
-python scheduler.py      # blocking; Ctrl+C to stop
-```
+These can take a long time on a cold corpus. In production, [`.github/workflows/cron.yml`](.github/workflows/cron.yml) runs them automatically each night.
 
 ## Running tests
 
@@ -61,12 +57,9 @@ The harness uses an isolated SQLite file per test, stubs all HTTP via `responses
 
 ## Deployment
 
-Pinakes deploys to Fly.io as **two process groups**:
+Pinakes deploys to Fly.io as a **single-machine application**: one gunicorn worker, one SQLite file on a persistent volume. Daily fetches and nightly backups are triggered externally by [`.github/workflows/cron.yml`](.github/workflows/cron.yml) at 03:00 UTC, which `POST`s to `/fetch` and `/api/admin/run-backup` respectively.
 
-| Process | Entry point | Purpose |
-|---|---|---|
-| `app` | `gunicorn ... app:app` | Web server. Receives HTTP traffic. |
-| `scheduler` | `python scheduler.py` | Daily fetch + weekly OpenAlex enrichment. Writes `/data/scheduler.heartbeat` so `GET /health/deep` can verify it's alive. |
+(An earlier design ran the scheduler as a second Fly process group with its own machine. That didn't work because Fly volumes are single-attach: the scheduler had no way to share `/data` with the app machine. See [`docs/refactor-notes/13-scheduler-architecture-fix.md`](docs/refactor-notes/13-scheduler-architecture-fix.md).)
 
 ### One-time setup
 
@@ -76,16 +69,21 @@ flyctl secrets set PINAKES_ADMIN_TOKEN=$(python -c "import secrets; print(secret
 
 # Optional: hook up Sentry error monitoring (free tier is fine)
 flyctl secrets set SENTRY_DSN='https://...@...ingest.sentry.io/...'
-
-# After the first deploy, scale each process group to one machine
-flyctl scale count app=1 scheduler=1
 ```
 
-The Sentry DSN is optional. Without it, [`monitoring.py`](monitoring.py) is a no-op and errors only surface in `flyctl logs`. With it, both the web process and the scheduler report errors with `component=web` / `component=scheduler` tags; ingestion errors are additionally tagged with `source=crossref|rss|scrape|openalex|citations` and (when known) `journal=<name>`.
+The Sentry DSN is optional. Without it, [`monitoring.py`](monitoring.py) is a no-op and errors only surface in `flyctl logs`. With it, the web process reports errors with `component=web`; ingestion errors are additionally tagged with `source=crossref|rss|scrape|openalex|citations` and (when known) `journal=<name>`.
+
+### Daily fetch + backup (cron-driven)
+
+Pinakes triggers its daily fetch and nightly backup via [`.github/workflows/cron.yml`](.github/workflows/cron.yml), which hits `POST /fetch` and `POST /api/admin/run-backup` at 03:00 UTC. Both endpoints require `PINAKES_ADMIN_TOKEN`.
+
+To enable, add `PINAKES_ADMIN_TOKEN` as a **GitHub Actions repository secret** (Settings → Secrets and variables → Actions → New repository secret). Use the same value you set as the Fly secret.
+
+The workflow can also be triggered manually from the Actions tab (workflow_dispatch).
 
 ### Backups (recommended)
 
-The scheduler runs an online SQLite backup nightly at 03:00 UTC. The pipeline is `sqlite3 .backup` → zstd → age-encrypt → S3-compatible bucket. See [`docs/runbooks/disaster-recovery.md`](docs/runbooks/disaster-recovery.md) for the restoration procedure.
+Backups run inside the cron workflow above: `POST /api/admin/run-backup` snapshots the DB, compresses with zstd, encrypts with age, uploads to an S3-compatible bucket, and prunes per the 30-daily / 26-weekly / 12-monthly retention policy. Each successful run writes `/data/scheduler.heartbeat` so `/health/deep` reports `scheduler_healthy: true`. See [`docs/runbooks/disaster-recovery.md`](docs/runbooks/disaster-recovery.md) for restoration.
 
 ```bash
 # 1. Generate an age key pair locally; KEEP the private key off Fly.
@@ -106,6 +104,13 @@ flyctl secrets set \
 ```
 
 **The age private key is the most important secret in this project.** Store it in a password manager AND a paper backup. If you lose it, every backup becomes unrecoverable.
+
+You can verify backups by triggering one manually and inspecting the resulting B2 object:
+
+```bash
+curl -X POST -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" \
+  https://pinakes.xyz/api/admin/run-backup | jq
+```
 
 To restore manually:
 
@@ -128,7 +133,7 @@ curl -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.xyz/health/
 
 ### Triggering a fetch manually
 
-The scheduler runs every 24 hours. To force one early:
+The cron workflow runs daily. To force a fetch early:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.xyz/fetch
@@ -145,7 +150,7 @@ Rhet-Comp-Index/
 ├── db.py                        SQLite layer + analytics queries
 ├── journals.py                  Journal definitions (CrossRef, RSS, scrape, manual)
 ├── tagger.py                    Controlled-vocabulary auto-tagging
-├── scheduler.py                 Standalone APScheduler process
+├── (scheduler.py removed in sched-fix; cron lives in .github/workflows/cron.yml)
 │
 ├── fetcher.py                   CrossRef API ingester
 ├── rss_fetcher.py               RSS / OAI-PMH / WordPress ingester
@@ -186,7 +191,7 @@ Rhet-Comp-Index/
 ├── requirements.txt             Runtime deps
 ├── requirements-dev.txt         Dev / test deps
 ├── Dockerfile                   Multi-stage build for Fly
-├── fly.toml                     Fly deployment config (two process groups)
+├── fly.toml                     Fly deployment config (single-machine)
 └── articles.db                  SQLite database (gitignored; on /data in prod)
 ```
 

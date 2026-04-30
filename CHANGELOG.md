@@ -6,6 +6,14 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 
 ## [Unreleased]
 
+### Changed (post-G1 emergency fix)
+
+- Removed `scheduler.py` and the `scheduler` Fly process group; replaced with a GitHub Actions cron at 03:00 UTC that hits `POST /fetch` and the new `POST /api/admin/run-backup` endpoint. The previous architecture (separate Fly machine running APScheduler) didn't work because Fly volumes are single-attach: the scheduler machine had no way to share `/data` with the app machine, and was silently writing to its own ephemeral container filesystem. See [`docs/refactor-notes/13-scheduler-architecture-fix.md`](docs/refactor-notes/13-scheduler-architecture-fix.md).
+- New endpoint `POST /api/admin/run-backup` (admin-token-protected): runs the backup pipeline synchronously inside the app process, returns the full summary as JSON, and writes `/data/scheduler.heartbeat` on success.
+- `fly.toml` simplified: `[processes]` block removed (single-process deployment), `[http_service].processes` removed.
+- `Dockerfile` comment updated to describe the single-process model.
+- README's "Deployment" section rewritten to describe the cron-driven model.
+
 ### Added
 
 - Pytest harness with 320+ characterization tests across `db.py`, `app.py`, the three ingestion paths, and the input-validation helpers. Coverage gates: ≥ 75 % on `app.py`, ≥ 60 % on `db.py`. CI runs on every push; the Fly deploy is gated on test passage.

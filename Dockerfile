@@ -32,13 +32,12 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-# On Fly, fly.toml's [processes] block defines two entry points (app =
-# gunicorn, scheduler = python scheduler.py) and overrides this CMD. The
-# default below applies to plain `docker run pinakes` and to local dev.
-# To run the scheduler in a non-Fly container, override CMD:
-#   docker run pinakes python scheduler.py
+# Single-process deployment: gunicorn serves HTTP, daily fetch + nightly
+# backup are triggered externally by .github/workflows/cron.yml. The
+# previous standalone scheduler.py process group was removed because Fly
+# volumes are single-attach and the scheduler had no way to share /data
+# with the app machine. See docs/refactor-notes/13-scheduler-architecture-fix.md.
 #
-# Use gunicorn for production; 1 worker keeps SQLite writes safe.
 # --preload is intentionally omitted: it imports app.py (and runs init_db) in the
 # master process before forking, which conflicts with any background SQLite writer
 # (e.g. fetch_institutions.py) that may be holding a write lock at deploy time,

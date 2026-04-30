@@ -1,0 +1,63 @@
+# Daily cron: triggers Pinakes's fetch and backup against the production
+# app at pinakes.xyz. Replaces the standalone scheduler.py process group
+# that was removed in refactor-notes/13 because Fly volumes are
+# single-attach (the scheduler had no way to share /data with the app).
+#
+# Required repository secret: PINAKES_ADMIN_TOKEN — same value as the
+# Fly secret of the same name. Set via Settings -> Secrets and variables
+# -> Actions -> New repository secret.
+
+name: Daily fetch + backup
+
+on:
+  schedule:
+    # 03:00 UTC daily. Cron syntax: minute hour day month dow.
+    # Note: GitHub Actions cron is best-effort and may delay several minutes.
+    - cron: '0 3 * * *'
+  # Manual trigger from the Actions tab for testing or emergency runs.
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    name: Trigger /fetch
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /fetch (async; returns 200 immediately, fetch runs in background)
+        run: |
+          response=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -X POST https://pinakes.xyz/fetch \
+            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}")
+          echo "HTTP status: $response"
+          if [ "$response" != "200" ]; then
+            echo "::error::POST /fetch returned $response"
+            exit 1
+          fi
+
+  backup:
+    name: Trigger /api/admin/run-backup
+    runs-on: ubuntu-latest
+    # Run after fetch so today's fetched articles are included in tonight's
+    # snapshot. Fetch is async, so we sleep briefly to let it land most
+    # records before snapshotting. If the fetch is still running when we
+    # snapshot, that's fine: SQLite's online .backup API is consistent
+    # under concurrent writes; today's late-arriving rows just land in
+    # tomorrow's backup instead.
+    needs: fetch
+    steps:
+      - name: Wait 10 minutes for the async fetch to finish most of its work
+        run: sleep 600
+
+      - name: POST /api/admin/run-backup (synchronous; returns full summary)
+        run: |
+          response=$(curl -sS -X POST https://pinakes.xyz/api/admin/run-backup \
+            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" \
+            -w "\nHTTP_STATUS:%{http_code}")
+          status=$(echo "$response" | grep "^HTTP_STATUS:" | cut -d: -f2)
+          body=$(echo "$response" | sed '/^HTTP_STATUS:/d')
+          echo "HTTP status: $status"
+          echo "Response body:"
+          echo "$body" | head -50
+          if [ "$status" != "200" ]; then
+            echo "::error::Backup failed with status $status"
+            exit 1
+          fi

@@ -12,8 +12,9 @@
 #                          error reporting is silently disabled. The free
 #                          Sentry tier is sufficient for current traffic.
 #
-# Backup secrets (all six required for backup.py to run; missing any one
-# causes the daily backup job to log CRITICAL and skip):
+# Backup secrets (all six required for /api/admin/run-backup to succeed;
+# missing any one causes the endpoint to return a failure dict and write
+# no heartbeat. Reads at runtime, not at startup):
 #   PINAKES_BACKUP_BUCKET           e.g. "pinakes-backup"
 #   PINAKES_BACKUP_ENDPOINT         e.g. "https://s3.us-west-002.backblazeb2.com"
 #   PINAKES_BACKUP_REGION           e.g. "us-west-002"
@@ -24,11 +25,13 @@
 #                                   machine — it is the operator's only
 #                                   path back from a disaster.
 #
-# Process groups (see [processes] below):
-#   app        — gunicorn web server. Receives all HTTP traffic.
-#   scheduler  — APScheduler BlockingScheduler running scheduler.py. No HTTP.
-# After deploying, scale the scheduler to one machine ONCE:
-#   flyctl scale count app=1 scheduler=1
+# Architecture: single-machine deployment. Daily fetch + nightly backup
+# are triggered by .github/workflows/cron.yml hitting POST /fetch and
+# POST /api/admin/run-backup at 03:00 UTC. The standalone scheduler.py
+# process group (which previously ran on its own Fly machine) was
+# removed because Fly volumes are single-attach: the scheduler had no
+# way to share /data with the app machine. See
+# docs/refactor-notes/13-scheduler-architecture-fix.md.
 
 app = 'rhet-comp-index'
 primary_region = 'iad'
@@ -39,17 +42,6 @@ primary_region = 'iad'
   PORT = '8080'
   FLASK_ENV = 'production'
   DB_PATH = '/data/articles.db'
-
-[processes]
-  # The web process. Same gunicorn invocation that the Dockerfile uses as
-  # its CMD fallback; the [processes] entry overrides CMD on Fly.
-  app = "gunicorn --bind 0.0.0.0:8080 --workers 1 --timeout 120 --capture-output --log-level info app:app"
-  # The scheduler process. Standalone APScheduler BlockingScheduler. Writes
-  # /data/scheduler.heartbeat every cycle so /health/deep can verify it is
-  # actually running. With min_machines_running=1 and one machine per
-  # process group, there is exactly one scheduler at any time, so no
-  # double-fetch coordination is needed.
-  scheduler = "python scheduler.py"
 
 [[mounts]]
   source = 'rhet_comp_data'
@@ -62,10 +54,6 @@ primary_region = 'iad'
   auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
-  # Only the app process group serves HTTP. The scheduler does not bind a
-  # port, so excluding it here prevents Fly from health-checking it as a
-  # web service.
-  processes = ["app"]
 
   [http_service.concurrency]
     type = 'connections'

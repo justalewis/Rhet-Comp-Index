@@ -172,3 +172,67 @@ def test_fetch_endpoint_succeeds_with_correct_token(client, monkeypatch):
 
 # /health's admin_auth surfacing is exercised in tests/test_health.py
 # (test_liveness_includes_admin_auth_status). Don't duplicate here.
+
+
+# ── /api/admin/run-backup integration ──────────────────────────────────────
+
+
+def test_run_backup_endpoint_requires_auth_no_header(client, monkeypatch):
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
+    resp = client.post("/api/admin/run-backup")
+    assert resp.status_code == 401
+
+
+def test_run_backup_endpoint_requires_auth_wrong_token(client, monkeypatch):
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
+    resp = client.post("/api/admin/run-backup",
+                       headers={"Authorization": "Bearer wrong"})
+    assert resp.status_code == 403
+
+
+def test_run_backup_endpoint_returns_summary(client, monkeypatch):
+    """With auth + a stubbed run_backup, the endpoint returns the summary
+    dict and writes a heartbeat on success."""
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
+    fake_summary = {
+        "success": True,
+        "snapshot_bytes": 12345,
+        "compressed_bytes": 6789,
+        "uploaded_to": "s3://test-bucket/2026/04/30/x.db.zst.age",
+        "duration_seconds": 1.5,
+        "pruned_keys": [],
+        "error": None,
+    }
+    with patch("backup.run_backup", return_value=fake_summary), \
+         patch("health.write_heartbeat") as wh:
+        resp = client.post("/api/admin/run-backup",
+                           headers={"Authorization": "Bearer real"})
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["success"] is True
+    assert body["uploaded_to"] == "s3://test-bucket/2026/04/30/x.db.zst.age"
+    wh.assert_called_once()
+
+
+def test_run_backup_endpoint_returns_500_on_failure_and_no_heartbeat(
+    client, monkeypatch,
+):
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
+    fail_summary = {
+        "success": False,
+        "snapshot_bytes": None,
+        "compressed_bytes": None,
+        "uploaded_to": None,
+        "duration_seconds": 0.1,
+        "pruned_keys": [],
+        "error": "missing env vars: ['PINAKES_BACKUP_BUCKET']",
+    }
+    with patch("backup.run_backup", return_value=fail_summary), \
+         patch("health.write_heartbeat") as wh:
+        resp = client.post("/api/admin/run-backup",
+                           headers={"Authorization": "Bearer real"})
+    assert resp.status_code == 500
+    body = resp.get_json()
+    assert body["success"] is False
+    assert "missing env vars" in body["error"]
+    wh.assert_not_called()

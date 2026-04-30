@@ -134,9 +134,9 @@ def test_route_count_matches_expected(client):
     """A removed or added route is caught immediately."""
     rules = [r for r in client.application.url_map.iter_rules()
              if r.endpoint != "static"]
-    # 44 user-defined routes after Prompt B3 added /health/ready and
-    # /health/deep (was 42 before).
-    assert len(rules) == 44, (
-        f"Expected 44 routes, got {len(rules)}. "
+    # 45 user-defined routes:
+    #   42 baseline + /health/ready + /health/deep (B3) + /api/admin/run-backup (sched-fix)
+    assert len(rules) == 45, (
+        f"Expected 45 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
