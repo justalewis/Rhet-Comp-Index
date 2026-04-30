@@ -2002,5 +2002,5 @@
 <!-- Pass server-side data to JS -->
 <script>window.ALL_JOURNALS = {{ all_journals | tojson | safe }};</script>
 
-<script src="/static/explore.js?v={{ version }}"></script>
+<script type="module" src="/static/js/explore-loader.js?v={{ version }}"></script>
 {% endblock %}
