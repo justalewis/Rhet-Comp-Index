@@ -20,6 +20,7 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 ### Changed
 
 - `db.py` (4,405 lines, 96 functions) decomposed into a `db/` package — submodules `core`, `articles`, `authors`, `citations`, `books`, `institutions`, `coverage`, `fetch_log`. Public API preserved exactly via re-exports in `db/__init__.py`; every import site outside the package keeps working with no edits. Internals moved verbatim — no SQL, docstring, or type-hint changes. See [`docs/refactor-notes/09-db-split-inventory.md`](docs/refactor-notes/09-db-split-inventory.md).
+- `app.py` (1,460 lines, 44 routes) decomposed into an application factory plus 8 Blueprints (`admin`, `main`, `articles`, `authors`, `citations`, `stats`, `books`, `institutions`) and `web_helpers.py` for shared filters, decorators, and error handlers. URLs preserved byte-identical; endpoint names change from bare to prefixed (`index` → `main.index`), which is harmless because no `url_for()` call exists in templates or Python code. See [`docs/refactor-notes/10-app-split-inventory.md`](docs/refactor-notes/10-app-split-inventory.md).
 - `templates/error.html` now extends `base-core.html` (theme switcher and CSS inherited; sidebar intentionally omitted because a DB outage would otherwise cascade into a second failure).
 - README rewritten end-to-end to reflect the actual scope of the project (44+ journals, 50,000+ articles, four data sources).
 - Fly health-check path moved from `/health` to `/health/ready` — readiness is the right semantics for "should this machine receive traffic."
