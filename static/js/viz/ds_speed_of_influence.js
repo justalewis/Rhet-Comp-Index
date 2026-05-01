@@ -1,4 +1,9 @@
 // static/js/viz/ds_speed_of_influence.js — Ch 4, Tool 5: The Speed of Influence
+//
+// Hosts the prototype "compare clusters" affordance (P3.5). Speed of
+// Influence was chosen to prototype on because its primary readout is
+// already direction-bucketed summary cards, so a side-by-side compare
+// is a natural extension rather than a restructure of the visualisation.
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
@@ -14,6 +19,11 @@ let _filtersWired_loadDsSpeedOfInfluence = false;
 
 let _exportWired_loadDsSpeedOfInfluence = false;
 
+// Compare mode: when set to a non-empty cluster slug, the loader fetches
+// the same endpoint a second time with `cluster=<compareCluster>` and
+// renders two summary blocks side-by-side. Cleared by clicking the chip.
+let _soiCompareCluster = '';
+
 async function loadDsSpeedOfInfluence() {
   if (!_exportWired_loadDsSpeedOfInfluence) {
     renderExportToolbar('tab-ds-speed-of-influence', { svgSelector: '#ds-soi-distributions svg', dataProvider: () => (window.__dsSoiData && Object.entries(window.__dsSoiData.stats || {}).filter(([,v]) => v).map(([dir, st]) => Object.assign({direction: dir}, st))) });
@@ -22,17 +32,100 @@ async function loadDsSpeedOfInfluence() {
   if (!_filtersWired_loadDsSpeedOfInfluence) {
     renderFilterBar('tab-ds-speed-of-influence', {  onApply: () => loadDsSpeedOfInfluence() });
     _filtersWired_loadDsSpeedOfInfluence = true;
+    _injectCompareControl();
   }
   setLoading('ds-soi-summary', 'Computing delay distributions…');
   try {
-    const data = await (() => { const _qs = filterParams('tab-ds-speed-of-influence').toString(); return fetchJson('/api/datastories/ch4-speed-of-influence' + (_qs ? ('?' + _qs) : '')); })();
-    window.__dsSoiData = data;
-    renderSummary(data);
-    renderDistributions(data);
-    renderTrends(data);
+    const params = filterParams('tab-ds-speed-of-influence');
+    const url = '/api/datastories/ch4-speed-of-influence' + (params.toString() ? ('?' + params.toString()) : '');
+    if (_soiCompareCluster) {
+      // Fire both requests in parallel. Second request: drop the user's
+      // current cluster filter and substitute the compare cluster, but
+      // keep journals + year range so the comparison is fair.
+      const cmpParams = new URLSearchParams(params);
+      cmpParams.delete('cluster');
+      cmpParams.set('cluster', _soiCompareCluster);
+      const cmpUrl = '/api/datastories/ch4-speed-of-influence?' + cmpParams.toString();
+      const [data, cmp] = await Promise.all([fetchJson(url), fetchJson(cmpUrl)]);
+      window.__dsSoiData = data;
+      renderCompareSummary(data, cmp);
+      renderDistributions(data);
+      renderTrends(data);
+    } else {
+      const data = await fetchJson(url);
+      window.__dsSoiData = data;
+      renderSummary(data);
+      renderDistributions(data);
+      renderTrends(data);
+    }
   } catch (e) {
     setError('ds-soi-summary', 'Failed to load: ' + e.message);
   }
+}
+
+function _injectCompareControl() {
+  const panel = document.getElementById('tab-ds-speed-of-influence');
+  const filterBar = panel && panel.querySelector('.ds-filter-bar');
+  if (!filterBar || filterBar.querySelector('.soi-compare-control')) return;
+  const opts = Array.isArray(window.DS_CLUSTER_OPTIONS) ? window.DS_CLUSTER_OPTIONS : [];
+  const wrap = document.createElement('label');
+  wrap.className = 'soi-compare-control';
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:0.15rem;min-width:160px;';
+  wrap.innerHTML = '<span style="color:#7a7268;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Compare with</span>';
+  const sel = document.createElement('select');
+  sel.id = 'soi-compare-cluster';
+  sel.innerHTML = '<option value="">(off)</option>' +
+    opts.map(o => `<option value="${o.slug}">${o.label}</option>`).join('');
+  sel.value = _soiCompareCluster;
+  sel.addEventListener('change', () => {
+    _soiCompareCluster = sel.value || '';
+    loadDsSpeedOfInfluence();
+  });
+  wrap.appendChild(sel);
+  filterBar.appendChild(wrap);
+}
+
+function renderCompareSummary(dataA, dataB) {
+  const el = document.getElementById('ds-soi-summary');
+  el.innerHTML = '';
+  const aLabel = (filterParams('tab-ds-speed-of-influence').get('cluster')) || 'Whole corpus';
+  const bSlug = _soiCompareCluster;
+  const opts = Array.isArray(window.DS_CLUSTER_OPTIONS) ? window.DS_CLUSTER_OPTIONS : [];
+  const bLabel = (opts.find(o => o.slug === bSlug) || {}).label || bSlug;
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;';
+  wrap.appendChild(_renderCompareColumn(aLabel, dataA));
+  wrap.appendChild(_renderCompareColumn(bLabel, dataB));
+  el.appendChild(wrap);
+
+  const note = document.createElement('div');
+  note.style.cssText = 'margin-top:0.6rem;font-size:0.78rem;color:#7a7268;';
+  note.innerHTML = 'Comparing two cluster scopes side-by-side. The chart below renders the LEFT-hand cluster only — flip "Compare with" to the right-hand cluster to inspect its distribution.';
+  el.appendChild(note);
+}
+
+function _renderCompareColumn(label, data) {
+  const col = document.createElement('div');
+  col.style.cssText = 'padding:0.6rem 0.8rem;background:#fdfbf7;border:1px solid #e8e4de;';
+  const heading = document.createElement('div');
+  heading.style.cssText = 'font-size:0.72rem;color:#5a3e28;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:0.4rem;';
+  heading.textContent = label;
+  col.appendChild(heading);
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;';
+  Object.entries(data.stats || {}).forEach(([dir, st]) => {
+    if (!st) return;
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:0.4rem 0.6rem;background:#fff;border-left:3px solid ' + (DIR_COLORS[dir]||'#9c9890') + ';font-size:0.78rem;';
+    card.innerHTML = '<div style="font-size:0.72rem;color:#9c9890;">'
+      + escapeHtml(data.labels && data.labels[dir] || dir) + '</div>'
+      + '<div style="font-size:1rem;font-weight:700;color:#3a3026;">median ' + st.median + ' yrs</div>'
+      + '<div style="color:#7a7268;font-size:0.72rem;">n=' + st.count.toLocaleString() + '</div>';
+    grid.appendChild(card);
+  });
+  col.appendChild(grid);
+  return col;
 }
 
 function renderSummary(data) {
