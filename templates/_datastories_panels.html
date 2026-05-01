@@ -389,10 +389,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Internal rank: rank by internal citation count. Global rank: rank by OpenAlex's <code>cited_by_count</code>. Spearman rank correlation between the two is reported. Articles in the top 100 of either ranking are tabulated; quadrant labels split the scatter into four interpretive zones.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Cluster and journal filters narrow the scatter to articles published in that scope. The Spearman rank correlation reported in the summary is recomputed on the filtered set &mdash; a useful comparison axis is "how well does internal citation track global citation in [TPC] vs in [Rhetoric]?"</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Inside / Outside compares each article's internal (corpus) citation rank against its global (OpenAlex) citation rank. Articles that rank high internally but low globally are field-specific canon; the reverse pattern (high globally, low internally) signals work the field has imported but not metabolized into its own conversation.</p>
+
+      <p>Run with default parameters across the indexed corpus, the comparison covers 18,620 articles. The Spearman rank correlation between internal and global rank is &rho; = 0.57 (p &approx; 0), indicating a moderate but far-from-perfect alignment between the two rankings. The four quadrants partition the corpus: 17,995 articles sit in the <em>background</em> quadrant (low on both), 253 are <em>tpc_specific</em> (high internal, low global), 119 are <em>shared_canon</em> (high on both), and 253 are <em>imported</em> (high global, low internal). The 119 shared-canon articles are the field's strongest contribution to broader scholarly conversation; the 253 imported articles flag work the field reaches for as authority but has not yet integrated into its own dense citation neighborhoods.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Internal rank is computed by ordering articles on internal citation count; global rank is computed by ordering on OpenAlex's <code>cited_by_count</code>. The Spearman rank correlation is computed across the full comparison set.<sup>1</sup> Articles in the top 100 of either ranking are tabulated; quadrant labels partition the scatter into four interpretive zones using percentile cutoffs on each axis.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Cluster and journal filters narrow the scatter to articles published in that scope. The Spearman correlation is recomputed on the filtered set, which lets the user ask whether internal and global citation track each other more tightly in TPC than in Rhetoric, or whether one cluster has a heavier "imported" tail than the other.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Spearman, C. (1904). The proof and measurement of association between two things. <em>American Journal of Psychology, 15</em>(1), 72&ndash;101.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-io-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-io-scatter" style="min-height:520px;"></div>
@@ -409,10 +422,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each decade window, an undirected weighted citation graph is partitioned with NetworkX's Louvain implementation. Cross-decade alignment uses shared-article overlap: a community at <em>t+1</em> is a continuation of a community at <em>t</em> if they share at least 30% of articles (Jaccard-like). Splits, merges, emergences, and extinctions are derived from the alignment.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Louvain re-runs on whatever edge subset survives the filter. With a tight cluster filter the per-decade community count usually drops (fewer nodes mean a coarser partition); with a broad filter you see finer structure. Heavy first-time compute (~30-60s).</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Communities through Time runs Louvain community detection within four decade windows (1980s&ndash;90s, 2000s, 2010s, 2020s) and aligns the partitions across decades to show how research communities split, merge, persist, or disappear. Each Sankey ribbon traces one community's continuity (or its absence) across the windows.</p>
+
+      <p>Run with default parameters across the indexed corpus, the alignment produces 17 cross-decade ribbons. Rather than a single field-wide community persisting across forty years, the partition shows specialization &mdash; communities that emerge in one decade and either stabilize, fragment into smaller clusters in later decades, or disappear when their citation traffic falls below detection threshold. Read the ribbons as a history of how research fronts in writing studies have evolved structurally rather than thematically.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each decade window, an undirected weighted citation graph is constructed and partitioned with NetworkX's Louvain implementation.<sup>1</sup> Cross-decade alignment uses shared-article overlap: a community at <em>t+1</em> is a continuation of a community at <em>t</em> if they share at least 30% of articles (Jaccard-like overlap). Splits, merges, emergences, and extinctions are derived from the alignment.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Louvain re-runs on whatever edge subset survives the filter. With a tight cluster filter the per-decade community count usually drops (fewer nodes mean a coarser partition); with a broad filter the partition surfaces finer structure. Heavy first-time compute (~30&ndash;60s); cached after.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Blondel, V. D., Guillaume, J.-L., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks. <em>Journal of Statistical Mechanics: Theory and Experiment, 2008</em>(10), P10008.</li>
+      </ol>
+    </div>
   </details>
   <div class="loading-msg" id="ds-ct-loading">Running Louvain across four decade windows&hellip; (cached after first run)</div>
   <div class="chart-container--auto" id="ds-ct-sankey" style="min-height:520px;"></div>
@@ -424,10 +450,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Communities come from the same Louvain partition the Explore section's Communities tool uses. For each community: internal density = (internal edges) / (n choose 2), external density = (cross-community edges from these nodes) / (their max possible). Insularity ratio = internal / external. Distribution-based quartiles label communities <em>insular</em> / <em>moderate</em> / <em>integrative</em>.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filters scope which articles enter the community-detection graph. Insularity classifications (insular / moderate / integrative) are quartile-based <em>within the filtered set</em> &mdash; a community that's "integrative" in the whole corpus may register as "insular" inside its own cluster, which is a useful signal.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Walls and Bridges scores each citation community on how much of its citation traffic stays within the community versus crossing to others. Insular communities sit on the y-axis (high internal density relative to external); integrative communities sit toward the diagonal (citation traffic distributed across community boundaries).</p>
+
+      <p>Run with default parameters across the indexed corpus (13,442 articles, 44,322 edges, 25 communities), the Cognitive-Process community led by Flower and Hayes's 1981 article carries the highest insularity ratio at 65.1 across 1,185 articles &mdash; an extreme case of an inward-facing research front whose internal citation density vastly exceeds its citations to or from neighboring communities. The social-justice TC community led by Jones, Moore, and Walton's 2016 "Disrupting the Past" sits at 25.0 across 1,728 articles &mdash; large and still insular, but materially more outward-facing than the Cognitive-Process community. The genre / activity-systems community led by Russell's 1997 "Rethinking Genre" sits at 19.7 across 1,364 articles, which makes it the most integrative of the three largest communities &mdash; consistent with Russell's role as the field's heaviest cross-cluster bridge in the Border Crossers tool.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Communities come from the same Louvain partition the Explore section's Communities tool uses.<sup>1</sup> For each community, internal density is computed as internal edges over (n choose 2); external density is cross-community edges from these nodes over their maximum possible cross-community edges. The insularity ratio is internal density divided by external density. Distribution-based quartiles label communities as <em>insular</em>, <em>moderate</em>, or <em>integrative</em>.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filters scope which articles enter the community-detection graph. Insularity classifications are quartile-based <em>within the filtered set</em> &mdash; a community that registers as integrative in the whole corpus may register as insular inside its own cluster, which is itself an analytically useful signal.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Newman, M. E. J. (2006). Modularity and community structure in networks. <em>Proceedings of the National Academy of Sciences, 103</em>(23), 8577&ndash;8582.</li>
+      </ol>
+    </div>
   </details>
   <div class="loading-msg" id="ds-wb-loading">Loading community partition&hellip;</div>
   <div class="chart-container--auto" id="ds-wb-scatter" style="min-height:480px;"></div>
@@ -440,10 +479,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>SPC (search path count) is computed for every edge in the global citation DAG. The top-K edges by SPC are extracted; their connected components yield key routes. Convergence points are articles that sit on more than one route. The global Hummon-Doreian path is included for comparison.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Heaviest tool in this section. Filters narrow the DAG; the SPC computation then traces top routes through that subgraph. Filtering to a single cluster typically yields shorter routes (fewer cross-cluster traversals inflate path counts) but with sharper convergence points. Cached after first compute per unique filter combination.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>First Spark generalizes Main Path Analysis: where Main Path returns the single highest-SPC chain, First Spark extracts the top-K highest-traffic routes through the citation DAG. Where they converge is where the field's intellectual history funnels through a small number of pivotal articles. The global Hummon-Doreian path is included for comparison.</p>
+
+      <p>Run with default parameters across the indexed DAG (13,442 nodes, 44,315 edges), the tool returns five top routes. Route 0 is the heaviest at SPC = 1.33 &times; 10<sup>11</sup>, an 8-article chain from Kroll's 1985 "Social-Cognitive Ability and Writing Performance" to Winsor's 1999 "Genre and Activity Systems" &mdash; the cognition-to-genre-theory pipeline of the 1980s and 1990s. Route 1 (SPC = 9.6 &times; 10<sup>10</sup>) is a six-article chain rooted in Spinuzzi's 2010 "Secret Sauce and Snake Oil" terminating at McNely, Spinuzzi, and Teston's 2015 "Contemporary Research Methodologies" &mdash; the technical-communication methods chain. Route 2 (SPC = 9.0 &times; 10<sup>10</sup>) runs from Beaufort's 2000 "Learning the Trade" through Gygi and Zachry's 2010 work on regulatory genre &mdash; the workplace-writing chain. Routes 3 and 4 surface shorter genre-theory chains around Schryer 1993 and Winsor 2000.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>SPC (search path count) is computed for every edge in the global citation DAG using the integrated approach of Liu and Lu.<sup>1</sup> The top-K edges by SPC are extracted; their connected components yield distinct routes. Convergence points are articles that sit on more than one route &mdash; high-SPC nodes whose centrality is structural rather than incidental.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Heaviest tool in this section. Filters narrow the DAG before SPC is computed. Filtering to a single cluster typically yields shorter routes (fewer cross-cluster traversals to inflate path counts) but produces sharper convergence points. Cached after first compute per unique filter combination.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Liu, J. S., &amp; Lu, L. Y. Y. (2012). An integrated approach for main path analysis: Development of the Hirsch index as an example. <em>Journal of the American Society for Information Science and Technology, 63</em>(3), 528&ndash;542.</li>
+      </ol>
+    </div>
   </details>
   <div class="loading-msg" id="ds-fs-loading">Computing SPC over the full DAG&hellip; (cached after first run)</div>
   <div class="chart-container--auto" id="ds-fs-routes" style="min-height:520px;"></div>
