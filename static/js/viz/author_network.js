@@ -7,7 +7,7 @@
 
 import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { PALETTE, journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -197,13 +197,6 @@ async function loadNetwork(minPapers, topN) {
       .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
     nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
   });
-
-  // Force a re-warmed simulation: when loadNetwork is called from a hash-routing
-  // path (e.g. /explore#authors), the simulation may have been created and
-  // ticked-to-cooldown before the DOM was visible, leaving the node groups
-  // without transforms. Restart kicks the tick events again so the handler
-  // above runs against the live DOM.
-  simulation.alpha(0.8).restart();
 
   // Search highlighting
   document.getElementById('net-search').addEventListener('input', function() {
