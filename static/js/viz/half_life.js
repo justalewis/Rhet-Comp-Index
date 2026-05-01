@@ -59,6 +59,7 @@ async function loadHalfLife() {
   try {
     const resp = await fetch('/api/citations/half-life?' + params.toString());
     data = await resp.json();
+    window.__expHalfLife = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load half-life data.</p>';
     return;
