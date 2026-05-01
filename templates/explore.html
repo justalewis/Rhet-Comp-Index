@@ -1516,22 +1516,34 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">What the chord diagram measures</h4>
-        <p>Each cell in the underlying matrix counts the number of times articles published in journal A cite articles published in journal B. This is a journal-level aggregation of the article-level citation data &mdash; a macro view of the same citation network shown in other Explore tabs. The chord diagram makes the <strong>directionality</strong> and <strong>magnitude</strong> of inter-journal citation flows immediately visible.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Journal Citation Flow chord diagram aggregates the article-level citation graph up to the journal level. Each cell in the underlying 36&times;36 matrix counts the number of times articles published in journal A cite articles published in journal B. The chord diagram renders that matrix visually: each arc on the ring is one journal, and each chord connecting two arcs has two ends whose widths show the citation flow in each direction. Where a chord is markedly wider at one end, the citation relationship is asymmetric &mdash; one journal cites the other more than it is cited in return.</p>
 
-        <h4 class="methodology-heading">Directionality</h4>
-        <p>Each chord has two ends of potentially different widths. The width at the source journal&rsquo;s arc indicates how many citations flow <em>from</em> that journal <em>to</em> the other; the width at the target end shows the reverse flow. When a chord is markedly wider at one end, the citation relationship is asymmetric &mdash; one journal cites the other more than it is cited in return. This can reflect status hierarchies, methodological borrowing, or cross-subdisciplinary engagement.</p>
+        <p>Run with default parameters across the 36 indexed journals, the matrix carries 44,640 inter-journal citations of which 20,530 (46.0%) are self-citations &mdash; articles citing other articles in the same journal. Among cross-journal flows the heaviest single edge runs from <em>Journal of Technical Writing and Communication</em> to <em>Technical Communication Quarterly</em> at 1,157 citations, followed by TCQ to <em>Journal of Business and Technical Communication</em> at 1,065, JBTC to TCQ at 881, and <em>Written Communication</em> to <em>Research in the Teaching of English</em> at 788. Ranked by total outbound flow the top three citing journals are <em>Computers and Composition</em> (5,672 outbound citations), TCQ (5,119), and <em>IEEE Transactions on Professional Communication</em> (4,227); ranked by inbound flow the top three are TCQ (6,341 inbound), <em>Computers and Composition</em> (4,632), and JBTC (4,337). TCQ is the field's structural attractor: a citing source for many venues and the most-cited target overall.</p>
 
-        <h4 class="methodology-heading">Self-citation</h4>
-        <p>The diagonal of the matrix (journal citing itself) appears as a chord looping back to the same arc. High self-citation can indicate a coherent internal research conversation, editorial preferences for citing the journal&rsquo;s own literature, or insularity. Most journals in the index exhibit significant self-citation because authors publishing in a venue often engage with the existing conversation in that venue.</p>
+        <p>Use the tool to identify dominant citing-cited dyads, locate hubs that pull citations from across the field, and read off how concentrated or dispersed each venue's citation footprint is. The 46% self-citation rate is itself the most important number on the diagram: it indicates that nearly half of all internal citation traffic stays within the same venue rather than crossing journal boundaries.</p>
 
-        <h4 class="methodology-heading">Limitations</h4>
-        <p>Citation counts are influenced by journal size: journals with more articles generate more citations. The raw counts shown here do not normalise for journal output volume. Journals that do not deposit reference lists with CrossRef are invisible as <em>citing</em> sources but may still appear as <em>cited</em> targets. Only citations between articles in this index are counted &mdash; citations to books, dissertations, or journals outside the index are not reflected.</p>
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>The matrix is a journal-level aggregation of the article-level citation graph. For each indexed article whose reference list contains another indexed article, the citing article's journal is rolled up to the matrix row and the cited article's journal to the matrix column. Self-citations appear on the diagonal as chord loops on the visualization. The full matrix preserves directionality &mdash; the flow from journal A to journal B is recorded separately from the flow from B to A &mdash; which lets the chord diagram surface asymmetric relationships rather than averaging them out.</p>
+
+        <p>Three structural features of the diagram bear interpretation. First, the high self-citation rate is partly editorial and partly topical: authors publishing in a venue tend to engage with that venue's prior conversation, and editors often value continuity with the journal's existing scholarship. Second, the strongest cross-journal flows almost all run within the technical-communication sub-cluster (JTWC&harr;TCQ&harr;JBTC&harr;IEEE TPC), which reflects a tightly integrated research community in which articles routinely cite across the four flagship TC venues but rarely reach into composition journals or rhetoric journals. Third, asymmetric chords often signal a status or directional borrowing relationship; a chord that is much wider at journal A's end than at B's end means A is reading B more than B is reading A.</p>
+
+        <p>Two limitations bear on interpretation. The raw counts are not normalized for journal output volume.<sup>1</sup> A large journal that publishes 200 articles per year generates more citing flows simply because its articles have more reference list entries; comparing raw flows across journals of different sizes can misrepresent the relative intensity of inter-journal engagement. Normalization by article count or by total reference-list length would correct for this but is not currently exposed in the UI. The second limitation is bibliometric scope: journals that do not deposit reference lists with CrossRef appear as invisible citing sources, though they may still appear as cited targets when other journals cite their articles. The Coverage Notes page at <a href="/coverage">/coverage</a> documents which journals contribute citing signal and which do not.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Four controls scope the matrix. Filter changes do not auto-recompute; the Compute button re-runs the aggregation against the current filter state.</p>
+
+        <p>The <strong>minimum-citations slider</strong> filters which chords are drawn. At the default of one, every nonzero flow is rendered; raising to 25 or 50 strips out the long tail of light flows and produces a visualization dominated by the major axes &mdash; useful when the question is "where does citation traffic concentrate?" rather than "what is the full topology?"</p>
+
+        <p>The <strong>From / To year filters</strong> restrict the citation set by the citing article's publication year. Restricting to 2015&ndash;2025 reframes the question from "what is the all-time flow pattern?" to "how is the field citing across journals <em>now</em>?" and tends to amplify the technical-communication sub-cluster relative to the all-time view, because the recent decade has tightened internal TC citation traffic.</p>
+
+        <p>The <strong>Journals picker</strong> narrows the matrix to a chosen subset of journals on both axes. Restricting to the four TC venues isolates that sub-cluster and shows its internal flow pattern with cross-cluster citations dropped; restricting to the rhetoric venues exposes a substantively different sub-graph in which self-citation and cross-cluster citation patterns shift.</p>
 
         <h4 class="methodology-heading">References</h4>
-        <ul class="methodology-refs">
-          <li>Leydesdorff, L. (2007). Betweenness centrality as an indicator of the interdisciplinarity of scientific journals. <em>Journal of the American Society for Information Science and Technology, 58</em>(9), 1303&ndash;1319.</li>
-        </ul>
+        <ol class="methodology-refs">
+          <li>Leydesdorff, L., &amp; Rafols, I. (2011). Indicators of the interdisciplinarity of journals: Diversity, centrality, and citations. <em>Journal of Informetrics, 5</em>(1), 87&ndash;100.</li>
+          <li>Borner, K., Klavans, R., Patek, M., Zoss, A. M., Biberstine, J. R., Light, R. P., Lariviere, V., &amp; Boyack, K. W. (2012). Design and update of a classification system: The UCSD map of science. <em>PLoS ONE, 7</em>(7), e39464.</li>
+        </ol>
 
         </div>
       </details>
