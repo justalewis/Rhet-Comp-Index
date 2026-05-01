@@ -258,14 +258,29 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Tagging system</h4>
-        <p>Pinakes uses a controlled vocabulary of 61 disciplinary topics developed to capture the major research areas in rhetoric and composition. Each article is tagged automatically by matching its title and abstract text against keyword patterns for each topic. An article can receive multiple tags. The tagging is rule-based (string matching with word boundaries), not machine-learned; it trades recall for precision, preferring to miss a marginal match rather than over-assign topics.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Topic Co-Occurrence heatmap shows how often pairs of disciplinary topics appear together on the same article. Each cell answers the question: of the articles in the index, how many were tagged with both topic A and topic B? Darker cells mark thematic intersections; faded cells mark topic pairs that rarely sit together in the same paper.</p>
 
-        <h4 class="methodology-heading">Co-occurrence matrix</h4>
-        <p>The heatmap displays a symmetric matrix where each cell (<em>i</em>,&thinsp;<em>j</em>) contains the number of articles tagged with both topic <em>i</em> and topic <em>j</em>. Diagonal cells show the total count for each topic alone. The color intensity uses a sequential scale from white (zero co-occurrences) to dark brown (highest co-occurrence count in the matrix). Only topic pairs with at least one co-occurrence are colored.</p>
+        <p>Run with default parameters against the full Pinakes index, the heatmap renders a 61&times;61 grid. The single heaviest pair is "teacher development" and "writing pedagogy," which co-occur on 1,394 indexed articles. "Rhetorical criticism" and "book reviews" follow at 1,307; rhetorical criticism also pairs heavily with classical rhetoric (1,163), discourse analysis (1,146), modern rhetorical theory (1,108), and argument (1,101), reflecting both the centrality of rhetorical criticism as a research mode and its high base rate inside the indexed corpus. The pedagogy/teacher-development pair is the only intersection in the heatmap that is not anchored to rhetorical criticism on at least one side.</p>
 
-        <h4 class="methodology-heading">Interpretation and limitations</h4>
-        <p>High co-occurrence between two topics means they frequently appear on the same article, suggesting thematic overlap or a recognized sub-field at their intersection. However, topics with very high base rates (e.g., &ldquo;pedagogy&rdquo;) will naturally co-occur with many others simply because they are common &mdash; the matrix does not normalize for frequency. Articles lacking abstracts receive fewer tags, so journals indexed via RSS or scraping are systematically underrepresented. The 61-term vocabulary was designed for rhetoric and composition specifically and may not adequately capture interdisciplinary work that uses different terminology.</p>
+        <p>Use the tool to locate dense thematic overlap, identify recognized sub-fields at the intersection of two terms, and notice asymmetries (a topic that appears in heavy pairs across the row but rarely on the diagonal of any other topic's row).</p>
+
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>Tags are assigned by a rule-based matcher run over each article's title and abstract. The vocabulary is a controlled list of 61 disciplinary topics developed for rhetoric and composition, with each topic backed by a hand-curated keyword pattern (a regular expression with word-boundary anchors and a small set of synonym alternations). The matcher prefers precision to recall: marginal matches are intentionally dropped rather than over-assigned. Articles that lack an abstract receive fewer tags than articles with full text, since the title alone exposes a smaller surface for keyword matching. Roughly 73% of indexed articles currently carry at least one tag, with the remaining 27% concentrated in journals indexed via RSS or scraping rather than CrossRef.</p>
+
+        <p>The heatmap reads from a symmetric co-occurrence matrix where cell (<em>i</em>,&nbsp;<em>j</em>) holds the count of articles tagged with both topic <em>i</em> and topic <em>j</em>. Cells are colored on a sequential white-to-brown scale anchored to the matrix maximum, so the darkest cell in any rendering is the heaviest pair in that rendering rather than a fixed threshold. Diagonal cells are not displayed: an article cannot co-occur with itself, and the per-topic article count is reported separately rather than as a self-edge.</p>
+
+        <p>The analytic move here is descriptive rather than inferential. Co-occurrence on its own does not measure association strength; it conflates genuine thematic overlap with the joint base rate of two common terms.<sup>1</sup> A topic with high base rate (rhetorical criticism, in this corpus) will appear in heavy pairs across many rows simply because it is common, which is why the dominant rhetorical-criticism pairs run from book reviews to classical rhetoric to argument without that pattern necessarily indexing a single coherent thematic cluster. To control for base rate, divide each cell by the marginal counts and inspect the residual; the heatmap as displayed is the unnormalized signal, which is more legible at a glance but requires this interpretive caveat.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The heatmap is rendered without user-tunable parameters. The vocabulary, the keyword patterns, and the article corpus are all fixed at the time the page loads. Hover any cell to read the article count for that topic pair; the matrix is symmetric, so cell (<em>i</em>,&nbsp;<em>j</em>) reports the same count as cell (<em>j</em>,&nbsp;<em>i</em>).</p>
+
+        <p>Two structural caveats bear on interpretation. The 61-term vocabulary was designed for rhetoric and composition specifically and will systematically under-tag interdisciplinary work that uses adjacent-field terminology (information science, applied linguistics, education theory). Articles indexed via RSS or web scraping rarely carry abstracts and are therefore tagged on title text alone, which makes those venues appear thinner in the heatmap than their actual thematic footprint warrants; the Coverage Notes page at <a href="/coverage">/coverage</a> documents which journals fall in this category.</p>
+
+        <h4 class="methodology-heading">References</h4>
+        <ol class="methodology-refs">
+          <li>Callon, M., Courtial, J.-P., Turner, W. A., &amp; Bauin, S. (1983). From translations to problematic networks: An introduction to co-word analysis. <em>Social Science Information, 22</em>(2), 191&ndash;235.</li>
+        </ol>
 
         </div>
       </details>
