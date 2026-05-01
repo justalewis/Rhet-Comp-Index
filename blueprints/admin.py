@@ -1,9 +1,11 @@
 """admin Blueprint — auth-gated mutating endpoints and the layered health checks."""
 
+import json
 import logging
+import os
 import threading
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from auth import require_admin_token
 from rate_limit import limiter, LIMITS, fetch_auth_failing
@@ -81,4 +83,82 @@ def run_backup_now():
             log.warning("heartbeat write after backup failed: %s", exc)
     status = 200 if summary.get("success") else 500
     return jsonify(summary), status
+
+
+# ── Disciplinary Calendar add-event ────────────────────────────────────────
+# Appends a {year, type, title} entry to data/disciplinary_events.json.
+# The Datastories ds_disciplinary_calendar() function reads this file at
+# request time (merged with the code-curated seed list) so additions show
+# up on the next page load, no restart required.
+
+_DISCIPLINARY_EVENT_TYPES = {
+    "journal_founded", "landmark_article",
+    "external_crisis", "special_issue",
+}
+
+
+@bp.route("/api/admin/disciplinary-event", methods=["POST"])
+@require_admin_token
+def add_disciplinary_event():
+    """Append one event to data/disciplinary_events.json. JSON body:
+        {"year": 2024, "type": "landmark_article", "title": "Foo bar"}
+
+    Idempotent on (year, title) — duplicate posts are silently dropped.
+    Type must be one of: journal_founded, landmark_article,
+    external_crisis, special_issue. Returns the full updated user-events
+    list."""
+    body = request.get_json(silent=True) or {}
+    try:
+        year = int(body.get("year"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "year must be an integer"}), 400
+    title = (body.get("title") or "").strip()
+    ev_type = (body.get("type") or "").strip()
+    if not title:
+        return jsonify({"error": "title is required"}), 400
+    if ev_type not in _DISCIPLINARY_EVENT_TYPES:
+        return jsonify({
+            "error": "type must be one of: " + ", ".join(sorted(_DISCIPLINARY_EVENT_TYPES))
+        }), 400
+    if year < 1900 or year > 2100:
+        return jsonify({"error": "year out of plausible range (1900-2100)"}), 400
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.normpath(os.path.join(here, "..", "data", "disciplinary_events.json"))
+    os.makedirs(os.path.dirname(json_path), exist_ok=True)
+
+    existing = []
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, list):
+                existing = loaded
+        except Exception as exc:  # noqa: BLE001
+            log.warning("disciplinary events JSON malformed; rewriting: %s", exc)
+            existing = []
+
+    key = (year, title.lower())
+    seen = {(int(e.get("year", 0)), (e.get("title") or "").lower()) for e in existing if isinstance(e, dict)}
+    if key in seen:
+        return jsonify({"status": "duplicate", "events": existing}), 200
+
+    new_event = {"year": year, "type": ev_type, "title": title}
+    existing.append(new_event)
+    existing.sort(key=lambda e: (e.get("year", 0), e.get("title", "")))
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(existing, f, ensure_ascii=False, indent=2)
+
+    # Bust the ds_disciplinary_calendar disk cache so the new event shows
+    # up immediately rather than waiting for the next DB-fingerprint change.
+    # The cache stores files at <_cache_dir()>/<name>-<keyhash>.json.
+    try:
+        from datastories_cache import _cache_dir
+        for f in _cache_dir().glob("ds_disciplinary_calendar-*.json"):
+            try: f.unlink()
+            except OSError: pass
+    except Exception:
+        pass
+
+    return jsonify({"status": "added", "event": new_event, "events": existing}), 201
 

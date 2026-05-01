@@ -2608,9 +2608,49 @@ def ds_prince_network(cluster=None, journals=None,
     }
 
 
-# Curated disciplinary events used by ds_disciplinary_calendar.
-# Year + short label + type. Curated; the user can extend this list.
-_DISCIPLINARY_EVENTS = [
+# Curated disciplinary events used by ds_disciplinary_calendar. Two sources:
+# - the seed list right below (code-curated, lives with the source for review)
+# - data/disciplinary_events.json (runtime-extensible, written by the
+#   /api/admin/disciplinary-event endpoint)
+# _load_disciplinary_events() merges the two; the JSON file's entries are
+# appended after the seed and de-duplicated by (year, title).
+import json as _json
+import os as _os
+
+_DISCIPLINARY_EVENTS_JSON = _os.path.join(
+    _os.path.dirname(__file__), "..", "data", "disciplinary_events.json"
+)
+
+
+def _load_disciplinary_events():
+    seen = set()
+    out = []
+    for ev in _DISCIPLINARY_EVENTS_SEED:
+        key = (ev.get("year"), (ev.get("title") or "").strip().lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(ev)
+    try:
+        if _os.path.exists(_DISCIPLINARY_EVENTS_JSON):
+            with open(_DISCIPLINARY_EVENTS_JSON, encoding="utf-8") as f:
+                extra = _json.load(f)
+            for ev in (extra if isinstance(extra, list) else []):
+                if not isinstance(ev, dict):
+                    continue
+                key = (ev.get("year"), (ev.get("title") or "").strip().lower())
+                if key in seen or not ev.get("year") or not ev.get("title"):
+                    continue
+                seen.add(key)
+                out.append(ev)
+    except Exception:
+        # Malformed JSON or unreadable file shouldn't break the tool —
+        # just fall back to the seed list.
+        pass
+    return sorted(out, key=lambda e: e.get("year", 0))
+
+
+_DISCIPLINARY_EVENTS_SEED = [
     {"year": 1949, "type": "external_crisis",  "title": "Shannon's information theory published"},
     {"year": 1949, "type": "journal_founded", "title": "College Composition and Communication founded"},
     {"year": 1968, "type": "landmark_article","title": "Macrorie's 'Engfish' coinage"},
@@ -2630,6 +2670,11 @@ _DISCIPLINARY_EVENTS = [
     {"year": 2020, "type": "external_crisis", "title": "COVID-19 disrupts higher education"},
     {"year": 2022, "type": "external_crisis", "title": "Public ChatGPT release"},
 ]
+
+
+def _disciplinary_events():
+    """Public accessor — merge seed list with runtime-added JSON entries."""
+    return _load_disciplinary_events()
 
 
 @cached("ds_disciplinary_calendar")
@@ -2652,9 +2697,10 @@ def ds_disciplinary_calendar(cluster=None, journals=None,
             continue
         spikes[int(ay)] += 1
 
+    events = _disciplinary_events()
     # Per-event-type post-event awakening rate (5-year window)
     by_type = defaultdict(list)
-    for ev in _DISCIPLINARY_EVENTS:
+    for ev in events:
         for off in range(5):
             by_type[ev["type"]].append(spikes.get(ev["year"] + off, 0))
     type_means = {
@@ -2665,11 +2711,11 @@ def ds_disciplinary_calendar(cluster=None, journals=None,
     spike_series = sorted([{"year": y, "n": n} for y, n in spikes.items()], key=lambda r: r["year"])
 
     return {
-        "events":       _DISCIPLINARY_EVENTS,
+        "events":       events,
         "awakenings":   spike_series,
         "type_means":   type_means,
         "summary":      {
-            "n_events":     len(_DISCIPLINARY_EVENTS),
+            "n_events":     len(events),
             "n_beauties":   len(beauties),
             "year_range":   [spike_series[0]["year"], spike_series[-1]["year"]] if spike_series else None,
         },
