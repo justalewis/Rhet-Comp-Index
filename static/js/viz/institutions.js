@@ -26,8 +26,9 @@ async function loadInstitutions() {
 
   let data;
   try {
-    const resp = await fetch('/api/stats/institutions');
+    const resp = await fetch('/api/stats/institutions', { cache: 'no-cache' });
     data = await resp.json();
+    window.__expInstitutions = data;
   } catch (e) {
     barContainer.innerHTML = '<p class="explore-hint">Failed to load institution data.</p>';
     return;
