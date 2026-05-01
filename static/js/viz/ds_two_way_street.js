@@ -112,10 +112,47 @@ function renderTrends(data) {
     .text('Cross-field edges (bars) and reciprocity rate (line) per decade');
 }
 
+// Three views over the most_reciprocated rows: per-article (default,
+// the original table), per-author (each author summed across the
+// articles they appear on), per-journal. Switching is client-side only —
+// the underlying data is the same article-level array.
+let _dsTwView = 'article';
+
 function renderTable(data) {
   const el = document.getElementById('ds-tw-table');
   const rows = data.most_reciprocated || [];
   if (!rows.length) { el.innerHTML = '<p class="explore-hint">No reciprocated articles.</p>'; return; }
+
+  // Tab strip
+  const tabs = ['article', 'author', 'journal'];
+  const tabHtml = '<div style="margin-bottom:0.6rem;font-size:0.82rem;">' +
+    tabs.map(t => '<button type="button" data-tw-view="' + t + '" ' +
+      'style="margin-right:0.3rem;padding:0.25rem 0.7rem;cursor:pointer;' +
+      'background:' + (_dsTwView === t ? '#5a3e28' : '#fdfbf7') + ';' +
+      'color:' + (_dsTwView === t ? '#fdfbf7' : '#5a3e28') + ';' +
+      'border:1px solid #c8c4bc;border-radius:11px;font-size:0.78rem;">' +
+      'by ' + t + '</button>').join('') +
+    '</div>';
+
+  let bodyHtml = '';
+  if (_dsTwView === 'article') {
+    bodyHtml = _renderArticleTable(rows);
+  } else if (_dsTwView === 'author') {
+    bodyHtml = _renderAuthorTable(rows);
+  } else {
+    bodyHtml = _renderJournalTable(rows);
+  }
+
+  el.innerHTML = tabHtml + bodyHtml;
+  el.querySelectorAll('button[data-tw-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _dsTwView = btn.getAttribute('data-tw-view');
+      renderTable(data);
+    });
+  });
+}
+
+function _renderArticleTable(rows) {
   let html = '<table class="ds-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;">';
   html += '<thead><tr>';
   ['Article', 'Year', 'Mutual partners', 'Cites RC', 'Cited by RC'].forEach(h =>
@@ -133,7 +170,70 @@ function renderTable(data) {
     html += '</tr>';
   });
   html += '</tbody></table>';
-  el.innerHTML = html;
+  return html;
+}
+
+function _renderAuthorTable(rows) {
+  // Sum per-author across rows. Authors are ';' delimited per the corpus
+  // convention. Skip empty / unknown.
+  const byAuthor = {};
+  rows.forEach(r => {
+    (r.authors || '').split(';').map(a => a.trim()).filter(Boolean).forEach(a => {
+      if (!byAuthor[a]) byAuthor[a] = { author: a, n_articles: 0, n_mutual_partners: 0, n_cites_rc: 0, n_cited_by_rc: 0 };
+      byAuthor[a].n_articles += 1;
+      byAuthor[a].n_mutual_partners += r.n_mutual_partners || 0;
+      byAuthor[a].n_cites_rc += r.n_cites_rc || 0;
+      byAuthor[a].n_cited_by_rc += r.n_cited_by_rc || 0;
+    });
+  });
+  const arr = Object.values(byAuthor).sort((a, b) => b.n_mutual_partners - a.n_mutual_partners);
+  if (!arr.length) return '<p class="explore-hint">No author data on these rows.</p>';
+  let html = '<table class="ds-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;">';
+  html += '<thead><tr>';
+  ['Author', 'Reciprocated articles', 'Mutual partners', 'Cites RC', 'Cited by RC'].forEach(h =>
+    html += '<th style="border-bottom:2px solid #e8e4de;padding:0.4rem 0.5rem;text-align:left;">' + escapeHtml(h) + '</th>');
+  html += '</tr></thead><tbody>';
+  arr.slice(0, 50).forEach(a => {
+    html += '<tr>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + escapeHtml(a.author) + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + a.n_articles + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">' + a.n_mutual_partners + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + a.n_cites_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + a.n_cited_by_rc + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  if (arr.length > 50) html += '<p class="explore-hint" style="margin-top:0.4rem;">Showing 50 of ' + arr.length + ' authors.</p>';
+  return html;
+}
+
+function _renderJournalTable(rows) {
+  const byJournal = {};
+  rows.forEach(r => {
+    const j = r.journal || '—';
+    if (!byJournal[j]) byJournal[j] = { journal: j, n_articles: 0, n_mutual_partners: 0, n_cites_rc: 0, n_cited_by_rc: 0 };
+    byJournal[j].n_articles += 1;
+    byJournal[j].n_mutual_partners += r.n_mutual_partners || 0;
+    byJournal[j].n_cites_rc += r.n_cites_rc || 0;
+    byJournal[j].n_cited_by_rc += r.n_cited_by_rc || 0;
+  });
+  const arr = Object.values(byJournal).sort((a, b) => b.n_mutual_partners - a.n_mutual_partners);
+  let html = '<table class="ds-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;">';
+  html += '<thead><tr>';
+  ['Journal', 'Reciprocated articles', 'Mutual partners', 'Cites RC', 'Cited by RC'].forEach(h =>
+    html += '<th style="border-bottom:2px solid #e8e4de;padding:0.4rem 0.5rem;text-align:left;">' + escapeHtml(h) + '</th>');
+  html += '</tr></thead><tbody>';
+  arr.forEach(j => {
+    html += '<tr>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + escapeHtml(j.journal) + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + j.n_articles + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">' + j.n_mutual_partners + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + j.n_cites_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + j.n_cited_by_rc + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
 }
 
 window.loadDsTwoWayStreet = loadDsTwoWayStreet;
