@@ -78,6 +78,7 @@ async function loadBibcoupling() {
   try {
     const resp = await fetch('/api/citations/bibcoupling?' + params.toString());
     data = await resp.json();
+    window.__expBibcoupling = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load bibliographic coupling data.</p>';
     return;
