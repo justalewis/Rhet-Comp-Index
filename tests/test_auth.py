@@ -3,6 +3,7 @@
 var (503), missing/malformed header (401), wrong token (403), and the
 happy path (the wrapped view runs)."""
 
+import threading
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -190,9 +191,13 @@ def test_run_backup_endpoint_requires_auth_wrong_token(client, monkeypatch):
     assert resp.status_code == 403
 
 
-def test_run_backup_endpoint_returns_summary(client, monkeypatch):
-    """With auth + a stubbed run_backup, the endpoint returns the summary
-    dict and writes a heartbeat on success."""
+def test_run_backup_endpoint_kicks_off_async_and_writes_heartbeat(
+    client, monkeypatch,
+):
+    """The endpoint returns 200 immediately ("backup started") and the
+    actual backup runs in a background thread. On success, the thread
+    writes the heartbeat. We patch run_backup to return synchronously
+    and join the thread before asserting on the heartbeat call."""
     monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
     fake_summary = {
         "success": True,
@@ -203,20 +208,33 @@ def test_run_backup_endpoint_returns_summary(client, monkeypatch):
         "pruned_keys": [],
         "error": None,
     }
+    started_threads = []
+    real_thread_init = threading.Thread.__init__
+    def capturing_init(self, *a, **kw):
+        real_thread_init(self, *a, **kw)
+        started_threads.append(self)
     with patch("backup.run_backup", return_value=fake_summary), \
-         patch("health.write_heartbeat") as wh:
+         patch("health.write_heartbeat") as wh, \
+         patch.object(threading.Thread, "__init__", capturing_init):
         resp = client.post("/api/admin/run-backup",
                            headers={"Authorization": "Bearer real"})
+    # Endpoint returns immediately with the kick-off ack.
     assert resp.status_code == 200
     body = resp.get_json()
-    assert body["success"] is True
-    assert body["uploaded_to"] == "s3://test-bucket/2026/04/30/x.db.zst.age"
+    assert body == {"status": "backup started"}
+    # Wait for the background thread to finish before checking side effects.
+    for t in started_threads:
+        t.join(timeout=2.0)
     wh.assert_called_once()
 
 
-def test_run_backup_endpoint_returns_500_on_failure_and_no_heartbeat(
+def test_run_backup_endpoint_swallows_failure_and_skips_heartbeat(
     client, monkeypatch,
 ):
+    """Failure inside the backup pipeline is logged but doesn't break the
+    endpoint contract — the kick-off response is still 200; heartbeat is
+    NOT written; the failure is logged at ERROR for the operator to find
+    via `fly logs`."""
     monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
     fail_summary = {
         "success": False,
@@ -227,12 +245,18 @@ def test_run_backup_endpoint_returns_500_on_failure_and_no_heartbeat(
         "pruned_keys": [],
         "error": "missing env vars: ['PINAKES_BACKUP_BUCKET']",
     }
+    started_threads = []
+    real_thread_init = threading.Thread.__init__
+    def capturing_init(self, *a, **kw):
+        real_thread_init(self, *a, **kw)
+        started_threads.append(self)
     with patch("backup.run_backup", return_value=fail_summary), \
-         patch("health.write_heartbeat") as wh:
+         patch("health.write_heartbeat") as wh, \
+         patch.object(threading.Thread, "__init__", capturing_init):
         resp = client.post("/api/admin/run-backup",
                            headers={"Authorization": "Bearer real"})
-    assert resp.status_code == 500
-    body = resp.get_json()
-    assert body["success"] is False
-    assert "missing env vars" in body["error"]
+    assert resp.status_code == 200
+    assert resp.get_json() == {"status": "backup started"}
+    for t in started_threads:
+        t.join(timeout=2.0)
     wh.assert_not_called()

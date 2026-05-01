@@ -47,8 +47,16 @@ jobs:
       - name: Wait 10 minutes for the async fetch to finish most of its work
         run: sleep 600
 
-      - name: POST /api/admin/run-backup (synchronous; returns full summary)
+      - name: POST /api/admin/run-backup (async; 200 means kicked-off, not finished)
         run: |
+          # The endpoint returns 200 immediately and runs the
+          # snapshot→zstd→age→B2 pipeline in a background thread (the
+          # pipeline itself takes 2–5 minutes on a 1-CPU Fly machine,
+          # which exceeds gunicorn's 120-second worker timeout if run
+          # synchronously, producing a 502). Success or failure of the
+          # actual backup surfaces in `fly logs` as "Backup succeeded:
+          # {...}" / "Backup failed: {...}" lines, and the heartbeat
+          # file at /data/scheduler.heartbeat is touched on success.
           response=$(curl -sS -X POST https://pinakes.xyz/api/admin/run-backup \
             -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" \
             -w "\nHTTP_STATUS:%{http_code}")
@@ -58,6 +66,7 @@ jobs:
           echo "Response body:"
           echo "$body" | head -50
           if [ "$status" != "200" ]; then
-            echo "::error::Backup failed with status $status"
+            echo "::error::Backup kick-off failed with status $status"
             exit 1
           fi
+          echo "Backup kicked off. Watch fly logs for completion summary."

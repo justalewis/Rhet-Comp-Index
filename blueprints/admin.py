@@ -59,30 +59,59 @@ def health_deep():
     return jsonify(_health.deep_diagnostic()), 200
 
 
+def _run_backup_in_background():
+    """Background-thread target for /api/admin/run-backup. Runs the full
+    pipeline (snapshot → zstd → age → B2 upload → retention prune), writes
+    the heartbeat on success, and logs the full summary at INFO so the
+    operator can audit via `fly logs`. Failures are logged at ERROR; if
+    Sentry is wired the failure will surface there too.
+
+    Kept as a module-level function (not a closure) so it pickles cleanly
+    and so tests can mock it without re-implementing the threading wrapper."""
+    try:
+        from backup import run_backup
+        summary = run_backup()
+        if summary.get("success"):
+            try:
+                _health.write_heartbeat()
+            except Exception as exc:  # noqa: BLE001
+                log.warning("heartbeat write after backup failed: %s", exc)
+            log.info("Backup succeeded: %s", summary)
+        else:
+            log.error("Backup failed: %s", summary)
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Backup raised unhandled exception: %s", exc)
+
+
 @bp.route("/api/admin/run-backup", methods=["POST"])
 @require_admin_token
 def run_backup_now():
-    """Run the SQLite backup pipeline synchronously: snapshot → zstd →
-    age-encrypt → upload to S3-compatible bucket → prune retention.
+    """Kick off the SQLite backup pipeline asynchronously and return 200
+    immediately. The pipeline (snapshot → zstd → age → B2 upload → retention
+    prune) takes 2–5 minutes for the current ~190 MB DB on a 1-CPU Fly
+    machine — longer than gunicorn's 120-second worker timeout, so a
+    synchronous endpoint returns 502 (worker killed mid-pipeline). Going
+    async sidesteps the timeout entirely.
 
     Called by .github/workflows/cron.yml at 03:00 UTC daily, hitting
-    pinakes.xyz with the PINAKES_ADMIN_TOKEN GitHub secret. Synchronous
-    so the GitHub Action sees real success/failure and so the resulting
-    JSON response carries the full summary for log/audit.
+    pinakes.xyz with the PINAKES_ADMIN_TOKEN GitHub secret. The cron
+    workflow trusts the 200; the actual success/failure of the backup
+    surfaces via:
 
-    Writes /data/scheduler.heartbeat on success — that file is what
-    /health/deep reads to report `scheduler_healthy`. With the
-    standalone scheduler.py removed (see refactor-notes/13), the
-    heartbeat is now the cron job's signal."""
-    from backup import run_backup
-    summary = run_backup()
-    if summary.get("success"):
-        try:
-            _health.write_heartbeat()
-        except Exception as exc:  # noqa: BLE001
-            log.warning("heartbeat write after backup failed: %s", exc)
-    status = 200 if summary.get("success") else 500
-    return jsonify(summary), status
+      - Fly logs (INFO line "Backup succeeded: {...}" with the summary;
+        ERROR line on failure with the failure dict)
+      - /data/scheduler.heartbeat (touched on success; /health/deep reads
+        this file to report scheduler_healthy)
+      - Sentry (if SENTRY_DSN is set, unhandled exceptions surface there)
+
+    If you need a richer success/failure signal back from the cron, add
+    a polling step that hits /health/deep and checks the heartbeat
+    timestamp. Not necessary for current operations; daily-snapshot
+    monitoring via the storage bucket's "last modified" timestamp is
+    sufficient."""
+    t = threading.Thread(target=_run_backup_in_background, daemon=True)
+    t.start()
+    return jsonify({"status": "backup started"}), 200
 
 
 # ── Disciplinary Calendar add-event ────────────────────────────────────────
