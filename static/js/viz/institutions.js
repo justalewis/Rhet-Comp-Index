@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -13,7 +14,13 @@ import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 let instBarChart  = null;
 let instLineChart = null;
 
+let _exportWired_loadInstitutions = false;
+
 async function loadInstitutions() {
+  if (!_exportWired_loadInstitutions) {
+    renderExportToolbar('tab-institutions', { svgSelector: '#institutions-container svg', dataProvider: () => (window.__expInstitutions && window.__expInstitutions.institutions || []) });
+    _exportWired_loadInstitutions = true;
+  }
   const barContainer = document.getElementById('inst-bar-container');
   barContainer.innerHTML = '<div class="loading-msg">Loading institution data…</div>';
 

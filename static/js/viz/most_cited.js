@@ -5,12 +5,19 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
+let _exportWired_loadCitations = false;
+
 async function loadCitations() {
+  if (!_exportWired_loadCitations) {
+    renderExportToolbar('tab-citations', { dataProvider: () => (window.__expMostCited || []) });
+    _exportWired_loadCitations = true;
+  }
   const container = document.getElementById('citations-list-container');
   container.innerHTML = '<div class="loading-msg">Loading…</div>';
 

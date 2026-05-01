@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -32,7 +33,13 @@ function updateCommJournalCount() {
   document.getElementById('comm-check-all').checked = (checked === total);
 }
 
+let _exportWired_loadCommunities = false;
+
 async function loadCommunities() {
+  if (!_exportWired_loadCommunities) {
+    renderExportToolbar('tab-communities', { svgSelector: '#communities-container svg', dataProvider: () => (window.__expCommunities && window.__expCommunities.communities || []) });
+    _exportWired_loadCommunities = true;
+  }
   const container = document.getElementById('comm-container');
   container.innerHTML = '<div class="loading-msg">Running community detection\u2026</div>';
   document.getElementById('comm-stats').textContent = '';

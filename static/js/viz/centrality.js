@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -44,7 +45,13 @@ function updateCentJournalCount() {
   if (allCb) allCb.indeterminate = (checked > 0 && checked < total);
 }
 
+let _exportWired_loadCentrality = false;
+
 async function loadCentrality() {
+  if (!_exportWired_loadCentrality) {
+    renderExportToolbar('tab-centrality', { svgSelector: '#centrality-container svg', dataProvider: () => (window.__expCentrality && window.__expCentrality.nodes || []) });
+    _exportWired_loadCentrality = true;
+  }
   clearTimeout(centDebounce);
 
   const container = document.getElementById('cent-container');
@@ -74,6 +81,7 @@ async function loadCentrality() {
   try {
     const resp = await fetch('/api/citations/centrality?' + params.toString());
     centData = await resp.json();
+  window.__expCentrality = centData;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load centrality data.</p>';
     return;

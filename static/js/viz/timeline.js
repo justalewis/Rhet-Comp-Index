@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -15,9 +16,16 @@ let allSeries = [];
 let allYears  = [];
 let showingTop8 = false;
 
+let _exportWired_loadTimeline = false;
+
 async function loadTimeline() {
+  if (!_exportWired_loadTimeline) {
+    renderExportToolbar('tab-timeline', { svgSelector: '#timeline-chart', dataProvider: () => (window.__expTimeline && window.__expTimeline.years || []).map((y, i) => Object.assign({year: y}, ...(window.__expTimeline.series||[]).map(s => ({[s.journal]: s.counts[i]})))) });
+    _exportWired_loadTimeline = true;
+  }
   const resp = await fetch('/api/stats/timeline');
   const data = await resp.json();
+  window.__expTimeline = data;
   allYears  = data.years;
   allSeries = data.series;
   renderTimeline(allSeries);

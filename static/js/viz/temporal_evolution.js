@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -28,7 +29,13 @@ function updateTeJournalCount() {
   document.getElementById('te-check-all').checked = (checked === total);
 }
 
+let _exportWired_loadTemporalEvolution = false;
+
 async function loadTemporalEvolution() {
+  if (!_exportWired_loadTemporalEvolution) {
+    renderExportToolbar('tab-temporal', { svgSelector: '#temporal-container svg', dataProvider: () => (window.__expTemporal && window.__expTemporal.snapshots || []) });
+    _exportWired_loadTemporalEvolution = true;
+  }
   // Clean up
   if (teChart) { teChart.destroy(); teChart = null; }
   if (teSimulation) { teSimulation.stop(); teSimulation = null; }

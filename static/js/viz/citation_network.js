@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -40,7 +41,13 @@ function updateCitnetJournalCount() {
   if (allCb) allCb.indeterminate = (checked > 0 && checked < total);
 }
 
+let _exportWired_loadCitationNetwork = false;
+
 async function loadCitationNetwork() {
+  if (!_exportWired_loadCitationNetwork) {
+    renderExportToolbar('tab-citnet', { svgSelector: '#citnet-container svg', dataProvider: () => (window.__expCitnet && window.__expCitnet.nodes || []) });
+    _exportWired_loadCitationNetwork = true;
+  }
   clearTimeout(citnetDebounce);
 
   const container = document.getElementById('citnet-container');

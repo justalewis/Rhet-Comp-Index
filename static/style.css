@@ -1307,6 +1307,16 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   position: relative;
 }
 
+/* Auto-sizing chart container — used by Datastories panels whose SVGs
+   are dynamically sized (sparkline grids, tall heatmaps, alluvial flows).
+   The default .chart-container hard-codes height: 480px which clips any
+   SVG taller than that and visually overflows into the next sibling. */
+.chart-container--auto {
+  width: 100%;
+  position: relative;
+  /* No height; min-height set inline per panel. */
+}
+
 .chart-section-head {
   font-family: var(--font-ui);
   font-size: 0.82rem;

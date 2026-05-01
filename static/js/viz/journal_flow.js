@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -72,7 +73,13 @@ const JFLOW_ABBREV = {
 
 function jflowAbbrev(name) { return JFLOW_ABBREV[name] || name; }
 
+let _exportWired_loadJournalFlow = false;
+
 async function loadJournalFlow() {
+  if (!_exportWired_loadJournalFlow) {
+    renderExportToolbar('tab-journalflow', { svgSelector: '#journalflow-container svg', dataProvider: () => (window.__expJournalFlow && window.__expJournalFlow.flow_pairs || []) });
+    _exportWired_loadJournalFlow = true;
+  }
   const container = document.getElementById('jflow-container');
   container.innerHTML = '<div class="loading-msg">Computing journal citation flows\u2026</div>';
   document.getElementById('jflow-stats').textContent = '';

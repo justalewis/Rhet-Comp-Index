@@ -1,0 +1,469 @@
+{# templates/_datastories_panels.html — one tab-panel div per Datastories tool.
+
+Each panel wraps a single tool's UI: brief intro, methodology details,
+filter controls, and the chart container. JS modules in static/js/viz/
+ds_*.js render into the *-container divs by id.
+
+This file is intentionally one big template to mirror explore.html's
+layout convention; chapter headings group the panels visually but each
+panel is independently rendered/loaded by static/js/datastories-loader.js.
+#}
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 3 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-braided-path" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Citation flow between Technical &amp; Professional Communication and Rhetoric/Composition, decade by decade. Each Sankey panel shows where citations originate (left) and where they land (right). The decade summary table beneath quantifies what the eye picks up.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Each citation edge is bucketed by the decade of its citing article. Source and target articles are mapped to a field group via the <code>journal_groups</code> classification (TPC / RC / OTHER). Within a decade, citations are aggregated to TPC&rarr;TPC, TPC&rarr;RC, RC&rarr;TPC, RC&rarr;RC, plus OTHER as residual. The Sankey nodes are pre-decade groups; widths are raw citation counts.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p><strong>Cluster</strong>, <strong>journals</strong>, <strong>year range</strong> all apply to both the citing and cited side. Picking <em>Composition &amp; Writing Studies</em> draws the Sankey using only edges where both endpoints are in CWS journals &mdash; useful for asking "what does intra-cluster citation traffic look like?" Narrow the year range to compare a specific decade against the rest. The decade selector switches which decade pane the diagram shows.</p></div>
+  </details>
+  <div class="chart-toolbar">
+    <label class="filter-label">Decade:&nbsp;
+      <select id="ds-bp-decade" onchange="dsBraidedPathSelectDecade()"></select>
+    </label>
+    <span class="filter-label" id="ds-bp-decade-summary" style="margin-left:1rem;color:#9c9890;"></span>
+  </div>
+  <div class="chart-container--auto" id="ds-bp-container" style="min-height:400px;"></div>
+  <div id="ds-bp-summary-table" style="margin-top:1rem;"></div>
+</div>
+
+<div id="tab-ds-branching-traditions" class="tab-panel" style="display:none;">
+  <p class="tab-intro">How the corpus is composed: every indexed journal sorted by tradition. The classification is fixed (the same one all the cross-field tools rely on); this panel shows the resulting balance of articles per group and per journal.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>The grouping (<code>TPC</code> / <code>RHET_COMP</code> / <code>OTHER</code>) is hand-curated and lives in <code>journal_groups.py</code>. <em>OTHER</em> is "adjacent": writing centers, WAC, multimodal, international, community-engaged. Counts come from a single SQL aggregation over the articles table.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p><strong>Year range</strong> changes which articles get counted toward the per-tradition totals. Use it to ask "what did the field look like before 2000?" The cluster/journal filters are intentionally hidden because this tool <em>is</em> the field-composition snapshot.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-bt-container" style="min-height:520px;"></div>
+</div>
+
+<div id="tab-ds-origins-frontiers" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Sources are articles cited inside the corpus but never citing anything in it (foundational works the field reaches back to). Sinks are the reverse: articles that cite into the corpus but are never cited from it (the active research frontier, plus genuine dead-ends).</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Sources are articles with internal in-degree &ge;&nbsp;1 and out-degree =&nbsp;0; sinks are out-degree &ge;&nbsp;1 and in-degree =&nbsp;0. Sinks published after the frontier-cutoff year are flagged <em>frontier</em>; older sinks are <em>data-gap</em> (most likely missing CrossRef references rather than truly uncited). Per-journal rates show how source-y or sink-y each venue's contribution is.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filtering to a <strong>cluster</strong> shows what is foundational for that subfield specifically &mdash; e.g. picking <em>Technical Communication</em> reveals which articles the TC subfield reaches back to. The <strong>year range</strong> shifts the frontier-cutoff implicitly: an upper bound near the present makes more articles look like "frontier sinks"; a tighter window makes the data-gap category more obvious.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-of-summary" style="min-height:60px;"></div>
+  <div class="chart-container--auto" id="ds-of-year-chart" style="min-height:280px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Per-journal source / sink rates</h4>
+  <div class="chart-container--auto" id="ds-of-journal-chart" style="min-height:520px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Notable sources and sinks</h4>
+  <div id="ds-of-notable" style="margin-top:0.6rem;"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 4 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-shifting-currents" class="tab-panel" style="display:none;">
+  <p class="tab-intro">A separate Hummon-Doreian main path computed for each of five decade windows (1970s&ndash;80s, 1990s, 2000s, 2010s, 2020s). Articles that appear on multiple decades' paths are flagged as <em>persistent</em>; articles that anchor a single decade are <em>decade-specific</em>.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each decade, the citation DAG restricted to that decade's articles (and their citations) is built; cycles are removed via topological-sort breaks; SPC (search path count) is computed for every edge; the highest-SPC chain from a source to a sink is reported as the decade's main path. Cross-decade persistence is then computed by counting how many decade paths each article appears on.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filters narrow the DAG that each decade's main path is computed on. <strong>Cluster</strong> turns the tool into "the decade-by-decade backbone within this subfield." A tight <strong>year range</strong> makes the per-decade slices sparser; widening usually produces longer paths. Heavy compute on the first cache miss &mdash; identical filter combinations return in under a second after.</p></div>
+  </details>
+  <div class="loading-msg" id="ds-sc-loading">Computing decade main paths&hellip; (cached after first run)</div>
+  <div class="chart-container--auto" id="ds-sc-container" style="min-height:520px;"></div>
+  <div id="ds-sc-table" style="margin-top:1rem;"></div>
+</div>
+
+<div id="tab-ds-speed-of-influence" class="tab-panel" style="display:none;">
+  <p class="tab-intro">How long it takes citations to land, broken down by direction. TPC&rarr;RC is typically slower than TPC&rarr;TPC; this panel quantifies that and tracks how delay distributions have shifted across decades.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Each edge's delay is (citing year &minus; cited year). Edges are bucketed by the field-group of source and target. Mann-Whitney U tests compare TPC&rarr;TPC against TPC&rarr;RC, RC&rarr;RC against RC&rarr;TPC, etc., to flag whether the differences are statistically distinguishable from random.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filters scope every direction's delay distribution. Apply a <strong>cluster</strong> to ask "how fast does this subfield consume its own work versus reach across the boundary?" The <strong>year range</strong> filters by citing year, so narrowing to a recent slice tracks contemporary citation tempo specifically.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-soi-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-soi-distributions" style="min-height:280px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Delay over time</h4>
+  <div class="chart-container--auto" id="ds-soi-trends" style="min-height:280px;"></div>
+</div>
+
+<div id="tab-ds-border-crossers" class="tab-panel" style="display:none;">
+  <p class="tab-intro">High-betweenness articles that connect TPC and RC neighbourhoods. These are the works that, if removed, would lengthen the average shortest path between the two sub-fields most.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>NetworkX's exact betweenness centrality is computed on the full undirected citation graph. Boundary-crossing flow (in/out degree by field group) is used to filter for genuine bridges versus locally-central nodes. The neighbourhood subgraph for each top bridge is included for the force-directed view.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Bridge detection runs on whatever subgraph the filters carve out. Filtering to a <strong>cluster</strong> finds the within-cluster bridges &mdash; useful when "TPC-vs-RC" isn't the boundary you want to study. <strong>Year range</strong> on citing date constrains which edges the betweenness algorithm sees. Heavy first-time compute (60-90s) per unique filter combination; cached after.</p></div>
+  </details>
+  <div class="loading-msg" id="ds-bc-loading">Computing exact betweenness centrality &mdash; cached after first run&hellip;</div>
+  <div class="chart-container--auto" id="ds-bc-bars" style="min-height:520px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Bridge neighbourhood</h4>
+  <div class="chart-container--auto" id="ds-bc-network" style="min-height:520px;"></div>
+</div>
+
+<div id="tab-ds-two-way-street" class="tab-panel" style="display:none;">
+  <p class="tab-intro">When TPC cites RC, does RC cite back? The reciprocity rate at the article level reveals how much intellectual traffic actually runs both ways and which TPC articles attract the most return citation.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Article-level reciprocity for an article <em>A</em> is the count of distinct articles in the other group that <em>A</em> both cites and is cited by. Edge-level reciprocity is the fraction of A&rarr;B edges with a B&rarr;A counterpart. Trends are computed per decade of the citing article.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Cluster and journal filters scope which articles get counted on each side of the boundary. Useful pattern: lock to <em>Rhetoric</em>, run, then switch to <em>Technical Communication</em> &mdash; the comparison is whether one cluster reciprocates more than the other.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-tw-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-tw-trends" style="min-height:280px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Most-reciprocated articles</h4>
+  <div id="ds-tw-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 5 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-shape-of-influence" class="tab-panel" style="display:none;">
+  <p class="tab-intro">The Lorenz curve and Gini coefficient for the corpus's citation distribution, plus a power-law fit. The visual answer to "how unequal is citation in this field?"</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Articles ordered by internal citation count produce a Lorenz curve; Gini = 2 &times; the area between the curve and the equality diagonal. A power-law fit (alpha, x_min) is computed via maximum likelihood on the long tail; alternative distributions (lognormal, exponential) are compared.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The Lorenz curve and Gini are population statistics &mdash; they tell you how unequal citation is <em>within whatever scope you choose</em>. A whole-corpus Gini ~0.91 hides large variation between subfields. Filter to <em>Composition &amp; Writing Studies</em> alone and the Gini may shift; comparing per-cluster Ginis is one of the more revealing ways to use this tool.</p></div>
+  </details>
+  <div class="chart-toolbar">
+    <label class="filter-label">Journal:&nbsp;
+      <select id="ds-shape-journal">
+        <option value="">All journals</option>
+      </select>
+    </label>
+    <button class="filter-apply-btn" onclick="dsShapeReload()">Apply</button>
+  </div>
+  <div class="chart-container--auto" id="ds-shape-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-shape-lorenz" style="min-height:340px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Frequency &amp; rank-frequency (log-log)</h4>
+  <div class="chart-container--auto" id="ds-shape-loglog" style="min-height:340px;"></div>
+</div>
+
+<div id="tab-ds-long-tail" class="tab-panel" style="display:none;">
+  <p class="tab-intro">For each top-cited article, how concentrated is its audience? Some canonical articles are cited by everyone in their journal; others are cited broadly across journals, decades, and authors. This panel separates the two.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Per-article metrics: self-journal rate (fraction of citations from the same journal), unique citing-author count, author Gini (concentration of citations among citing authors), top-citer share. Articles are classified <em>broadly_canonical</em> / <em>narrowly_canonical</em> / <em>mixed</em> via thresholds on those metrics.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The breadth classification depends on author / journal counts in the citing population. Filtering to a <strong>cluster</strong> reframes "broad vs narrow canonical" as broad-or-narrow <em>within that subfield</em>, which is often a more meaningful question than the corpus-wide picture. <strong>Top N</strong> sets how many top-cited articles to score.</p></div>
+  </details>
+  <div class="chart-toolbar">
+    <label class="filter-label">Top N:&nbsp;
+      <select id="ds-lt-topn"><option>25</option><option selected>50</option><option>100</option></select>
+    </label>
+    <button class="filter-apply-btn" onclick="dsLongTailReload()">Apply</button>
+  </div>
+  <div class="chart-container--auto" id="ds-lt-scatter" style="min-height:420px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Top articles, ranked</h4>
+  <div id="ds-lt-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-fair-ranking" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Articles ranked by <em>citations per year of life</em> rather than raw count. This neutralizes the age advantage older work has and surfaces rapidly-rising contemporary articles. Rank-shift is the difference between an article's raw and time-normalized rank.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For an article published in year <em>y</em>, citations-per-year = total internal citations &divide; (current year &minus; <em>y</em>). Articles published in the most recent <em>k</em> years are excluded by default to avoid noise from very-low-denominator outliers. Categories: <em>stable_canon</em>, <em>age_advantage</em>, <em>rising_fast</em>.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p><strong>Exclude last N years</strong> drops very-recent publications (low denominator results in noisy cit/yr). Bumping it from 2 to 5 produces a more stable contemporary canon at the cost of dropping articles still on the rise. Filter to a <strong>cluster</strong> to see who's rising fast within a single subfield.</p></div>
+  </details>
+  <div class="chart-toolbar">
+    <label class="filter-label">Exclude last N years:&nbsp;
+      <select id="ds-fr-exclude"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>5</option></select>
+    </label>
+    <button class="filter-apply-btn" onclick="dsFairRankingReload()">Apply</button>
+  </div>
+  <div class="chart-container--auto" id="ds-fr-scatter" style="min-height:480px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Top rising-fast vs. age-advantage</h4>
+  <div id="ds-fr-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-shifting-canons" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Top-cited articles per generation of citing scholars (pre-1995, 1995&ndash;2004, 2005&ndash;2014, 2015+). Articles can be enduring (top-N every generation), rising (climbing the ranks), fading (slipping off), or generational-only.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each generation window, the top-N most-cited articles are determined using only citations from articles whose own publication year falls within that window. Cross-generation classification uses presence and rank movement across the four windows.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filtering by <strong>cluster</strong> rebuilds each generation's top-N from the citation traffic <em>that cluster</em> generates &mdash; the comparison is "what each generation of [Rhetoric / TPC / CWS] scholars treated as canonical." Rising and fading articles surface differently in different clusters, which is a common pattern worth probing.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-canon-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-canon-heatmap" style="min-height:480px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">By category</h4>
+  <div id="ds-canon-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-reach-of-citation" class="tab-panel" style="display:none;">
+  <p class="tab-intro">The shape of how each top article accumulated its citations: steady classics climb steadily, late bloomers spike years after publication, one-wave articles rise sharply then plateau.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each top article, citations are bucketed by year. Pattern classification: <em>steady_classic</em> (smooth growth), <em>front_loaded</em> (most citations in first 3 years), <em>late_bloomer</em> (peak more than 5 years post-publication), <em>one_wave</em> (single peak then decline), <em>too_recent</em>, <em>too_few</em>.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p><strong>Cluster</strong> changes both which top-cited articles are eligible (citation count is computed within scope) and which citing articles contribute to each accumulation curve. <strong>Top N</strong> sets the number of sparkline cards in the grid.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-roc-grid" style="min-height:520px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Pattern distribution</h4>
+  <div class="chart-container--auto" id="ds-roc-bars" style="min-height:240px;"></div>
+</div>
+
+<div id="tab-ds-inside-outside" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Internal (corpus) versus global (OpenAlex) citation rank. Articles that rank high internally but low globally are <em>TPC-specific canon</em>; the reverse pattern (high globally, low internally) signals work the field has imported but not metabolized.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Internal rank: rank by internal citation count. Global rank: rank by OpenAlex's <code>cited_by_count</code>. Spearman rank correlation between the two is reported. Articles in the top 100 of either ranking are tabulated; quadrant labels split the scatter into four interpretive zones.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Cluster and journal filters narrow the scatter to articles published in that scope. The Spearman rank correlation reported in the summary is recomputed on the filtered set &mdash; a useful comparison axis is "how well does internal citation track global citation in [TPC] vs in [Rhetoric]?"</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-io-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-io-scatter" style="min-height:520px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Top divergent articles</h4>
+  <div id="ds-io-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 6 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-communities-time" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Louvain communities computed within four decade windows, then aligned across decades to show how groups split, merge, and persist. Each ribbon traces a community's continuity (or its absence) over time.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each decade window, an undirected weighted citation graph is partitioned with NetworkX's Louvain implementation. Cross-decade alignment uses shared-article overlap: a community at <em>t+1</em> is a continuation of a community at <em>t</em> if they share at least 30% of articles (Jaccard-like). Splits, merges, emergences, and extinctions are derived from the alignment.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Louvain re-runs on whatever edge subset survives the filter. With a tight cluster filter the per-decade community count usually drops (fewer nodes mean a coarser partition); with a broad filter you see finer structure. Heavy first-time compute (~30-60s).</p></div>
+  </details>
+  <div class="loading-msg" id="ds-ct-loading">Running Louvain across four decade windows&hellip; (cached after first run)</div>
+  <div class="chart-container--auto" id="ds-ct-sankey" style="min-height:520px;"></div>
+  <div id="ds-ct-detail" style="margin-top:1rem;"></div>
+</div>
+
+<div id="tab-ds-walls-bridges" class="tab-panel" style="display:none;">
+  <p class="tab-intro">For each citation community, how much of its citation traffic stays within the community versus crossing to others. Insular communities sit on the y-axis; integrative communities sit toward the diagonal.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Communities come from the same Louvain partition the Explore section's Communities tool uses. For each community: internal density = (internal edges) / (n choose 2), external density = (cross-community edges from these nodes) / (their max possible). Insularity ratio = internal / external. Distribution-based quartiles label communities <em>insular</em> / <em>moderate</em> / <em>integrative</em>.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filters scope which articles enter the community-detection graph. Insularity classifications (insular / moderate / integrative) are quartile-based <em>within the filtered set</em> &mdash; a community that's "integrative" in the whole corpus may register as "insular" inside its own cluster, which is a useful signal.</p></div>
+  </details>
+  <div class="loading-msg" id="ds-wb-loading">Loading community partition&hellip;</div>
+  <div class="chart-container--auto" id="ds-wb-scatter" style="min-height:480px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Per-community detail</h4>
+  <div id="ds-wb-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-first-spark" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Not one main path but several &mdash; the few highest-traffic routes through the citation DAG. Where they converge is where the field's intellectual history funnels through a small number of pivotal articles.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>SPC (search path count) is computed for every edge in the global citation DAG. The top-K edges by SPC are extracted; their connected components yield key routes. Convergence points are articles that sit on more than one route. The global Hummon-Doreian path is included for comparison.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Heaviest tool in this section. Filters narrow the DAG; the SPC computation then traces top routes through that subgraph. Filtering to a single cluster typically yields shorter routes (fewer cross-cluster traversals inflate path counts) but with sharper convergence points. Cached after first compute per unique filter combination.</p></div>
+  </details>
+  <div class="loading-msg" id="ds-fs-loading">Computing SPC over the full DAG&hellip; (cached after first run)</div>
+  <div class="chart-container--auto" id="ds-fs-routes" style="min-height:520px;"></div>
+  <div id="ds-fs-table" style="margin-top:1rem;"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 7 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-shared-foundations" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Articles linked by shared references &mdash; the bibliographic-coupling network of the corpus. Two articles that cite the same prior works are pulled together regardless of whether they cite each other directly.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each pair of articles, count shared references; weight by Jaccard similarity to control for very high-reference articles. Pairs below the minimum threshold are dropped; the top pairs by weight render as a force-directed network.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The coupling network is built from articles in the filtered scope. <strong>Cluster</strong> reveals what shared-reading patterns exist within a subfield. <strong>Min coupling</strong> trades graph density for noise &mdash; set to 5+ to focus on the strongest shared-foundation pairs.</p></div>
+  </details>
+  <div class="chart-toolbar">
+    <label class="filter-label">Min coupling:&nbsp;
+      <select id="ds-sf-min"><option>2</option><option selected>3</option><option>5</option><option>8</option></select>
+    </label>
+    <button class="filter-apply-btn" onclick="dsSharedFoundationsReload()">Apply</button>
+  </div>
+  <div class="chart-container--auto" id="ds-sf-network" style="min-height:560px;"></div>
+</div>
+
+<div id="tab-ds-two-maps" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Two ways to draw the field side-by-side: coupling clusters (what articles read in common) and citation communities (who cites whom). Concordant articles land in matching clusters; discordant articles diverge.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Both partitions come from Louvain at default resolution. Concordance is measured with normalized mutual information (NMI) and adjusted Rand index (ARI). Articles whose coupling-cluster and citation-community labels disagree are flagged <em>discordant</em>.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Both Louvain partitions (coupling-side and citation-side) re-run on the filtered scope. Picking a cluster turns the tool into "do these two maps of [this subfield] tell the same story?" which is often more interpretable than the whole-field NMI.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-tm-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-tm-comparison" style="min-height:520px;"></div>
+</div>
+
+<div id="tab-ds-books-everyone-reads" class="tab-panel" style="display:none;">
+  <p class="tab-intro">A "master works" list derived from the Datastories book's own figures: which articles appear across the most chapters' analyses. The closer an article gets to appearing in every chapter, the more central it is to the book's argument.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>This tool aggregates the article ID lists every other Datastories tool returns. An article's score is the count of distinct tools (and chapters) it appears in. Tied articles are broken by total internal citation count.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The aggregate is built from filter-aware sub-tools. Apply a <strong>cluster</strong> to derive a master-works list specific to that subfield &mdash; articles that show up across that cluster's view of every other tool. Each underlying tool uses the same filter, so the answer is "books everyone in [scope] reads, by Datastories' own measures."</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-be-summary" style="min-height:80px;"></div>
+  <div id="ds-be-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-uneven-debts" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Coupling pairs where the dependence runs much stronger one direction than the other. If A's reference list overlaps heavily with B's, but B's overlap with A is small, A is the dependent in the pair.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For a pair (A, B) with shared references <em>s</em>, |refs(A)| = <em>r<sub>a</sub></em>, |refs(B)| = <em>r<sub>b</sub></em>: directional coupling A&rarr;B = <em>s</em>/<em>r<sub>a</sub></em>; B&rarr;A = <em>s</em>/<em>r<sub>b</sub></em>; asymmetry = |A&rarr;B &minus; B&rarr;A|. Dependent article = the one whose ratio is larger.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Coupling pairs are computed on the filtered scope. Filtering to a single cluster surfaces the most asymmetric debts within that subfield &mdash; typically more interpretable than corpus-wide asymmetries because the dependent and other party share enough disciplinary context for the relationship to make sense.</p></div>
+  </details>
+  <div class="loading-msg" id="ds-ud-loading">Computing pairwise coupling and asymmetry&hellip; (cached after first run)</div>
+  <div class="chart-container--auto" id="ds-ud-scatter" style="min-height:480px;"></div>
+  <div id="ds-ud-table" style="margin-top:1rem;"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 8 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-solo-to-squad" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Article team-size over time. The single-author percentage, the median author count, and the year the median crossed each threshold &mdash; with milestone markers for the first 5+ author article and the first 10+ author article.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Author counts come from splitting the <code>authors</code> field on the corpus's standard delimiter and counting non-empty segments. Yearly aggregates are means, medians, and 75th-percentile team size; milestones are derived programmatically.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filters constrain which articles' authorship counts get tabulated. Apply a <strong>cluster</strong> to compare team-size trajectories across subfields: TPC and CWS often look quite different, with technical communication trending toward larger teams earlier. <strong>Year range</strong> truncates the timeline.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-st-trends" style="min-height:340px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Largest teams in the corpus</h4>
+  <div id="ds-st-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-academic-lineages" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Probable mentor &rarr; mentee relationships inferred from publication-year gaps. If A's first publication is 10+ years before B's, and they later co-author, A is treated as a probable mentor of B.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each author, first-publication year is computed from the corpus. For each co-author pair, if the gap exceeds the threshold (default 10 years), the pair is recorded as a probable mentorship. This is a heuristic and will mislabel late-career first publications and lateral collaborations.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filtering to a <strong>cluster</strong> narrows the corpus the lineage inference runs on, which usually produces a denser local mentorship graph (mentors and mentees are more likely to share a venue). <strong>Min year gap</strong> tightens the heuristic &mdash; 8 catches more pairs with more false positives; 15 catches only obvious mentorships.</p></div>
+  </details>
+  <div class="chart-toolbar">
+    <label class="filter-label">Minimum year gap:&nbsp;
+      <select id="ds-al-gap"><option>5</option><option>8</option><option selected>10</option><option>12</option><option>15</option></select>
+    </label>
+    <button class="filter-apply-btn" onclick="dsAcademicLineagesReload()">Apply</button>
+  </div>
+  <div class="chart-container--auto" id="ds-al-network" style="min-height:560px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Most-prolific mentors</h4>
+  <div id="ds-al-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<div id="tab-ds-lasting-partnerships" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Co-authoring pairs classified by persistence. Most pairs are one-shot (a single article); a long tail of pairs span multiple years and articles. The long-running ones are the field's stable collaborative units.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>For each co-author pair: total co-authored articles, year span, journals involved. Classification: <em>one_shot</em> = 1 article; <em>short_term</em> = 2 articles; <em>persistent</em> = &ge;3 articles spanning &ge;5 years.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The pair-classification statistics are computed on the filtered set. Filtering to a <strong>cluster</strong> surfaces persistent partnerships within that cluster only, which is usually what you want when reading "who has the long-running collaborative relationships in TPC?"</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-lp-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-lp-bars" style="min-height:240px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Persistent partnerships</h4>
+  <div id="ds-lp-table" style="margin-top:0.6rem;"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- ── Chapter 9 ─────────────────────────────────────────────────── -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div id="tab-ds-prince-network" class="tab-panel" style="display:none;">
+  <p class="tab-intro">For each sleeping beauty article, the "princes" that woke it up. Awakening type characterizes how the rediscovery happened: a single catalyst, a new sub-field, or a broad revival.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Sleeping beauties come from the existing Beauty Coefficient computation. Princes are the articles that cited the beauty in the awakening window. Awakening types: <em>single_catalyst</em>, <em>individual_rediscovery</em>, <em>journal_specific</em>, <em>subfield_revival</em>, <em>broad_trend</em>.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filters narrow the corpus the underlying sleeping-beauty detection runs on. Picking a <strong>cluster</strong> reveals subfield-specific awakening patterns &mdash; e.g. "what kinds of articles wake up the dormant Rhetoric corpus?" Heavy first-time compute when filters change.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-pn-network" style="min-height:560px;"></div>
+  <div id="ds-pn-table" style="margin-top:1rem;"></div>
+</div>
+
+<div id="tab-ds-disciplinary-calendar" class="tab-panel" style="display:none;">
+  <p class="tab-intro">A curated timeline of disciplinary events (journal foundings, landmark articles, special issues, external crises) laid against the corpus's awakening spikes. Where the two coincide, an event is plausibly causal.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>The events table is hand-curated. Awakening spikes come from per-year counts of sleeping-beauty awakening years. Correlations are post-event 5-year window means, by event type.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The events list itself is curated and not filtered. <strong>Cluster</strong> and <strong>year range</strong> reshape the awakening-spike series the events are laid against; with a cluster filter the post-event awakening rates by event type often shift, suggesting that some event types catalyse some subfields more than others.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-dc-timeline" style="min-height:480px;"></div>
+  <h4 class="methodology-heading" style="margin-top:1rem;">Event types and their post-event awakening rates</h4>
+  <div class="chart-container--auto" id="ds-dc-correlation" style="min-height:280px;"></div>
+</div>
+
+<div id="tab-ds-unread-canon" class="tab-panel" style="display:none;">
+  <p class="tab-intro">Articles cited heavily in the wider scholarly world (per OpenAlex) but rarely cited inside this corpus. The "unread canon" is what the field has imported via author awareness but hasn't woven into its own citation fabric.</p>
+  <details class="abstract-toggle methodology-section">
+    <summary class="methodology-summary">Methodology</summary>
+    <div class="methodology-body">
+      <p>Filter to corpus articles where global cited_by &ge; 100 and internal cited_by &le; 2. Rank by the ratio (global / max(1, internal)). Authors of these articles tend to be field-adjacent figures whose work is gestured at but not built upon.</p>
+    
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Filters scope which articles count as "unread canon." A cluster filter answers a different question: "what does [Rhetoric] cite from the wider scholarly world but not metabolize internally?" &mdash; frequently more interesting than the corpus-wide list.</p></div>
+  </details>
+  <div class="chart-container--auto" id="ds-uc-summary" style="min-height:80px;"></div>
+  <div class="chart-container--auto" id="ds-uc-scatter" style="min-height:480px;"></div>
+  <div id="ds-uc-table" style="margin-top:1rem;"></div>
+</div>

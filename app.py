@@ -163,7 +163,38 @@ def create_app() -> Flask:
     flask_app.register_blueprint(institutions_bp)
     flask_app.register_blueprint(admin_bp)
 
+    # Datastories blueprint is gated on a deliberate opt-in: it is the
+    # research/book-figure tool surface and isn't part of the public site.
+    # Default-disabled in production. Enable locally with PINAKES_ENABLE_DATASTORIES=1.
+    # We also auto-enable when running outside Fly (no FLY_APP_NAME) so a
+    # local `python app.py` Just Works for development.
+    if datastories_enabled():
+        from blueprints.datastories import bp as datastories_bp
+        flask_app.register_blueprint(datastories_bp)
+        log.info("Datastories blueprint enabled")
+    else:
+        log.info("Datastories blueprint NOT registered (production / explicit disable)")
+
     return flask_app
+
+
+def datastories_enabled():
+    """Resolve the Datastories on/off flag. Single source of truth so the
+    blueprint registration in create_app() and the inject_globals() context
+    processor agree.
+
+    Rules (first match wins):
+      1. PINAKES_ENABLE_DATASTORIES=1 forces ON, regardless of environment.
+      2. PINAKES_ENABLE_DATASTORIES=0 forces OFF.
+      3. Running on Fly (FLY_APP_NAME set) defaults OFF.
+      4. Otherwise (local dev) defaults ON.
+    """
+    explicit = os.environ.get("PINAKES_ENABLE_DATASTORIES")
+    if explicit == "1":
+        return True
+    if explicit == "0":
+        return False
+    return not os.environ.get("FLY_APP_NAME")
 
 
 app = create_app()

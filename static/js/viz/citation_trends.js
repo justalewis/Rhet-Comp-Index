@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -12,7 +13,13 @@ import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 let citTrendsChart = null;
 
+let _exportWired_loadCitTrends = false;
+
 async function loadCitTrends() {
+  if (!_exportWired_loadCitTrends) {
+    renderExportToolbar('tab-cittrends', { svgSelector: '#cittrends-chart', dataProvider: () => (window.__expCitTrends && window.__expCitTrends.years || []) });
+    _exportWired_loadCitTrends = true;
+  }
   const noteEl = document.getElementById('cittrends-note');
   noteEl.textContent = 'Loading…';
 

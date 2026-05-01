@@ -50,8 +50,14 @@ def _safe_float(val, default, lo=None, hi=None):
 
 
 def inject_globals():
-    """Make version string available to all templates for cache-busting."""
-    return {"version": APP_VERSION}
+    """Make version string available to all templates for cache-busting.
+    Also surfaces the Datastories on/off flag so _feature_nav.html can
+    decide whether to render the Datastories nav item."""
+    from app import datastories_enabled
+    return {
+        "version": APP_VERSION,
+        "datastories_enabled": datastories_enabled(),
+    }
 
 
 def not_found(e):

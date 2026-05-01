@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -26,7 +27,13 @@ function updateHlJournalCount() {
   document.getElementById('hl-check-all').checked = (checked === total);
 }
 
+let _exportWired_loadHalfLife = false;
+
 async function loadHalfLife() {
+  if (!_exportWired_loadHalfLife) {
+    renderExportToolbar('tab-halflife', { svgSelector: '#halflife-container svg', dataProvider: () => (window.__expHalfLife && window.__expHalfLife.journals || []) });
+    _exportWired_loadHalfLife = true;
+  }
   const container = document.getElementById('hl-container');
   container.innerHTML = '<div class="loading-msg">Computing citation half-life\u2026</div>';
   document.getElementById('hl-stats').textContent = '';

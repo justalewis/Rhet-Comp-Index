@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Datastories — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="Datastories: 26 chapter-organized analytical tools that produced the figures in the Datastories book — citation flow, community evolution, mentorship lineages, sleeping beauties, and more.">
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+      <h2>Datastories</h2>
+      <span class="result-count">Chapter-organized analyses</span>
+    </div>
+
+    <p class="page-intro">
+      Twenty-six analytical tools, organized by the chapter of <em>Datastories</em> they produced figures for. Each tool is the live interactive form of a CLI script that ran during the book's research phase. Click a chapter to expand its tools.
+    </p>
+
+    <div class="accordion-nav" id="accordion-nav">
+
+      <!-- ── Chapter 3 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch3">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 3 &mdash; The Citation Backbone</div>
+            <div class="accordion-orient">How knowledge flows between TPC and rhetoric/composition: the structural shape of the field's citation traffic.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-braided-path" data-hash="ch3-braided-path">
+              <div class="accordion-card-name">The Braided Path</div>
+              <div class="accordion-card-desc">A Sankey of citation flows between TPC and rhetoric/composition by decade.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-branching-traditions" data-hash="ch3-branching-traditions">
+              <div class="accordion-card-name">Branching Traditions</div>
+              <div class="accordion-card-desc">The 49 indexed journals classified by tradition (TPC, RC, adjacent), showing how the corpus is composed.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-origins-frontiers" data-hash="ch3-origins-frontiers">
+              <div class="accordion-card-name">Origins and Frontiers</div>
+              <div class="accordion-card-desc">Sources (foundational works no one cites further) and sinks (current frontier articles); how the field's chronological edges look.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chapter 4 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch4">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 4 &mdash; Two Fields or One?</div>
+            <div class="accordion-orient">Direct comparison of TPC and rhetoric/composition citation behavior over decades.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-shifting-currents" data-hash="ch4-shifting-currents">
+              <div class="accordion-card-name">Shifting Currents</div>
+              <div class="accordion-card-desc">Per-decade Hummon-Doreian main paths showing how the field's central knowledge thread moves over time.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-speed-of-influence" data-hash="ch4-speed-of-influence">
+              <div class="accordion-card-name">The Speed of Influence</div>
+              <div class="accordion-card-desc">How long it takes citations to land — comparing TPC&rarr;TPC, TPC&rarr;RC, RC&rarr;TPC, RC&rarr;RC delay distributions.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-border-crossers" data-hash="ch4-border-crossers">
+              <div class="accordion-card-name">Border Crossers</div>
+              <div class="accordion-card-desc">Articles with high betweenness centrality at the TPC/RC divide — the structural bridges between sub-fields.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-two-way-street" data-hash="ch4-two-way-street">
+              <div class="accordion-card-name">The Two-Way Street</div>
+              <div class="accordion-card-desc">Reciprocity rates between TPC and RC: how often citation goes both ways, and which articles are most-reciprocated.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chapter 5 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch5">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 5 &mdash; The Canon Machine</div>
+            <div class="accordion-orient">How the field concentrates citation attention, and how the canon shifts across generations.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-shape-of-influence" data-hash="ch5-shape-of-influence">
+              <div class="accordion-card-name">The Shape of Influence</div>
+              <div class="accordion-card-desc">Lorenz curve, Gini coefficient, and power-law fit for the citation distribution.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-long-tail" data-hash="ch5-long-tail">
+              <div class="accordion-card-name">The Long Tail</div>
+              <div class="accordion-card-desc">Per-article concentration metrics — how broadly versus narrowly each canonical article is cited.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-fair-ranking" data-hash="ch5-fair-ranking">
+              <div class="accordion-card-name">The Fair Ranking</div>
+              <div class="accordion-card-desc">Citations per year of life: who rises when you control for the age advantage of older articles?</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-shifting-canons" data-hash="ch5-shifting-canons">
+              <div class="accordion-card-name">Shifting Canons</div>
+              <div class="accordion-card-desc">Top-cited articles per generation of citing scholars: enduring canon, rising stars, fading classics.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-reach-of-citation" data-hash="ch5-reach-of-citation">
+              <div class="accordion-card-name">The Reach of a Citation</div>
+              <div class="accordion-card-desc">Per-article citation accumulation curves — steady classics, late bloomers, one-wave articles.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-inside-outside" data-hash="ch5-inside-outside">
+              <div class="accordion-card-name">Inside and Outside</div>
+              <div class="accordion-card-desc">Internal (corpus) versus global (OpenAlex) ranking: TPC-specific canon vs. articles imported but not metabolized.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chapter 6 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch6">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 6 &mdash; Community Structure</div>
+            <div class="accordion-orient">Which intellectual communities the field forms, how insular each is, and how they evolve.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-communities-time" data-hash="ch6-communities-time">
+              <div class="accordion-card-name">Communities Over Time</div>
+              <div class="accordion-card-desc">Per-decade Louvain communities and an alluvial flow showing how groups split, merge, and persist.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-walls-bridges" data-hash="ch6-walls-bridges">
+              <div class="accordion-card-name">Walls and Bridges</div>
+              <div class="accordion-card-desc">Per-community insularity ratio: which communities cite themselves, which look outward.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-first-spark" data-hash="ch6-first-spark">
+              <div class="accordion-card-name">The First Spark</div>
+              <div class="accordion-card-desc">Key-route main-path analysis: not one main thread but several parallel high-traffic routes through the citation DAG.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chapter 7 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch7">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 7 &mdash; Reference Networks</div>
+            <div class="accordion-orient">What the field reads in common, and where intellectual debts run deeper one way than the other.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-shared-foundations" data-hash="ch7-shared-foundations">
+              <div class="accordion-card-name">Shared Foundations</div>
+              <div class="accordion-card-desc">Bibliographic coupling network: articles that cite the same prior works.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-two-maps" data-hash="ch7-two-maps">
+              <div class="accordion-card-name">Two Maps of the Field</div>
+              <div class="accordion-card-desc">Coupling clusters versus citation communities — where the two views agree and where they diverge.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-books-everyone-reads" data-hash="ch7-books-everyone-reads">
+              <div class="accordion-card-name">The Books Everyone Reads</div>
+              <div class="accordion-card-desc">Articles that show up across the most chapters' figures — a derived "master works" list for the book project.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-uneven-debts" data-hash="ch7-uneven-debts">
+              <div class="accordion-card-name">Uneven Debts</div>
+              <div class="accordion-card-desc">Asymmetric coupling: pairs where one article depends on the other's reading much more than the reverse.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chapter 8 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch8">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 8 &mdash; Authorship & Collaboration</div>
+            <div class="accordion-orient">From solo scholar to authoring teams: how collaboration patterns have changed, and which partnerships persist.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-solo-to-squad" data-hash="ch8-solo-to-squad">
+              <div class="accordion-card-name">Solo to Squad</div>
+              <div class="accordion-card-desc">Team-size trends over time: when single-authorship lost majority status, when 5+ author articles arrived.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-academic-lineages" data-hash="ch8-academic-lineages">
+              <div class="accordion-card-name">Academic Lineages</div>
+              <div class="accordion-card-desc">Probable mentor &rarr; mentee relationships inferred from publication-year gaps in co-authorship.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-lasting-partnerships" data-hash="ch8-lasting-partnerships">
+              <div class="accordion-card-name">Lasting Partnerships</div>
+              <div class="accordion-card-desc">Co-authoring pairs classified by persistence: one-shot, short-term, and long-running collaborations.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Chapter 9 ─────────────────────────────────────── -->
+      <div class="accordion-section" data-section="ch9">
+        <button class="accordion-header" onclick="toggleAccordion(this)">
+          <div class="accordion-header-text">
+            <div class="accordion-question">Chapter 9 &mdash; Sleeping Beauties</div>
+            <div class="accordion-orient">Dormant articles that woke up, what woke them up, and the books the field never read.</div>
+          </div>
+          <span class="accordion-chevron">&#9660;</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-cards">
+            <a class="accordion-card" data-tab="ds-prince-network" data-hash="ch9-prince-network">
+              <div class="accordion-card-name">Prince Network</div>
+              <div class="accordion-card-desc">For each sleeping beauty, which articles ("princes") woke it up, and what kind of awakening it was.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-disciplinary-calendar" data-hash="ch9-disciplinary-calendar">
+              <div class="accordion-card-name">The Disciplinary Calendar</div>
+              <div class="accordion-card-desc">Curated disciplinary events laid against sleeping-beauty awakening spikes.</div>
+            </a>
+            <a class="accordion-card" data-tab="ds-unread-canon" data-hash="ch9-unread-canon">
+              <div class="accordion-card-name">The Unread Canon</div>
+              <div class="accordion-card-desc">Articles cited heavily in the wider scholarly world but rarely cited inside the field's own corpus.</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <a href="/explore" class="accordion-browse-link">Back to Explore &rarr;</a>
+
+    </div><!-- /accordion-nav -->
+
+    <!-- Hidden tab buttons (kept for JS compatibility with showTab dispatch) -->
+    <div class="explore-tabs" style="display:none;">
+      <button class="explore-tab" onclick="showTab('ds-braided-path', this)" data-hash="ch3-braided-path">Braided Path</button>
+      <button class="explore-tab" onclick="showTab('ds-branching-traditions', this)" data-hash="ch3-branching-traditions">Branching Traditions</button>
+      <button class="explore-tab" onclick="showTab('ds-origins-frontiers', this)" data-hash="ch3-origins-frontiers">Origins and Frontiers</button>
+      <button class="explore-tab" onclick="showTab('ds-shifting-currents', this)" data-hash="ch4-shifting-currents">Shifting Currents</button>
+      <button class="explore-tab" onclick="showTab('ds-speed-of-influence', this)" data-hash="ch4-speed-of-influence">Speed of Influence</button>
+      <button class="explore-tab" onclick="showTab('ds-border-crossers', this)" data-hash="ch4-border-crossers">Border Crossers</button>
+      <button class="explore-tab" onclick="showTab('ds-two-way-street', this)" data-hash="ch4-two-way-street">Two-Way Street</button>
+      <button class="explore-tab" onclick="showTab('ds-shape-of-influence', this)" data-hash="ch5-shape-of-influence">Shape of Influence</button>
+      <button class="explore-tab" onclick="showTab('ds-long-tail', this)" data-hash="ch5-long-tail">Long Tail</button>
+      <button class="explore-tab" onclick="showTab('ds-fair-ranking', this)" data-hash="ch5-fair-ranking">Fair Ranking</button>
+      <button class="explore-tab" onclick="showTab('ds-shifting-canons', this)" data-hash="ch5-shifting-canons">Shifting Canons</button>
+      <button class="explore-tab" onclick="showTab('ds-reach-of-citation', this)" data-hash="ch5-reach-of-citation">Reach of a Citation</button>
+      <button class="explore-tab" onclick="showTab('ds-inside-outside', this)" data-hash="ch5-inside-outside">Inside and Outside</button>
+      <button class="explore-tab" onclick="showTab('ds-communities-time', this)" data-hash="ch6-communities-time">Communities Over Time</button>
+      <button class="explore-tab" onclick="showTab('ds-walls-bridges', this)" data-hash="ch6-walls-bridges">Walls and Bridges</button>
+      <button class="explore-tab" onclick="showTab('ds-first-spark', this)" data-hash="ch6-first-spark">First Spark</button>
+      <button class="explore-tab" onclick="showTab('ds-shared-foundations', this)" data-hash="ch7-shared-foundations">Shared Foundations</button>
+      <button class="explore-tab" onclick="showTab('ds-two-maps', this)" data-hash="ch7-two-maps">Two Maps</button>
+      <button class="explore-tab" onclick="showTab('ds-books-everyone-reads', this)" data-hash="ch7-books-everyone-reads">Books Everyone Reads</button>
+      <button class="explore-tab" onclick="showTab('ds-uneven-debts', this)" data-hash="ch7-uneven-debts">Uneven Debts</button>
+      <button class="explore-tab" onclick="showTab('ds-solo-to-squad', this)" data-hash="ch8-solo-to-squad">Solo to Squad</button>
+      <button class="explore-tab" onclick="showTab('ds-academic-lineages', this)" data-hash="ch8-academic-lineages">Academic Lineages</button>
+      <button class="explore-tab" onclick="showTab('ds-lasting-partnerships', this)" data-hash="ch8-lasting-partnerships">Lasting Partnerships</button>
+      <button class="explore-tab" onclick="showTab('ds-prince-network', this)" data-hash="ch9-prince-network">Prince Network</button>
+      <button class="explore-tab" onclick="showTab('ds-disciplinary-calendar', this)" data-hash="ch9-disciplinary-calendar">Disciplinary Calendar</button>
+      <button class="explore-tab" onclick="showTab('ds-unread-canon', this)" data-hash="ch9-unread-canon">Unread Canon</button>
+    </div>
+
+    <!-- ── Tool panels (filled by per-tool fragments below) ───────────────────── -->
+    {% include "_datastories_panels.html" %}
+
+{% endblock %}
+
+{% block body_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12"></script>
+
+<script>window.ALL_JOURNALS = {{ all_journals | tojson | safe }};</script>
+<script>window.MIN_YEAR = {{ min_year }}; window.MAX_YEAR = {{ max_year }};</script>
+<script>window.DS_CLUSTER_OPTIONS = {{ cluster_options | tojson | safe }};</script>
+
+<script type="module" src="/static/js/datastories-loader.js?v={{ version }}"></script>
+{% endblock %}

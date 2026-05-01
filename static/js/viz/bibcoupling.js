@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -40,7 +41,13 @@ function updateBibcoupJournalCount() {
   if (allCb) allCb.indeterminate = (checked > 0 && checked < total);
 }
 
+let _exportWired_loadBibcoupling = false;
+
 async function loadBibcoupling() {
+  if (!_exportWired_loadBibcoupling) {
+    renderExportToolbar('tab-bibcoupling', { svgSelector: '#bibcoupling-container svg', dataProvider: () => (window.__expBibcoupling && window.__expBibcoupling.nodes || []) });
+    _exportWired_loadBibcoupling = true;
+  }
   clearTimeout(bibcoupDebounce);
 
   const container = document.getElementById('bibcoup-container');

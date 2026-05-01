@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -13,7 +14,13 @@ import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 let sbDetailChart = null;
 let sbData        = null;
 
+let _exportWired_loadSleepingBeauties = false;
+
 async function loadSleepingBeauties() {
+  if (!_exportWired_loadSleepingBeauties) {
+    renderExportToolbar('tab-sleepers', { svgSelector: '#sb-detail-chart', dataProvider: () => (window.__expSleepingBeauties && window.__expSleepingBeauties.articles || []) });
+    _exportWired_loadSleepingBeauties = true;
+  }
   const container = document.getElementById('sb-list-container');
   container.innerHTML = '<div class="loading-msg">Computing Beauty Coefficients\u2026</div>';
   document.getElementById('sb-detail').style.display = 'none';
@@ -39,6 +46,7 @@ async function loadSleepingBeauties() {
   try {
     const resp = await fetch('/api/citations/sleeping-beauties?' + params.toString());
     sbData = await resp.json();
+  window.__expSleepingBeauties = sbData;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load Sleeping Beauties data.</p>';
     return;

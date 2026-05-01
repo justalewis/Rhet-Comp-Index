@@ -1,8 +1,13 @@
 # Database — never commit, lives on the Fly.io volume
 articles.db
+articles.db-shm
+articles.db-wal
 *.db
 *.sqlite
 *.sqlite3
+
+# Datastories disk cache (derived; regenerated on demand from articles.db)
+data/datastories_cache/
 
 # Python
 __pycache__/
