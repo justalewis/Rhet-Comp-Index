@@ -1860,36 +1860,39 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Network construction</h4>
-        <p>For each time window a subgraph is built from articles published within
-        that window and the citation links among them. An edge appears in the
-        window when the <em>citing</em> article is published. The cumulative view
-        adds each window's articles and edges to a growing graph, showing total
-        network size over time.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Temporal Network Evolution tool slices the indexed citation graph into time windows and reports a panel of structural metrics for each slice. The visualization renders those metrics as time series, which lets the analyst read off the field's growth, consolidation, and fragmentation phases at a glance &mdash; whether the network is becoming more cohesive over time, whether modular structure is intensifying or weakening, and whether the field's intellectual chains are becoming longer or shorter.</p>
 
-        <h4 class="methodology-heading">Metrics</h4>
-        <p><strong>Density</strong> is the fraction of possible edges that actually
-        exist (higher = more interconnected). <strong>Clustering coefficient</strong>
-        (transitivity) measures the tendency of articles to form tightly-knit
-        groups. <strong>Giant component fraction</strong> is the share of nodes in the
-        largest connected component &mdash; a high value indicates a cohesive network.
-        <strong>Modularity</strong> measures how strongly the network decomposes into
-        communities (Louvain algorithm, computed when &ge; 10 nodes).
-        <strong>Average path length</strong> in the giant component indicates how many
-        citation hops separate typical articles.</p>
+        <p>Run with default parameters &mdash; minimum one citation, five-year windows &mdash; the tool returns 18 windows from 1939&ndash;1943 to 2024&ndash;2028. The cumulative graph at the most recent window contains 6,673 articles and 22,930 citations. Three structural movements are legible. First, the giant component fraction rises from roughly 0.10 in the 1984&ndash;1988 window to 0.58 in the 2019&ndash;2023 window: across forty years the field has knitted itself into a cohesive citation network where the largest connected component now contains the majority of indexed articles. Second, average degree rises from 0.64 in 1984&ndash;1988 to 1.94 in 2019&ndash;2023, reflecting a citation graph that is densifying. Third, modularity Q falls from 0.907 in 2009&ndash;2013 to 0.820 in 2019&ndash;2023; the field remains modular, but cross-cluster citation traffic has grown enough to soften the boundaries between research fronts.</p>
 
-        <h4 class="methodology-heading">Window size</h4>
-        <p>Annual windows (size 1) provide maximum temporal resolution but may
-        produce noisy metrics for years with few articles. Wider windows (3 or 5
-        years) smooth the signal but obscure short-lived structural changes.</p>
+        <p>Use the tool to identify structural turning points, distinguish growth phases (rising node and edge counts) from consolidation phases (rising giant-component fraction or falling modularity), and locate the windows in which today's research fronts crystallized.</p>
+
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>For each time window the tool builds a directed subgraph from articles published within that window and the citation links between them. An edge enters the window when the <em>citing</em> article's publication year falls inside the window. A cumulative-view alternative aggregates the subgraphs into a growing graph that tracks total network size over time. The metrics are then computed on each window's graph using standard network-science definitions.<sup>1</sup></p>
+
+        <p><em>Density</em> is the fraction of possible directed edges that actually exist; in citation networks density typically falls as the network grows because the number of possible edges grows quadratically while the number of actual edges grows roughly linearly. <em>Average degree</em> reports the mean number of citations incident to each node, which avoids the density confound and is more interpretable for growing networks. <em>Transitivity</em> (the network-wide clustering coefficient) measures the tendency of citation triangles to close. <em>Giant component fraction</em> is the share of nodes in the largest connected component, a direct indicator of network cohesion.<sup>2</sup> <em>Modularity Q</em> from a Louvain partition measures how strongly the network decomposes into communities and is computed only when the window contains at least ten nodes. <em>Average path length</em> in the giant component reports the mean number of citation hops between articles, which indicates how many steps of intellectual transmission typically separate any two pieces of work.</p>
+
+        <p>The trajectory of these metrics across windows is the analytic move. Rising node and edge counts mark a growth phase; the typical signature is dropping density and rising giant-component fraction simultaneously, since the network is adding articles faster than it adds edges but is also stitching itself together topologically. Falling modularity in the presence of stable or rising average degree is the signature of consolidation: cross-community citation traffic is growing relative to within-community traffic, which softens the partition. The 2019&ndash;2023 window in this corpus shows exactly that pattern.</p>
+
+        <p>Two limitations bear on interpretation. The metrics are sensitive to window size: annual windows produce maximum temporal resolution but very noisy metrics for years with few articles, while five-year windows smooth the signal at the cost of hiding short-lived structural changes. The most recent window in any computation is partial &mdash; the 2024&ndash;2028 window currently contains only 127 articles because most of its years have not yet been indexed &mdash; and its metrics should be read as in-progress rather than as a stable terminal value. The metrics are also corpus-bounded: a structural phenomenon visible in citation networks that include external scholarship may not be visible here.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Four controls scope the analysis. Filter changes do not auto-recompute; the Compute button re-runs the per-window metric computation against the current filter state.</p>
+
+        <p>The <strong>minimum-citations slider</strong> filters which articles are eligible to enter the per-window graph. At the default of one citation the tool admits any article that has at least one incident citation; raising the threshold tightens each window's graph to its more-cited core, which usually shortens average path length and inflates giant-component fraction.</p>
+
+        <p>The <strong>Window slider</strong> selects the temporal granularity from 1 year to 10 years. One-year windows are the right choice when the question is about specific year-on-year transitions; five-year windows smooth the noise and make multi-decade trajectories legible; ten-year windows produce a coarse-grained reading of long-run structural change.</p>
+
+        <p>The <strong>From / To year filters</strong> restrict the analysis to a chosen historical span. Restricting to 1995&ndash;2025 strips away the very early years where the indexed citation graph is too sparse to produce stable metrics; restricting to 2010&ndash;2025 isolates the recent consolidation phase.</p>
+
+        <p>The <strong>Network Snapshot</strong> mode replaces the time-series view with a force-directed graph at any single year, accessed through the year slider in the snapshot view. Use snapshot mode to inspect the network's actual topology in a window of interest after time-series analysis has identified that window as structurally distinctive.</p>
 
         <h4 class="methodology-heading">References</h4>
-        <ul class="methodology-refs">
-          <li>Barab&aacute;si, A.-L. (2016). <em>Network Science</em>.
-            Cambridge University Press.</li>
-          <li>de Solla Price, D. J. (1965). Networks of scientific papers.
-            <em>Science, 149</em>(3683), 510&ndash;515.</li>
-        </ul>
+        <ol class="methodology-refs">
+          <li>Newman, M. E. J. (2010). <em>Networks: An introduction</em>. Oxford University Press.</li>
+          <li>Barab&aacute;si, A.-L. (2016). <em>Network science</em>. Cambridge University Press.</li>
+          <li>Price, D. J. de S. (1965). Networks of scientific papers. <em>Science, 149</em>(3683), 510&ndash;515.</li>
+        </ol>
         </div>
       </details>
 
