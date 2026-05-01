@@ -742,20 +742,35 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Data source</h4>
-        <p>The citation network is built from reference lists deposited by publishers with <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a>. Each directed edge represents one article citing another. Only citations between articles <em>both</em> present in this index are shown &mdash; references to external work are excluded.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Citation Network displays the actual directed citation graph between indexed articles. Each circle is one article, sized by how many indexed articles cite it; each arrow points from a citing article to the article it cites. Density and clustering in the rendered graph reveal which articles are at the center of the field's internal conversation and which sub-areas form tight citation neighborhoods around shared landmark texts.</p>
 
-        <h4 class="methodology-heading">Graph construction</h4>
-        <p>The graph is <em>directed</em>: an edge from article A to article B means A cites B. Nodes are filtered to articles receiving at least <em>n</em> internal citations (configurable via the slider), capped at 500 nodes ranked by citation count. Edges are retained only when both the citing and cited article appear in the filtered node set. Node size is proportional to internal citation count; node color is assigned by journal.</p>
+        <p>Run with default parameters &mdash; minimum five internal citations, all years, all journals &mdash; the graph displays 500 articles connected by 1,315 directed citation edges. Ranked by in-graph degree (citations received from other displayed nodes), the central node is Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future" with 38 incident edges, followed by Russell's 1997 "Rethinking Genre in School and Society" at 32, Carolyn D. Rude's "Contemporary Research Methodologies in Technical Communication" at 29, and Haas's 2012 "Race, Rhetoric, and Technology" at 27. The technical-communication and genre-theory clusters dominate the rendered structure; rhetoric-of-science and writing-center sub-areas appear as smaller, looser neighborhoods at the periphery.</p>
 
-        <h4 class="methodology-heading">Layout algorithm</h4>
-        <p>The visualization uses a <strong>force-directed layout</strong> (d3-force). Nodes repel each other via simulated electrostatic charge; citation edges act as spring forces pulling connected nodes together. The simulation runs until the layout stabilizes. Densely interconnected articles cluster together, while articles with few shared citations drift to the periphery.</p>
+        <p>Use the tool to identify landmark articles by visual centrality, locate sub-area clusters formed by shared internal citation, trace citation chains between specific articles by clicking and following edges, and read off the structural difference between heavily-interconnected sub-fields and sparsely-connected ones.</p>
 
-        <h4 class="methodology-heading">Search and interaction</h4>
-        <p>The search bar filters by title or author name, highlighting matching nodes. Hovering over a node shows article details and citation count. Clicking a node navigates to its full article page. The graph supports zoom (scroll), pan (drag background), and node drag (drag individual nodes).</p>
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>The graph is built from CrossRef reference deposits. For each indexed article whose reference list has been fetched, every reference whose DOI matches another indexed article produces one directed edge from citing to cited. The resulting graph is filtered before display: nodes must hold at least <em>n</em> incident internal citations to be eligible (the minimum-citations slider), and the eligible set is capped at the top 500 articles by internal citation count to keep rendering responsive. Edges are retained only when both endpoints survive the node filter; a citation from a displayed article to a non-displayed article is dropped, which means the visible degree of any node is bounded by the cap rather than the full internal citation graph.</p>
 
-        <h4 class="methodology-heading">Limitations</h4>
-        <p>The network shows only <em>internal</em> citation relationships. An article heavily cited outside this index appears small or absent. Journals that do not deposit reference lists with CrossRef contribute no edges. The cap at 500 nodes means peripheral articles may be excluded even at low minimum-citation thresholds. The force layout is stochastic: the exact node positions change on each load, though the cluster structure remains stable.</p>
+        <p>Layout uses a force-directed simulation. Nodes repel each other via simulated charge while edges act as springs whose pull is proportional to edge presence. The simulation runs until the configuration stabilizes; densely-interconnected article neighborhoods coalesce into clusters and lightly-cited articles drift to the periphery. Node size is proportional to internal-citation count and node color is assigned by source journal, which makes journal homogeneity within clusters visible without an explicit grouping step.</p>
+
+        <p>Two limitations bear on interpretation. The network shows only <em>internal</em> citation relationships; an article heavily cited outside the indexed corpus appears small or, if its in-graph degree falls below the slider threshold, absent.<sup>1</sup> Journals that do not deposit reference lists with CrossRef contribute no outbound edges, which means their citation behavior is structurally invisible even when their articles do receive citations from other indexed work. The 500-node cap is the second constraint: at low minimum-citation thresholds the cap binds tightly and excludes peripheral articles whose connectivity to the core is real but lightly weighted. Raising the slider tightens the visible core; lowering it admits more peripheral work but is constrained by the node cap.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Four controls scope the graph. Filter changes do not auto-recompute; the Compute button re-runs the query against the current filter state.</p>
+
+        <p>The <strong>minimum-citations slider</strong> filters which articles are eligible to appear. At the default of five internal citations, the graph carves to articles cited by at least five other indexed articles. Lowering to one or two admits a long tail of single-cited work and tends to fill the periphery with isolates and small components. Raising to ten or fifteen produces a sparser, more legible graph dominated by the field's most heavily-cited landmark texts.</p>
+
+        <p>The <strong>From / To year filters</strong> restrict articles by publication year. A tight range &mdash; 2015 to 2025, for instance &mdash; reframes the question from "what is the field's all-time citation structure?" to "what does the citation neighborhood of the last decade look like?", which often surfaces the social-justice technical-communication cluster as the dominant component.</p>
+
+        <p>The <strong>Journals picker</strong> narrows the corpus to a chosen subset. Restricting to a single journal exposes how that venue's articles cite each other internally; restricting to a journal cluster (the technical-communication venues, for example) shows the cluster's internal citation structure with cross-cluster edges removed.</p>
+
+        <p>The <strong>Search bar</strong> does not refilter the graph; it locates and highlights a node already in the rendered set by title or author. Click any node to open the full article page; hover any node to read its citation count and basic metadata.</p>
+
+        <h4 class="methodology-heading">References</h4>
+        <ol class="methodology-refs">
+          <li>Hicks, D., Wouters, P., Waltman, L., de Rijcke, S., &amp; Rafols, I. (2015). Bibliometrics: The Leiden Manifesto for research metrics. <em>Nature, 520</em>(7548), 429&ndash;431.</li>
+        </ol>
 
         </div>
       </details>
