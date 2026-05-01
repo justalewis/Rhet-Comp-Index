@@ -225,13 +225,31 @@ function renderCentrality(container, data) {
 
   centNodeSel = nodeGroup;
 
-  // Circles
+  // Circles. Tag each <g> with the article id so the per-row hover handler
+  // (wired in renderCentralityTables) can find and pop the matching node.
+  nodeGroup.attr('data-id', d => d.id);
   nodeGroup.append('circle')
     .attr('r', d => nodeR(d))
     .style('fill',         d => nodeColor(d))
     .style('fill-opacity', 0.88)
     .style('stroke',       '#fff')
     .style('stroke-width', 1.5);
+
+  // Linked-views: when the cursor enters a node group, highlight the
+  // matching <li data-id="..."> rows in the two tables below.
+  nodeGroup
+    .on('mouseenter.link', function(_, d) {
+      document.querySelectorAll('#cent-tables li[data-id="' + d.id + '"]').forEach(li => {
+        li.style.background = '#fdfbf7';
+        li.style.outline = '2px solid #b38a6a';
+      });
+    })
+    .on('mouseleave.link', function(_, d) {
+      document.querySelectorAll('#cent-tables li[data-id="' + d.id + '"]').forEach(li => {
+        li.style.background = '';
+        li.style.outline = '';
+      });
+    });
 
   // Labels for top 20 nodes by chosen metric
   const sortedBySize = [...centNodes].sort((a, b) => {
@@ -301,7 +319,7 @@ function renderCentralityTables(data) {
         ? (d.eigenvector_centrality * 100).toFixed(1) + '%'
         : (d.betweenness_centrality * 100).toFixed(1) + '%';
 
-      return `<li class="article" style="padding:0.4rem 0;border-bottom:1px solid var(--border-color,#e8e4de);">
+      return `<li class="article" data-id="${d.id}" style="padding:0.4rem 0;border-bottom:1px solid var(--border-color,#e8e4de);transition:background 0.1s;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;">
           <div style="min-width:0;">
             <a href="/article/${d.id}" class="article-title" style="font-size:0.84rem;">${escapeHtml(d.title)}</a>
@@ -314,6 +332,34 @@ function renderCentralityTables(data) {
         </div>
       </li>`;
     }).join('');
+
+    // Linked-views: hovering a table row pops the matching node in the SVG.
+    ol.querySelectorAll('li[data-id]').forEach(li => {
+      const id = li.getAttribute('data-id');
+      li.addEventListener('mouseenter', () => {
+        const g = document.querySelector('#cent-container g[data-id="' + id + '"]');
+        if (!g) return;
+        const c = g.querySelector('circle');
+        if (c) {
+          c.dataset._origR = c.getAttribute('r');
+          c.dataset._origStrokeW = c.style.strokeWidth;
+          c.setAttribute('r', parseFloat(c.dataset._origR) * 1.6);
+          c.style.stroke = '#b38a6a';
+          c.style.strokeWidth = 3;
+          g.parentNode.appendChild(g);  // raise to top
+        }
+      });
+      li.addEventListener('mouseleave', () => {
+        const g = document.querySelector('#cent-container g[data-id="' + id + '"]');
+        if (!g) return;
+        const c = g.querySelector('circle');
+        if (c && c.dataset._origR) {
+          c.setAttribute('r', c.dataset._origR);
+          c.style.stroke = '#fff';
+          c.style.strokeWidth = c.dataset._origStrokeW || '1.5';
+        }
+      });
+    });
   }
 
   renderTable('cent-table-eigen', data.top_eigenvector);
