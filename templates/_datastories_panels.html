@@ -226,10 +226,24 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Articles ordered by internal citation count produce a Lorenz curve; Gini = 2 &times; the area between the curve and the equality diagonal. A power-law fit (alpha, x_min) is computed via maximum likelihood on the long tail; alternative distributions (lognormal, exponential) are compared.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>The Lorenz curve and Gini are population statistics &mdash; they tell you how unequal citation is <em>within whatever scope you choose</em>. A whole-corpus Gini ~0.91 hides large variation between subfields. Filter to <em>Composition &amp; Writing Studies</em> alone and the Gini may shift; comparing per-cluster Ginis is one of the more revealing ways to use this tool.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Shape of Influence reports the Lorenz curve and Gini coefficient for the corpus's internal citation distribution, plus a power-law fit on the long tail. The visual answer to "how unequal is citation in this field?" lives here.</p>
+
+      <p>Run with default parameters across the indexed corpus, the corpus-wide Gini sits at 0.909 &mdash; a near-maximum-inequality value. Of 51,843 indexed articles, 41,444 (79.9%) have zero internal citations; the top 1% of articles capture roughly 28% of all internal citations and the top 100 articles capture 11.2%. The shape is Lotkaesque<sup>1</sup>: a small head of heavily-cited articles and a long tail of articles cited once, twice, or not at all. The corpus-wide Gini hides substantial sub-cluster variation; comparing per-cluster Ginis is one of the more revealing uses of this tool.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Articles are ordered by internal citation count to produce a Lorenz curve; the Gini coefficient is computed as twice the area between the curve and the equality diagonal. A power-law fit (alpha, x_min) is computed via maximum likelihood on the long tail; alternative distributions (lognormal, exponential) are compared via Vuong's likelihood-ratio test.<sup>2</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>The Lorenz curve and Gini are population statistics &mdash; they describe inequality within whatever scope the user chooses. The whole-corpus Gini of 0.909 hides large variation between subfields. Filtering to <em>Composition &amp; Writing Studies</em> or to <em>Technical Communication</em> alone produces different Ginis; comparing per-cluster Ginis is the analytic move.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Lotka, A. J. (1926). The frequency distribution of scientific productivity. <em>Journal of the Washington Academy of Sciences, 16</em>(12), 317&ndash;323.</li>
+        <li>Clauset, A., Shalizi, C. R., &amp; Newman, M. E. J. (2009). Power-law distributions in empirical data. <em>SIAM Review, 51</em>(4), 661&ndash;703.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-toolbar">
     <label class="filter-label">Journal:&nbsp;
@@ -250,10 +264,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Per-article metrics: self-journal rate (fraction of citations from the same journal), unique citing-author count, author Gini (concentration of citations among citing authors), top-citer share. Articles are classified <em>broadly_canonical</em> / <em>narrowly_canonical</em> / <em>mixed</em> via thresholds on those metrics.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>The breadth classification depends on author / journal counts in the citing population. Filtering to a <strong>cluster</strong> reframes "broad vs narrow canonical" as broad-or-narrow <em>within that subfield</em>, which is often a more meaningful question than the corpus-wide picture. <strong>Top N</strong> sets how many top-cited articles to score.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Long Tail asks how concentrated each top-cited article's audience is. Some canonical articles are cited by everyone in their home journal but rarely outside it; others are cited broadly across journals, decades, and authors. The breadth metrics separate the two.</p>
+
+      <p>Run with default parameters (top 50 by citation count), Jones, Moore, and Walton's 2016 "Disrupting the Past" leads at 146 citations distributed across 11 unique citing journals and 201 unique citing authors, with a self-journal rate of 38.4% and an author Gini of 0.189 (relatively even citation distribution across citers); its top single citer is Avery C. Edenfield at 4.1% of total citations. The classification scores it as <em>broadly_canonical</em>. Jones's solo 2016 "The Technical Communicator as Advocate" follows at 144 citations across 11 journals and 171 authors with a much lower self-journal rate of 10.4% &mdash; the same broad-canonical classification but a different distribution profile, with citation traffic spread more evenly across the field rather than concentrated in TCQ.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Per-article metrics: self-journal rate (fraction of citations from the same journal), unique citing-author count, author Gini (concentration of citations among citing authors), top-citer share. Articles are classified <em>broadly_canonical</em>, <em>narrowly_canonical</em>, or <em>mixed</em> via thresholds on those metrics. The classification scheme adapts the diversity-and-concentration framework from interdisciplinarity-of-citation literature.<sup>1</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>The breadth classification depends on author and journal counts in the citing population. Filtering to a <strong>cluster</strong> reframes "broad vs. narrow canonical" as broad-or-narrow <em>within that subfield</em>, which is often a more meaningful question than the corpus-wide picture. <strong>Top N</strong> sets how many top-cited articles to score.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Leydesdorff, L., &amp; Rafols, I. (2011). Indicators of the interdisciplinarity of journals: Diversity, centrality, and citations. <em>Journal of Informetrics, 5</em>(1), 87&ndash;100.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-toolbar">
     <label class="filter-label">Top N:&nbsp;
@@ -271,10 +298,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For an article published in year <em>y</em>, citations-per-year = total internal citations &divide; (current year &minus; <em>y</em>). Articles published in the most recent <em>k</em> years are excluded by default to avoid noise from very-low-denominator outliers. Categories: <em>stable_canon</em>, <em>age_advantage</em>, <em>rising_fast</em>.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p><strong>Exclude last N years</strong> drops very-recent publications (low denominator results in noisy cit/yr). Bumping it from 2 to 5 produces a more stable contemporary canon at the cost of dropping articles still on the rise. Filter to a <strong>cluster</strong> to see who's rising fast within a single subfield.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Fair Ranking ranks articles by <em>citations per year of life</em> rather than raw count. The normalization neutralizes the age advantage older work has and surfaces rapidly-rising contemporary articles. Each article carries a <em>rank shift</em>: the difference between its raw rank and its time-normalized rank.</p>
+
+      <p>Run with default parameters across the indexed corpus (excluding the most recent two years to stabilize per-year denominators), 85 articles enter the comparison set. Categories sort 15 as <em>stable_canon</em> (articles whose rank stays high under both raw and per-year metrics &mdash; established work that still accumulates citations rapidly), 35 as <em>rising_fast</em> (articles that rank far higher per-year than raw, indicating recent trajectory not yet captured by lifetime totals), and 35 as <em>age_advantage</em> (articles whose raw rank substantially exceeds their per-year rank, indicating accumulated rather than active citation). Jones, Moore, and Walton's 2016 "Disrupting the Past" sits at raw rank 1, normalized rank 1, with 14.6 citations per year over 10 years &mdash; classified <em>stable_canon</em>: a contemporary article whose ranking holds under both metrics.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For an article published in year <em>y</em>, citations-per-year is computed as total internal citations divided by (current year minus <em>y</em>). Articles published in the most recent <em>k</em> years are excluded to avoid noise from very-low-denominator outliers.<sup>1</sup> The category assignment compares raw rank against the time-normalized rank: large positive shifts (raw rank much worse than normalized) flag <em>rising_fast</em>; large negative shifts flag <em>age_advantage</em>; small shifts flag <em>stable_canon</em>.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p><strong>Exclude last N years</strong> drops very-recent publications (their low denominators produce noisy cit/yr values). Bumping it from 2 to 5 produces a more stable contemporary canon at the cost of dropping articles still on the rise. Filtering to a <strong>cluster</strong> shows who is rising fast within a single subfield.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Wang, J. (2013). Citation time window choice for research impact evaluation. <em>Scientometrics, 94</em>(3), 851&ndash;872.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-toolbar">
     <label class="filter-label">Exclude last N years:&nbsp;
@@ -292,10 +332,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each generation window, the top-N most-cited articles are determined using only citations from articles whose own publication year falls within that window. Cross-generation classification uses presence and rank movement across the four windows.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filtering by <strong>cluster</strong> rebuilds each generation's top-N from the citation traffic <em>that cluster</em> generates &mdash; the comparison is "what each generation of [Rhetoric / TPC / CWS] scholars treated as canonical." Rising and fading articles surface differently in different clusters, which is a common pattern worth probing.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Shifting Canons reports the top-cited articles per generation of citing scholars (pre-1995, 1995&ndash;2004, 2005&ndash;2014, 2015+). Articles can be enduring (top-N every generation), rising (climbing the ranks across generations), fading (slipping off), or generational-only (appearing in only one window).</p>
+
+      <p>Run with default parameters across the indexed corpus, four generations are surfaced. Bruffee's 1984 "Collaborative Learning and the 'Conversation of Mankind'" anchors the pre-1995 generation; Cooper and Selfe's 1990 "Computer Conferences and Learning" leads the 1995&ndash;2004 generation; Russell's 1997 "Rethinking Genre in School and Society" leads the 2005&ndash;2014 generation. Across the four windows the cross-generation classification flags 7 articles as <em>fading</em>, 5 as <em>rising</em>, 3 as <em>intermittent</em>, and 66 as <em>generational-only</em> &mdash; an asymmetry suggesting that most "canonical" articles in any given generation are specific to that era's citing population rather than persisting across decades.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each generation window, the top-N most-cited articles are determined using only citations from articles whose own publication year falls within that window. Cross-generation classification then uses presence and rank movement across the four windows: stable presence with rising rank flags <em>rising</em>; stable presence with falling rank flags <em>fading</em>; non-monotonic presence flags <em>intermittent</em>; presence in only one window flags <em>generational-only</em>.<sup>1</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filtering by <strong>cluster</strong> rebuilds each generation's top-N from the citation traffic <em>that cluster</em> generates &mdash; the comparison shifts to "what each generation of Rhetoric / TPC / CWS scholars treated as canonical." Rising and fading articles surface differently in different clusters, which is a common pattern worth probing.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Garfield, E. (1979). <em>Citation indexing: Its theory and application in science, technology, and humanities</em>. Wiley.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-canon-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-canon-heatmap" style="min-height:480px;"></div>
@@ -308,10 +361,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each top article, citations are bucketed by year. Pattern classification: <em>steady_classic</em> (smooth growth), <em>front_loaded</em> (most citations in first 3 years), <em>late_bloomer</em> (peak more than 5 years post-publication), <em>one_wave</em> (single peak then decline), <em>too_recent</em>, <em>too_few</em>.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p><strong>Cluster</strong> changes both which top-cited articles are eligible (citation count is computed within scope) and which citing articles contribute to each accumulation curve. <strong>Top N</strong> sets the number of sparkline cards in the grid.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Reach of Citation classifies the shape of each top-cited article's citation accumulation curve. Steady classics climb smoothly across years; late bloomers spike well after publication; one-wave articles rise and decline; front-loaded articles concentrate citations in their first few years.</p>
+
+      <p>Run with default parameters across the top 100 articles, the distribution is striking: 78 articles classify as <em>late_bloomer</em> and 22 as <em>steady_classic</em>; the front-loaded and one-wave categories are essentially empty. The dominant pattern in the field is delayed citation accumulation. Jones, Moore, and Walton's 2016 "Disrupting the Past" exemplifies the pattern: 0 citations in 2016 and 2017, then 5 in 2018, 16 in 2019, 8 in 2020, 21 in 2021, peaking at 38 in 2022 (six years after publication), then 14, 19, 22 across 2023&ndash;2025. Cumulative citations climbed from 0 to 88 in the first six years and to 146 by 2026. Most top articles in this corpus follow this delayed-recognition shape rather than the immediate-uptake pattern characteristic of fast-moving STEM fields.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each top article, internal citations are bucketed by year of citing article. Pattern classification proceeds via the position and shape of the per-year series:<sup>1</sup> <em>steady_classic</em> (smooth growth without a sharp peak), <em>front_loaded</em> (most citations in first 3 years post-publication), <em>late_bloomer</em> (peak occurs more than 5 years post-publication), <em>one_wave</em> (single peak followed by decline), and the residual <em>too_recent</em> / <em>too_few</em> categories.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p><strong>Cluster</strong> changes both which top-cited articles are eligible (citation count is computed within scope) and which citing articles contribute to each accumulation curve. <strong>Top N</strong> sets the number of sparkline cards in the grid.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Wang, D., Song, C., &amp; Barab&aacute;si, A.-L. (2013). Quantifying long-term scientific impact. <em>Science, 342</em>(6154), 127&ndash;132.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-roc-grid" style="min-height:520px;"></div>
   <h4 class="methodology-heading" style="margin-top:1rem;">Pattern distribution</h4>
