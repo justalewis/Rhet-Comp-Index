@@ -59,14 +59,30 @@ function renderSankey(data) {
 
   if (!_ctShowSmallFlows) {
     // Hide nodes whose size is < 1% of the largest in their decade.
+    // The API encodes link.source/link.target as numeric indices into the
+    // nodes array, so filtering nodes requires re-mapping every kept
+    // link's source/target to their post-filter indices. Drop any link
+    // whose source or target was filtered out.
     const maxByDecade = {};
     nodes.forEach(n => {
       maxByDecade[n.decade] = Math.max(maxByDecade[n.decade] || 0, n.size || 0);
     });
-    const keepNode = n => (n.size || 0) >= 0.01 * (maxByDecade[n.decade] || 1);
-    const keepNames = new Set(nodes.filter(keepNode).map(n => n.name));
-    nodes = nodes.filter(keepNode);
-    links = links.filter(l => keepNames.has(l.source) && keepNames.has(l.target));
+    const keepIdx = new Map();      // old index → new index
+    const newNodes = [];
+    nodes.forEach((n, oldIdx) => {
+      if ((n.size || 0) >= 0.01 * (maxByDecade[n.decade] || 1)) {
+        keepIdx.set(oldIdx, newNodes.length);
+        newNodes.push(n);
+      }
+    });
+    const newLinks = [];
+    links.forEach(l => {
+      if (keepIdx.has(l.source) && keepIdx.has(l.target)) {
+        newLinks.push({ ...l, source: keepIdx.get(l.source), target: keepIdx.get(l.target) });
+      }
+    });
+    nodes = newNodes;
+    links = newLinks;
     if (!nodes.length || !links.length) {
       el.append('p').attr('class','explore-hint').style('margin-top','0.3rem')
         .text('Every flow this decade is below 1% — toggle the box above to show them.');
