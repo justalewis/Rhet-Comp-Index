@@ -17,7 +17,7 @@ let _exportWired_loadCitTrends = false;
 
 async function loadCitTrends() {
   if (!_exportWired_loadCitTrends) {
-    renderExportToolbar('tab-cittrends', { svgSelector: '#cittrends-chart', dataProvider: () => (window.__expCitTrends && window.__expCitTrends.years || []) });
+    renderExportToolbar('tab-cittrends', { svgSelector: '#cittrends-chart', dataProvider: () => (window.__expCitTrends || []) });
     _exportWired_loadCitTrends = true;
   }
   const noteEl = document.getElementById('cittrends-note');
@@ -31,6 +31,7 @@ async function loadCitTrends() {
   try {
     const resp = await fetch('/api/stats/citation-trends?' + params.toString());
     rows = await resp.json();
+    window.__expCitTrends = rows;
   } catch (e) {
     noteEl.textContent = 'Failed to load data.';
     return;
