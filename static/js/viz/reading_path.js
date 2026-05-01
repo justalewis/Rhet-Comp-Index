@@ -5,6 +5,7 @@
 // re-attached to `window` at the bottom so onclick=/onchange=/oninput=
 // attributes in explore.html and inside HTML-string fragments resolve.
 
+import { renderExportToolbar } from "./_ds_export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -26,6 +27,24 @@ const RP_COLORS = {
 
 
 function initReadingPath() {
+  // Wire the shared SVG/PNG/CSV export toolbar. CSV flattens the four
+  // relationship buckets (cites, cited_by, cocited, coupled) plus the
+  // seed into a single rows array, so the export reflects the assembled
+  // path rather than just one bucket.
+  renderExportToolbar('tab-readingpath', {
+    svgSelector: '#rp-graph-container svg',
+    dataProvider: () => {
+      const d = window.__expReadingPath;
+      if (!d) return [];
+      const rows = [];
+      if (d.seed) rows.push(Object.assign({ relation: 'seed' }, d.seed));
+      ['cites', 'cited_by', 'cocited', 'coupled'].forEach(rel => {
+        (d[rel] || []).forEach(a => rows.push(Object.assign({ relation: rel }, a)));
+      });
+      return rows;
+    },
+  });
+
   const searchInput = document.getElementById('rp-search');
   const acBox = document.getElementById('rp-autocomplete');
   const clearBtn = document.getElementById('rp-clear-btn');
@@ -133,6 +152,7 @@ async function rpBuildFromId(articleId) {
   try {
     const resp = await fetch('/api/citations/reading-path?article=' + articleId);
     rpData = await resp.json();
+    window.__expReadingPath = rpData;
     if (rpData.error) {
       document.getElementById('rp-loading').style.display = 'none';
       alert('Error: ' + rpData.error);
@@ -157,6 +177,7 @@ async function rpBuild() {
   try {
     const resp = await fetch('/api/citations/reading-path?article=' + rpSeedId);
     rpData = await resp.json();
+    window.__expReadingPath = rpData;
     if (rpData.error) {
       document.getElementById('rp-loading').style.display = 'none';
       document.getElementById('rp-build-btn').disabled = false;
