@@ -33,7 +33,13 @@
       <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">Browse All Tools</a>
     </div>
   </div>
+  {# Two render modes for the Datastories nav item:
+     - Authed: full chapter outline so collaborators jump straight to a tool.
+     - Unauthed: a single link to the public landing page. We intentionally
+       don't expose the chapter outline to visitors who haven't signed in,
+       since the tool surface is private until publication. #}
   <div class="nav-item{% if active_nav == 'datastories' %} active{% endif %}" id="nav-datastories">
+    {% if datastories_authed %}
     <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
       <span class="feature-nav-icon">&#9686;</span>
       Datastories
@@ -41,7 +47,7 @@
     </button>
     <div class="nav-dropdown">
       <a href="/datastories" class="nav-dropdown-item" style="font-weight:600;">About Datastories</a>
-      <a href="/datastories/tools" class="nav-dropdown-item nav-dropdown-divider">All Tools (sign-in required)</a>
+      <a href="/datastories/tools" class="nav-dropdown-item nav-dropdown-divider">All Tools</a>
       <a href="/datastories/tools#ch3-braided-path" class="nav-dropdown-item nav-dropdown-divider">Ch 3 &mdash; The Citation Backbone</a>
       <a href="/datastories/tools#ch3-braided-path" class="nav-dropdown-item">The Braided Path</a>
       <a href="/datastories/tools#ch3-branching-traditions" class="nav-dropdown-item">Branching Traditions</a>
@@ -76,6 +82,12 @@
       <a href="/datastories/tools#ch9-disciplinary-calendar" class="nav-dropdown-item">The Disciplinary Calendar</a>
       <a href="/datastories/tools#ch9-unread-canon" class="nav-dropdown-item">The Unread Canon</a>
     </div>
+    {% else %}
+    <a href="/datastories" class="feature-nav-link{% if active_nav == 'datastories' %} active-feature-link{% endif %}">
+      <span class="feature-nav-icon">&#9686;</span>
+      Datastories
+    </a>
+    {% endif %}
   </div>
   <div class="nav-item" id="nav-authors">
     <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">

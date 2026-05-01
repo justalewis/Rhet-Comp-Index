@@ -51,12 +51,20 @@ def _safe_float(val, default, lo=None, hi=None):
 
 def inject_globals():
     """Make version string available to all templates for cache-busting.
-    Also surfaces the Datastories on/off flag so _feature_nav.html can
-    decide whether to render the Datastories nav item."""
+    Also surfaces the Datastories flags so _feature_nav.html can decide
+    whether to render the Datastories nav item, and whether to expose
+    the full chapter outline (authed) vs a single link to the landing
+    page (not authed)."""
     from app import datastories_enabled
+    from auth_datastories import is_authenticated
     return {
         "version": APP_VERSION,
         "datastories_enabled": datastories_enabled(),
+        # Truthy when the current request carries a valid session cookie
+        # OR a valid PINAKES_ADMIN_TOKEN bearer header. Tools, API, and
+        # the chapter-outline dropdown are gated on this. Always evaluated
+        # in a request context — inject_globals runs as a context processor.
+        "datastories_authed": is_authenticated(),
     }
 
 
