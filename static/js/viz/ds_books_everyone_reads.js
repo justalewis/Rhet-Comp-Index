@@ -49,19 +49,41 @@ function renderTable(data) {
 
   let html = '<table class="ds-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;">';
   html += '<thead><tr>';
-  ['#','Article','Year','Journal','Tools'].forEach(h => html += '<th style="border-bottom:2px solid #e8e4de;padding:0.4rem 0.5rem;text-align:left;">' + escapeHtml(h) + '</th>');
+  ['#','Article','Year','Journal','Tools', ''].forEach(h => html += '<th style="border-bottom:2px solid #e8e4de;padding:0.4rem 0.5rem;text-align:left;">' + escapeHtml(h) + '</th>');
   html += '</tr></thead><tbody>';
   rows.forEach((r, i) => {
-    html += '<tr>';
+    const toolsList = (r.tools || []).map(t => escapeHtml(t)).join(', ');
+    html += '<tr class="be-main-row" data-row="' + i + '">';
     html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${i + 1}</td>`;
     html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a></td>`;
     html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.year || '—'}</td>`;
     html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${escapeHtml(r.journal || '—')}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;color:#5a3e28;">${r.n_tools}<span style="color:#9c9890;font-weight:400;font-size:0.78rem;"> · ${escapeHtml(r.tools.slice(0, 3).join(', '))}${r.tools.length > 3 ? '…' : ''}</span></td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;color:#5a3e28;">${r.n_tools}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">` +
+              `<button type="button" class="be-toggle" data-row="${i}" ` +
+              `style="padding:0.1rem 0.45rem;background:#fdfbf7;border:1px solid #c8c4bc;cursor:pointer;font-size:0.74rem;border-radius:9px;">tools ▾</button></td>`;
     html += '</tr>';
+    // Hidden detail row — expanded on toggle. Lists every tool the article
+    // appeared in plus its citation_count + cluster bucket if present.
+    html += `<tr class="be-detail-row" data-row="${i}" style="display:none;background:#fdfbf7;">`;
+    html += `<td colspan="6" style="padding:0.45rem 0.8rem;border-bottom:1px solid #f1ede6;font-size:0.78rem;color:#3a3026;">`;
+    html += `<strong style="color:#5a3e28;">Surfaced by ${r.n_tools} Datastories tool${r.n_tools !== 1 ? 's' : ''}:</strong> `;
+    html += toolsList || '<em style="color:#9c9890;">no tools recorded</em>';
+    html += `</td></tr>`;
   });
   html += '</tbody></table>';
   el.innerHTML = html;
+
+  el.querySelectorAll('.be-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-row');
+      const detail = el.querySelector('tr.be-detail-row[data-row="' + i + '"]');
+      if (!detail) return;
+      const open = detail.style.display === '';
+      detail.style.display = open ? 'none' : '';
+      btn.textContent = open ? 'tools ▾' : 'tools ▴';
+    });
+  });
 }
 
 window.loadDsBooksEveryoneReads = loadDsBooksEveryoneReads;
