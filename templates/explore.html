@@ -2084,40 +2084,37 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Relationship sets</h4>
-        <p><strong>Backward citations</strong> are articles the seed cites (its reference
-        list). <strong>Forward citations</strong> are articles that cite the seed.
-        <strong>Co-citation neighbours</strong> are articles X where at least one article
-        C cites both X and the seed &mdash; a high co-citation count means X and the seed
-        are frequently treated as related by the citing literature.
-        <strong>Bibliographic coupling neighbours</strong> are articles X that share at
-        least one reference with the seed &mdash; the more shared references, the
-        stronger the overlap.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Reading Path tool builds a structured reading list around a seed article. The user picks any indexed article as the seed; the tool then assembles four citation-neighborhood sets &mdash; what the seed cites, what cites the seed, what is co-cited with the seed, and what shares references with the seed &mdash; and ranks every article in the union of those sets by a composite relevance score. The output is both a tabular reading list and a force-directed graph centered on the seed, which lets the user traverse from a known starting point into the surrounding citation neighborhood.</p>
 
-        <h4 class="methodology-heading">Scoring</h4>
-        <p>Each related article receives a composite relevance score:
-        <strong>+2</strong> for a direct citation link (backward or forward),
-        <strong>+weight</strong> for co-citation (capped at 5),
-        <strong>+weight</strong> for bibliographic coupling (capped at 5),
-        <strong>+1</strong> if it shares a topic tag with the seed,
-        <strong>+1</strong> if published in the same journal.
-        Articles appearing in multiple relationship sets accumulate points, surfacing
-        the most broadly connected works.</p>
+        <p>Run with Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future" as the seed, the tool returns 222 unique articles spanning the full neighborhood: the seed cites 57 indexed articles in its own reference list, 146 indexed articles cite the seed in return, 20 articles are co-cited with the seed by other indexed work, and 20 articles share references with the seed. The composite-ranked reading list surfaces Cecilia Shelton's 2020 "Shifting Out of Neutral," Walton's 2016 "Supporting Human Dignity and Human Rights," Jones's solo 2016 "The Technical Communicator as Advocate," Frost's 2016 "Apparent Feminism as a Methodology for Technical Communication," and Cox's 2019 "Working Closets" at the top &mdash; each appears in multiple relationship sets and accumulates score across them. The companion graph renders 223 nodes and 243 edges with the seed at center, color-coded by relationship type.</p>
 
-        <h4 class="methodology-heading">Graph visualisation</h4>
-        <p>The force-directed graph places the seed at the centre. Nodes are coloured
-        by relationship type: blue for backward citations, green for forward citations,
-        orange for co-citation, purple for bibliographic coupling. Nodes appearing in
-        multiple sets show multi-coloured borders. Node size reflects the composite
-        relevance score. Edges are drawn for every identified relationship, with
-        colour matching the relationship type.</p>
+        <p>Use the tool to assemble a structured first reading list when entering a new sub-area, locate articles that bridge a known seed to its surrounding citation neighborhood, and surface articles that connect to the seed through multiple distinct relationship channels rather than one.</p>
 
-        <h4 class="methodology-heading">Limitations</h4>
-        <p>Co-citation and bibliographic coupling are limited to the top 20 neighbours
-        each. The reading path only covers articles within Pinakes&rsquo; index &mdash;
-        citations to articles outside the indexed journals are not included. Articles
-        from journals that do not deposit reference lists with CrossRef will have no
-        backward citation data and limited co-citation / coupling data.</p>
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>The four relationship sets are computed independently against the indexed citation graph. <em>Backward citations</em> are articles the seed cites &mdash; the resolved DOIs in the seed's CrossRef-deposited reference list that match other indexed articles. <em>Forward citations</em> are articles that cite the seed &mdash; the inverse query, returning every indexed article whose reference list contains the seed's DOI. <em>Co-citation neighbors</em> are articles X for which at least one indexed article C cites both X and the seed; the strength of the co-citation tie is the count of citing articles that pair them.<sup>1</sup> <em>Bibliographic coupling neighbors</em> are articles X whose reference list shares at least one indexed article with the seed's reference list; the coupling strength is the count of shared references.<sup>2</sup> The co-citation and coupling sets are each capped at the top 20 neighbors by tie strength to keep the reading list focused on substantively related work rather than long-tail noise.</p>
+
+        <p>The composite relevance score combines the four signals into a single ranking. Each related article receives <strong>+2</strong> for a direct citation link (either backward or forward), <strong>+weight</strong> for any co-citation tie (the count of citing articles, capped at 5 to prevent any single dominant pair from saturating the score), <strong>+weight</strong> for any bibliographic coupling tie (the count of shared references, capped at 5), <strong>+1</strong> for a shared topic tag with the seed, and <strong>+1</strong> for publication in the same journal as the seed. Articles that appear in multiple relationship sets accumulate score across them, which is the analytic move: an article that cites the seed, is co-cited with the seed in other articles, and shares topic tags with the seed scores higher than an article connected through any single channel, even if that channel is heavier.</p>
+
+        <p>This is a hybrid recommendation strategy. Pure citation-based recommendation favors directly-linked articles but misses peripheral work that the field treats as related; pure co-citation favors perceived kinship but misses an article's own intellectual debts; pure coupling favors shared inputs but misses the field's reception of the seed.<sup>3</sup> The composite score is constructed to give each channel a chance to surface its strongest neighbors and then rewards articles that appear across channels. The +1 topic-tag and same-journal weights are deliberately small &mdash; topical similarity is a useful tie-breaker between citation-equivalent articles but should not override the citation evidence.</p>
+
+        <p>Two limitations bear on interpretation. The reading list is bounded by the indexed corpus: an article that the seed cites in its reference list but that is not itself indexed will not appear in the backward-citations set, and the same is true for any external work that should plausibly join the reading list. Articles from journals that do not deposit reference lists with CrossRef have no backward-citation data and limited co-citation and coupling data, which means using such an article as a seed produces a reading list weighted heavily toward forward citations only. The Coverage Notes page at <a href="/coverage">/coverage</a> documents which venues fall in this category.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>The tool exposes one primary input and several display controls.</p>
+
+        <p>The <strong>Search for a seed article</strong> input drives everything else. The user types a title fragment, an author name, or a keyword; the autocomplete dropdown returns matching indexed articles ranked by recency and citation count. Selecting an article triggers the full neighborhood query and renders the seed card, the reading list table, and the relationship graph.</p>
+
+        <p>The <strong>relationship-set toggles</strong> in the table header let the user filter the reading list to a single relationship type or any combination of the four. Toggling off "Backward citations" restricts the list to articles that cite the seed or share intellectual neighborhoods with it, which is the right move when the question is "what came after this article and is related to it?" rather than "what is this article reading?"</p>
+
+        <p>The <strong>graph view</strong> renders the relationship graph with color-coded edges (blue for backward, green for forward, orange for co-citation, purple for coupling). Nodes that appear in multiple relationship sets carry multi-color borders. Node size scales with composite relevance score; click any node to switch the seed to that article and re-run the neighborhood query against the new seed. This recursive traversal is the primary use of the graph view: starting from a known anchor, the user can navigate outward through whichever relationship channel they want to follow.</p>
+
+        <h4 class="methodology-heading">References</h4>
+        <ol class="methodology-refs">
+          <li>Small, H. (1973). Co-citation in the scientific literature: A new measure of the relationship between two documents. <em>Journal of the American Society for Information Science, 24</em>(4), 265&ndash;269.</li>
+          <li>Kessler, M. M. (1963). Bibliographic coupling between scientific papers. <em>American Documentation, 14</em>(1), 10&ndash;25.</li>
+          <li>Boyack, K. W., &amp; Klavans, R. (2010). Co-citation analysis, bibliographic coupling, and direct citation: Which citation approach represents the research front most accurately? <em>Journal of the American Society for Information Science and Technology, 61</em>(12), 2389&ndash;2404.</li>
+        </ol>
 
         </div>
       </details>
