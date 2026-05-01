@@ -36,11 +36,33 @@ async function loadDsReachOfCitation() {
   }
 }
 
+// Pattern ordering used when sorting cards — groups visually-similar
+// curves together so eye-comparison across cards is easier.
+const PATTERN_ORDER = [
+  'steady_classic', 'late_bloomer', 'one_wave', 'front_loaded',
+  'too_recent', 'too_few',
+];
+
 function renderGrid(data) {
   const el = d3.select('#ds-roc-grid');
   el.selectAll('*').remove();
-  const arts = (data.articles || []).slice(0, 60);
+  // Sort by pattern first (so same-shape sparklines are adjacent), then by
+  // total citations within each pattern group so the heaviest hitters lead.
+  const articles = (data.articles || []).slice();
+  articles.sort((a, b) => {
+    const ia = PATTERN_ORDER.indexOf(a.pattern); const ib = PATTERN_ORDER.indexOf(b.pattern);
+    const pa = ia === -1 ? 99 : ia; const pb = ib === -1 ? 99 : ib;
+    if (pa !== pb) return pa - pb;
+    return (b.total_citations || 0) - (a.total_citations || 0);
+  });
+  const arts = articles.slice(0, 60);
   if (!arts.length) { el.append('p').attr('class','explore-hint').text('No data.'); return; }
+
+  // Opacity ramp keyed off total citations across the visible set, so the
+  // most-cited article in the cohort gets a fully saturated area-fill and
+  // the long tail fades. Pattern still drives hue.
+  const maxTotal = d3.max(arts, a => a.total_citations) || 1;
+  const opacity = d3.scaleSqrt().domain([0, maxTotal]).range([0.18, 0.85]);
 
   const w = el.node().clientWidth || 720;
   const cols = 4;
@@ -58,15 +80,21 @@ function renderGrid(data) {
     svg.append('rect').attr('x', cx).attr('y', cy).attr('width', cellW - 16).attr('height', cellH - 12)
       .attr('fill', '#fdfbf7').attr('stroke', '#e8e4de').attr('stroke-width', 0.5);
 
-    // Sparkline
+    // Sparkline (area + line). Area opacity encodes total citations within
+    // the cohort, so heavy hitters read at a glance even before label text.
     const series = art.series || [];
     if (series.length) {
       const x = d3.scaleLinear().domain([0, series.length - 1]).range([cx + 6, cx + cellW - 22]);
       const ymax = d3.max(series, p => p.cumulative) || 1;
-      const y = d3.scaleLinear().domain([0, ymax]).range([cy + cellH - 24, cy + 28]);
+      const yRange = [cy + cellH - 24, cy + 28];
+      const y = d3.scaleLinear().domain([0, ymax]).range(yRange);
+      const color = PATTERN_COLOR[art.pattern] || '#9c9890';
+      const area = d3.area().x((p, k) => x(k)).y0(yRange[0]).y1(p => y(p.cumulative));
       const line = d3.line().x((p, k) => x(k)).y(p => y(p.cumulative));
+      svg.append('path').datum(series).attr('d', area)
+        .attr('fill', color).attr('fill-opacity', opacity(art.total_citations || 0)).attr('stroke', 'none');
       svg.append('path').datum(series).attr('d', line).attr('fill', 'none')
-        .attr('stroke', PATTERN_COLOR[art.pattern] || '#9c9890').attr('stroke-width', 1.5);
+        .attr('stroke', color).attr('stroke-width', 1.5);
     }
 
     // Label (clickable)
