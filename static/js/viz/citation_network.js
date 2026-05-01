@@ -93,13 +93,29 @@ async function loadCitationNetwork() {
   document.getElementById('citnet-stats').textContent =
     `${data.node_count} articles\u2002·\u2002${data.link_count} citation links`;
 
-  // Legend: unique journals present in this result set
+  // Legend: unique journals present in this result set. Clickable —
+  // a click on the swatch ticks/unticks the matching journal filter
+  // checkbox and triggers a reload, so the legend doubles as a fast
+  // "show only this journal" / "remove this journal" affordance.
   const seenJournals = [...new Set(data.nodes.map(n => n.journal))].sort();
   document.getElementById('citnet-legend').innerHTML = seenJournals.map(j =>
-    `<span class="citnet-legend-item">` +
+    `<span class="citnet-legend-item" data-journal="${escapeHtml(j)}" ` +
+       `style="cursor:pointer;" title="Click to toggle this journal in the filter">` +
     `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
     `${escapeHtml(j)}</span>`
   ).join('');
+  document.querySelectorAll('#citnet-legend .citnet-legend-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const name = el.getAttribute('data-journal');
+      const cb = [...document.querySelectorAll('.citnet-journal-check')]
+        .find(c => c.value === name);
+      if (cb) {
+        cb.checked = !cb.checked;
+        updateCitnetJournalCount();
+        loadCitationNetwork();
+      }
+    });
+  });
 
   renderCitationNetwork(container, data);
 }
