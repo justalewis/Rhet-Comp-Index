@@ -186,7 +186,13 @@ export function enableZoomPan(svg, opts) {
  * @returns {d3.DragBehavior}
  */
 export function enableDrag(simulation) {
+  // clickDistance(5): if the pointer moves > 5 pixels between mousedown and
+  // mouseup, suppress the subsequent click event entirely. This is d3-drag's
+  // built-in click-vs-drag separator and stops the ubiquitous "I dragged a
+  // node and the page navigated to it" misfire on every force-graph in the
+  // Explore section.
   return d3.drag()
+    .clickDistance(5)
     .on('start', (event, d) => {
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x; d.fy = d.y;
