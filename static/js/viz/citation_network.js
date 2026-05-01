@@ -120,8 +120,57 @@ async function loadCitationNetwork() {
   renderCitationNetwork(container, data);
 }
 
+// 2-hop drill-in. Walks the loaded link list to find every node within
+// two citation hops of the focus id, then re-renders the network with
+// just those nodes/links. A "Clear focus" chip lets the user back out
+// without re-fetching from the server.
+let _citnetFullData = null;
+let _citnetFocusId = null;
+
+function focusOnNode(id) {
+  if (!_citnetFullData) return;
+  const links = _citnetFullData.links;
+  // BFS up to depth 2 in the undirected projection of the citation graph.
+  const include = new Set([id]);
+  let frontier = new Set([id]);
+  for (let hop = 0; hop < 2; hop++) {
+    const next = new Set();
+    links.forEach(l => {
+      const s = typeof l.source === 'object' ? l.source.id : l.source;
+      const t = typeof l.target === 'object' ? l.target.id : l.target;
+      if (frontier.has(s) && !include.has(t)) { next.add(t); include.add(t); }
+      if (frontier.has(t) && !include.has(s)) { next.add(s); include.add(s); }
+    });
+    frontier = next;
+    if (!frontier.size) break;
+  }
+  const nodes = _citnetFullData.nodes.filter(n => include.has(n.id));
+  const subLinks = links.filter(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return include.has(s) && include.has(t);
+  });
+  _citnetFocusId = id;
+  const seed = nodes.find(n => n.id === id);
+  document.getElementById('citnet-stats').innerHTML =
+    `Focused on <strong>${escapeHtml(seed ? seed.title : '#' + id)}</strong> ` +
+    `· ${nodes.length} articles in 2-hop neighbourhood · ${subLinks.length} edges ` +
+    `<button id="citnet-clear-focus" style="margin-left:0.6rem;padding:0.15rem 0.5rem;background:#fdfbf7;border:1px solid #c8c4bc;cursor:pointer;font-size:0.78rem;border-radius:11px;">Clear focus</button>`;
+  document.getElementById('citnet-clear-focus').addEventListener('click', () => {
+    _citnetFocusId = null;
+    renderCitationNetwork(document.getElementById('citnet-container'), _citnetFullData);
+    document.getElementById('citnet-stats').textContent =
+      `${_citnetFullData.node_count} articles · ${_citnetFullData.link_count} citation links`;
+  });
+  renderCitationNetwork(document.getElementById('citnet-container'),
+    { ...{nodes, links: subLinks}, node_count: nodes.length, link_count: subLinks.length });
+}
+
 function renderCitationNetwork(container, data) {
   container.innerHTML = '';
+  // First call after a fresh fetch: stash the full dataset for focus mode.
+  // Subsequent calls (focus drill-in / clear) pass a subset; don't overwrite.
+  if (!_citnetFocusId) _citnetFullData = data;
   citnetNodes = data.nodes.map(d => ({ ...d }));
   citnetLinks = data.links.map(d => ({ ...d }));
 
@@ -175,7 +224,13 @@ function renderCitationNetwork(container, data) {
     )
     .on('click', (event, d) => {
       event.stopPropagation();
-      window.location = '/article/' + d.id;
+      // Click → focus on this node (re-render with 2-hop subgraph).
+      // Ctrl/Cmd-click → navigate to the article page (the old behaviour).
+      if (event.ctrlKey || event.metaKey) {
+        window.location = '/article/' + d.id;
+      } else {
+        focusOnNode(d.id);
+      }
     })
     .on('mouseover', (event, d) => {
       const year  = d.pub_date ? d.pub_date.slice(0, 4) : '';
