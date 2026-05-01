@@ -46,6 +46,9 @@ function initReadingPath() {
     },
   });
 
+  // Render the "Recently built" chip strip if there are any persisted seeds.
+  rpRenderRecentChips();
+
   const searchInput = document.getElementById('rp-search');
   const acBox = document.getElementById('rp-autocomplete');
   const clearBtn = document.getElementById('rp-clear-btn');
@@ -122,6 +125,64 @@ async function rpSearch(q) {
   }
 }
 
+// ── Recently-built seeds ──────────────────────────────────────────
+// Persist the last 5 seed articles (id + title + journal) so the user
+// can rebuild a path without re-typing. Stored under a single localStorage
+// key as a JSON array; oldest entries are dropped past the 5-item cap.
+const RP_RECENT_KEY = 'rp-recent-seeds';
+const RP_RECENT_MAX = 5;
+
+function rpRecentLoad() {
+  try {
+    const raw = localStorage.getItem(RP_RECENT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function rpRecentSave(seed) {
+  if (!seed || !seed.id) return;
+  let list = rpRecentLoad().filter(s => s.id !== seed.id);
+  list.unshift({ id: seed.id, title: seed.title || ('#' + seed.id), journal: seed.journal || '' });
+  list = list.slice(0, RP_RECENT_MAX);
+  try { localStorage.setItem(RP_RECENT_KEY, JSON.stringify(list)); } catch (e) {}
+  rpRenderRecentChips();
+}
+
+function rpRenderRecentChips() {
+  const list = rpRecentLoad();
+  let host = document.getElementById('rp-recent-chips');
+  // Inject the host element next to the search box on first render.
+  if (!host) {
+    const seedCard = document.getElementById('rp-seed-card');
+    const search   = document.getElementById('rp-search');
+    const anchor   = (search && search.parentNode) || (seedCard && seedCard.parentNode);
+    if (!anchor) return;
+    host = document.createElement('div');
+    host.id = 'rp-recent-chips';
+    host.style.cssText = 'margin:0.5rem 0;font-size:0.8rem;color:#7a7268;';
+    anchor.appendChild(host);
+  }
+  if (!list.length) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  host.style.display = 'block';
+  host.innerHTML = '<span style="margin-right:0.4rem;text-transform:uppercase;letter-spacing:0.04em;font-size:0.72rem;color:#9c9890;">Recent</span>' +
+    list.map(s => {
+      const label = (s.title || '#' + s.id).slice(0, 36);
+      const tip = (s.title || '#' + s.id) + (s.journal ? ' — ' + s.journal : '');
+      return '<button type="button" class="rp-recent-chip" data-id="' + s.id +
+        '" title="' + escHtml(tip).replace(/"/g, '&quot;') + '" ' +
+        'style="margin:0.15rem 0.25rem 0.15rem 0;padding:0.2rem 0.5rem;' +
+        'background:#fdfbf7;border:1px solid #c8c4bc;border-radius:11px;' +
+        'cursor:pointer;font-size:0.78rem;color:#5a3e28;">' +
+        escHtml(label) + '</button>';
+    }).join('');
+  host.querySelectorAll('.rp-recent-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = parseInt(btn.getAttribute('data-id'));
+      if (id) rpBuildFromId(id);
+    });
+  });
+}
+
 function rpSelectSeed(article) {
   rpSeedId = article.id;
   document.getElementById('rp-search').value = '';
@@ -159,6 +220,7 @@ async function rpBuildFromId(articleId) {
       alert('Error: ' + rpData.error);
       return;
     }
+    rpRecentSave(rpData.seed);
     // Show seed card
     rpSelectSeed(rpData.seed);
     document.getElementById('rp-loading').style.display = 'none';
@@ -185,6 +247,7 @@ async function rpBuild() {
       alert('Error: ' + rpData.error);
       return;
     }
+    rpRecentSave(rpData.seed);
     document.getElementById('rp-loading').style.display = 'none';
     document.getElementById('rp-build-btn').disabled = false;
     rpRenderResults();
