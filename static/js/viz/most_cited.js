@@ -36,6 +36,7 @@ async function loadCitations() {
   try {
     const resp = await fetch('/api/stats/most-cited?' + params.toString());
     data = await resp.json();
+    window.__expMostCited = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load citation data.</p>';
     return;
