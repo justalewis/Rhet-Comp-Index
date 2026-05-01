@@ -31,14 +31,47 @@ async function loadDsCommunitiesTime() {
   }
 }
 
+// Default off — when on, nodes whose size is below 1% of the per-decade
+// max are hidden along with any link they touch. Held in module scope so
+// the toggle re-render is fast and doesn't need a server round-trip.
+let _ctShowSmallFlows = false;
+
 function renderSankey(data) {
   const el = d3.select('#ds-ct-sankey');
   el.selectAll('*').remove();
-  const nodes = (data.sankey_nodes || []).map(n => ({...n}));
-  const links = (data.sankey_links || []).map(l => ({...l}));
+  let nodes = (data.sankey_nodes || []).map(n => ({...n}));
+  let links = (data.sankey_links || []).map(l => ({...l}));
   if (!nodes.length || !links.length) {
     el.append('p').attr('class','explore-hint').text('Not enough cross-decade overlap to draw an alluvial flow.');
     return;
+  }
+
+  // Toolbar with the small-flows toggle. Re-renders on change.
+  const toolbar = el.append('div').style('margin-bottom', '0.4rem')
+    .style('font-size', '0.82rem').style('color', '#7a7268');
+  toolbar.html('<label style="cursor:pointer;display:inline-flex;align-items:center;gap:0.3rem;">' +
+    '<input type="checkbox" id="ds-ct-show-small"' + (_ctShowSmallFlows ? ' checked' : '') + '>' +
+    '<span>Show flows below 1% of decade max</span></label>');
+  toolbar.select('#ds-ct-show-small').on('change', function() {
+    _ctShowSmallFlows = this.checked;
+    renderSankey(data);
+  });
+
+  if (!_ctShowSmallFlows) {
+    // Hide nodes whose size is < 1% of the largest in their decade.
+    const maxByDecade = {};
+    nodes.forEach(n => {
+      maxByDecade[n.decade] = Math.max(maxByDecade[n.decade] || 0, n.size || 0);
+    });
+    const keepNode = n => (n.size || 0) >= 0.01 * (maxByDecade[n.decade] || 1);
+    const keepNames = new Set(nodes.filter(keepNode).map(n => n.name));
+    nodes = nodes.filter(keepNode);
+    links = links.filter(l => keepNames.has(l.source) && keepNames.has(l.target));
+    if (!nodes.length || !links.length) {
+      el.append('p').attr('class','explore-hint').style('margin-top','0.3rem')
+        .text('Every flow this decade is below 1% — toggle the box above to show them.');
+      return;
+    }
   }
 
   const w = el.node().clientWidth || 720, h = 540;
