@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -129,12 +130,8 @@ function renderBibcoupling(container, data) {
     .attr('width', W)
     .attr('height', H);
 
-  bibcoupZoomBehavior = d3.zoom()
-    .scaleExtent([0.1, 8])
-    .on('zoom', (event) => gRoot.attr('transform', event.transform));
-
-  bibcoupSvgEl.call(bibcoupZoomBehavior);
-  const gRoot = bibcoupSvgEl.append('g');
+  const gRoot = enableZoomPan(bibcoupSvgEl, { scaleExtent: [0.1, 8] });
+  bibcoupZoomBehavior = bibcoupSvgEl.node().__dsZoomBehavior;
 
   // Links
   bibcoupLinkSel = gRoot.append('g').attr('class', 'bibcoup-links')

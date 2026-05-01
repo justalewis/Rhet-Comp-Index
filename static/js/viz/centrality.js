@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -160,12 +161,8 @@ function renderCentrality(container, data) {
     .attr('width', W)
     .attr('height', H);
 
-  centZoomBehavior = d3.zoom()
-    .scaleExtent([0.1, 8])
-    .on('zoom', (event) => gRoot.attr('transform', event.transform));
-
-  centSvgEl.call(centZoomBehavior);
-  const gRoot = centSvgEl.append('g');
+  const gRoot = enableZoomPan(centSvgEl, { scaleExtent: [0.1, 8] });
+  centZoomBehavior = centSvgEl.node().__dsZoomBehavior;
 
   // Links
   centLinkSel = gRoot.append('g').attr('class', 'cent-links')

@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { PALETTE, journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -87,18 +88,14 @@ async function loadNetwork(minPapers, topN) {
     neighbors[t] && neighbors[t].add(s);
   });
 
-  netZoomBehavior = d3.zoom().scaleExtent([0.2, 6]).on('zoom', (event) => {
-    g.attr('transform', event.transform);
-  });
-
   const svgSel = d3.select('#network-container')
     .append('svg')
     .attr('width', W)
-    .attr('height', H)
-    .call(netZoomBehavior);
+    .attr('height', H);
 
   netSvgEl = svgSel.node();
-  const g = svgSel.append('g');
+  const g = enableZoomPan(svgSel, { scaleExtent: [0.2, 6] });
+  netZoomBehavior = svgSel.node().__dsZoomBehavior;
 
   const simulation = d3.forceSimulation(nodes)
     .force('link', d3.forceLink(links)

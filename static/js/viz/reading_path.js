@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -244,13 +245,7 @@ function rpRenderGraph() {
     .style('font-family', 'system-ui, sans-serif');
   rpSvg = svg;
 
-  const g = svg.append('g');
-
-  // Zoom
-  const zoom = d3.zoom()
-    .scaleExtent([0.2, 5])
-    .on('zoom', (event) => g.attr('transform', event.transform));
-  svg.call(zoom);
+  const g = enableZoomPan(svg, { scaleExtent: [0.2, 5] });
 
   // Determine node color based on primary relationship type
   function nodeColor(d) {

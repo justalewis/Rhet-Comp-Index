@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -288,10 +289,7 @@ function renderTeForceGraph(container, snapshot) {
   const svg = d3.select(container).append('svg')
     .attr('width', W).attr('height', H)
     .style('background', '#faf8f5');
-  const g = svg.append('g');
-
-  svg.call(d3.zoom().scaleExtent([0.15, 6])
-    .on('zoom', e => g.attr('transform', e.transform)));
+  const g = enableZoomPan(svg, { scaleExtent: [0.15, 6] });
 
   const linkSel = g.append('g').selectAll('line')
     .data(links).enter().append('line')

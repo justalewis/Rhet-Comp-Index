@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -139,12 +140,8 @@ function renderCocitation(container, data) {
     .attr('width', W)
     .attr('height', H);
 
-  cocitZoomBehavior = d3.zoom()
-    .scaleExtent([0.1, 8])
-    .on('zoom', (event) => gRoot.attr('transform', event.transform));
-
-  cocitSvgEl.call(cocitZoomBehavior);
-  const gRoot = cocitSvgEl.append('g');
+  const gRoot = enableZoomPan(cocitSvgEl, { scaleExtent: [0.1, 8] });
+  cocitZoomBehavior = cocitSvgEl.node().__dsZoomBehavior;
 
   // Links (undirected, weighted)
   cocitLinkSel = gRoot.append('g').attr('class', 'cocit-links')

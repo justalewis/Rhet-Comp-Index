@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -108,11 +109,7 @@ function renderCommunities(container, data) {
   const rScale = d3.scaleSqrt().domain([0, citExtent[1] || 1]).range([3, 18]);
 
   const svg = d3.select(container).append('svg').attr('width', W).attr('height', H);
-  const g = svg.append('g');
-
-  const zoom = d3.zoom().scaleExtent([0.2, 5])
-    .on('zoom', e => g.attr('transform', e.transform));
-  svg.call(zoom);
+  const g = enableZoomPan(svg, { scaleExtent: [0.2, 5] });
 
   const linkSel = g.append('g').selectAll('line')
     .data(links).enter().append('line')
