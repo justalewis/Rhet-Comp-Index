@@ -106,6 +106,7 @@ async function loadJournalFlow() {
   try {
     const resp = await fetch('/api/citations/journal-flow?' + params.toString());
     data = await resp.json();
+    window.__expJournalFlow = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load journal citation flow data.</p>';
     return;
