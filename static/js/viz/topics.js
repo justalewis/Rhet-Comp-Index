@@ -18,7 +18,7 @@ async function loadHeatmap() {
     renderExportToolbar('tab-topics', { svgSelector: '#heatmap-container svg', dataProvider: () => (window.__expTopics && window.__expTopics.matrix || []) });
     _exportWired_loadHeatmap = true;
   }
-  const resp = await fetch('/api/stats/tag-cooccurrence');
+  const resp = await fetch('/api/stats/tag-cooccurrence', { cache: 'no-cache' });
   const data = await resp.json();
   window.__expTopics = data;
 
