@@ -209,14 +209,31 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Data source</h4>
-        <p>Article records are drawn from <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a> using the Metadata API, queried by journal ISSN. For each journal, Pinakes fetches all articles with DOIs and records their publication date, title, authors, and abstract where available. A small number of journals are indexed via RSS feeds or web scraping when CrossRef coverage is unavailable; these records may lack structured dates.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Publication Timeline shows how article output is distributed across years and journals. Each colored band in a year's stacked bar represents one journal's contribution to that year's published total. Read horizontally, the chart traces each venue's publishing rhythm; read vertically, it reads as a profile of the field's annual scholarly throughput.</p>
 
-        <h4 class="methodology-heading">Chart construction</h4>
-        <p>Articles are grouped by publication year and journal. The stacked bar chart shows the count of articles published per year for each journal. Years with zero articles for a given journal appear as gaps in that journal&rsquo;s color band. The &ldquo;Show top 8&rdquo; toggle filters to the eight journals with the most articles across all years, reducing visual clutter for trend analysis.</p>
+        <p>Run with default parameters against the full Pinakes index, the chart spans 1990 to 2026 and aggregates 35,108 articles across 51 indexed journals. <em>College English</em> contributes the tallest single column (2,622 indexed articles), followed by <em>College Composition and Communication</em> (2,455), <em>IEEE Transactions on Professional Communication</em> (1,918), <em>Rhetorica</em> (1,900), and <em>Computers and Composition</em> (1,543). The five-journal block accounts for roughly a third of the entire indexed corpus.</p>
 
-        <h4 class="methodology-heading">Interpretation and limitations</h4>
-        <p>The timeline reflects <em>indexed</em> output, not total output. Journals added to the index more recently show data only from their first fetch onward, even if they published earlier. Journals that publish infrequently or that deposit metadata irregularly with CrossRef may show apparent gaps that reflect data availability rather than actual publication hiatuses. The date used is the CrossRef <code>published-print</code> or <code>published-online</code> date, whichever is earlier; some publishers backdate or batch-release content, which can create artificial spikes.</p>
+        <p>Use the tool to compare journal output trajectories, locate publication surges that often track editorial transitions or special-issue runs, and read off the relative scale at which each venue contributes to the field's record.</p>
+
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>Article records are drawn from CrossRef using the Metadata API, queried by journal ISSN.<sup>1</sup> For each journal Pinakes pulls every record that carries a DOI and stores the title, authors, abstract where available, and publication date. A small number of journals lack reliable CrossRef coverage and are indexed via the publisher's RSS feed or by direct web scraping; these records sometimes lack structured publication dates and either fall out of the timeline or are bucketed at the year level only.</p>
+
+        <p>The bucketing date is the CrossRef <code>published-print</code> or <code>published-online</code> field, whichever is earlier. Articles are then grouped by year and journal and stacked into the bar chart. Years with no contribution from a given journal appear as gaps in that journal's color band rather than as zero-height slices. The "Show top 8 journals only" toggle re-renders the same data restricted to the eight venues with the highest aggregate output across the full date range.</p>
+
+        <p>Two limitations bear on interpretation. First, the timeline reflects <em>indexed</em> output, not total scholarly output: journals added to the index more recently show data only from their indexing date forward, which can produce sharp leading edges that read as publication surges but are recovery artefacts of when Pinakes began crawling that venue. Second, some publishers backdate batch-released content or deposit metadata irregularly with CrossRef, which produces artificial spikes in the year the deposit lands rather than the year the article appeared. The Coverage Notes page at <a href="/coverage">/coverage</a> documents the per-journal indexing window and known coverage gaps.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Two controls govern the chart.</p>
+
+        <p>The <strong>Show top 8 journals only</strong> toggle restricts the stacked bars to the eight venues with the largest total indexed output, rolling the remaining forty-three into invisibility rather than into an "Other" band. Use it to compare the most prolific venues without the visual noise of long-tail journals; switch it off to see the full distribution and to locate smaller venues' publication windows.</p>
+
+        <p>The chart auto-renders on tab open and re-renders instantly when the toggle is flipped; no Compute click is required because the underlying aggregation is precomputed at index-load time and held in memory.</p>
+
+        <h4 class="methodology-heading">References</h4>
+        <ol class="methodology-refs">
+          <li>Hendricks, G., Tkaczyk, D., Lin, J., &amp; Feeney, P. (2020). Crossref: The sustainable source of community-owned scholarly metadata. <em>Quantitative Science Studies, 1</em>(1), 414&ndash;427.</li>
+        </ol>
 
         </div>
       </details>
