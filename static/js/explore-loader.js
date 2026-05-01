@@ -183,8 +183,51 @@ window.toggleAccordion = toggleAccordion;
 window.showTab = showTab;
 
 
+// ── Filter persistence ────────────────────────────────────────
+// Each Explore tool's filter widgets (year-from / year-to inputs, journal
+// checkboxes, mode selects, etc.) are independent <input>/<select> elements
+// with stable ids. Persist their values to localStorage so a refresh or
+// reopened tab doesn't wipe the user's choice. Datastories already does
+// this via shared/filters.js's per-panel localStorage; this is the Explore
+// equivalent, lifted up to the loader so it covers every tool uniformly
+// without per-tool code changes.
+const _PERSIST_PREFIX = 'explore-filter:';
+
+function persistExploreFilters() {
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    const panelId = panel.id;
+    if (!panelId) return;
+    panel.querySelectorAll('input[id], select[id]').forEach(el => {
+      // Skip search boxes and one-shot triggers that shouldn't survive refresh.
+      if (el.type === 'search') return;
+      if (/-search$/.test(el.id) || /-go$/.test(el.id)) return;
+      const storeKey = _PERSIST_PREFIX + panelId + ':' + el.id;
+      // Restore
+      try {
+        const saved = localStorage.getItem(storeKey);
+        if (saved !== null) {
+          if (el.type === 'checkbox') el.checked = saved === '1';
+          else el.value = saved;
+        }
+      } catch (e) { /* private mode / quota — ignore */ }
+      // Save on change
+      el.addEventListener('change', () => {
+        try {
+          localStorage.setItem(storeKey,
+            el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value);
+        } catch (e) { /* ignore */ }
+      });
+    });
+  });
+}
+
+
 // ── Auto-activate tab from URL hash or ?tab= param (from explore.js end) ─
 window.addEventListener('DOMContentLoaded', function () {
+  // Restore filter values from localStorage BEFORE any tab loader runs so
+  // the first request uses the persisted filter set, not the HTML defaults.
+  persistExploreFilters();
+
   // Build a lookup: hash → tab name (from data-hash attributes)
   const hashMap = {};
   document.querySelectorAll('.explore-tab[data-hash]').forEach(b => {
