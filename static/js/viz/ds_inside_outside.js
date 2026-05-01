@@ -88,7 +88,7 @@ function renderScatter(data) {
   root.append('text').attr('x', 16).attr('y', h/2).attr('transform', `rotate(-90, 16, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Internal rank (corpus)');
 
-  root.append('g').selectAll('circle').data(sample).join('circle')
+  const circles = root.append('g').selectAll('circle').data(sample).join('circle')
     .attr('cx', d => x(d.global_rank))
     .attr('cy', d => y(d.internal_rank))
     .attr('r', 2)
@@ -96,15 +96,27 @@ function renderScatter(data) {
     .attr('opacity', 0.6)
     .style('cursor', 'pointer')
     .on('click', (e, d) => { if (e.defaultPrevented) return; window.location.href = '/article/' + d.id; })
-    .append('title').text(d => (d.title || '#'+d.id) + '\n' + (d.journal || '') + ' · internal #' + d.internal_rank + ' · global #' + d.global_rank);
+    .on('mouseover', function(e, d) {
+      // Dim every other point and pop the hovered one — at >1500 dots the
+      // default opacity smear makes individual points hard to follow.
+      circles.attr('opacity', 0.08);
+      d3.select(this).attr('opacity', 1).attr('r', 5).raise();
+    })
+    .on('mouseout', function() {
+      circles.attr('opacity', 0.6).attr('r', 2);
+    });
+  circles.append('title').text(d => (d.title || '#'+d.id) + '\n' + (d.journal || '') + ' · internal #' + d.internal_rank + ' · global #' + d.global_rank);
 
-  // Quadrant guide labels (low-rank = top-cited; corners are interpretive zones)
+  // Quadrant guide labels (low-rank = top-cited; corners are interpretive zones).
+  // Anchored to the outer svg, not the zoom root, so they stay readable when
+  // the user zooms into a dense region.
   function quadLabel(text, qx, qy, color, anchor) {
-    root.append('text').attr('x', qx).attr('y', qy)
+    svg.append('text').attr('x', qx).attr('y', qy)
       .attr('text-anchor', anchor || 'start')
       .attr('font-size', 11).attr('font-weight', 600)
-      .attr('fill', color).attr('opacity', 0.8)
+      .attr('fill', color).attr('opacity', 0.85)
       .attr('paint-order', 'stroke').attr('stroke', '#fdfbf7').attr('stroke-width', 4)
+      .style('pointer-events', 'none')
       .text(text);
   }
   quadLabel('Shared canon', m.left + 8, m.top + 16, QUAD_COLOR.shared_canon);
