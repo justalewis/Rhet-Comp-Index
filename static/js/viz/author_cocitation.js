@@ -94,6 +94,7 @@ async function loadAuthorCocitation() {
   try {
     const resp = await fetch('/api/author-cocitation?' + params.toString());
     data = await resp.json();
+    window.__expAuthorCocitation = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load author co-citation data.</p>';
     return;
