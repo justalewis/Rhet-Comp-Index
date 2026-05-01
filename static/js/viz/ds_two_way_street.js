@@ -1,7 +1,7 @@
 // static/js/viz/ds_two_way_street.js — Ch 4, Tool 7: The Two-Way Street
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsTwoWayStreet = false;
 

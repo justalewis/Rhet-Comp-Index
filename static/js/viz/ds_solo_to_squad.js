@@ -1,7 +1,7 @@
 // static/js/viz/ds_solo_to_squad.js — Ch 8, Tool 21: Solo to Squad
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsSoloToSquad = false;
 

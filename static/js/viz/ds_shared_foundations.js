@@ -1,7 +1,7 @@
 // static/js/viz/ds_shared_foundations.js — Ch 7, Tool 17: Shared Foundations
-import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, enableZoomPan, enableDrag } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, enableZoomPan, enableDrag } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsSharedFoundations = false;
 

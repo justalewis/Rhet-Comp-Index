@@ -1,7 +1,7 @@
 // static/js/viz/ds_shifting_currents.js — Ch 4, Tool 4: Shifting Currents
-import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsShiftingCurrents = false;
 

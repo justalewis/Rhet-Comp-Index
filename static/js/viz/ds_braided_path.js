@@ -1,7 +1,7 @@
 // static/js/viz/ds_braided_path.js — Ch 3, Tool 1: The Braided Path
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _data = null;
 let _filtersWired = false;

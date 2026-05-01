@@ -1,7 +1,7 @@
 // static/js/viz/ds_lasting_partnerships.js — Ch 8, Tool 23: Lasting Partnerships
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const CAT_COLOR = {
   one_shot:    "#d4cec5",

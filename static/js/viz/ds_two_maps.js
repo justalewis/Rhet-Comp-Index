@@ -1,7 +1,7 @@
 // static/js/viz/ds_two_maps.js — Ch 7, Tool 18: Two Maps of the Field
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsTwoMaps = false;
 

@@ -1,4 +1,4 @@
-// static/js/viz/_ds_filters.js
+// static/js/shared/filters.js
 //
 // Shared filter component used by every Datastories tool. Renders a small
 // filter bar (cluster select, journal multi-select dropdown, year-from /

@@ -1,6 +1,6 @@
-// static/js/viz/_ds_common.js
+// static/js/shared/common.js
 //
-// Shared helpers for the Datastories viz modules. Imports from
+// Shared helpers for the Datastories (and Explore) viz modules. Imports from
 // ../utils/ where possible; defines a few Datastories-specific
 // utilities (group colors, status messages, simple table builder).
 

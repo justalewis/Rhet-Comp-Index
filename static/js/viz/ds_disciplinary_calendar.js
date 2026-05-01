@@ -1,7 +1,7 @@
 // static/js/viz/ds_disciplinary_calendar.js — Ch 9, Tool 25: The Disciplinary Calendar
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const TYPE_COLOR = {
   journal_founded:  "#3a5a28",

@@ -1,7 +1,7 @@
 // static/js/viz/ds_branching_traditions.js — Ch 3, Tool 2: Branching Traditions
-import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, GROUP_LABELS } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, GROUP_LABELS } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsBranchingTraditions = false;
 

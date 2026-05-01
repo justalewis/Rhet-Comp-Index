@@ -1,7 +1,7 @@
 // static/js/viz/ds_long_tail.js — Ch 5, Tool 9: The Long Tail
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const BREADTH_COLOR = {
   broadly_canonical:  "#3a5a28",

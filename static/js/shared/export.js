@@ -1,4 +1,4 @@
-// static/js/viz/_ds_export.js
+// static/js/shared/export.js
 //
 // Shared export utility for every Datastories (and Explore) tool. Adds
 // three buttons to a panel's toolbar:

@@ -1,7 +1,7 @@
 // static/js/viz/ds_inside_outside.js — Ch 5, Tool 13: Inside and Outside
-import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const QUAD_COLOR = {
   shared_canon: "#3a5a28",

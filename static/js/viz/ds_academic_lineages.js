@@ -1,7 +1,7 @@
 // static/js/viz/ds_academic_lineages.js — Ch 8, Tool 22: Academic Lineages
-import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan, enableDrag } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan, enableDrag } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 let _filtersWired_loadDsAcademicLineages = false;
 

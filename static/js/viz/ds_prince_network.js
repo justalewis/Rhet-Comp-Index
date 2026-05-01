@@ -1,7 +1,7 @@
 // static/js/viz/ds_prince_network.js — Ch 9, Tool 24: Prince Network
-import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const TYPE_COLOR = {
   single_catalyst:        "#a04525",

@@ -1,7 +1,7 @@
 // static/js/viz/ds_reach_of_citation.js — Ch 5, Tool 12: The Reach of a Citation
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const PATTERN_COLOR = {
   steady_classic: "#3a5a28",

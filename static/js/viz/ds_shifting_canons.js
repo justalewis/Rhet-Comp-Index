@@ -1,7 +1,7 @@
 // static/js/viz/ds_shifting_canons.js — Ch 5, Tool 11: Shifting Canons
-import { setLoading, setError, fetchJson, escapeHtml } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 const CAT_COLOR = {
   enduring:          "#3a5a28",

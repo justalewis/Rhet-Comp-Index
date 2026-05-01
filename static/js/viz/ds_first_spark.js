@@ -1,7 +1,7 @@
 // static/js/viz/ds_first_spark.js — Ch 6, Tool 16: The First Spark
-import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS } from "./_ds_common.js";
-import { renderFilterBar, filterParams } from "./_ds_filters.js";
-import { renderExportToolbar } from "./_ds_export.js";
+import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS } from "../shared/common.js";
+import { renderFilterBar, filterParams } from "../shared/filters.js";
+import { renderExportToolbar } from "../shared/export.js";
 
 // Cap routes shown alongside the global path so columns stay readable.
 const MAX_VISIBLE_ROUTES = 3;
