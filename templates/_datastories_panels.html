@@ -18,10 +18,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Each citation edge is bucketed by the decade of its citing article. Source and target articles are mapped to a field group via the <code>journal_groups</code> classification (TPC / RC / OTHER). Within a decade, citations are aggregated to TPC&rarr;TPC, TPC&rarr;RC, RC&rarr;TPC, RC&rarr;RC, plus OTHER as residual. The Sankey nodes are pre-decade groups; widths are raw citation counts.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p><strong>Cluster</strong>, <strong>journals</strong>, <strong>year range</strong> all apply to both the citing and cited side. Picking <em>Composition &amp; Writing Studies</em> draws the Sankey using only edges where both endpoints are in CWS journals &mdash; useful for asking "what does intra-cluster citation traffic look like?" Narrow the year range to compare a specific decade against the rest. The decade selector switches which decade pane the diagram shows.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>The Braided Path tracks citation traffic between Technical &amp; Professional Communication (TPC) and Rhetoric/Composition (RC) decade by decade. Each Sankey panel shows where the decade's citations originate (left) and where they land (right); width encodes count. The decade summary table beneath quantifies what the eye picks up.</p>
+
+      <p>Run with default parameters across the indexed corpus, the diagram traces a striking growth and asymmetry. Pre-1990s the field carried 901 inter- and intra-cluster citations &mdash; 258 TPC&rarr;TPC, 462 RC&rarr;RC, 79 TPC&rarr;RC, and only 9 RC&rarr;TPC. By the 2020s the total has grown twentyfold to 18,250, and the asymmetry persists: TPC cites RC at 862 edges per decade while RC cites TPC at 444. TPC remains the more outwardly engaged neighborhood; RC stays largely inside its own conversation across all five decades.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Each citation edge is bucketed by the decade of its citing article. Source and target articles are mapped to a field group via the <code>journal_groups</code> classification (TPC / RC / OTHER). Within each decade, citations are aggregated to TPC&rarr;TPC, TPC&rarr;RC, RC&rarr;TPC, RC&rarr;RC, plus OTHER as a residual category. Sankey nodes are per-decade group buckets; widths are raw citation counts. The <code>journal_groups</code> mapping is hand-curated and remains stable across runs.<sup>1</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p><strong>Cluster</strong>, <strong>journals</strong>, and <strong>year range</strong> apply to both the citing and cited side. Selecting <em>Composition &amp; Writing Studies</em> draws the Sankey using only edges where both endpoints are in CWS journals &mdash; useful for asking what intra-cluster citation traffic looks like. Narrowing the year range compares a specific decade against the rest. The decade selector switches which decade pane the diagram displays.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Sankey, M. H. P. R. (1898). Introductory note on the thermal efficiency of steam-engines. <em>Minutes of Proceedings of the Institution of Civil Engineers, 134</em>, 278&ndash;283.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-toolbar">
     <label class="filter-label">Decade:&nbsp;
@@ -38,10 +51,18 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>The grouping (<code>TPC</code> / <code>RHET_COMP</code> / <code>OTHER</code>) is hand-curated and lives in <code>journal_groups.py</code>. <em>OTHER</em> is "adjacent": writing centers, WAC, multimodal, international, community-engaged. Counts come from a single SQL aggregation over the articles table.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p><strong>Year range</strong> changes which articles get counted toward the per-tradition totals. Use it to ask "what did the field look like before 2000?" The cluster/journal filters are intentionally hidden because this tool <em>is</em> the field-composition snapshot.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Branching Traditions is the corpus snapshot every cross-field tool depends on. It sorts every indexed journal into one of three traditions and reports the resulting balance of journals and articles per group. Read it as the answer to "what is this index actually composed of?"</p>
+
+      <p>Run with default parameters across the full indexed corpus, three traditions emerge. <em>Rhetoric &amp; Composition</em> is the largest at 24 journals and 33,131 articles &mdash; 64% of the indexed corpus. <em>Technical &amp; Professional Communication</em> is concentrated and prolific: 9 journals carrying 8,223 articles. The <em>Other / Adjacent</em> bucket &mdash; writing centers, WAC, multimodal, international, community-engaged venues &mdash; gathers 18 journals and 10,489 articles. The asymmetry between groups (RC has nearly four times as many articles as TPC across more than twice as many journals) is the structural fact behind every cross-cluster citation pattern in the rest of the chapters.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>The grouping (<code>TPC</code> / <code>RHET_COMP</code> / <code>OTHER</code>) is hand-curated and lives in <code>journal_groups.py</code>. <em>OTHER</em> covers venues whose work is rhetorically and pedagogically adjacent to writing studies but whose primary disciplinary home is elsewhere. Counts come from a single SQL aggregation over the articles table, joined to the journal-group mapping.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p><strong>Year range</strong> changes which articles get counted toward the per-tradition totals. Narrowing to pre-2000 reads how the index was composed in the field's earlier era; opening to all years gives the corpus snapshot above. The cluster and journal filters are intentionally hidden because this tool <em>is</em> the composition snapshot.</p>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-bt-container" style="min-height:520px;"></div>
 </div>
@@ -51,10 +72,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Sources are articles with internal in-degree &ge;&nbsp;1 and out-degree =&nbsp;0; sinks are out-degree &ge;&nbsp;1 and in-degree =&nbsp;0. Sinks published after the frontier-cutoff year are flagged <em>frontier</em>; older sinks are <em>data-gap</em> (most likely missing CrossRef references rather than truly uncited). Per-journal rates show how source-y or sink-y each venue's contribution is.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filtering to a <strong>cluster</strong> shows what is foundational for that subfield specifically &mdash; e.g. picking <em>Technical Communication</em> reveals which articles the TC subfield reaches back to. The <strong>year range</strong> shifts the frontier-cutoff implicitly: an upper bound near the present makes more articles look like "frontier sinks"; a tighter window makes the data-gap category more obvious.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Origins and Frontiers separates the indexed corpus into the work the field reaches back to (sources: cited but never citing inside the index) and the work that is currently citing into the field but has not yet been cited from it (sinks: citing but never cited). Sinks split into two sub-categories: <em>frontier</em> (recent enough that not being cited is normal) and <em>data-gap</em> (old enough that the absence of citation more likely reflects missing reference deposits than genuine non-citation).</p>
+
+      <p>Run with default parameters across the indexed corpus, the tool surfaces 51,843 articles. 41,444 (79.9%) are sources &mdash; foundational work that other indexed articles cite but that itself cites nothing inside the corpus, often because its own reference list reaches into books, dissertations, or journals outside the index. 2,998 articles (5.8%) are frontier sinks under the 2021 cutoff, and 5,277 (10.2%) are data-gap sinks &mdash; likely victims of reference-deposit coverage rather than genuine isolation. The most-cited source in the field is Adrienne Rich's 1972 "When We Dead Awaken: Writing as Re-Vision" with 402 CrossRef citations &mdash; an external-influence text that the indexed corpus reaches back to without the corpus indexing what Rich herself was reading.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Sources are articles with internal in-degree &ge;&nbsp;1 and out-degree =&nbsp;0; sinks are out-degree &ge;&nbsp;1 and in-degree =&nbsp;0. Sinks published after the frontier-cutoff year are flagged <em>frontier</em>; older sinks are <em>data-gap</em>. Per-journal rates report each venue's source-rate and sink-rate, which together describe how the venue contributes to the corpus's intellectual flow.<sup>1</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filtering to a <strong>cluster</strong> shows what is foundational for that subfield specifically &mdash; selecting <em>Technical Communication</em> reveals which articles the TC sub-area reaches back to. The <strong>year range</strong> shifts the frontier-cutoff implicitly: an upper bound near the present makes more articles look like frontier sinks; a tighter window makes the data-gap category more obvious.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Hummon, N. P., &amp; Doreian, P. (1989). Connectivity in a citation network: The development of DNA theory. <em>Social Networks, 11</em>(1), 39&ndash;63.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-of-summary" style="min-height:60px;"></div>
   <div class="chart-container--auto" id="ds-of-year-chart" style="min-height:280px;"></div>
