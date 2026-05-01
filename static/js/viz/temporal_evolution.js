@@ -71,6 +71,7 @@ async function loadTemporalEvolution() {
   try {
     const resp = await fetch('/api/citations/temporal-evolution?' + params.toString());
     data = await resp.json();
+    window.__expTemporal = data;
   } catch (e) {
     statsEl.textContent = 'Failed to load temporal data.';
     return;
