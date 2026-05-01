@@ -557,17 +557,35 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Data source</h4>
-        <p>Citation counts are derived from reference lists deposited by publishers with <a href="https://www.crossref.org/" target="_blank" rel="noopener">CrossRef</a>. When an indexed article includes another indexed article in its reference list, that counts as one internal citation. Citations from or to articles <em>outside</em> this index are not tracked. The <code>cite_fetcher.py</code> script matches DOIs in reference lists against DOIs in the articles table.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Citations tool ranks indexed articles by the number of other indexed articles that cite them. Each row shows one article and an internal citation count: the number of distinct indexed articles whose CrossRef reference list contains a DOI matching that article. The list is a frequency snapshot of <em>internal</em> influence, not a measure of an article's total scholarly reach.</p>
 
-        <h4 class="methodology-heading">Counting method</h4>
-        <p>Each article&rsquo;s citation count reflects the number of <em>distinct</em> indexed articles that cite it. Self-citations (an article citing itself) are included if they appear in the CrossRef reference list. The list is ranked by descending citation count. Ties are broken alphabetically by title.</p>
+        <p>Run with default parameters (no filters), the tool ranks all articles in the index by descending citation count. The single most-cited article inside the corpus is Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future: An Antenarrative of Technical Communication" in <em>Technical Communication Quarterly</em>, with 146 internal citations. Jones's solo 2016 piece "The Technical Communicator as Advocate" follows at 144, then Edbauer's 2005 "Unframing Models of Public Distribution" at 135 and Russell's 1997 "Rethinking Genre in School and Society" at 129. The distribution falls quickly: the fifth-ranked article carries 120 citations, the tenth 76, the twenty-fifth 51, and the fiftieth 42, which gives a quick read on how concentrated the field's internal citation traffic is at the top.</p>
 
-        <h4 class="methodology-heading">Filters</h4>
-        <p>The year filters restrict which <em>cited</em> articles appear (by their publication year), not which citing articles contribute counts. The journal filter restricts cited articles to a single journal. The topic filter restricts to articles carrying a specific topic tag. All filters interact: selecting &ldquo;From 2010&rdquo; + &ldquo;Journal: CCC&rdquo; shows only CCC articles published in or after 2010, ranked by how often other indexed articles cite them.</p>
+        <p>Use the tool to identify the articles the indexed journals are reading and re-citing, surface concentrations of influence inside particular sub-areas (filter by topic or by journal to narrow the scope), and locate the year-by-year shape of the citation distribution.</p>
 
-        <h4 class="methodology-heading">Limitations</h4>
-        <p>This is an <em>internal</em> citation count — it reflects influence within the journals indexed here, not total citations across all of scholarship. Many rhetoric and composition journals do not deposit reference lists with CrossRef, so their citing behavior is invisible. Older articles have had more time to accumulate citations, creating an inherent recency disadvantage. See the coverage panel below for per-journal reference deposit rates.</p>
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>Internal citation counts are derived from reference lists deposited by publishers with CrossRef. The fetcher pulls each indexed article's reference list, extracts the DOI of every cited work, and joins on the articles table to identify which references point to other indexed articles. A successful join produces one citation; failed joins are dropped, which is the correct behavior for an internal-only measure but means the count is silent about citations to non-indexed scholarship. Self-citations are retained if the publisher's deposit lists them in the reference array.</p>
+
+        <p>Ranking is by descending count of distinct citing articles, with ties broken alphabetically by title. The internal-citation distribution is a long-tail distribution dominated at the top by a small set of heavily-cited landmark articles and at the bottom by a long tail of articles cited once or not at all &mdash; a pattern consistent with citation-distribution literature dating to Lotka.<sup>1</sup> The top five articles in this index account for roughly 670 internal citations; the next forty-five account for around 2,500.</p>
+
+        <p>Three limitations bear on interpretation. The count reflects citations <em>within</em> the indexed journals only: many rhetoric and composition venues do not deposit reference lists with CrossRef and therefore contribute no citing signal, even when their articles do cite indexed work. The Coverage Notes page at <a href="/coverage">/coverage</a> documents per-journal deposit rates. Citations are also retrospective: older articles have had more years to accumulate citations than newer articles, which is why the top of the list skews toward landmark work from the 1980s through 2010s rather than the most recent publication years. Finally, internal citation count is not a quality measure: an article cited 100 times because it is contested or methodologically problematic registers identically to an article cited 100 times because it is foundational.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Four filters refine the ranking. They auto-recompute on change &mdash; no Compute button is required because the underlying query is fast.</p>
+
+        <p>The <strong>From / To year filters</strong> restrict the set of <em>cited</em> articles by publication year, not the set of citing articles. Restricting to 2015&ndash;2025 surfaces the most-cited recent work and lets the user read how rapidly the post-social-justice-turn citation pattern accumulated; restricting to pre-2000 returns a different ranked list dominated by foundational work.</p>
+
+        <p>The <strong>Journal filter</strong> narrows the cited set to a single venue. Selecting <em>College Composition and Communication</em> ranks only CCC articles by their internal citation count from the rest of the index; the resulting list is a quick read on which articles in that venue have made the deepest mark on the wider field.</p>
+
+        <p>The <strong>Topic filter</strong> restricts to articles carrying a chosen disciplinary tag. The dropdown is ordered by tag frequency; tag assignment is rule-based against title and abstract text, which means a topic filter applied to RSS-indexed venues without abstracts will under-recall.</p>
+
+        <p>Filters compose: <em>From 2010</em> + <em>Journal: CCC</em> + <em>Topic: writing centers</em> returns CCC articles published in or after 2010 that carry the writing-centers tag, ranked by internal citations. Empty intersections produce an empty list rather than a fallback.</p>
+
+        <h4 class="methodology-heading">References</h4>
+        <ol class="methodology-refs">
+          <li>Lotka, A. J. (1926). The frequency distribution of scientific productivity. <em>Journal of the Washington Academy of Sciences, 16</em>(12), 317&ndash;323.</li>
+        </ol>
 
         </div>
       </details>
