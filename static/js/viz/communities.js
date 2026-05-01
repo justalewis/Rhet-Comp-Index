@@ -202,6 +202,24 @@ function renderCommunityTables(data) {
   if (!data.communities.length) { tablesEl.style.display = 'none'; return; }
   const commColor = i => COMM_PALETTE[i % COMM_PALETTE.length];
 
+  // Client-side insularity stats per community (matches the Datastories
+  // Walls/Bridges definition): internal / external edge counts, and the
+  // insularity ratio. Computed from the already-loaded link list so no
+  // extra API call is needed.
+  const insularity = {};
+  data.communities.forEach(c => { insularity[c.id] = { internal: 0, external: 0 }; });
+  data.links.forEach(l => {
+    const s = data.nodes.find(n => n.id === (l.source.id || l.source));
+    const t = data.nodes.find(n => n.id === (l.target.id || l.target));
+    if (!s || !t || s.community == null || t.community == null) return;
+    if (s.community === t.community) {
+      if (insularity[s.community]) insularity[s.community].internal += 1;
+    } else {
+      if (insularity[s.community]) insularity[s.community].external += 1;
+      if (insularity[t.community]) insularity[t.community].external += 1;
+    }
+  });
+
   let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">';
   for (const c of data.communities) {
     const topics = c.topics.map(t =>
@@ -213,11 +231,23 @@ function renderCommunityTables(data) {
       return `<li style="margin-bottom:0.3rem;"><a href="/article/${a.id}" style="color:#5a3e28;">${a.title || 'Untitled'}</a> <span style="color:#999;">${yr} &middot; cited ${a.internal_cited_by_count}&times;</span></li>`;
     }).join('');
 
+    const ins = insularity[c.id] || { internal: 0, external: 0 };
+    const ratio = ins.external > 0 ? (ins.internal / ins.external).toFixed(2) : '∞';
+    const insLabel = ratio === '∞' ? 'isolated'
+                  : parseFloat(ratio) >= 4 ? 'insular'
+                  : parseFloat(ratio) >= 1.5 ? 'moderate'
+                  : 'integrative';
+
     html += `<div style="border:1px solid #e5ddd0;border-radius:6px;padding:0.8rem;background:#faf8f4;">
       <h4 style="margin:0 0 0.4rem;font-size:0.9rem;">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${commColor(c.id)};margin-right:0.3rem;"></span>
         Community ${c.id + 1} <span style="font-weight:normal;color:#999;">(${c.size} articles)</span>
       </h4>
+      <div style="font-size:0.74rem;color:#7a7268;margin-bottom:0.4rem;">
+        <span title="Citations between members of this community">${ins.internal} internal edges</span>
+         &middot; <span title="Citations crossing the community boundary">${ins.external} cross-community</span>
+         &middot; insularity <strong>${ratio}</strong> (${insLabel})
+      </div>
       <div style="margin-bottom:0.4rem;">${topics}</div>
       <div style="font-size:0.78rem;color:#888;margin-bottom:0.4rem;">${journals}</div>
       <ol style="font-size:0.82rem;padding-left:1.2rem;margin:0;">${articles}</ol>
