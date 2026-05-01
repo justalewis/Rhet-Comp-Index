@@ -752,10 +752,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>The events table is hand-curated. Awakening spikes come from per-year counts of sleeping-beauty awakening years. Correlations are post-event 5-year window means, by event type.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>The events list itself is curated and not filtered. <strong>Cluster</strong> and <strong>year range</strong> reshape the awakening-spike series the events are laid against; with a cluster filter the post-event awakening rates by event type often shift, suggesting that some event types catalyse some subfields more than others.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Disciplinary Calendar lays a curated timeline of disciplinary events (journal foundings, landmark articles, special issues, external crises) against the corpus's awakening spikes. Where an event coincides with a sustained rise in sleeping-beauty awakenings, the event is plausibly catalytic; where the awakening signal is flat across event years, the event is probably ceremonial rather than structural.</p>
+
+      <p>Run with default parameters across the indexed corpus, the timeline carries 18 hand-curated events from 1949 (the founding of <em>College Composition and Communication</em>; Shannon's information theory) through 2026, plotted against the awakening years of 200 sleeping beauties. The post-event 5-year-window analysis returns sharply different awakening rates by event type: <em>landmark_article</em> events show a mean of 3.71 awakenings in the five years following, <em>external_crisis</em> events show 3.12, and <em>journal_founded</em> events show only 1.15. Landmark articles and external crises are catalytic; journal foundings are not, consistent with the intuition that the field's awakenings track new arguments and exogenous shocks rather than new venues.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>The events table is hand-curated and lives in <code>data/disciplinary_events.json</code>. Awakening spikes come from per-year counts of sleeping-beauty awakening years computed by the Sleeping Beauties tool. Per-event-type correlations are computed as the mean count of awakenings occurring in the five years following each event of that type.<sup>1</sup> The interpretive caveat is that proximity does not establish causation; the means measure post-event awakening density rather than direct causal influence.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>The events list itself is curated and not user-filterable. <strong>Cluster</strong> and <strong>year range</strong> reshape the awakening-spike series the events are laid against; with a cluster filter the post-event awakening rates by event type often shift, suggesting that some event types catalyze some subfields more than others.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Min, C., Bu, Y., Wu, D., Ding, Y., &amp; Zhang, Y. (2021). Identifying citation patterns of scientific breakthroughs: A perspective of dynamic citation process. <em>Information Processing &amp; Management, 58</em>(1), 102428.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-dc-timeline" style="min-height:480px;"></div>
   <h4 class="methodology-heading" style="margin-top:1rem;">Event types and their post-event awakening rates</h4>
@@ -767,10 +780,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Filter to corpus articles where global cited_by &ge; 100 and internal cited_by &le; 2. Rank by the ratio (global / max(1, internal)). Authors of these articles tend to be field-adjacent figures whose work is gestured at but not built upon.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filters scope which articles count as "unread canon." A cluster filter answers a different question: "what does [Rhetoric] cite from the wider scholarly world but not metabolize internally?" &mdash; frequently more interesting than the corpus-wide list.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>The Unread Canon surfaces articles cited heavily in the wider scholarly world (per OpenAlex) but rarely cited inside this corpus. These are texts the field has imported through author awareness but has not yet woven into its own citation fabric &mdash; gestured at but not built upon.</p>
+
+      <p>Run with default parameters (global cited_by &ge; 100 and internal cited_by &le; 2), 40 articles surface as unread canon. Adrienne Rich's 1972 "When We Dead Awaken: Writing as Re-Vision" leads at zero internal citations against 402 CrossRef-tracked global citations &mdash; a ratio of 402.0. The article is foundational outside the indexed corpus but invisible to the corpus's internal citation graph. Lowry and Gaskin's 2014 PLS-SEM methodology piece in <em>IEEE Transactions on Professional Communication</em> follows with similar profile, and Kellogg's 2008 "Training writing skills" sits at 2 internal citations against 429 global &mdash; ratio 143.0. The list reads as a quick survey of where the field's actual citation graph diverges from its perceived intellectual debts.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Articles are filtered to those with global <code>cited_by_count</code> from OpenAlex at or above 100 and internal citation count at or below 2.<sup>1</sup> The result is ranked by the ratio of global to max(1, internal), which scores articles whose external influence vastly exceeds their internal uptake. Authors of these articles tend to be field-adjacent figures whose work is acknowledged in author-introductory citations or epigraphs but not absorbed into the field's argumentative citation traffic.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filters scope which articles count as unread canon. A cluster filter answers a different question: what does each subfield cite from the wider scholarly world but not metabolize internally? The cluster-specific list is frequently more interesting than the corpus-wide list because the disciplinary context narrows what counts as "should have been metabolized."</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>MacRoberts, M. H., &amp; MacRoberts, B. R. (1989). Problems of citation analysis: A critical review. <em>Journal of the American Society for Information Science, 40</em>(5), 342&ndash;349.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-uc-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-uc-scatter" style="min-height:480px;"></div>
