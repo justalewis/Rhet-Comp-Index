@@ -164,7 +164,13 @@ async function loadNetwork(minPapers, topN) {
   // Labels for nodes with count >= 5
   nodeGroup.filter(d => d.count >= 5)
     .append('text')
-      .text(d => { const p = d.id.split(' '); return p[p.length - 1]; })
+      .text(d => {
+        // Keep the last two words so joint surnames (e.g., "Lopez Garcia",
+        // "de la Cruz") aren't truncated to a single token; cap at 22 chars.
+        const parts = d.id.split(' ').filter(Boolean);
+        const tail = parts.slice(-2).join(' ');
+        return tail.length > 22 ? tail.slice(0, 21) + '…' : tail;
+      })
       .attr('dy', d => rScale(d.count) + 10)
       .attr('text-anchor', 'middle')
       .style('font-family', 'system-ui, sans-serif')
