@@ -63,3 +63,7 @@ htmlcov/
 
 # Misc
 headers.txt
+
+# Methodology overhaul scratch space (notes + raw example outputs)
+_methodology_notes/
+_methodology_examples/
