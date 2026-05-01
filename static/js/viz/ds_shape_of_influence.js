@@ -79,9 +79,20 @@ function renderLorenz(data) {
   const x = d3.scaleLinear().domain([0, 1]).range([m.left, w - m.right]);
   const y = d3.scaleLinear().domain([0, 1]).range([h - m.bottom, m.top]);
 
-  // Equality diagonal
+  // Equality diagonal — labelled "perfect equality" so the visual reading
+  // of the curve's distance from this line matches the Gini number reported
+  // in the summary card above. Without the label, the diagonal reads as a
+  // generic grid line and the Lorenz interpretation gets lost.
   svg.append('line').attr('x1', x(0)).attr('y1', y(0)).attr('x2', x(1)).attr('y2', y(1))
     .attr('stroke', '#c8c4bc').attr('stroke-dasharray', '4 3');
+  // Label rotated to follow the diagonal, positioned about 70% along it.
+  const lx = x(0.72), ly = y(0.72);
+  svg.append('text').attr('x', lx).attr('y', ly - 6)
+    .attr('transform', `rotate(-45, ${lx}, ${ly - 6})`)
+    .attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', '#9c9890')
+    .attr('font-style', 'italic').attr('paint-order', 'stroke')
+    .attr('stroke', '#fdfbf7').attr('stroke-width', 3)
+    .text('perfect equality');
 
   // Lorenz curve
   const data_pts = pa.map((p, i) => ({ x: p, y: pc[i] }));
