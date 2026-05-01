@@ -79,6 +79,7 @@ async function loadCocitation() {
   try {
     const resp = await fetch('/api/citations/cocitation?' + params.toString());
     data = await resp.json();
+    window.__expCocitation = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load co-citation data.</p>';
     return;
