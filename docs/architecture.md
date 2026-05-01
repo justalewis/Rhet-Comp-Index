@@ -4,7 +4,7 @@ A technical overview of how Pinakes is built. Companion to [methodology.md](meth
 
 ## Overview
 
-Pinakes is a Flask web application backed by a single SQLite database, populated by three ingestion paths (CrossRef, RSS / OAI-PMH / WordPress, custom HTML scrapers) and enriched weekly by OpenAlex. The corpus covers 45 venues in Rhetoric and Composition, comprising over fifty thousand articles. The full venue list is in [journal-coverage.md](journal-coverage.md). The deployment is a single Fly.io machine with one gunicorn worker for HTTP and one APScheduler process for ingestion.
+Pinakes is a Flask web application backed by a single SQLite database, populated by three ingestion paths (CrossRef, RSS / OAI-PMH / WordPress, custom HTML scrapers) and enriched periodically by OpenAlex. The corpus covers 45 venues in Rhetoric and Composition, comprising over fifty thousand articles. The full venue list is in [journal-coverage.md](journal-coverage.md). The deployment is a single Fly.io machine running one gunicorn worker for HTTP. Daily ingestion and nightly backup are triggered externally by a GitHub Actions cron job that posts to admin-token-protected endpoints on the running app.
 
 The system is intentionally small. Every component is replaceable in a few hours of work without a migration plan. The constraints driving this — single maintainer, scholarly publication horizon, no funded operations team — are documented per choice in the audit notes under [`refactor-notes/`](refactor-notes/).
 
@@ -74,7 +74,7 @@ A two-tier metadata distinction matters for downstream tools: scraped articles o
 
 Two enrichment passes run on top of the ingested base records:
 
-**OpenAlex** ([`enrich_openalex.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/enrich_openalex.py#L134)). For each article with a DOI, OpenAlex returns abstracts (decoded from the inverted-index format), open-access status (`gold`/`green`/`hybrid`/`bronze`/`closed`), the canonical OpenAlex work ID, and author affiliations with institution ROR IDs. Runs weekly via the scheduler, processes only articles whose `openalex_enriched_at` is null, polite-pool rate-limited at 10 req/s.
+**OpenAlex** ([`enrich_openalex.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/enrich_openalex.py#L134)). For each article with a DOI, OpenAlex returns abstracts (decoded from the inverted-index format), open-access status (`gold`/`green`/`hybrid`/`bronze`/`closed`), the canonical OpenAlex work ID, and author affiliations with institution ROR IDs. Invoked from the daily fetch path, processes only articles whose `openalex_enriched_at` is null, polite-pool rate-limited at 10 req/s.
 
 **CrossRef references** ([`cite_fetcher.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/cite_fetcher.py#L139)). For each article with a DOI, CrossRef returns its reference list. References that carry a DOI are stored in the `citations` table; the `target_article_id` is set when the cited DOI matches an in-corpus article. References without DOIs are recorded with a synthetic key derived from the SHA-256 of the raw reference string, which preserves the citation count without inflating the in-corpus citation graph.
 
@@ -92,14 +92,18 @@ Per-visualization JavaScript lives in [`static/js/viz/`](../static/js/viz/) — 
 
 ## Deployment
 
-Fly.io, primary region IAD, single 1 GB / 1 CPU machine. Two process groups defined in `fly.toml`:
+Fly.io, primary region IAD, single 1 GB / 1 CPU machine. Single-process deployment: gunicorn `app:app` is the only thing the machine runs. There is no `[processes]` block in `fly.toml`; the Dockerfile `CMD` runs gunicorn directly.
 
-| Process | Entry point | Role |
+Daily ingestion and nightly backup are triggered externally by [`.github/workflows/cron.yml`](../.github/workflows/cron.yml) at 03:00 UTC. The workflow uses the `PINAKES_ADMIN_TOKEN` GitHub Actions secret to POST to two admin-only endpoints on the running app:
+
+| Cron job | Endpoint | Behaviour |
 |---|---|---|
-| `app` | gunicorn `app:app` | Web server. One worker (single SQLite writer) |
-| `scheduler` | `python scheduler.py` | Daily fetch + weekly OpenAlex enrichment + nightly backup. No HTTP |
+| `fetch`  | `POST /fetch`                  | Returns 200 immediately; the fetch runs as a daemon thread inside gunicorn against the persistent volume |
+| `backup` | `POST /api/admin/run-backup`   | Synchronous; runs the backup pipeline in-process, writes `/data/scheduler.heartbeat` on success, returns the full summary as JSON (HTTP 500 on failure so the workflow surfaces it) |
 
-A 3 GB persistent volume mounted at `/data` holds the SQLite file, the WAL files, and the scheduler heartbeat. The volume survives deploys; a deploy replaces the machine but leaves the data in place. Disaster recovery via off-machine backups is documented in [runbooks/disaster-recovery.md](runbooks/disaster-recovery.md).
+A 3 GB persistent volume mounted at `/data` holds the SQLite file, the WAL files, and the heartbeat. The volume survives deploys; a deploy replaces the machine but leaves the data in place. Disaster recovery via off-machine backups is documented in [runbooks/disaster-recovery.md](runbooks/disaster-recovery.md).
+
+This architecture supersedes the original two-process-group design (Path A from [refactor-notes/04](refactor-notes/04-health-and-scheduler.md)). The original design didn't work because Fly volumes are single-attach and a separate scheduler machine had no way to share `/data` with the app. The full audit trail of the switch is in [refactor-notes/13-scheduler-architecture-fix.md](refactor-notes/13-scheduler-architecture-fix.md).
 
 The deploy pipeline is gated on tests via GitHub Actions: every push to `main` runs `pytest`, and the Fly deploy workflow only fires when tests pass.
 
@@ -109,7 +113,7 @@ Three layers of operational visibility:
 
 **Logs.** Standard Python logging at INFO in production; piped to `flyctl logs`. Log lines include the source IP (preferring the `Fly-Client-IP` header), the route path, and the structured event (`Auth required`, `rate limit hit`, `Backup OK`, etc.). No request bodies are logged.
 
-**Sentry** (optional, gated on the `SENTRY_DSN` secret). Errors from the web process are tagged `component=web`; from the scheduler `component=scheduler`. Ingestion errors carry `source=crossref|rss|scrape|openalex|citations` and `journal=<name>`. PII scrubbing strips `Authorization` headers, `Cookie` headers, query parameters whose name contains `token`, and request bodies. Configuration in [`monitoring.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/monitoring.py).
+**Sentry** (optional, gated on the `SENTRY_DSN` secret). Errors from the web process are tagged `component=web`; ingestion errors carry `source=crossref|rss|scrape|openalex|citations` and `journal=<name>`. PII scrubbing strips `Authorization` headers, `Cookie` headers, query parameters whose name contains `token`, and request bodies. Configuration in [`monitoring.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/monitoring.py).
 
 **Health endpoints**:
 
@@ -136,7 +140,7 @@ These choices are deliberate. Future maintainers should not "fix" them without f
 - **No live scraping during web requests.** Every viz reads pre-computed data from SQLite. Scraping is offline, scheduled, polite. ([CONTRIBUTING.md scraping ethics](../CONTRIBUTING.md#scraping-ethics).)
 - **No user accounts.** A single shared bearer token gates the mutating `/fetch` endpoint. ([refactor-notes/02-admin-auth.md](refactor-notes/02-admin-auth.md).)
 - **No write-through caching layer.** Citation graphs and other expensive computations run on demand against SQLite. The corpus is small enough that this is fast (sub-second for most graph endpoints, under three seconds for the heaviest). ([refactor-notes/03-rate-limiting.md](refactor-notes/03-rate-limiting.md) for the protective rate caps.)
-- **No microservices.** One web process, one scheduler process, one SQLite file. The deploy is one Fly machine. The complexity of a service mesh is not justified by the workload.
+- **No microservices.** One web process, one SQLite file, one Fly machine. Scheduled work runs from outside the cluster (a GitHub Actions cron) hitting authenticated admin endpoints on the same machine. The complexity of a service mesh is not justified by the workload. ([refactor-notes/13-scheduler-architecture-fix.md](refactor-notes/13-scheduler-architecture-fix.md) for why the earlier in-cluster scheduler design didn't fit.)
 - **No bundler for the JavaScript.** Native ES modules, D3 from CDN, no `package.json`. ([refactor-notes/11-explore-js-split-inventory.md](refactor-notes/11-explore-js-split-inventory.md).)
 - **No ORM.** Direct `sqlite3` with parameterised queries. ([refactor-notes/09-db-split-inventory.md](refactor-notes/09-db-split-inventory.md).)
 

@@ -1,5 +1,9 @@
 # 04 — Layered health checks and scheduler architecture (Prompt B3)
 
+> **SUPERSEDED 2026-04-30** — see [13-scheduler-architecture-fix.md](13-scheduler-architecture-fix.md). The "Path A" architecture described below (a separate Fly process group running `scheduler.py`) never actually worked in production: Fly volumes are single-attach, so the scheduler machine could not share `/data` with the app and was silently writing fetches to its own ephemeral container filesystem. The bug surfaced during backup-secret setup and was fixed by deleting `scheduler.py`, removing the `[processes]` block from `fly.toml`, and switching to a GitHub Actions cron that POSTs to admin-token-protected endpoints on the app machine. This document is preserved as historical record of the original choice and its rationale.
+>
+> The three-level `/health` design described below remains in production unchanged.
+
 Audit trail for hardening `/health` and resolving the `scheduler.py` deployment story.
 
 ## Files added / modified

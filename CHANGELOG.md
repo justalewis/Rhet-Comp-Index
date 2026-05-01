@@ -20,7 +20,7 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 - Bearer-token authentication on `POST /fetch` (`PINAKES_ADMIN_TOKEN` env var). Read-only endpoints remain anonymous.
 - Tiered Flask-Limiter configuration: 60/min default, 20/min on `/api/citations/*` and `/api/stats/*`, 120/min on `/api/articles/search`, 6/hour on `/fetch`. Custom 429 handler returns JSON for API clients and HTML otherwise; both shapes carry a `Retry-After` header.
 - Three-level health check: `/health` (liveness, no DB), `/health/ready` (DB reachable; what Fly's check loop hits), `/health/deep` (admin-protected; counts, disk, scheduler heartbeat, integrity check).
-- Fly process groups: `app` (gunicorn) and `scheduler` (`python scheduler.py`). The scheduler writes `/data/scheduler.heartbeat` so deep-health can verify it is actually running.
+- Heartbeat file at `/data/scheduler.heartbeat`, written by the cron-triggered `POST /api/admin/run-backup` endpoint on each successful backup, so `/health/deep` can verify scheduled work is happening. (The original Fly-process-group design that originally produced the heartbeat was reverted; see the post-G1 emergency-fix entry above and [`docs/refactor-notes/13-scheduler-architecture-fix.md`](docs/refactor-notes/13-scheduler-architecture-fix.md).)
 - `data/seeds/` directory holding the two large checked-in JSON files used by one-off ingestion scripts, with a README explaining each file's producer / consumer.
 - `CONTRIBUTING.md` documenting the scraping-ethics rules and the test requirements for new contributions.
 - `docs/architecture.md`, `docs/methodology.md` (placeholders to be expanded with the JWA research note), `docs/refactor-notes/` (audit trail for the structural changes in this release).
