@@ -142,6 +142,15 @@ export function enableZoomPan(svg, opts) {
   const gRoot = svg.append('g').attr('class', 'ds-zoom-root');
   const zoomBehavior = d3.zoom()
     .scaleExtent(scaleExtent)
+    .on('start', () => {
+      // Hide any open d3-tooltip during the zoom/pan gesture so it doesn't
+      // hover over the moving content. Native browser tooltips (those backed
+      // by <title>) are unaffected. Tooltips reappear naturally on the next
+      // mouseover, so we don't need a matching restore on 'end'.
+      document.querySelectorAll('.heatmap-tooltip, [class$="-tip"]').forEach(el => {
+        el.style.display = 'none';
+      });
+    })
     .on('zoom', (event) => { gRoot.attr('transform', event.transform); });
   svg.call(zoomBehavior);
   // Double-click resets the zoom rather than zooming in (the d3 default).
