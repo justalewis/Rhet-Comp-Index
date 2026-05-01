@@ -52,6 +52,7 @@ async function loadMainPath() {
   try {
     const resp = await fetch('/api/citations/main-path?' + params.toString());
     data = await resp.json();
+    window.__expMainPath = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load main path data.</p>';
     return;
