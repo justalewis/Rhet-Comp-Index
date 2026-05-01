@@ -61,6 +61,27 @@ function renderScatter(data) {
   svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Unique citing authors');
 
+  // Quadrant grid: median lines + per-quadrant captions to make the
+  // breadth-class interpretation legible at a glance.
+  const xMid = d3.median(arts, a => a.self_journal_rate) || 0.5;
+  const yMid = d3.median(arts, a => a.unique_citing_authors) || 1;
+  const xMidPx = x(xMid), yMidPx = y(yMid);
+  svg.append('line').attr('x1', xMidPx).attr('x2', xMidPx).attr('y1', m.top).attr('y2', h - m.bottom)
+    .attr('stroke', '#e8e4de').attr('stroke-dasharray', '3 3');
+  svg.append('line').attr('y1', yMidPx).attr('y2', yMidPx).attr('x1', m.left).attr('x2', w - m.right)
+    .attr('stroke', '#e8e4de').attr('stroke-dasharray', '3 3');
+  function quad(text, qx, qy, anchor) {
+    svg.append('text').attr('x', qx).attr('y', qy)
+      .attr('text-anchor', anchor || 'start').attr('font-size', 10).attr('font-style','italic')
+      .attr('fill', '#9c9890').attr('paint-order','stroke')
+      .attr('stroke','#fdfbf7').attr('stroke-width', 3)
+      .style('pointer-events','none').text(text);
+  }
+  quad('broadly canonical',  m.left + 8,         m.top + 14,             'start');
+  quad('mixed canonical',    w - m.right - 8,    m.top + 14,             'end');
+  quad('low-reach',          m.left + 8,         h - m.bottom - 6,       'start');
+  quad('narrowly canonical', w - m.right - 8,    h - m.bottom - 6,       'end');
+
   const dots = svg.append('g').selectAll('circle').data(arts).join('circle')
     .attr('cx', d => x(d.self_journal_rate))
     .attr('cy', d => y(d.unique_citing_authors))

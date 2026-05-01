@@ -66,6 +66,23 @@ function renderScatter(data) {
   svg.append('text').attr('x', 14).attr('y', h/2).attr('transform',`rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Normalized rank (cit/yr)');
 
+  // Quadrant captions on either side of the equality diagonal. Above the
+  // diagonal: norm_rank > raw_rank, i.e. the article is RANKED LOWER on
+  // the time-normalized axis than on the raw axis — older work whose
+  // citations look impressive in absolute terms but unimpressive per year
+  // (age advantage). Below the diagonal: time-normalized rank is higher —
+  // recent work climbing fast. The diagonal itself is the "rank-stable"
+  // band.
+  function quad(text, qx, qy, anchor) {
+    svg.append('text').attr('x', qx).attr('y', qy)
+      .attr('text-anchor', anchor || 'start').attr('font-size', 10).attr('font-style','italic')
+      .attr('fill', '#9c9890').attr('paint-order','stroke')
+      .attr('stroke','#fdfbf7').attr('stroke-width', 3)
+      .style('pointer-events','none').text(text);
+  }
+  quad('rising fast (newer; cit/yr beats raw)', m.left + 8,         m.top + 14,             'start');
+  quad('age advantage (older; raw beats cit/yr)', w - m.right - 8,  h - m.bottom - 6,       'end');
+
   const dots = svg.append('g').selectAll('circle').data(arts.filter(a => a.raw_rank <= maxRank + 5 && a.norm_rank <= maxRank + 5)).join('circle')
     .attr('cx', d => x(d.raw_rank))
     .attr('cy', d => y(d.norm_rank))
