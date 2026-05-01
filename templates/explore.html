@@ -305,19 +305,36 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">Data source</h4>
-        <p>Author names are extracted from CrossRef metadata for each article. Co-authorship is inferred from shared bylines: if two authors appear on the same article, they share a co-authorship edge. Author names are normalized (case-folded, whitespace-trimmed) but not disambiguated &mdash; two authors with the same name are treated as one person, and the same author with variant name forms (e.g., with or without middle initial) may appear as separate nodes.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Co-Authorship Network maps which authors have written articles together inside the indexed journals. Each circle is one author, sized by their total number of indexed publications; each line is a co-authorship tie, weighted by the number of articles the pair has written together. Authors who collaborate frequently sit close to each other; authors who collaborate rarely or not at all drift apart or, in the case of pure solo authors, sit alone at the periphery as isolates.</p>
 
-        <h4 class="methodology-heading">Graph construction</h4>
-        <p>The visualization displays an <em>undirected, weighted</em> graph where each node is an author and each edge connects two authors who have co-authored at least one indexed article. Edge weight equals the number of co-authored articles. The node set is filtered to authors with at least <em>n</em> indexed publications (configurable via the &ldquo;Min. publications&rdquo; dropdown), then capped at the top <em>k</em> by total publication count. Only edges between nodes in the displayed set are shown.</p>
+        <p>Run with default parameters &mdash; 150 most-published authors, minimum three indexed publications &mdash; the graph contains 266 co-authorship edges connecting 125 of the 150 displayed nodes; the remaining 25 are isolates (frequent solo publishers with no co-author inside the displayed set). The single heaviest tie is between Joe Erickson and Kevin Roozen at 65 shared articles, followed by Cynthia L. Selfe and Gail E. Hawisher at 58, then Jennifer L. Holberg and Marcy Taylor at 45. Selfe and Enos are the most prolific authors in the rendered set at 105 indexed articles each, though only Selfe sits inside one of the densest collaborative clusters; Enos's 105 articles are largely solo, which is a substantively different career profile.</p>
 
-        <h4 class="methodology-heading">Layout algorithm</h4>
-        <p>The graph uses a <strong>force-directed layout</strong> (d3-force) where nodes repel each other via simulated charge and edges act as springs pulling co-authors together. Stronger co-authorship ties (more shared papers) produce shorter, thicker edges. The simulation iterates until it reaches a visually stable configuration, causing research communities to form visible clusters.</p>
+        <p>Use the tool to identify collaborative communities, locate high-traffic mentor-student dyads (long-running pairs with double-digit shared output), and notice the difference between productive solo authors and productive collaborators &mdash; both are common in rhetoric and composition, and the graph distinguishes them visually.</p>
 
-        <h4 class="methodology-heading">Interpretation and limitations</h4>
-        <p>Clusters in the graph reflect collaborative communities within the indexed journals. However, the network reflects only publications <em>within this index</em>: scholars who collaborate extensively in books, edited collections, or journals not indexed here will appear less connected than their actual collaborative record warrants. Solo-authored work &mdash; still the dominant mode in rhetoric and composition &mdash; is invisible in this graph. Prolific solo authors appear as isolates (unconnected nodes), which is an accurate representation of their collaborative profile within the index but not necessarily of their broader influence.</p>
-        <p>Author name disambiguation remains an unsolved problem in bibliometrics. Common names may inflate connectivity, while name variants for the same author may understate it.</p>
-        <p>The Author Network shows collaborative relationships (co-authorship). For the field&rsquo;s <em>perceived</em> intellectual relationships &mdash; which scholars are cited together regardless of whether they have collaborated &mdash; see <a href="#author-cocitation" onclick="document.querySelector('[data-hash=author-cocitation]').click();return false;">Author Co-Citation</a>.</p>
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>Co-authorship analysis treats each multi-author article as evidence of a collaborative relationship between every pair of authors on the byline.<sup>1</sup> Author names are pulled from CrossRef metadata, normalized by case-folding and whitespace-trimming, and aggregated. The resulting graph is <em>undirected and weighted</em>: each node is an author, each edge connects a pair of authors who share at least one indexed byline, and the edge weight equals the number of articles they have co-authored. Authors with only solo publications inside the indexed set carry no edges and appear as isolates if they meet the publication threshold.</p>
+
+        <p>The displayed graph is filtered. Authors must hold at least <em>n</em> indexed publications to be eligible (the "Min. publications" dropdown), and the eligible set is then capped at the top <em>k</em> authors by publication count (the "Authors shown" dropdown). Only edges between authors in the displayed set are rendered; an edge from a displayed author to a non-displayed collaborator is dropped, which means the apparent connectivity of any node is bounded by the cap. Layout is computed by a force-directed simulation in which nodes repel each other via simulated charge and edges act as springs whose pull is proportional to co-authorship weight. Heavier ties produce shorter, thicker lines; the simulation iterates until the configuration stabilizes, which produces visible clustering around long-running collaborative groups.</p>
+
+        <p>Author-name disambiguation is the standard limitation of bibliometric collaboration analysis.<sup>2</sup> Pinakes does not run a disambiguation pass: two scholars with the same name are merged into one node, and the same scholar appearing with a middle initial in some bylines and without it in others may split across two nodes. Coverage is the second limitation: the graph reflects only co-authored work in the indexed journals, so scholars who collaborate primarily in edited collections, monographs, or unindexed venues will appear less connected than their full collaborative record warrants. Solo work is invisible in the edges, though it does drive node size.</p>
+
+        <p>For the field's <em>perceived</em> intellectual relationships &mdash; which scholars are cited together regardless of whether they have ever collaborated &mdash; see the Author Co-Citation tool, which addresses a different question.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Three controls shape the network. The Reload button is required after changing any of them; the simulation does not auto-recompute on dropdown change.</p>
+
+        <p>The <strong>Min. publications</strong> dropdown sets the eligibility floor. At the default of 3+ indexed publications, the network surfaces consistently-publishing authors and excludes one-off contributors. Lowering to 2+ admits a long tail of newer or guest contributors, which usually adds isolates rather than edges. Raising to 5+ or 10+ filters down to the field's most established authors and tightens the visible clusters but loses several real collaborative relationships at the periphery.</p>
+
+        <p>The <strong>Authors shown</strong> dropdown caps the rendered set at the top-N most-published authors. The default of 150 balances readability against coverage; 50 or 100 produces a sparser, easier-to-read graph that risks dropping legitimate co-author connections, while 300 or 500 fills in the periphery at the cost of visual clutter. A node's apparent isolation often reverses at higher cap settings: an author who looks like an isolate at 150 may have several edges that connect them to authors ranked 151&ndash;300.</p>
+
+        <p>The <strong>Search author</strong> input does not refilter the graph; it locates and highlights a node already in the rendered set. Clicking any node highlights that author's connections and surfaces the author info bar with a link to the full author profile.</p>
+
+        <h4 class="methodology-heading">References</h4>
+        <ol class="methodology-refs">
+          <li>Newman, M. E. J. (2001). Scientific collaboration networks. I. Network construction and fundamental results. <em>Physical Review E, 64</em>(1), 016131.</li>
+          <li>Smalheiser, N. R., &amp; Torvik, V. I. (2009). Author name disambiguation. <em>Annual Review of Information Science and Technology, 43</em>(1), 1&ndash;43.</li>
+        </ol>
 
         </div>
       </details>
