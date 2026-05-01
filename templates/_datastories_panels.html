@@ -107,10 +107,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each decade, the citation DAG restricted to that decade's articles (and their citations) is built; cycles are removed via topological-sort breaks; SPC (search path count) is computed for every edge; the highest-SPC chain from a source to a sink is reported as the decade's main path. Cross-decade persistence is then computed by counting how many decade paths each article appears on.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filters narrow the DAG that each decade's main path is computed on. <strong>Cluster</strong> turns the tool into "the decade-by-decade backbone within this subfield." A tight <strong>year range</strong> makes the per-decade slices sparser; widening usually produces longer paths. Heavy compute on the first cache miss &mdash; identical filter combinations return in under a second after.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Shifting Currents computes a separate Hummon-Doreian main path for each of five decade windows (1970s&ndash;80s, 1990s, 2000s, 2010s, 2020s) and reports each decade's backbone alongside a cross-decade persistence ranking. Articles that appear on multiple decades' paths are flagged as <em>persistent</em>; articles that anchor a single decade are <em>decade-specific</em>.</p>
+
+      <p>Run with default parameters across the indexed corpus, the five decade paths surface different anchor articles. The 1970s&ndash;80s path is short (4 articles) and led by Mike Rose's 1980 "Rigid Rules, Inflexible Plans, and the Stifling of Language." The 1990s extends to 8 articles led by Nancy Nelson Spivey's "Transforming Texts." The 2000s shrinks back to 6 articles anchored by Dorothy Winsor's "Ordering Work." The 2010s explodes to 12 articles led by the multi-author "Symposium: On the Framework for Success in Postsecondary Writing." The 2020s holds 9 articles. The persistence list collects 39 articles that appear on more than one decade's path &mdash; a small set whose membership marks the texts that have shaped the field's backbone across multiple eras rather than within a single decade.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each decade, the citation DAG restricted to that decade's articles and their citations is constructed; cycles are removed via topological-sort breaks; SPC (search path count) is computed for every edge; the highest-SPC chain from a source to a sink is reported as the decade's main path.<sup>1</sup> Cross-decade persistence is then computed by counting how many decade paths each article appears on. The result is a per-decade reading list plus a persistence ranking that surfaces cross-era anchor texts.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filters narrow the DAG that each decade's main path is computed on. <strong>Cluster</strong> turns the tool into "the decade-by-decade backbone within this subfield." A tight <strong>year range</strong> makes the per-decade slices sparser; widening usually produces longer paths. Heavy compute on the first cache miss; identical filter combinations return in under a second after.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Liu, J. S., &amp; Lu, L. Y. Y. (2012). An integrated approach for main path analysis: Development of the Hirsch index as an example. <em>Journal of the American Society for Information Science and Technology, 63</em>(3), 528&ndash;542.</li>
+      </ol>
+    </div>
   </details>
   <div class="loading-msg" id="ds-sc-loading">Computing decade main paths&hellip; (cached after first run)</div>
   <div class="chart-container--auto" id="ds-sc-container" style="min-height:520px;"></div>
@@ -122,10 +135,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Each edge's delay is (citing year &minus; cited year). Edges are bucketed by the field-group of source and target. Mann-Whitney U tests compare TPC&rarr;TPC against TPC&rarr;RC, RC&rarr;RC against RC&rarr;TPC, etc., to flag whether the differences are statistically distinguishable from random.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filters scope every direction's delay distribution. Apply a <strong>cluster</strong> to ask "how fast does this subfield consume its own work versus reach across the boundary?" The <strong>year range</strong> filters by citing year, so narrowing to a recent slice tracks contemporary citation tempo specifically.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Speed of Influence quantifies how long it takes citations to land, broken down by source-target field group. Each citation's delay is computed as (citing year &minus; cited year), and the resulting distributions are compared across direction with Mann-Whitney U tests. The question the tool answers is whether different cross-cluster citation directions move at materially different speeds.</p>
+
+      <p>Run with default parameters across the indexed corpus, the four directions show distinct tempos. TPC&rarr;TPC citations have a median delay of 6 years across 16,102 edges, the fastest direction in the corpus. RC&rarr;RC and RC&rarr;TPC are both at median 7 years (16,040 and 839 edges respectively). TPC&rarr;RC is the slowest at median 8 years across 2,915 edges. The Mann-Whitney comparison between TPC&rarr;RC and RC&rarr;TPC returns p &asymp; 3 &times; 10<sup>&minus;6</sup>, indicating a statistically clear delay asymmetry: when TPC reaches across to cite RC, it cites materially older work than when RC reaches across to cite TPC. The TPC&rarr;TPC vs. TPC&rarr;RC comparison is even stronger (p &asymp; 9 &times; 10<sup>&minus;62</sup>): citation traffic stays fastest when it stays inside the source cluster.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Each citation edge's delay is (citing year &minus; cited year). Edges are bucketed by the field-group of source and target into the four directional categories. Mann-Whitney U tests compare distributions pairwise to flag whether observed differences are statistically distinguishable from random fluctuation.<sup>1</sup> Reported statistics include count, mean, median, Q25, Q75, standard deviation, and maximum.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filters scope every direction's delay distribution. Applying a <strong>cluster</strong> filter asks how fast that subfield consumes its own work versus reaches across the boundary. The <strong>year range</strong> filters by citing year, so narrowing to a recent slice tracks contemporary citation tempo specifically &mdash; a useful diagnostic for whether cross-cluster delays are rising or falling over time.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Mann, H. B., &amp; Whitney, D. R. (1947). On a test of whether one of two random variables is stochastically larger than the other. <em>Annals of Mathematical Statistics, 18</em>(1), 50&ndash;60.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-soi-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-soi-distributions" style="min-height:280px;"></div>
@@ -138,10 +164,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>NetworkX's exact betweenness centrality is computed on the full undirected citation graph. Boundary-crossing flow (in/out degree by field group) is used to filter for genuine bridges versus locally-central nodes. The neighbourhood subgraph for each top bridge is included for the force-directed view.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Bridge detection runs on whatever subgraph the filters carve out. Filtering to a <strong>cluster</strong> finds the within-cluster bridges &mdash; useful when "TPC-vs-RC" isn't the boundary you want to study. <strong>Year range</strong> on citing date constrains which edges the betweenness algorithm sees. Heavy first-time compute (60-90s) per unique filter combination; cached after.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Border Crossers identifies high-betweenness articles that connect TPC and RC neighborhoods. These are the works that, if removed, would lengthen the average shortest path between the two sub-fields most. Border Crossers reports both betweenness scores and a separate count of cross-cluster boundary edges incident to each candidate, so a node ranks high only if it both lies on many shortest paths <em>and</em> actually carries cross-boundary traffic rather than just within-cluster traffic.</p>
+
+      <p>Run with default parameters across the indexed corpus (13,442 articles, 44,322 edges), the top bridge is Jenny Edbauer's 2005 "Unframing Models of Public Distribution: From Rhetorical Situation to Rhetorical Ecologies" (RC, 135 citations, betweenness 0.034, 55 boundary edges), followed by Bruffee's 1984 "Collaborative Learning and the 'Conversation of Mankind'" (RC, 108 citations, 61 boundary edges) and Russell's 1997 "Rethinking Genre in School and Society" (RC, 129 citations, 93 boundary edges) &mdash; the article with the highest count of TPC-RC boundary edges in the entire corpus. Jones, Moore, and Walton's 2016 "Disrupting the Past" appears at fourth place but with only 16 boundary edges, indicating that its high citation count and within-cluster centrality do not translate to a heavy cross-cluster connector role: it is central to TPC, not bridging TPC to RC.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>NetworkX's exact betweenness centrality is computed on the full undirected citation graph using Brandes's algorithm.<sup>1</sup> Boundary-crossing flow (the count of cross-cluster edges incident to each node) is reported alongside betweenness so the user can distinguish genuine bridges from locally-central nodes. The neighborhood subgraph for each top bridge is included for the force-directed view, which renders the bridge node together with its first-degree cross-cluster neighbors.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Bridge detection runs on whatever subgraph the filters carve out. Filtering to a <strong>cluster</strong> finds within-cluster bridges &mdash; useful when "TPC-vs-RC" is not the boundary of interest. <strong>Year range</strong> on citing date constrains which edges the betweenness algorithm sees. Heavy first-time compute (60&ndash;90s) per unique filter combination; cached after.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Brandes, U. (2001). A faster algorithm for betweenness centrality. <em>Journal of Mathematical Sociology, 25</em>(2), 163&ndash;177.</li>
+      </ol>
+    </div>
   </details>
   <div class="loading-msg" id="ds-bc-loading">Computing exact betweenness centrality &mdash; cached after first run&hellip;</div>
   <div class="chart-container--auto" id="ds-bc-bars" style="min-height:520px;"></div>
@@ -154,10 +193,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Article-level reciprocity for an article <em>A</em> is the count of distinct articles in the other group that <em>A</em> both cites and is cited by. Edge-level reciprocity is the fraction of A&rarr;B edges with a B&rarr;A counterpart. Trends are computed per decade of the citing article.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Cluster and journal filters scope which articles get counted on each side of the boundary. Useful pattern: lock to <em>Rhetoric</em>, run, then switch to <em>Technical Communication</em> &mdash; the comparison is whether one cluster reciprocates more than the other.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Two-Way Street asks whether cross-cluster citation runs both ways: when a TPC article cites RC, does any RC article cite back? The reciprocity rate at the article level reveals how much intellectual traffic actually runs both ways and which articles attract the most return citation.</p>
+
+      <p>Run with default parameters across the indexed corpus, RC reciprocates with TPC at a substantially higher rate than the reverse. Of 1,277 TPC articles that cite RC work, only 270 (21.1%) get cited back by RC; of 387 RC articles that cite TPC work, 143 (37.0%) get cited back by TPC. The asymmetry runs against intuition: even though TPC reaches out to cite RC more often than the reverse (1,277 outgoing vs. 387), RC is the more reliably reciprocating cluster when it does reach out. At the strict edge level (A&rarr;B paired with a literal B&rarr;A counterpart), the rate is 0.0% because article-pair reciprocity through the same two articles is rare; the analytic move is at the article-level reciprocity, where the question is whether each cluster's outreach gets <em>any</em> return engagement at all.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Article-level reciprocity for an article <em>A</em> is the count of distinct articles in the other group that <em>A</em> both cites and is cited by. Edge-level reciprocity is the fraction of A&rarr;B edges with a B&rarr;A counterpart on the same article pair. Trends are computed per decade of the citing article so the user can read whether reciprocity rates are rising or falling over time.<sup>1</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Cluster and journal filters scope which articles get counted on each side of the boundary. A useful pattern is to lock to <em>Rhetoric</em>, run, then switch to <em>Technical Communication</em> &mdash; the comparison is whether one cluster reciprocates more than the other. Year-range filters narrow the analysis to a specific decade, which can surface generational shifts in cross-cluster engagement.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Wasserman, S., &amp; Faust, K. (1994). <em>Social network analysis: Methods and applications</em>. Cambridge University Press.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-tw-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-tw-trends" style="min-height:280px;"></div>
