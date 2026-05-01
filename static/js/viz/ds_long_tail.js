@@ -61,16 +61,18 @@ function renderScatter(data) {
   svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Unique citing authors');
 
-  svg.append('g').selectAll('circle').data(arts).join('circle')
+  const dots = svg.append('g').selectAll('circle').data(arts).join('circle')
     .attr('cx', d => x(d.self_journal_rate))
     .attr('cy', d => y(d.unique_citing_authors))
     .attr('r',  d => r(d.total_citations))
     .attr('fill', d => BREADTH_COLOR[d.breadth] || '#9c9890')
-    .attr('opacity', 0.65)
+    .attr('opacity', 0.6)
     .attr('stroke', '#3a3026').attr('stroke-width', 0.5)
     .style('cursor','pointer')
     .on('click', (e, d) => { window.location.href = '/article/' + d.id; })
-    .append('title').text(d =>
+    .on('mouseover', function(_, d) { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', r(d.total_citations) * 1.6).raise(); })
+    .on('mouseout',  function(_, d) { dots.attr('opacity', 0.6); d3.select(this).attr('r', r(d.total_citations)); });
+  dots.append('title').text(d =>
       (d.title || '#' + d.id) + '\n' + (d.journal || '') + ' (' + (d.year || '—') + ')\n' +
       d.total_citations + ' citations, ' + d.unique_citing_authors + ' authors\n' +
       'breadth: ' + d.breadth.replace(/_/g,' ')

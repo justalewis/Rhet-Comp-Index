@@ -62,13 +62,15 @@ function renderScatter(data) {
   svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Internal corpus citations');
 
-  svg.append('g').selectAll('circle').data(arts).join('circle')
+  const dots = svg.append('g').selectAll('circle').data(arts).join('circle')
     .attr('cx', d => x(d.global_count))
     .attr('cy', d => y(d.internal) + (Math.random() - 0.5) * 6)  // jitter
     .attr('r', 3.5).attr('fill', '#a04525').attr('opacity', 0.6).attr('stroke', '#3a3026').attr('stroke-width', 0.4)
     .style('cursor','pointer')
     .on('click', (e, d) => { window.location.href = '/article/' + d.id; })
-    .append('title').text(d => (d.title || '#'+d.id) + '\n' + (d.journal || '') + ' (' + (d.year || '—') + ')\nglobal ' + d.global_count + ' / internal ' + d.internal);
+    .on('mouseover', function() { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', 6).raise(); })
+    .on('mouseout',  function() { dots.attr('opacity', 0.6).attr('r', 3.5); });
+  dots.append('title').text(d => (d.title || '#'+d.id) + '\n' + (d.journal || '') + ' (' + (d.year || '—') + ')\nglobal ' + d.global_count + ' / internal ' + d.internal);
 }
 
 function renderTable(data) {

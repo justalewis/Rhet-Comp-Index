@@ -62,13 +62,15 @@ function renderScatter(data) {
   svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('External density (cross-community)');
 
-  svg.append('g').selectAll('circle').data(comms).join('circle')
+  const dots = svg.append('g').selectAll('circle').data(comms).join('circle')
     .attr('cx', d => x(d.internal_density))
     .attr('cy', d => y(d.external_density))
     .attr('r', d => r(d.n_articles))
     .attr('fill', d => CLASS_COLOR[d.classification] || '#9c9890')
-    .attr('opacity', 0.7).attr('stroke', '#3a3026').attr('stroke-width', 0.5)
-    .append('title').text(d => 'Community #' + (d.rank + 1) + '  · ' + d.n_articles + ' articles\n' +
+    .attr('opacity', 0.6).attr('stroke', '#3a3026').attr('stroke-width', 0.5)
+    .on('mouseover', function(_, d) { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', r(d.n_articles) * 1.4).raise(); })
+    .on('mouseout',  function(_, d) { dots.attr('opacity', 0.6); d3.select(this).attr('r', r(d.n_articles)); });
+  dots.append('title').text(d => 'Community #' + (d.rank + 1) + '  · ' + d.n_articles + ' articles\n' +
       'insularity ' + d.insularity_ratio + ' · ' + d.classification + '\n' +
       'top journal: ' + ((d.top_journals[0] && d.top_journals[0][0]) || '—'));
 

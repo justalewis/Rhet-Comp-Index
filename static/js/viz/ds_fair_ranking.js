@@ -66,16 +66,18 @@ function renderScatter(data) {
   svg.append('text').attr('x', 14).attr('y', h/2).attr('transform',`rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Normalized rank (cit/yr)');
 
-  svg.append('g').selectAll('circle').data(arts.filter(a => a.raw_rank <= maxRank + 5 && a.norm_rank <= maxRank + 5)).join('circle')
+  const dots = svg.append('g').selectAll('circle').data(arts.filter(a => a.raw_rank <= maxRank + 5 && a.norm_rank <= maxRank + 5)).join('circle')
     .attr('cx', d => x(d.raw_rank))
     .attr('cy', d => y(d.norm_rank))
     .attr('r',  4.5)
     .attr('fill', d => CAT_COLOR[d.category] || '#9c9890')
     .attr('stroke', '#3a3026').attr('stroke-width', 0.5)
-    .attr('opacity', 0.85)
+    .attr('opacity', 0.6)
     .style('cursor','pointer')
     .on('click', (e, d) => { window.location.href = '/article/' + d.id; })
-    .append('title').text(d =>
+    .on('mouseover', function() { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', 7).raise(); })
+    .on('mouseout',  function() { dots.attr('opacity', 0.6).attr('r', 4.5); });
+  dots.append('title').text(d =>
       (d.title || '#' + d.id) + '\n' + (d.journal || '') + ' (' + (d.year || '—') + ')\n' +
       'cited ' + d.cited_by + ' times, ' + d.cit_per_year + '/yr\n' +
       d.category.replace(/_/g, ' '));

@@ -61,12 +61,14 @@ function renderScatter(data) {
   root.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
     .text('Coupling B→A (shared / refs in B)');
 
-  root.append('g').selectAll('circle').data(pairs).join('circle')
+  const dots = root.append('g').selectAll('circle').data(pairs).join('circle')
     .attr('cx', d => x(d.ratio_a))
     .attr('cy', d => y(d.ratio_b))
     .attr('r', d => 2 + Math.sqrt(d.shared))
-    .attr('fill', '#5a3e28').attr('opacity', 0.55).attr('stroke', '#3a3026').attr('stroke-width', 0.4)
-    .append('title').text(d => `${d.shared} shared refs\nA: ${(d.a_title || '#'+d.a)}\nB: ${(d.b_title || '#'+d.b)}\nasymmetry: ${d.asymmetry}`);
+    .attr('fill', '#5a3e28').attr('opacity', 0.6).attr('stroke', '#3a3026').attr('stroke-width', 0.4)
+    .on('mouseover', function(_, d) { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', (2 + Math.sqrt(d.shared)) * 1.6).raise(); })
+    .on('mouseout',  function(_, d) { dots.attr('opacity', 0.6); d3.select(this).attr('r', 2 + Math.sqrt(d.shared)); });
+  dots.append('title').text(d => `${d.shared} shared refs\nA: ${(d.a_title || '#'+d.a)}\nB: ${(d.b_title || '#'+d.b)}\nasymmetry: ${d.asymmetry}`);
 }
 
 function renderTable(data) {
