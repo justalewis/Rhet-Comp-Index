@@ -139,13 +139,22 @@ function showSleepingBeautyDetail(art) {
   const byline = last + (auth.includes(';') ? ' et al.' : '');
 
   document.getElementById('sb-detail-title').textContent = art.title;
+  // Cross-link into the Datastories Prince Network tool with this SB
+  // pre-selected via URL param. Hidden when Datastories isn't enabled
+  // (the link 404s in production, so don't render it there).
+  const princeLink = (window.DATASTORIES_ENABLED !== false)
+    ? ` \u2002\u00b7\u2002 <a href="/datastories?seed=${art.id}#ch9-prince-network" ` +
+      `style="color:#b38a6a;" title="Open the Prince Network tool with this Sleeping Beauty pre-selected">` +
+      `Show princes \u2192</a>`
+    : '';
   document.getElementById('sb-detail-meta').innerHTML =
     `${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 ` +
     `<em>${escapeHtml(art.journal)}</em> \u2002\u00b7\u2002 ` +
     `B\u2009=\u2009${art.beauty_coefficient.toFixed(1)} \u2002\u00b7\u2002 ` +
     `Slept ${art.sleep_years} years \u2002\u00b7\u2002 ` +
     `Awakened ${art.awakening_year} \u2002\u00b7\u2002 ` +
-    `<a href="/article/${art.id}" style="color:#b38a6a;">View article \u2192</a>`;
+    `<a href="/article/${art.id}" style="color:#b38a6a;">View article \u2192</a>` +
+    princeLink;
 
   const tl = art.citation_timeline || [];
   const years  = tl.map(t => t.year);
