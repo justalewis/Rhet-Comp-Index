@@ -80,6 +80,8 @@ function initReadingPath() {
   // Export buttons
   document.getElementById('rp-export-bibtex').addEventListener('click', rpExportBibtex);
   document.getElementById('rp-export-text').addEventListener('click', rpExportText);
+  const mdBtn = document.getElementById('rp-export-md');
+  if (mdBtn) mdBtn.addEventListener('click', rpExportMarkdown);
 
   // Check if we have a seed from URL parameter
   const urlParams = new URLSearchParams(location.search);
@@ -536,6 +538,60 @@ function rpExportText() {
   });
   rpDownloadFile('reading-path.txt', lines.join('\n'), 'text/plain');
 }
+
+// Annotated Markdown export — sections per relationship bucket, each row
+// with title, byline, year, journal, citation count, and a one-line
+// "annotation" auto-derived from the relevance reason. Suitable for
+// pasting into Zotero notes, sharing as a PDF, or saving alongside a
+// reading list.
+function rpExportMarkdown() {
+  if (!rpData) return;
+  const lines = [];
+  const seed = rpData.seed || {};
+  lines.push('# Reading Path');
+  lines.push('');
+  lines.push('**Seed:** ' + (seed.title || '(untitled)'));
+  if (seed.authors) lines.push('**Authors:** ' + seed.authors);
+  const seedYear = (seed.pub_date || '').slice(0, 4);
+  if (seed.journal || seedYear) {
+    lines.push('**Source:** ' + (seed.journal || '') + (seedYear ? ' (' + seedYear + ')' : ''));
+  }
+  if (seed.doi) lines.push('**DOI:** ' + seed.doi);
+  lines.push('');
+  lines.push('Generated from the Pinakes Reading Path tool.');
+  lines.push('');
+
+  const sections = [
+    { key: 'cites',    title: 'Backward references — papers the seed cites' },
+    { key: 'cited_by', title: 'Forward citations — papers that cite the seed' },
+    { key: 'cocited',  title: 'Co-cited — papers frequently appearing alongside the seed in others\' references' },
+    { key: 'coupled',  title: 'Bibliographically coupled — papers that share many references with the seed' },
+  ];
+  sections.forEach(s => {
+    const arr = rpData[s.key] || [];
+    if (!arr.length) return;
+    lines.push('## ' + s.title);
+    lines.push('');
+    arr.forEach((a, i) => {
+      const yr = (a.pub_date || '').slice(0, 4);
+      lines.push((i + 1) + '. **' + (a.title || '(untitled)') + '**');
+      const meta = [];
+      if (a.authors) meta.push(a.authors);
+      if (yr) meta.push(yr);
+      if (a.journal) meta.push('*' + a.journal + '*');
+      if (meta.length) lines.push('   ' + meta.join(' · '));
+      const annotation = [];
+      if (a.internal_cited_by_count != null) annotation.push('cited ' + a.internal_cited_by_count + '× internally');
+      if (a.score != null) annotation.push('relevance ' + a.score);
+      if (a.reason) annotation.push(a.reason);
+      if (annotation.length) lines.push('   _' + annotation.join(' · ') + '_');
+      if (a.doi) lines.push('   DOI: `' + a.doi + '`');
+      lines.push('');
+    });
+  });
+  rpDownloadFile('reading-path.md', lines.join('\n'), 'text/markdown');
+}
+
 
 function rpDownloadFile(filename, content, mime) {
   const blob = new Blob([content], { type: mime });
