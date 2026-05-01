@@ -1590,20 +1590,38 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">What main path analysis reveals</h4>
-        <p>Introduced by Hummon &amp; Doreian (1989) to study the development of DNA theory, main path analysis identifies the most significant citation chains in a research field. Where centrality scores individual articles, main path analysis scores <em>edges</em> (citation links) and traces the single most-traversed route through the network from its newest to its oldest articles.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>Main Path Analysis traces the single most important chain of articles connecting today's writing-studies work to its foundational sources. Think of the citation network as a river system: every article cites earlier ones, every newer article gets cited by someone, and most citations are tributaries. The main path is the trunk, the route along which the most intellectual traffic flows.</p>
 
-        <h4 class="methodology-heading">DAG construction</h4>
-        <p>The citation network is treated as a directed acyclic graph (DAG) with edges flowing from citing (newer) to cited (older) articles. Any cycles (rare, caused by publication lag) are broken by removing edges that point from older to newer work. <strong>Source nodes</strong> (in-degree 0) are the current frontier &mdash; articles that cite others but are not themselves cited. <strong>Sink nodes</strong> (out-degree 0) are foundational works that cite nothing else in the network.</p>
+        <p>Run with default parameters against the full Pinakes index, the tool returns a 25-article chain that begins with Agboka and Dorpenyo's 2022 "Curricular Efforts in Technical Communication After the Social Justice Turn" at the frontier and ends with Carol Berkenkotter's 1981 "Understanding a Writer's Awareness of Audience" at the foundation. Between those endpoints sit Russell's 1997 "Rethinking Genre in School and Society" (the most-cited article on the entire path, with 129 citations inside the index), Berkenkotter and Huckin's 1993 sociocognitive-genre piece, and Spivey's 1990 work on text transformation. The path threads through four decades of genre theory, activity systems, and professional communication research; reading it from bottom to top is one compressed way to follow how the field arrived at its current concerns.</p>
 
-        <h4 class="methodology-heading">Search Path Count (SPC)</h4>
-        <p>Each edge (u, v) is weighted by SPC(u, v) = (number of source&rarr;u paths) &times; (number of v&rarr;sink paths). Edges on the backbone carry high SPC because they are traversed by many source-to-sink paths; peripheral edges carry low SPC. The main path is then extracted by greedily following the highest-SPC edge at each step.</p>
+        <p>Use the tool to ask: what work is the writing-studies citation graph most actively channelling? Which articles, if removed from the index, would disrupt the field's transmission of ideas most?</p>
+
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>Main path analysis was introduced by Hummon and Doreian to study the development of DNA theory and has since been extended into a standard bibliometric instrument for tracing knowledge flow through citation networks.<sup>1</sup> Where centrality measures score individual nodes, main path analysis scores edges and traces the single highest-traffic route through the graph. The tool here implements the Search Path Count (SPC) variant introduced by Liu and Lu, which computes path counts more efficiently than the original Search Path Link Count and corrects an asymmetry in the original procedure.<sup>2</sup></p>
+
+        <p>Construction proceeds in four steps. First, the citation graph is filtered to articles that meet the minimum-citations threshold and any active year-range or journal scope; the result is loaded as a directed graph with edges flowing from citing (newer) to cited (older) work. Second, any cycles produced by publication-date inversions or imprecise pub dates are removed by deleting the cycle edge whose source-target year gap is largest in the wrong direction. Third, articles with in-degree zero are designated as <em>sources</em> (the field's frontier) and articles with out-degree zero as <em>sinks</em> (foundational works that cite nothing else inside the index). Fourth, for each edge (u, v) the tool computes SPC(u, v) as the product of (number of source-to-u paths) and (number of v-to-sink paths) using two passes over the topologically sorted graph.</p>
+
+        <p>The main path is then extracted greedily: starting from the source incident to the highest-SPC outgoing edge, the algorithm follows the highest-SPC edge at each step until it terminates at a sink. Running the tool against the Pinakes index with default parameters produces a DAG of 726 articles and 2,279 edges, with 118 sources, 218 sinks, and three cycles removed; the resulting main path has 25 articles, with the heaviest single edge carrying an SPC of roughly 1.69 million source-to-sink paths.</p>
+
+        <p>Two limitations bear on interpretation. The path is corpus-bounded: an article that is foundational in the wider scholarly world but rarely cited inside the indexed journals will not appear, and the foundational end of the path tilts toward whichever sub-area happens to have deeper internal citation chains in the corpus. The greedy extraction, second, returns a single backbone rather than the family of high-traffic routes; the Datastories <em>First Spark</em> tool addresses this gap by extracting the top-K SPC routes and reporting their convergence points.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Four controls scope the DAG that the tool computes against. They sit above the chart area and require an explicit <strong>Compute</strong> click to run.</p>
+
+        <p>The <strong>minimum-citations slider</strong> filters which articles enter the graph at all. At the default of two internal citations, an article must be cited by at least two other articles inside the indexed journals to be considered. A lower setting (one) admits more peripheral work and tends to lengthen the path. A higher setting (five or above) carves the network down to the heavily-cited core, producing a shorter and steeper path through the field's most central nodes.</p>
+
+        <p>The <strong>year-range filters</strong> restrict the DAG by publication year. A tight range produces a sparser graph with fewer cross-decade traversals, which often shortens the path but can surface era-specific backbones; the 1990s genre-theory cluster becomes legible when the range is set to 1985&ndash;2005. A wide range threads paths across the full historical span.</p>
+
+        <p>The <strong>journals picker</strong> narrows the corpus to a chosen subset. Restricting to a cluster (the technical-communication venues, for instance, or the rhetoric-journal cluster) reframes the question from "what is the field's backbone?" to "what is this sub-area's backbone, computed from citations that stay inside the cluster?" Cross-cluster citations are dropped along with their endpoints; the resulting path may be shorter and less interconnected than the full-corpus version.</p>
+
+        <p>Filter changes do not auto-recompute. The Compute click is required because main path analysis on the full DAG takes several seconds and would otherwise re-fire on every checkbox toggle.</p>
 
         <h4 class="methodology-heading">References</h4>
-        <ul class="methodology-refs">
+        <ol class="methodology-refs">
           <li>Hummon, N. P., &amp; Doreian, P. (1989). Connectivity in a citation network: The development of DNA theory. <em>Social Networks, 11</em>(1), 39&ndash;63.</li>
-          <li>Liu, J. S., &amp; Lu, L. Y. Y. (2012). An integrated approach for main path analysis. <em>JASIST, 63</em>(3), 528&ndash;542.</li>
-        </ul>
+          <li>Liu, J. S., &amp; Lu, L. Y. Y. (2012). An integrated approach for main path analysis: Development of the Hirsch index as an example. <em>Journal of the American Society for Information Science and Technology, 63</em>(3), 528&ndash;542.</li>
+        </ol>
 
         </div>
       </details>
