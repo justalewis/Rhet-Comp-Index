@@ -143,3 +143,27 @@ def clear_all():
         except OSError:
             pass
     return n
+
+
+def get_if_cached(func_name: str, *args, **kwargs):
+    """Return the cached result for (func_name, args, kwargs) if it exists
+    AND its fingerprint matches the current DB state, else None. Never
+    triggers a compute.
+
+    Used by `ds_books_everyone_reads` (the master-list aggregator) to skip
+    underlying heavy tools whose cache is cold — better to return a
+    partial master list quickly than to chain 60–90s computes that exceed
+    gunicorn's worker timeout."""
+    fp = _db_fingerprint()
+    key = _key(func_name, args, kwargs)
+    path = _path_for(func_name, key)
+    if not path.is_file():
+        return None
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            blob = json.load(f)
+        if blob.get("_fingerprint") == fp:
+            return blob["data"]
+    except (OSError, json.JSONDecodeError):
+        pass
+    return None

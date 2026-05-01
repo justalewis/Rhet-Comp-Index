@@ -2127,11 +2127,14 @@ def ds_books_everyone_reads(cluster=None, journals=None,
     articles). Filters propagate to each underlying tool, so a cluster /
     year-range scope produces a master-works list specific to that scope.
     """
+    from datastories_cache import get_if_cached
+
     fkw = dict(cluster=cluster, journals=journals,
                year_from=year_from, year_to=year_to)
 
     article_to_tools = defaultdict(set)
     article_meta = {}
+    skipped_tools = []   # tools whose cache was cold; surfaced in the response
 
     def _record(tool_name, articles):
         for a in (articles or []):
@@ -2148,33 +2151,43 @@ def ds_books_everyone_reads(cluster=None, journals=None,
                     "authors": a.get("authors"),
                 }
 
-    # Pull from each tool's output (they're cached so this is cheap)
-    try:
-        _record("Border Crossers", ds_border_crossers(**fkw).get("top_bridges"))
-    except Exception:
-        pass
+    # Heavy @cached tools: NEVER trigger a fresh compute from this
+    # aggregator. Border-crossers + walls-bridges each take 30–90 seconds
+    # on a cold cache; chaining all six tools exceeds gunicorn's worker
+    # timeout. If a tool's cache is cold, skip it and tell the caller —
+    # the user can hit that tool directly to populate its cache, after
+    # which a subsequent master-list call will include it.
+    bc = get_if_cached("ds_border_crossers", **fkw)
+    if bc:
+        _record("Border Crossers", bc.get("top_bridges"))
+    else:
+        skipped_tools.append("Border Crossers")
+    wb = get_if_cached("ds_walls_bridges", **fkw)
+    if wb:
+        for c in wb.get("communities", []):
+            _record("Walls and Bridges", c.get("top_articles"))
+    else:
+        skipped_tools.append("Walls and Bridges")
+
+    # Light/uncached tools (each 5–15 seconds): call directly. Wrapped in
+    # try/except so a single failure doesn't blank the whole list.
     try:
         _record("The Long Tail", ds_long_tail(top_n=50, **fkw).get("articles"))
     except Exception:
-        pass
+        skipped_tools.append("The Long Tail")
     try:
         _record("The Fair Ranking", ds_fair_ranking(**fkw).get("comparison"))
     except Exception:
-        pass
+        skipped_tools.append("The Fair Ranking")
     try:
         for gen in ds_shifting_canons(**fkw).get("generations", []):
             _record("Shifting Canons", gen.get("top"))
     except Exception:
-        pass
+        skipped_tools.append("Shifting Canons")
     try:
         _record("The Reach of a Citation", ds_reach_of_citation(**fkw).get("articles"))
     except Exception:
-        pass
-    try:
-        for c in ds_walls_bridges(**fkw).get("communities", []):
-            _record("Walls and Bridges", c.get("top_articles"))
-    except Exception:
-        pass
+        skipped_tools.append("The Reach of a Citation")
 
     # Hydrate any missing metadata
     missing = [a for a in article_to_tools if a not in article_meta]
@@ -2201,6 +2214,7 @@ def ds_books_everyone_reads(cluster=None, journals=None,
         "summary":  {
             "n_articles":   len(rows),
             "n_tools_used": len({t for r in rows for t in r["tools"]}),
+            "skipped_tools": skipped_tools,
         },
     }
 

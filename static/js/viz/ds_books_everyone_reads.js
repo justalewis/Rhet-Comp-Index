@@ -29,7 +29,8 @@ async function loadDsBooksEveryoneReads() {
 
 function renderSummary(data) {
   const s = data.summary || {};
-  const html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.6rem;">
+  const skipped = (s.skipped_tools || []);
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.6rem;">
     <div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;">
       <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;">Articles surfaced</div>
       <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${(s.n_articles || 0).toLocaleString()}</div>
@@ -39,6 +40,18 @@ function renderSummary(data) {
       <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${s.n_tools_used || 0}</div>
     </div>
   </div>`;
+  if (skipped.length) {
+    // The aggregator skips heavy @cached tools (Border Crossers,
+    // Walls and Bridges) when their cache is cold, to avoid hitting
+    // gunicorn's worker timeout. Tell the user how to fill them in.
+    html += '<div style="margin-top:0.6rem;padding:0.6rem 0.8rem;background:#fef6e8;border-left:3px solid #b38a6a;font-size:0.82rem;color:#5a3e28;">' +
+      '<strong>Partial result.</strong> ' + skipped.length +
+      (skipped.length === 1 ? ' tool was' : ' tools were') +
+      ' skipped because their result wasn’t cached: <em>' +
+      skipped.map(t => escapeHtml(t)).join(', ') + '</em>. ' +
+      'Visit each tool once (links in the Datastories nav) to populate its cache, then reload this page for the full master list.' +
+      '</div>';
+  }
   document.getElementById('ds-be-summary').innerHTML = html;
 }
 
