@@ -47,7 +47,40 @@ async function loadCitations() {
     return;
   }
 
-  let html = '<ol class="most-cited-list">';
+  // Per-journal breakdown sub-bar above the list. Each segment is sized
+  // proportionally to the number of articles in the current top-N from
+  // that journal. Click a segment to filter the list to that journal
+  // (sets the journal selector and re-runs loadCitations).
+  const journalCounts = {};
+  data.forEach(d => {
+    const j = d.journal || '—';
+    journalCounts[j] = (journalCounts[j] || 0) + 1;
+  });
+  const breakdown = Object.entries(journalCounts).sort((a, b) => b[1] - a[1]);
+  const total = data.length;
+  let breakdownHtml = '';
+  if (breakdown.length > 1) {
+    const palette = ['#5a3e28','#3a5a28','#a04525','#8b6045','#4a6a8a','#6a5a8a','#5a7a4a','#7a6a2a','#3a6a6a','#7a4a3a'];
+    breakdownHtml = '<div class="most-cited-breakdown" style="margin:0 0 0.8rem;">' +
+      '<div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.25rem;">' +
+        'Top ' + total + ' by journal' +
+      '</div>' +
+      '<div style="display:flex;height:18px;border:1px solid #e8e4de;cursor:pointer;font-size:0.72rem;color:#fdfbf7;">' +
+        breakdown.map(([j, n], i) => {
+          const pct = (n / total) * 100;
+          const c = palette[i % palette.length];
+          return '<div data-journal="' + escapeHtml(j) + '" ' +
+            'style="background:' + c + ';width:' + pct + '%;display:flex;align-items:center;justify-content:center;overflow:hidden;" ' +
+            'title="' + escapeHtml(j) + ': ' + n + ' of ' + total + '">' +
+            (pct >= 6 ? n : '') +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div style="font-size:0.72rem;color:#7a7268;margin-top:0.2rem;">Click a segment to filter to that journal</div>' +
+    '</div>';
+  }
+
+  let html = breakdownHtml + '<ol class="most-cited-list">';
   data.forEach((item, i) => {
     const year = item.pub_date ? item.pub_date.slice(0, 4) : '';
     const authors = item.authors || '';
@@ -78,6 +111,20 @@ async function loadCitations() {
   html += '</ol>';
 
   container.innerHTML = html;
+
+  // Wire breakdown segments — clicking one sets the citations-journal
+  // selector (if present) and re-fetches via loadCitations.
+  container.querySelectorAll('.most-cited-breakdown [data-journal]').forEach(seg => {
+    seg.addEventListener('click', () => {
+      const j = seg.getAttribute('data-journal');
+      const sel = document.getElementById('citations-journal');
+      if (sel) {
+        // If the journal is already selected, clicking clears the filter.
+        sel.value = (sel.value === j) ? '' : j;
+        loadCitations();
+      }
+    });
+  });
 }
 
 // ── Inline-handler globals ────────────────────────────────────
