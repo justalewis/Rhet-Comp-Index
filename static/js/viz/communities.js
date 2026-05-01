@@ -66,6 +66,7 @@ async function loadCommunities() {
   try {
     const resp = await fetch('/api/citations/communities?' + params.toString());
     data = await resp.json();
+    window.__expCommunities = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load community data.</p>';
     return;
