@@ -511,10 +511,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each pair of articles, count shared references; weight by Jaccard similarity to control for very high-reference articles. Pairs below the minimum threshold are dropped; the top pairs by weight render as a force-directed network.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>The coupling network is built from articles in the filtered scope. <strong>Cluster</strong> reveals what shared-reading patterns exist within a subfield. <strong>Min coupling</strong> trades graph density for noise &mdash; set to 5+ to focus on the strongest shared-foundation pairs.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Shared Foundations renders the bibliographic-coupling network of the corpus: articles linked because they cite the same prior works are pulled together regardless of whether they cite each other directly. Where Citation Network shows who cites whom, Shared Foundations shows who is reading the same things.</p>
+
+      <p>Run with default parameters across the indexed corpus (minimum coupling = 3 shared references), 31,504 article pairs satisfy the threshold; the top 2,000 by weight render as the network with 400 nodes and 2,000 edges. Visible clusters correspond to research fronts whose authors are reading overlapping prior literatures &mdash; methodological schools, topical communities, or theoretical lineages whose shared foundations bind them together.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each pair of articles, the count of shared references is computed and weighted by Jaccard similarity to control for very long reference lists.<sup>1</sup> Pairs below the minimum threshold are dropped; the top pairs by weight render as a force-directed network. The visible network is therefore a heavily-pruned head of the coupling distribution; the underlying coupling matrix is much larger.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>The coupling network is built from articles in the filtered scope. <strong>Cluster</strong> reveals what shared-reading patterns exist within a subfield. <strong>Min coupling</strong> trades graph density for noise &mdash; setting it to 5+ focuses the network on the strongest shared-foundation pairs.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Kessler, M. M. (1963). Bibliographic coupling between scientific papers. <em>American Documentation, 14</em>(1), 10&ndash;25.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-toolbar">
     <label class="filter-label">Min coupling:&nbsp;
@@ -530,10 +543,24 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Both partitions come from Louvain at default resolution. Concordance is measured with normalized mutual information (NMI) and adjusted Rand index (ARI). Articles whose coupling-cluster and citation-community labels disagree are flagged <em>discordant</em>.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Both Louvain partitions (coupling-side and citation-side) re-run on the filtered scope. Picking a cluster turns the tool into "do these two maps of [this subfield] tell the same story?" which is often more interpretable than the whole-field NMI.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Two Maps draws the field two ways and asks whether they agree. Coupling clusters group articles that read the same prior work; citation communities group articles that cite each other. Concordant articles land in matching clusters under both partitions; discordant articles land in different clusters and mark places where shared foundations diverge from active citation traffic.</p>
+
+      <p>Run with default parameters across 2,000 articles, the coupling-side Louvain partition produces 198 clusters; the citation-side partition produces 202 communities; 1,099 articles (54.95%) classify as <em>concordant</em>. The agreement is moderate: NMI = 0.45 and ARI = 0.26, well above random alignment but well below the 0.8&ndash;1.0 range that would indicate the two maps tell the same story. The 45% discordance rate is the analytic finding &mdash; nearly half of articles sit in shared-foundation neighborhoods that do not coincide with their citation neighborhoods, signaling that what the field is reading and what the field is citing diverge structurally rather than overlap cleanly.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Both partitions come from Louvain at default resolution.<sup>1</sup> Concordance between partitions is measured by normalized mutual information (NMI) and adjusted Rand index (ARI), which are the standard partition-comparison statistics in the community-detection literature.<sup>2</sup> Articles whose coupling-cluster and citation-community labels disagree are flagged <em>discordant</em>.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Both Louvain partitions re-run on the filtered scope. Selecting a cluster turns the tool into "do these two maps of this subfield tell the same story?" which is often more interpretable than the whole-corpus NMI because the answer can be checked against domain knowledge.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Blondel, V. D., Guillaume, J.-L., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks. <em>Journal of Statistical Mechanics: Theory and Experiment, 2008</em>(10), P10008.</li>
+        <li>Vinh, N. X., Epps, J., &amp; Bailey, J. (2010). Information theoretic measures for clusterings comparison: Variants, properties, normalization and correction for chance. <em>Journal of Machine Learning Research, 11</em>, 2837&ndash;2854.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-tm-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-tm-comparison" style="min-height:520px;"></div>
@@ -544,10 +571,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>This tool aggregates the article ID lists every other Datastories tool returns. An article's score is the count of distinct tools (and chapters) it appears in. Tied articles are broken by total internal citation count.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>The aggregate is built from filter-aware sub-tools. Apply a <strong>cluster</strong> to derive a master-works list specific to that subfield &mdash; articles that show up across that cluster's view of every other tool. Each underlying tool uses the same filter, so the answer is "books everyone in [scope] reads, by Datastories' own measures."</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>The Books Everyone Reads aggregates the article-ID lists every other Datastories tool returns and ranks the union by how many tools surface each article. The closer an article gets to appearing in every chapter's analysis, the more central it is to the book's overall argument about the field's structure.</p>
+
+      <p>Run with default parameters across the indexed corpus, the aggregator returns 247 articles surfaced by 6 tools across the chapters. Flower and Hayes's 1981 "A Cognitive Process Theory of Writing" appears in all 6 surfacing tools (Border Crossers, Shifting Canons, Fair Ranking, Long Tail, Reach of Citation, Walls and Bridges) &mdash; the tool's master-list leader and the article whose centrality is most overdetermined by the field's own structural measures. Fahnestock's 1986 "Accommodating Science" appears in the same 6 tools, indicating two distinct genealogies of canonicity (cognition-and-process for Flower and Hayes, rhetoric-of-science for Fahnestock) that the field's measures collectively recognize.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>The aggregator runs each upstream Datastories tool that returns an article-ID list (filtering out tools that don't, like the chord diagrams) and unions the results. Each article's score is the count of distinct tools (and indirectly chapters) it appears in. Tied articles are broken by total internal citation count.<sup>1</sup> When upstream @cached tools have not been pre-warmed they are skipped to avoid worker timeouts; the skipped-tools list is reported in the summary so users can tell whether the result is partial.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>The aggregate is built from filter-aware sub-tools. Applying a <strong>cluster</strong> filter derives a master-works list specific to that subfield &mdash; articles that show up across that cluster's view of every other tool. Each underlying tool uses the same filter, so the answer is "books everyone in this scope reads, by Datastories' own measures."</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Garfield, E. (1972). Citation analysis as a tool in journal evaluation. <em>Science, 178</em>(4060), 471&ndash;479.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-be-summary" style="min-height:80px;"></div>
   <div id="ds-be-table" style="margin-top:0.6rem;"></div>
@@ -558,10 +598,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For a pair (A, B) with shared references <em>s</em>, |refs(A)| = <em>r<sub>a</sub></em>, |refs(B)| = <em>r<sub>b</sub></em>: directional coupling A&rarr;B = <em>s</em>/<em>r<sub>a</sub></em>; B&rarr;A = <em>s</em>/<em>r<sub>b</sub></em>; asymmetry = |A&rarr;B &minus; B&rarr;A|. Dependent article = the one whose ratio is larger.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Coupling pairs are computed on the filtered scope. Filtering to a single cluster surfaces the most asymmetric debts within that subfield &mdash; typically more interpretable than corpus-wide asymmetries because the dependent and other party share enough disciplinary context for the relationship to make sense.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Uneven Debts surfaces coupling pairs where the dependence runs much stronger in one direction than the other. If article A's reference list overlaps heavily with B's, but B's overlap with A is small relative to B's own reference list, A is the dependent in the pair: A is reading what B reads, but B is reading much more besides.</p>
+
+      <p>Run with default parameters across the indexed corpus, 200 most-asymmetric pairs surface. The maximum asymmetry observed is 0.923 and the median across the top 200 is 0.526. The single most-asymmetric pair is between two articles with shared = 7 references where one carries 91 references and the other carries only 7: the smaller article's reference list is essentially a subset of the larger article's, scoring it as fully dependent (ratio 1.0) on the other (ratio 0.077). Pairs of this shape often surface review-and-derivative relationships, where one article surveys broadly and another draws heavily on a narrow slice of that survey's source corpus.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For a pair (A, B) with shared references <em>s</em>, |refs(A)| = <em>r<sub>a</sub></em>, |refs(B)| = <em>r<sub>b</sub></em>, directional coupling A&rarr;B = <em>s</em>/<em>r<sub>a</sub></em>; B&rarr;A = <em>s</em>/<em>r<sub>b</sub></em>; asymmetry = |A&rarr;B &minus; B&rarr;A|. The dependent article is the one whose ratio is larger.<sup>1</sup> The metric directly addresses the long-reference-list bias inherent in symmetric coupling counts.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Coupling pairs are computed on the filtered scope. Filtering to a single cluster surfaces the most asymmetric debts within that subfield &mdash; typically more interpretable than corpus-wide asymmetries because the dependent and the other party share enough disciplinary context for the relationship to make sense.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Egghe, L., &amp; Rousseau, R. (2002). Co-citation, bibliographic coupling and a characterization of lattice citation networks. <em>Scientometrics, 55</em>(3), 349&ndash;361.</li>
+      </ol>
+    </div>
   </details>
   <div class="loading-msg" id="ds-ud-loading">Computing pairwise coupling and asymmetry&hellip; (cached after first run)</div>
   <div class="chart-container--auto" id="ds-ud-scatter" style="min-height:480px;"></div>
