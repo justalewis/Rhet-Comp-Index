@@ -630,10 +630,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Author counts come from splitting the <code>authors</code> field on the corpus's standard delimiter and counting non-empty segments. Yearly aggregates are means, medians, and 75th-percentile team size; milestones are derived programmatically.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filters constrain which articles' authorship counts get tabulated. Apply a <strong>cluster</strong> to compare team-size trajectories across subfields: TPC and CWS often look quite different, with technical communication trending toward larger teams earlier. <strong>Year range</strong> truncates the timeline.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Solo to Squad tracks article team-size over time: the single-author percentage, mean and median author count per decade, and milestone markers for the first 5+-author and 10+-author articles in the corpus. The metric reads as a long-run shift from solo authorship toward team authorship, which is one of the structural fingerprints that distinguish the writing-studies tradition from STEM publishing.</p>
+
+      <p>Run with default parameters across the indexed corpus, the trajectory is unambiguous. The 1930s decade carries 37 articles with 84% single-authored and a mean team size of 1.22; by the 2020s 7,046 articles carry a 62% single-author rate and a mean team size of 1.76. The first 5+-author article in the corpus dates to 1940, and the first 10+-author article to 1942 &mdash; both early outliers in <em>College English</em> book-review collections. The largest team in the corpus is the Polish School of Argumentation manifesto (Argumentation 2014) with 55 authors, followed by two 1960s-era multi-author book-review compilations in <em>College English</em> at 42 and 31 authors. Outside those edge cases, the modal article remains single-authored even today; the rise has been gradual rather than transformational.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Author counts come from splitting the <code>authors</code> field on the corpus's standard delimiter (semicolon) and counting non-empty segments. Yearly and decadal aggregates report means, medians, and 75th-percentile team size; milestones are derived programmatically as the earliest year in which the corresponding team-size threshold is crossed.<sup>1</sup></p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filters constrain which articles' authorship counts get tabulated. Applying a <strong>cluster</strong> filter compares team-size trajectories across subfields: TPC and CWS often look quite different, with technical communication trending toward larger teams earlier than the rhetoric-and-composition cluster. <strong>Year range</strong> truncates the timeline.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Wuchty, S., Jones, B. F., &amp; Uzzi, B. (2007). The increasing dominance of teams in production of knowledge. <em>Science, 316</em>(5827), 1036&ndash;1039.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-st-trends" style="min-height:340px;"></div>
   <h4 class="methodology-heading" style="margin-top:1rem;">Largest teams in the corpus</h4>
@@ -645,10 +658,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each author, first-publication year is computed from the corpus. For each co-author pair, if the gap exceeds the threshold (default 10 years), the pair is recorded as a probable mentorship. This is a heuristic and will mislabel late-career first publications and lateral collaborations.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filtering to a <strong>cluster</strong> narrows the corpus the lineage inference runs on, which usually produces a denser local mentorship graph (mentors and mentees are more likely to share a venue). <strong>Min year gap</strong> tightens the heuristic &mdash; 8 catches more pairs with more false positives; 15 catches only obvious mentorships.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Academic Lineages infers probable mentor &rarr; mentee relationships from publication-year gaps. If author A's first indexed publication is 10 or more years before author B's, and the two later co-author at least one article, A is treated as B's probable mentor. The result is a directed mentorship graph that surfaces the field's training relationships as a structural pattern.</p>
+
+      <p>Run with default parameters (minimum gap = 10 years), the heuristic identifies 9,346 mentorship pairs across 1,681 distinct mentors. The most prolific mentor by inferred mentees is Richard Leo Enos at 106 mentees, followed by Richard Beach at 82 and Edward M. White at 79 &mdash; all senior figures whose long publication histories combined with broad co-authorship rosters produce many qualifying pairs. The single most-active mentorship pair is Cynthia L. Selfe (first pub 1980) and Scott Lloyd DeWitt (first pub 1997) with 23 co-authored articles spanning 2004&ndash;2015, a 17-year publication gap that fits the canonical mentor-mentee profile cleanly. The heuristic will mislabel late-career first publications (someone whose first indexed work appears late but whose actual career began earlier) and lateral collaborations between scholars whose careers happen to be offset; the prolific-mentors list is the appropriate filter to read.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each author, first-publication year is computed from the corpus. For each co-author pair, if the gap between their first publications exceeds the threshold (default 10 years), the pair is recorded as a probable mentorship and the older author is recorded as the mentor.<sup>1</sup> The reported mentorship graph is therefore a heuristic upper bound rather than a verified network &mdash; structural patterns in the graph are interpretable but individual pairs may be mislabeled.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filtering to a <strong>cluster</strong> narrows the corpus the lineage inference runs on, which usually produces a denser local mentorship graph (mentors and mentees are more likely to share a venue). <strong>Min year gap</strong> tightens the heuristic &mdash; 8 catches more pairs with more false positives; 15 catches only obvious mentorships.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Malmgren, R. D., Ottino, J. M., &amp; Nunes Amaral, L. A. (2010). The role of mentorship in protege performance. <em>Nature, 465</em>(7298), 622&ndash;626.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-toolbar">
     <label class="filter-label">Minimum year gap:&nbsp;
@@ -666,10 +692,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>For each co-author pair: total co-authored articles, year span, journals involved. Classification: <em>one_shot</em> = 1 article; <em>short_term</em> = 2 articles; <em>persistent</em> = &ge;3 articles spanning &ge;5 years.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>The pair-classification statistics are computed on the filtered set. Filtering to a <strong>cluster</strong> surfaces persistent partnerships within that cluster only, which is usually what you want when reading "who has the long-running collaborative relationships in TPC?"</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>Lasting Partnerships classifies every co-author pair in the corpus by persistence: how long the collaboration ran and how many articles it produced. The bulk of co-authorship is one-shot; a small persistent tail represents the field's stable collaborative units.</p>
+
+      <p>Run with default parameters across the indexed corpus, 52,233 co-authoring pairs are classified. The distribution is starkly long-tailed: 48,526 (92.9%) are <em>one_shot</em> (single article), 3,391 (6.5%) are <em>short_term</em> (two articles), and only 316 pairs (0.6%) are <em>persistent</em> (three or more articles spanning at least five years). The most-persistent pair is Joe Erickson and Kevin Roozen at 65 co-authored articles spanning 12 years (2004&ndash;2016), followed by Cynthia L. Selfe and Gail E. Hawisher at 58 articles across an extraordinary 28-year span (1988&ndash;2016) and Jennifer L. Holberg and Marcy Taylor at 45 articles across 26 years (1999&ndash;2025). Long-running partnerships of this scale are rare enough that they constitute a distinct social formation in the field's structure.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>For each co-author pair, total co-authored articles, year span (last article year minus first article year), and journals involved are computed. Classification: <em>one_shot</em> = 1 article; <em>short_term</em> = 2 articles; <em>persistent</em> = at least 3 articles spanning at least 5 years.<sup>1</sup> The boundaries are interpretable rather than empirically optimized; persistence-as-defined captures the field's most-stable collaborative units.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>The pair-classification statistics are computed on the filtered set. Filtering to a <strong>cluster</strong> surfaces persistent partnerships within that cluster only, which is usually the right question when asking who has long-running collaborative relationships in a particular sub-area.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Newman, M. E. J. (2001). The structure of scientific collaboration networks. <em>Proceedings of the National Academy of Sciences, 98</em>(2), 404&ndash;409.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-lp-summary" style="min-height:80px;"></div>
   <div class="chart-container--auto" id="ds-lp-bars" style="min-height:240px;"></div>
@@ -686,10 +725,23 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
-      <p>Sleeping beauties come from the existing Beauty Coefficient computation. Princes are the articles that cited the beauty in the awakening window. Awakening types: <em>single_catalyst</em>, <em>individual_rediscovery</em>, <em>journal_specific</em>, <em>subfield_revival</em>, <em>broad_trend</em>.</p>
-    
-        <h4 class="methodology-heading">Controls</h4>
-        <p>Filters narrow the corpus the underlying sleeping-beauty detection runs on. Picking a <strong>cluster</strong> reveals subfield-specific awakening patterns &mdash; e.g. "what kinds of articles wake up the dormant Rhetoric corpus?" Heavy first-time compute when filters change.</p></div>
+
+      <h4 class="methodology-heading">Tool orientation</h4>
+      <p>The Prince Network attaches awakening narratives to each sleeping beauty: which articles cited the beauty during its awakening window, and what pattern those citers form. Awakening type classifies the rediscovery: <em>single_catalyst</em> (one prince paper drives the surge), <em>journal_specific</em> (the awakening concentrates in a single venue), <em>subfield_revival</em> (a single sub-area rediscovers the work), or <em>broad_trend</em> (citations come from across the field).</p>
+
+      <p>Run with default parameters across the indexed corpus, the tool returns 15 sleeping beauties with their princes. The dominant pattern is <em>broad_trend</em> at 13 of 15: most awakenings in the indexed corpus are field-wide rather than driven by single catalysts or sub-area revivals. Cargile Cook's 2002 "Layered Literacies" leads the list (the corpus's heaviest sleeping beauty by Beauty Coefficient), with awakening citers spanning multiple TC venues; the 1974 "Students' Right to Their Own Language" introduction shows a similar broad-trend awakening in 2018 driven by the post-2015 social-justice turn. The tool's analytic value lies in distinguishing the structural cause behind each awakening rather than just reporting the awakening event itself.</p>
+
+      <h4 class="methodology-heading">Methodology</h4>
+      <p>Sleeping beauties come from the existing Beauty Coefficient computation in the Sleeping Beauties tool.<sup>1</sup> Princes are the articles that cited the beauty in the awakening window (the years immediately after the awakening year). Awakening types are inferred from the prince set: a single dominant prince flags <em>single_catalyst</em>; concentration in a single journal flags <em>journal_specific</em>; concentration in a single research community flags <em>subfield_revival</em>; broad distribution across the field flags <em>broad_trend</em>.</p>
+
+      <h4 class="methodology-heading">Controls</h4>
+      <p>Filters narrow the corpus the underlying sleeping-beauty detection runs on. Selecting a <strong>cluster</strong> reveals subfield-specific awakening patterns &mdash; for example, "what kinds of articles wake up the dormant Rhetoric corpus?" Heavy first-time compute when filters change.</p>
+
+      <h4 class="methodology-heading">References</h4>
+      <ol class="methodology-refs">
+        <li>Ke, Q., Ferrara, E., Radicchi, F., &amp; Flammini, A. (2015). Defining and identifying Sleeping Beauties in science. <em>Proceedings of the National Academy of Sciences, 112</em>(24), 7426&ndash;7431.</li>
+      </ol>
+    </div>
   </details>
   <div class="chart-container--auto" id="ds-pn-network" style="min-height:560px;"></div>
   <div id="ds-pn-table" style="margin-top:1rem;"></div>
