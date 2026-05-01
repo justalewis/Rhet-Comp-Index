@@ -9,6 +9,9 @@ articles.db-wal
 # Datastories disk cache (derived; regenerated on demand from articles.db)
 data/datastories_cache/
 
+# Runtime-curated disciplinary events (admin-added via API; per-deployment)
+data/disciplinary_events.json
+
 # Python
 __pycache__/
 *.py[cod]
