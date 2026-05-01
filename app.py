@@ -26,6 +26,15 @@ import logging
 import os
 import time
 
+# Load local .env before any module imports that might read env vars at
+# import time. On Fly the env vars come from `fly secrets set` and there
+# is no .env file, so this is a no-op in production.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv is optional; without it, set vars in the shell.
+
 from flask import Flask, redirect, request
 from flask_compress import Compress
 
@@ -106,11 +115,41 @@ def create_app() -> Flask:
     # Initialise DB at app construction so gunicorn workers find the schema.
     init_db()
 
+    # SECRET_KEY: signs the Datastories session cookie (and any future signed
+    # cookies). Must be stable across worker processes for a multi-worker
+    # deployment, hence env-var-or-fail-fast in production. Local dev gets
+    # a per-process random key — that means a local restart logs everyone
+    # out, which is the right behaviour for development.
+    secret = os.environ.get("PINAKES_SECRET_KEY")
+    if not secret:
+        if os.environ.get("FLY_APP_NAME"):
+            raise RuntimeError(
+                "PINAKES_SECRET_KEY must be set in production. "
+                "Generate with: python -c 'import secrets; print(secrets.token_urlsafe(48))'"
+            )
+        import secrets as _secrets
+        secret = _secrets.token_urlsafe(48)
+        log.warning(
+            "PINAKES_SECRET_KEY not set; using a per-process random key. "
+            "Sessions will not survive a restart. This is fine for local dev."
+        )
+    flask_app.config["SECRET_KEY"] = secret
+
     # Surface a missing admin token at startup. Read endpoints continue to
     # work; mutating endpoints will reject all requests with 503 until set.
     if not admin_token_configured():
         log.critical(
             "PINAKES_ADMIN_TOKEN is not set; mutating endpoints will reject all requests"
+        )
+
+    # Surface a missing Datastories password at startup. The Datastories
+    # blueprint is always registered (the landing page is public), but the
+    # tools/API will return 503 until the password is configured.
+    from auth_datastories import password_configured
+    if not password_configured():
+        log.warning(
+            "PINAKES_DATASTORIES_PASSWORD is not set; Datastories tools will be inaccessible "
+            "(landing page still renders)."
         )
 
     # Tag articles from known gold-OA journals (fast, no API calls).
@@ -163,38 +202,28 @@ def create_app() -> Flask:
     flask_app.register_blueprint(institutions_bp)
     flask_app.register_blueprint(admin_bp)
 
-    # Datastories blueprint is gated on a deliberate opt-in: it is the
-    # research/book-figure tool surface and isn't part of the public site.
-    # Default-disabled in production. Enable locally with PINAKES_ENABLE_DATASTORIES=1.
-    # We also auto-enable when running outside Fly (no FLY_APP_NAME) so a
-    # local `python app.py` Just Works for development.
-    if datastories_enabled():
-        from blueprints.datastories import bp as datastories_bp
-        flask_app.register_blueprint(datastories_bp)
-        log.info("Datastories blueprint enabled")
-    else:
-        log.info("Datastories blueprint NOT registered (production / explicit disable)")
+    # Datastories blueprint — always registered. The landing page at
+    # /datastories is public; the tools at /datastories/tools and the
+    # /api/datastories/* endpoints are password-gated by
+    # auth_datastories.require_datastories_auth.
+    from blueprints.datastories import bp as datastories_bp
+    flask_app.register_blueprint(datastories_bp)
+    log.info("Datastories blueprint registered (landing public; tools auth-gated)")
 
     return flask_app
 
 
 def datastories_enabled():
-    """Resolve the Datastories on/off flag. Single source of truth so the
-    blueprint registration in create_app() and the inject_globals() context
-    processor agree.
+    """Always True — the Datastories landing page is public. Tools are
+    gated by auth_datastories.require_datastories_auth, not by blueprint
+    registration. Kept as a function (rather than removed) for backward
+    compatibility with the inject_globals() context processor and any
+    template that still checks `{% if datastories_enabled %}`.
 
-    Rules (first match wins):
-      1. PINAKES_ENABLE_DATASTORIES=1 forces ON, regardless of environment.
-      2. PINAKES_ENABLE_DATASTORIES=0 forces OFF.
-      3. Running on Fly (FLY_APP_NAME set) defaults OFF.
-      4. Otherwise (local dev) defaults ON.
-    """
-    explicit = os.environ.get("PINAKES_ENABLE_DATASTORIES")
-    if explicit == "1":
-        return True
-    if explicit == "0":
-        return False
-    return not os.environ.get("FLY_APP_NAME")
+    The nav-menu template now always renders the Datastories link, since
+    the landing page is always reachable. This function will likely be
+    removed entirely in a future cleanup."""
+    return True
 
 
 app = create_app()

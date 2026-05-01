@@ -33,7 +33,6 @@
       <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">Browse All Tools</a>
     </div>
   </div>
-  {% if datastories_enabled %}
   <div class="nav-item{% if active_nav == 'datastories' %} active{% endif %}" id="nav-datastories">
     <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
       <span class="feature-nav-icon">&#9686;</span>
@@ -41,43 +40,43 @@
       <span class="nav-chevron">&#9662;</span>
     </button>
     <div class="nav-dropdown">
-      <a href="/datastories" class="nav-dropdown-item" style="font-weight:600;">All Datastories</a>
-      <a href="/datastories#ch3-braided-path" class="nav-dropdown-item nav-dropdown-divider">Ch 3 &mdash; The Citation Backbone</a>
-      <a href="/datastories#ch3-braided-path" class="nav-dropdown-item">The Braided Path</a>
-      <a href="/datastories#ch3-branching-traditions" class="nav-dropdown-item">Branching Traditions</a>
-      <a href="/datastories#ch3-origins-frontiers" class="nav-dropdown-item">Origins and Frontiers</a>
-      <a href="/datastories#ch4-shifting-currents" class="nav-dropdown-item nav-dropdown-divider">Ch 4 &mdash; Two Fields or One?</a>
-      <a href="/datastories#ch4-shifting-currents" class="nav-dropdown-item">Shifting Currents</a>
-      <a href="/datastories#ch4-speed-of-influence" class="nav-dropdown-item">The Speed of Influence</a>
-      <a href="/datastories#ch4-border-crossers" class="nav-dropdown-item">Border Crossers</a>
-      <a href="/datastories#ch4-two-way-street" class="nav-dropdown-item">The Two-Way Street</a>
-      <a href="/datastories#ch5-shape-of-influence" class="nav-dropdown-item nav-dropdown-divider">Ch 5 &mdash; The Canon Machine</a>
-      <a href="/datastories#ch5-shape-of-influence" class="nav-dropdown-item">The Shape of Influence</a>
-      <a href="/datastories#ch5-long-tail" class="nav-dropdown-item">The Long Tail</a>
-      <a href="/datastories#ch5-fair-ranking" class="nav-dropdown-item">The Fair Ranking</a>
-      <a href="/datastories#ch5-shifting-canons" class="nav-dropdown-item">Shifting Canons</a>
-      <a href="/datastories#ch5-reach-of-citation" class="nav-dropdown-item">The Reach of a Citation</a>
-      <a href="/datastories#ch5-inside-outside" class="nav-dropdown-item">Inside and Outside</a>
-      <a href="/datastories#ch6-communities-time" class="nav-dropdown-item nav-dropdown-divider">Ch 6 &mdash; Community Structure</a>
-      <a href="/datastories#ch6-communities-time" class="nav-dropdown-item">Communities Over Time</a>
-      <a href="/datastories#ch6-walls-bridges" class="nav-dropdown-item">Walls and Bridges</a>
-      <a href="/datastories#ch6-first-spark" class="nav-dropdown-item">The First Spark</a>
-      <a href="/datastories#ch7-shared-foundations" class="nav-dropdown-item nav-dropdown-divider">Ch 7 &mdash; Reference Networks</a>
-      <a href="/datastories#ch7-shared-foundations" class="nav-dropdown-item">Shared Foundations</a>
-      <a href="/datastories#ch7-two-maps" class="nav-dropdown-item">Two Maps of the Field</a>
-      <a href="/datastories#ch7-books-everyone-reads" class="nav-dropdown-item">The Books Everyone Reads</a>
-      <a href="/datastories#ch7-uneven-debts" class="nav-dropdown-item">Uneven Debts</a>
-      <a href="/datastories#ch8-solo-to-squad" class="nav-dropdown-item nav-dropdown-divider">Ch 8 &mdash; Authorship</a>
-      <a href="/datastories#ch8-solo-to-squad" class="nav-dropdown-item">Solo to Squad</a>
-      <a href="/datastories#ch8-academic-lineages" class="nav-dropdown-item">Academic Lineages</a>
-      <a href="/datastories#ch8-lasting-partnerships" class="nav-dropdown-item">Lasting Partnerships</a>
-      <a href="/datastories#ch9-prince-network" class="nav-dropdown-item nav-dropdown-divider">Ch 9 &mdash; Sleeping Beauties</a>
-      <a href="/datastories#ch9-prince-network" class="nav-dropdown-item">Prince Network</a>
-      <a href="/datastories#ch9-disciplinary-calendar" class="nav-dropdown-item">The Disciplinary Calendar</a>
-      <a href="/datastories#ch9-unread-canon" class="nav-dropdown-item">The Unread Canon</a>
+      <a href="/datastories" class="nav-dropdown-item" style="font-weight:600;">About Datastories</a>
+      <a href="/datastories/tools" class="nav-dropdown-item nav-dropdown-divider">All Tools (sign-in required)</a>
+      <a href="/datastories/tools#ch3-braided-path" class="nav-dropdown-item nav-dropdown-divider">Ch 3 &mdash; The Citation Backbone</a>
+      <a href="/datastories/tools#ch3-braided-path" class="nav-dropdown-item">The Braided Path</a>
+      <a href="/datastories/tools#ch3-branching-traditions" class="nav-dropdown-item">Branching Traditions</a>
+      <a href="/datastories/tools#ch3-origins-frontiers" class="nav-dropdown-item">Origins and Frontiers</a>
+      <a href="/datastories/tools#ch4-shifting-currents" class="nav-dropdown-item nav-dropdown-divider">Ch 4 &mdash; Two Fields or One?</a>
+      <a href="/datastories/tools#ch4-shifting-currents" class="nav-dropdown-item">Shifting Currents</a>
+      <a href="/datastories/tools#ch4-speed-of-influence" class="nav-dropdown-item">The Speed of Influence</a>
+      <a href="/datastories/tools#ch4-border-crossers" class="nav-dropdown-item">Border Crossers</a>
+      <a href="/datastories/tools#ch4-two-way-street" class="nav-dropdown-item">The Two-Way Street</a>
+      <a href="/datastories/tools#ch5-shape-of-influence" class="nav-dropdown-item nav-dropdown-divider">Ch 5 &mdash; The Canon Machine</a>
+      <a href="/datastories/tools#ch5-shape-of-influence" class="nav-dropdown-item">The Shape of Influence</a>
+      <a href="/datastories/tools#ch5-long-tail" class="nav-dropdown-item">The Long Tail</a>
+      <a href="/datastories/tools#ch5-fair-ranking" class="nav-dropdown-item">The Fair Ranking</a>
+      <a href="/datastories/tools#ch5-shifting-canons" class="nav-dropdown-item">Shifting Canons</a>
+      <a href="/datastories/tools#ch5-reach-of-citation" class="nav-dropdown-item">The Reach of a Citation</a>
+      <a href="/datastories/tools#ch5-inside-outside" class="nav-dropdown-item">Inside and Outside</a>
+      <a href="/datastories/tools#ch6-communities-time" class="nav-dropdown-item nav-dropdown-divider">Ch 6 &mdash; Community Structure</a>
+      <a href="/datastories/tools#ch6-communities-time" class="nav-dropdown-item">Communities Over Time</a>
+      <a href="/datastories/tools#ch6-walls-bridges" class="nav-dropdown-item">Walls and Bridges</a>
+      <a href="/datastories/tools#ch6-first-spark" class="nav-dropdown-item">The First Spark</a>
+      <a href="/datastories/tools#ch7-shared-foundations" class="nav-dropdown-item nav-dropdown-divider">Ch 7 &mdash; Reference Networks</a>
+      <a href="/datastories/tools#ch7-shared-foundations" class="nav-dropdown-item">Shared Foundations</a>
+      <a href="/datastories/tools#ch7-two-maps" class="nav-dropdown-item">Two Maps of the Field</a>
+      <a href="/datastories/tools#ch7-books-everyone-reads" class="nav-dropdown-item">The Books Everyone Reads</a>
+      <a href="/datastories/tools#ch7-uneven-debts" class="nav-dropdown-item">Uneven Debts</a>
+      <a href="/datastories/tools#ch8-solo-to-squad" class="nav-dropdown-item nav-dropdown-divider">Ch 8 &mdash; Authorship</a>
+      <a href="/datastories/tools#ch8-solo-to-squad" class="nav-dropdown-item">Solo to Squad</a>
+      <a href="/datastories/tools#ch8-academic-lineages" class="nav-dropdown-item">Academic Lineages</a>
+      <a href="/datastories/tools#ch8-lasting-partnerships" class="nav-dropdown-item">Lasting Partnerships</a>
+      <a href="/datastories/tools#ch9-prince-network" class="nav-dropdown-item nav-dropdown-divider">Ch 9 &mdash; Sleeping Beauties</a>
+      <a href="/datastories/tools#ch9-prince-network" class="nav-dropdown-item">Prince Network</a>
+      <a href="/datastories/tools#ch9-disciplinary-calendar" class="nav-dropdown-item">The Disciplinary Calendar</a>
+      <a href="/datastories/tools#ch9-unread-canon" class="nav-dropdown-item">The Unread Canon</a>
     </div>
   </div>
-  {% endif %}
   <div class="nav-item" id="nav-authors">
     <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
       <span class="feature-nav-icon">&#9672;</span>

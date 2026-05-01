@@ -1,0 +1,97 @@
+{% extends "base-core.html" %}
+
+{% block title %}Datastories — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="Datastories: A Disciplinography of Technical and Professional Communication — an in-progress monograph project by Justin Lewis. Tools available to invited collaborators.">
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <!-- ── Top nav ───────────────────────────────────────────── -->
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/new">What's New</a>
+        <a href="/explore">Explore</a>
+        <a href="/authors">Authors</a>
+        <a href="/most-cited">Most Cited</a>
+        <a href="/books">Books</a>
+        <a href="/coverage">Coverage</a>
+        <a href="/about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Main content ─────────────────────────────────────── -->
+  <main class="about-content">
+
+    <h1 class="about-title">Datastories</h1>
+    <p style="font-size:1.1rem;color:#7a7268;font-style:italic;margin-top:-0.4rem;margin-bottom:2rem;">
+      A Disciplinography of Technical and Professional Communication
+    </p>
+
+    {% if login_error %}
+    <div style="margin:0 0 1.5rem;padding:0.7rem 1rem;background:#f8e6e0;border-left:3px solid #a04525;color:#3a3026;font-size:0.95rem;">
+      {{ login_error }}
+    </div>
+    {% endif %}
+
+    <p>Welcome. The tools collected under this tab are part of an in-progress monograph project, <em>Datastories: A Disciplinography of Technical and Professional Communication</em>. They're available here in a working state, password-protected, while the book takes shape.</p>
+
+    <h2 style="margin-top:2rem;">About the project</h2>
+
+    <p>Datastories uses the bibliometric infrastructure I've built on Pinakes to check the inherited narratives of TPC against what actually got published, cited, and connected over the field's roughly seventy-year history as a distinct scholarly enterprise. Each chapter begins with a specific computational method (main path analysis, community detection, bibliographic coupling, sleeping beauty indexing, and so on), surfaces a pattern in the citation or co-authorship data, and holds that pattern up against the disciplinary self-accounts TPC scholars have inherited or constructed. Sometimes the data confirms what we thought we knew; more often, in my testing so far, it complicates the picture.</p>
+
+    <p>The project takes its theoretical bearings from Maureen Daly Goggin's <em>Authoring a Discipline</em> (2000), which coined the term <em>disciplinography</em> and argued that journals are the sites where disciplines are authored, and from Derek Mueller's <em>Network Sense</em> (2017), which computationally operationalized disciplinography for rhetoric and composition. To my knowledge, no one has yet done this kind of work for TPC specifically. Pinakes makes it possible, with a different corpus, a substantially different set of computational tools, and a different set of questions about field identity.</p>
+
+    <p>The argument across the book is twofold: first, that bibliometric data becomes meaningful only when it is narrated, situated, and questioned; and second, that the distance between the stories a field tells about itself and the stories its data tells back is a productive space for disciplinographic work.</p>
+
+    <h2 style="margin-top:2rem;">What's here</h2>
+
+    <p>The tools on this tab are scoped to the TPC corpus (<em>Technical Communication Quarterly</em>, <em>Journal of Business and Technical Communication</em>, <em>Journal of Technical Writing and Communication</em>, <em>Business and Professional Communication Quarterly</em>, <em>IEEE Transactions on Professional Communication</em>, <em>Rhetoric of Health and Medicine</em>, with adjacent journals available for cross-field comparison). They're working tools, not finished products, and they'll change as the analyses for each chapter develop.</p>
+
+    <h2 style="margin-top:2rem;">Availability</h2>
+
+    <p>The book is under development with a target manuscript submission of Fall 2027. The tools collected here will eventually be made publicly available alongside the book, with embeddable widget versions accompanying the born-digital edition. Until then, this page remains password-protected for collaborators, editors, and readers I've invited into the project's earlier stages.</p>
+
+    <p>If you've landed here and you're curious about the project, I'd be glad to hear from you. You can reach me at <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a>.</p>
+
+    <p style="margin-top:2rem;">— Justin</p>
+
+    <!-- ── Login form ───────────────────────────────────────── -->
+    <section style="margin-top:3rem;padding:1.5rem 1.6rem;background:#fdfbf7;border:1px solid #e8e4de;border-radius:4px;max-width:38rem;">
+      {% if authed %}
+        <h3 style="margin-top:0;font-size:1.05rem;color:#5a3e28;">You're already signed in.</h3>
+        <p style="font-size:0.92rem;color:#7a7268;margin-bottom:0.8rem;">Your session is good for {{ ttl_days }} days from your last sign-in.</p>
+        <p style="margin:0.6rem 0 0;">
+          <a href="/datastories/tools" style="display:inline-block;padding:0.5rem 1.1rem;background:#5a3e28;color:#fdfbf7;text-decoration:none;border-radius:2px;font-size:0.92rem;">Open the tools →</a>
+          <form action="/datastories/logout" method="post" style="display:inline;margin-left:0.6rem;">
+            <button type="submit" style="background:transparent;border:1px solid #c8c4bc;padding:0.5rem 0.9rem;cursor:pointer;font-size:0.86rem;color:#7a7268;border-radius:2px;">Sign out</button>
+          </form>
+        </p>
+      {% else %}
+        <h3 style="margin-top:0;font-size:1.05rem;color:#5a3e28;">Sign in to access the tools</h3>
+        <form action="/datastories/login" method="post" autocomplete="off" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-top:0.6rem;">
+          <label for="ds-password" style="font-size:0.86rem;color:#7a7268;">Password</label>
+          <input type="password" id="ds-password" name="password" required autofocus
+                 style="flex:1;min-width:220px;padding:0.5rem 0.7rem;border:1px solid #c8c4bc;font-size:0.95rem;border-radius:2px;">
+          <button type="submit"
+                  style="padding:0.5rem 1.1rem;background:#5a3e28;color:#fdfbf7;border:0;cursor:pointer;font-size:0.92rem;border-radius:2px;">Sign in</button>
+        </form>
+        <p style="margin:0.8rem 0 0;font-size:0.82rem;color:#9c9890;">No account needed. One shared password for everyone I've invited. Sessions last {{ ttl_days }} days.</p>
+      {% endif %}
+    </section>
+
+  </main>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <footer class="about-page-footer">
+    <p>Pinakes is built and maintained by <a href="mailto:justalewis1@gmail.com">Justin Lewis</a> at <a href="https://www.olympic.edu/" target="_blank" rel="noopener">Olympic College</a>.</p>
+  </footer>
+
+</div>
+{% endblock %}

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, redirect, make_response
 
 from db import get_year_range, get_new_article_count, get_coverage_stats
 from db import datastories as ds
@@ -27,6 +27,12 @@ from journal_groups import get_clusters
 from journals import UNAVAILABLE_JOURNALS
 from rate_limit import limiter, LIMITS
 from web_helpers import _safe_int, cache_response
+from auth_datastories import (
+    is_authenticated, verify_password, password_configured,
+    issue_session_cookie, clear_session_cookie,
+    require_datastories_auth, require_datastories_auth_api,
+    COOKIE_TTL_SECONDS,
+)
 
 log = logging.getLogger(__name__)
 
@@ -66,10 +72,77 @@ def _parse_filters(req):
     }
 
 
-# ── HTML page ──────────────────────────────────────────────────────────────
+# ── HTML pages ─────────────────────────────────────────────────────────────
+#
+# /datastories         public landing page; doubles as the login screen.
+# /datastories/tools   the actual tool surface, password-gated.
+# /datastories/login   POST password, set cookie, redirect to /tools.
+# /datastories/logout  POST clears cookie.
+
+_TTL_DAYS = COOKIE_TTL_SECONDS // (24 * 60 * 60)
+
 
 @bp.route("/datastories")
+def datastories_landing():
+    """Public landing page describing the project. Always reachable."""
+    return render_template(
+        "datastories_landing.html",
+        active_nav="datastories",
+        authed=is_authenticated(),
+        ttl_days=_TTL_DAYS,
+        login_error=None,
+    )
+
+
+@bp.route("/datastories/login", methods=["POST"])
+@limiter.limit("12 per minute")
+def datastories_login():
+    """Validate the submitted password. On success, set the auth cookie
+    and redirect to /datastories/tools. On failure, re-render the landing
+    page with an inline error. Rate-limited tighter than the default to
+    discourage brute-force."""
+    if not password_configured():
+        return render_template(
+            "datastories_landing.html",
+            active_nav="datastories",
+            authed=False,
+            ttl_days=_TTL_DAYS,
+            login_error=(
+                "This server has not been configured for Datastories access "
+                "(PINAKES_DATASTORIES_PASSWORD is unset). Contact the operator."
+            ),
+        ), 503
+
+    submitted = (request.form.get("password") or "").strip()
+    if not verify_password(submitted):
+        log.warning(
+            "Datastories login failed: ip=%s",
+            request.headers.get("Fly-Client-IP") or request.remote_addr or "unknown",
+        )
+        return render_template(
+            "datastories_landing.html",
+            active_nav="datastories",
+            authed=False,
+            ttl_days=_TTL_DAYS,
+            login_error="That password didn't match. If you should have access, contact Justin.",
+        ), 401
+
+    response = make_response(redirect("/datastories/tools"))
+    issue_session_cookie(response)
+    return response
+
+
+@bp.route("/datastories/logout", methods=["POST"])
+def datastories_logout():
+    response = make_response(redirect("/datastories"))
+    clear_session_cookie(response)
+    return response
+
+
+@bp.route("/datastories/tools")
+@require_datastories_auth
 def datastories_page():
+    """The full tool surface — accordion of chapters and panels. Auth-gated."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     min_year, max_year = get_year_range()
@@ -96,6 +169,7 @@ def datastories_page():
 # ── Chapter 3 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch3-braided-path")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch3_braided_path():
@@ -103,6 +177,7 @@ def api_ch3_braided_path():
 
 
 @bp.route("/api/datastories/ch3-branching-traditions")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch3_branching_traditions():
@@ -111,6 +186,7 @@ def api_ch3_branching_traditions():
 
 
 @bp.route("/api/datastories/ch3-origins-frontiers")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch3_origins_frontiers():
@@ -120,6 +196,7 @@ def api_ch3_origins_frontiers():
 # ── Chapter 4 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch4-shifting-currents")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch4_shifting_currents():
@@ -127,6 +204,7 @@ def api_ch4_shifting_currents():
 
 
 @bp.route("/api/datastories/ch4-speed-of-influence")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch4_speed_of_influence():
@@ -134,6 +212,7 @@ def api_ch4_speed_of_influence():
 
 
 @bp.route("/api/datastories/ch4-border-crossers")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch4_border_crossers():
@@ -141,6 +220,7 @@ def api_ch4_border_crossers():
 
 
 @bp.route("/api/datastories/ch4-two-way-street")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch4_two_way_street():
@@ -150,6 +230,7 @@ def api_ch4_two_way_street():
 # ── Chapter 5 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch5-shape-of-influence")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch5_shape_of_influence():
@@ -162,6 +243,7 @@ def api_ch5_shape_of_influence():
 
 
 @bp.route("/api/datastories/ch5-long-tail")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch5_long_tail():
@@ -170,6 +252,7 @@ def api_ch5_long_tail():
 
 
 @bp.route("/api/datastories/ch5-fair-ranking")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch5_fair_ranking():
@@ -182,6 +265,7 @@ def api_ch5_fair_ranking():
 
 
 @bp.route("/api/datastories/ch5-shifting-canons")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch5_shifting_canons():
@@ -190,6 +274,7 @@ def api_ch5_shifting_canons():
 
 
 @bp.route("/api/datastories/ch5-reach-of-citation")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch5_reach_of_citation():
@@ -198,6 +283,7 @@ def api_ch5_reach_of_citation():
 
 
 @bp.route("/api/datastories/ch5-inside-outside")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch5_inside_outside():
@@ -207,6 +293,7 @@ def api_ch5_inside_outside():
 # ── Chapter 6 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch6-communities-time")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch6_communities_time():
@@ -214,6 +301,7 @@ def api_ch6_communities_time():
 
 
 @bp.route("/api/datastories/ch6-walls-bridges")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch6_walls_bridges():
@@ -221,6 +309,7 @@ def api_ch6_walls_bridges():
 
 
 @bp.route("/api/datastories/ch6-first-spark")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch6_first_spark():
@@ -230,6 +319,7 @@ def api_ch6_first_spark():
 # ── Chapter 7 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch7-shared-foundations")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch7_shared_foundations():
@@ -238,6 +328,7 @@ def api_ch7_shared_foundations():
 
 
 @bp.route("/api/datastories/ch7-two-maps")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch7_two_maps():
@@ -245,6 +336,7 @@ def api_ch7_two_maps():
 
 
 @bp.route("/api/datastories/ch7-books-everyone-reads")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch7_books_everyone_reads():
@@ -252,6 +344,7 @@ def api_ch7_books_everyone_reads():
 
 
 @bp.route("/api/datastories/ch7-uneven-debts")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch7_uneven_debts():
@@ -261,6 +354,7 @@ def api_ch7_uneven_debts():
 # ── Chapter 8 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch8-solo-to-squad")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch8_solo_to_squad():
@@ -268,6 +362,7 @@ def api_ch8_solo_to_squad():
 
 
 @bp.route("/api/datastories/ch8-academic-lineages")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch8_academic_lineages():
@@ -276,6 +371,7 @@ def api_ch8_academic_lineages():
 
 
 @bp.route("/api/datastories/ch8-lasting-partnerships")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch8_lasting_partnerships():
@@ -285,6 +381,7 @@ def api_ch8_lasting_partnerships():
 # ── Chapter 9 ──────────────────────────────────────────────────────────────
 
 @bp.route("/api/datastories/ch9-prince-network")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=600)
 def api_ch9_prince_network():
@@ -292,6 +389,7 @@ def api_ch9_prince_network():
 
 
 @bp.route("/api/datastories/ch9-disciplinary-calendar")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch9_disciplinary_calendar():
@@ -299,6 +397,7 @@ def api_ch9_disciplinary_calendar():
 
 
 @bp.route("/api/datastories/ch9-unread-canon")
+@require_datastories_auth_api
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=600)
 def api_ch9_unread_canon():
