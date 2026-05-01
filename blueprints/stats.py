@@ -68,7 +68,7 @@ def api_author_network():
     Accepts: ?min_papers=3&top_n=150
     """
     min_papers = _safe_int(request.args.get("min_papers", 3), 3, lo=2, hi=25)
-    top_n      = _safe_int(request.args.get("top_n",      150), 150, lo=25, hi=350)
+    top_n      = _safe_int(request.args.get("top_n",      150), 150, lo=25, hi=500)
     return jsonify(get_author_network(min_papers=min_papers, top_n=top_n))
 
 

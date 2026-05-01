@@ -60,9 +60,14 @@ async function loadNetwork(minPapers, topN) {
   const nodes = data.nodes;
   const links = data.links;
 
-  // Stats bar
+  // Stats bar — surface the requested cap explicitly so users picking a
+  // higher "Authors shown" value know the corpus has more than what's drawn.
+  const requested = parseInt(document.getElementById('net-top-n').value) || 150;
+  const totalText = (nodes.length < requested)
+    ? `${nodes.length} authors`
+    : `${nodes.length} authors (showing top ${requested}; raise "Authors shown" to see more)`;
   document.getElementById('net-stats').textContent =
-    `${nodes.length} authors · ${links.length} co-authorship links`;
+    `${totalText} · ${links.length} co-authorship links`;
 
   if (!nodes || nodes.length === 0) {
     container.innerHTML = '<p class="explore-hint">No authors found with those settings. Try lowering the minimum publications threshold.</p>';
