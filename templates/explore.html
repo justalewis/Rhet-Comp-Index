@@ -1043,20 +1043,40 @@
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
 
-        <h4 class="methodology-heading">What community detection measures</h4>
-        <p>Community detection partitions a network into groups (communities) such that the density of edges within groups is significantly higher than the density of edges between groups. The measure used is <strong>modularity Q</strong> (Newman, 2006), which compares observed within-group edge density to what would be expected in a random network with the same degree sequence. Values of Q above 0.3 indicate meaningful community structure.</p>
+        <h4 class="methodology-heading">Tool orientation</h4>
+        <p>The Community Detection tool partitions the citation network into clusters of articles that cite each other more densely than they cite work elsewhere in the index. The algorithm finds the partition automatically rather than working from a predefined topic list, which means the resulting communities are emergent groupings driven by citation behavior rather than by editorial classification or subject tagging. Each community amounts to a research front: a group of articles whose authors have read each other and built on each other's work.</p>
 
-        <h4 class="methodology-heading">Algorithm</h4>
-        <p>The Louvain method (Blondel et al., 2008) is a greedy agglomerative algorithm that iteratively moves nodes to neighbouring communities when doing so increases modularity. The <strong>resolution</strong> parameter controls granularity: values below 1.0 produce fewer, larger communities; values above 1.0 produce more, smaller ones.</p>
+        <p>Run with default parameters &mdash; minimum two internal citations, resolution 1.0, all years and journals &mdash; the algorithm partitions 527 articles connected by 1,621 edges into 17 communities with a modularity Q of 0.587. The dominant cluster (C0, 91 articles) is the genre / activity-systems community led by Russell's 1997 "Rethinking Genre" and rooted in <em>Written Communication</em>, JBTC, and TCQ. The second cluster (C1, 77 articles) is the social-justice technical-communication community led by Jones, Moore, and Walton's 2016 "Disrupting the Past" and concentrated in TCQ. The third (C2, 71 articles) is the digital-rhetoric / computers-and-composition cluster led by Cooper and Selfe's 1990 "Computer Conferences and Learning" and rooted in <em>Computers and Composition</em>. Smaller communities surface the assessment cluster (C6, anchored by Flower and Hayes 1981 "A Cognitive Process Theory of Writing" in <em>Assessing Writing</em>), the intercultural TC cluster (C7), and the writing-center / service-learning cluster (C5).</p>
 
-        <h4 class="methodology-heading">Graph construction</h4>
-        <p>The citation network is converted to an undirected weighted graph. If article A cites article B, an edge is created between them with weight 1; if the citation is reciprocal, the weight is 2. Community detection operates on this undirected representation because intellectual affinity is symmetric.</p>
+        <p>Use the tool to identify the field's research fronts as the citation graph reveals them, locate which journals concentrate in which communities, and read off how stable or fragmented a sub-area is from the size of its cluster and the cohesion of its journal mix.</p>
+
+        <h4 class="methodology-heading">Methodology</h4>
+        <p>Community detection partitions a network into groups such that within-group edge density is materially higher than between-group density.<sup>1</sup> The measure of fit is modularity Q, which scores a partition by comparing observed within-group edge weight against the expected weight under a degree-preserving random null model.<sup>2</sup> Values of Q above roughly 0.3 indicate meaningful community structure; the default-parameter Q of 0.587 sits well into the well-clustered range and reflects that the indexed citation network is genuinely modular rather than an undifferentiated mass.</p>
+
+        <p>The algorithm is the Louvain method &mdash; a greedy agglomerative procedure that iteratively moves each node to whichever neighboring community produces the largest gain in Q, then folds each community into a single super-node and repeats, terminating when no move improves Q.<sup>3</sup> The Louvain algorithm is non-deterministic in its tie-breaking, so two runs on the same input may produce slightly different partitions for low-degree boundary nodes, though the overall cluster structure is stable. The directed citation graph is symmetrized before community detection because intellectual affinity, as opposed to citation flow, is undirected: a reciprocal citation between two articles produces an edge weight of 2 rather than two separate edges.</p>
+
+        <p>The resolution parameter &gamma; modifies the modularity objective to favor finer or coarser partitions.<sup>4</sup> At &gamma; = 1.0 (the standard Newman-Girvan modularity), the algorithm produces 17 communities at this corpus size; values below 1.0 favor merging adjacent communities into larger blocs, and values above 1.0 favor splitting communities into smaller, more topically-uniform clusters. The trade-off is between communities that are large enough to be analytically informative and communities that are small enough to be topically coherent. Each community is summarized by its top articles (by internal citation count), top journals (by article count within the community), and top topics (extracted from the controlled-vocabulary tags assigned to its articles); these summaries appear in the legend and the per-community tables.</p>
+
+        <p>Two limitations bear on interpretation. The communities are corpus-bounded: a research front whose citation chains run primarily through unindexed venues will not appear as a coherent cluster here, and the visible structure tilts toward whichever sub-areas have the densest internal citation chains. The partition is also unstable at the boundary: a peripheral article that sits in roughly equal proximity to two communities may be assigned to either one across runs, which is why the per-community tables list the high-citation core articles rather than every member.</p>
+
+        <h4 class="methodology-heading">Controls</h4>
+        <p>Five controls scope the partition. Filter changes do not auto-recompute; the Compute button is required because Louvain runs several seconds against a multi-thousand-node graph.</p>
+
+        <p>The <strong>minimum-citations slider</strong> sets the eligibility floor for inclusion in the network. At the default of two internal citations, peripheral articles enter the graph and the algorithm finds finer-grained communities at the cost of some boundary noise. Raising to five or ten produces fewer, larger communities anchored by the field's most-cited landmark articles.</p>
+
+        <p>The <strong>resolution slider</strong> controls cluster granularity directly, ranging 0.5 to 2.0. Lower values (0.7&ndash;0.9) merge the social-justice TC and intercultural TC clusters into a single technical-communication-of-difference community; higher values (1.3&ndash;1.7) split the genre cluster into separate sub-communities for activity systems, professional writing, and academic genre studies. Move the slider to test whether a particular structural feature is robust across resolutions or specific to one resolution choice.</p>
+
+        <p>The <strong>From / To year filters</strong> restrict the network by article publication year. Detecting communities on a 2010&ndash;2025 slice yields a substantively different partition than the all-time view: the social-justice TC cluster grows into the largest community, and several pre-2000 communities disappear because their core articles fall outside the date filter.</p>
+
+        <p>The <strong>Journals picker</strong> narrows the corpus to a chosen subset. Restricting to a journal cluster (the technical-communication venues, for instance) detects communities <em>within</em> that scope and produces a finer-grained view of how that sub-area's research fronts are organized.</p>
 
         <h4 class="methodology-heading">References</h4>
-        <ul class="methodology-refs">
-          <li>Blondel, V. D., Guillaume, J.-L., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks. <em>Journal of Statistical Mechanics, 2008</em>(10), P10008.</li>
-          <li>Newman, M. E. J. (2006). Modularity and community structure in networks. <em>PNAS, 103</em>(23), 8577&ndash;8582.</li>
-        </ul>
+        <ol class="methodology-refs">
+          <li>Fortunato, S. (2010). Community detection in graphs. <em>Physics Reports, 486</em>(3&ndash;5), 75&ndash;174.</li>
+          <li>Newman, M. E. J. (2006). Modularity and community structure in networks. <em>Proceedings of the National Academy of Sciences, 103</em>(23), 8577&ndash;8582.</li>
+          <li>Blondel, V. D., Guillaume, J.-L., Lambiotte, R., &amp; Lefebvre, E. (2008). Fast unfolding of communities in large networks. <em>Journal of Statistical Mechanics: Theory and Experiment, 2008</em>(10), P10008.</li>
+          <li>Reichardt, J., &amp; Bornholdt, S. (2006). Statistical mechanics of community detection. <em>Physical Review E, 74</em>(1), 016110.</li>
+        </ol>
 
         </div>
       </details>
