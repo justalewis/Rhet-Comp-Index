@@ -76,6 +76,7 @@ async function loadCitationNetwork() {
   try {
     const resp = await fetch('/api/citations/network?' + params.toString());
     data = await resp.json();
+    window.__expCitnet = data;
   } catch (e) {
     container.innerHTML = '<p class="explore-hint">Failed to load network data.</p>';
     return;
