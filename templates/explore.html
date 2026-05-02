@@ -7,6 +7,9 @@
 {% endblock %}
 
 {% block content %}
+    {% from "_network_legend.html" import network_legend %}
+    {% from "_network_trio_compare.html" import network_trio_compare %}
+    {% from "_how_to_read.html" import how_to_read %}
     <div class="content-header">
       <h2>Explore</h2>
       <span class="result-count">Data visualisations</span>
@@ -205,6 +208,12 @@
       <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: not all journals contribute equal data to this chart →</a></p>
 
+      {{ how_to_read(
+          "How indexed-output volume is distributed across years and journals, and where individual venues sit in the field's overall scholarly throughput.",
+          "A claim about &lsquo;how much the field publishes.&rsquo; The timeline reflects indexed output, not total publishing. Journals added to the index more recently show data only from their indexing date forward, which produces sharp leading edges that look like surges but are recovery artefacts.",
+          "Toggle &lsquo;Show top 8 journals only&rsquo; to read the field's high-volume venues separately from the long tail. The shape of the long tail (steady or staircased) often reveals when small journals were added to the index versus when they actually published."
+      ) }}
+
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
@@ -254,6 +263,12 @@
       <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap — a quick way to see which research threads are most tightly intertwined. Tags are drawn from a 61-term disciplinary vocabulary and matched against title and abstract text, currently covering about 73% of indexed articles. Journals without abstracts in the index are underrepresented.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals indexed via RSS or scraping often lack abstracts and are underrepresented here →</a></p>
 
+      {{ how_to_read(
+          "Which thematic tags appear together on the same articles. Useful for spotting tightly intertwined research threads and recognised sub-fields at the intersection of two terms.",
+          "A claim about which topics are &lsquo;more important&rsquo; or which research threads are most central. Frequent tags will co-occur with everything by base-rate inflation: the heatmap shows volume of overlap, not strength of association.",
+          "Read the off-diagonal more than the diagonal. The surprising pairs &mdash; where you didn't expect a heavy overlap &mdash; are the analytically interesting ones. To control for base rate, divide each cell by the marginal counts and inspect the residual; the heatmap is the unnormalized signal."
+      ) }}
+
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
@@ -299,6 +314,16 @@
         <p>Rhetoric and composition is historically a solo-author field, so most scholars don't appear here: they either have fewer indexed publications than the threshold you've set, or they haven't co-authored with others in the index. The authors who do appear — and especially the clusters that form around them — tend to reflect sustained research communities: writing center scholars, WAC researchers, technical communication groups, empirical writing researchers. Isolates (nodes with no edges) are frequent publishers who work primarily alone.</p>
         <p class="network-howto"><strong>How to use it:</strong> Scroll or pinch to zoom · Drag nodes to rearrange · <strong>Click a node</strong> to highlight that author's connections; click again or use the "View profile" button to open their full page · Use the controls below to change which authors appear.</p>
         <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: authors who publish primarily in journals without CrossRef DOIs appear less connected than their actual collaborative record →</a></p>
+        {{ network_legend(
+            "author's total indexed publications",
+            "uniform (highlighted on click)",
+            "undirected; weight = number of co-authored articles"
+        ) }}
+        {{ how_to_read(
+            "Who has actually written articles together inside the indexed journals. Useful for identifying long-running collaborative pairs and dense research groups.",
+            "A claim about scholarly kinship in the broader sense. Rhetoric/composition is historically a solo-author field; many scholars who clearly belong to the same conversation will appear as isolates here.",
+            "Cross-reference with the Author Co-Citation tool: scholars who are heavily co-cited but never co-authored are participating in the same conversation without sharing a byline."
+        ) }}
       </div>
 
       <details class="abstract-toggle methodology-section">
@@ -392,6 +417,18 @@
       <p class="tab-intro">The clusters that form are not research teams (that is the <a href="#authors" onclick="document.querySelector('[data-hash=authors]').click();return false;">Author Network</a>). They are the field&rsquo;s mental model of who belongs together: which scholars a citing author reaches for when building the theoretical frame of an argument, the methods section of a study, or the literature review of a dissertation chapter. Dense clusters often correspond to recognised schools of thought or research specialisations. Scholars positioned between clusters &mdash; visible as nodes with edges reaching into multiple groups &mdash; bridge conversations that the field otherwise treats as separate.</p>
 
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: co-citation data depends on journals that deposit reference lists with CrossRef. Authors whose work appears primarily in journals without reference deposits will be underrepresented &rarr;</a></p>
+
+      {{ network_legend(
+          "total co-citation strength (sum of edge weights)",
+          "uniform (cluster position emerges from layout)",
+          "undirected; weight = number of citing articles co-citing the pair"
+      ) }}
+
+      {{ how_to_read(
+          "Which scholars the citing community has come to treat as part of the same intellectual conversation. Useful for identifying recognized schools of thought and the bridge figures between them.",
+          "A claim about who has actually collaborated, or about whether any two scholars agree intellectually. Co-citation reflects what later authors do with a pair, not whether either has ever cited the other.",
+          "Restrict the citing-articles year range to a recent decade (e.g., 2018&ndash;present) and watch how the cluster structure shifts; the shifts mark moments when the field's perception of who-belongs-with-whom moved."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -545,6 +582,8 @@
         <div id="acocit-pairs-container"></div>
       </div>
 
+      {{ network_trio_compare("author_cocit") }}
+
     </div><!-- /tab-authorcocit -->
 
     <!-- ── Citations tab ─────────────────────────────────────── -->
@@ -680,6 +719,12 @@
       <p class="tab-intro">Average internal references per article by publication year — how densely each year's articles cite other indexed work. The curve rises toward the present as the indexed corpus has grown and articles have more eligible internal targets to cite. Filter by journal to compare citation patterns across venues.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation counts reflect only journals that deposit reference lists with CrossRef →</a></p>
 
+      {{ how_to_read(
+          "How densely the indexed articles cite each other year by year &mdash; a measure of internal connectedness over time.",
+          "A claim about how engaged the field is with prior work, or about whether scholarship has gotten more rigorous. Coverage growth is the dominant cause of the upward curve: more journals deposit reference lists now than in 1990, and the indexed corpus has more eligible internal targets to cite.",
+          "Read the slope across a 5-year window rather than the absolute level. Compare a single journal's trajectory against the all-journals baseline to see whether the venue's citation behavior is unusual relative to the field's overall trend."
+      ) }}
+
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
@@ -737,6 +782,18 @@
 
       <p class="tab-intro">Force-directed graph of citation relationships between articles in this index. Each node is an article; edges represent a citation. Raise the minimum-citations threshold to show only the most densely connected work. Filter by journal or year to focus on a particular corner of the field.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals without CrossRef reference deposits contribute no edges to this graph →</a></p>
+
+      {{ network_legend(
+          "internal citation count (citations received from other indexed articles)",
+          "source journal",
+          "directed; arrowhead points from citing article to cited article"
+      ) }}
+
+      {{ how_to_read(
+          "Who cites whom inside the indexed corpus. Useful for locating landmark articles by visual centrality and tracing chains of intellectual debt between specific texts.",
+          "A claim about which articles are most influential overall. The graph counts only edges where both endpoints are indexed; an article cited heavily in books or unindexed venues will look smaller than its actual influence.",
+          "Restrict the year range to a 10&ndash;15 year window (e.g., 2010&ndash;2025) to see which articles are at the center of recent conversation, then compare to the all-time view. The articles that lose centrality under the recent filter are the ones the field is no longer reaching back for."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -858,6 +915,8 @@
         <div class="loading-msg">Loading citation network…</div>
       </div>
 
+      {{ network_trio_compare("citation") }}
+
     </div><!-- /tab-citnet -->
 
     <!-- ── Centrality tab ──────────────────────────────────────── -->
@@ -865,6 +924,18 @@
 
       <p class="tab-intro">Network centrality analysis of citation relationships across the index. <strong>Eigenvector centrality</strong> identifies articles connected to the most highly-connected work — the intellectual epicentres of the field. <strong>Betweenness centrality</strong> identifies bridge articles that sit on the shortest paths between clusters — the work that connects different conversations. Inspired by <a href="https://publicationsncte.org/content/journals/10.58680/ccc2026773430" target="_blank" rel="noopener">Marie Pruitt's bibliometric network analysis of <em>CCC</em> (2026)</a>, extended here across all journals in the index.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: centrality scores reflect only journals that deposit reference lists with CrossRef →</a></p>
+
+      {{ network_legend(
+          "configurable: eigenvector / betweenness / raw citation count (default: eigenvector)",
+          "configurable: source journal / heatmap on active metric (default: source journal)",
+          "directed; arrowhead points from citing article to cited article"
+      ) }}
+
+      {{ how_to_read(
+          "Which articles sit at the structural center of the citation graph (eigenvector) versus which articles bridge between sub-areas (betweenness). The two metrics ask different questions and routinely disagree, which is the analytic point.",
+          "A claim about which articles are most &lsquo;important&rsquo;. Both metrics tilt toward older articles with more accumulated citation paths, and the rankings depend on which sub-areas have the densest internal citation chains in this corpus.",
+          "Read the eigenvector top 25 and the betweenness top 25 side by side. Articles that appear on only one list are doing different structural work than articles that appear on both."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -882,9 +953,9 @@
         <h4 class="methodology-heading">Methodology</h4>
         <p>The citation network is constructed as a directed graph G&nbsp;=&nbsp;(V,&nbsp;E) where each node v is an indexed article and each directed edge (u,&nbsp;v) means article u cites article v. The graph is filtered before centrality computation: nodes must hold at least <em>n</em> internal citations to be eligible (the minimum-citations slider) and the eligible set is capped at the top 600 articles by citation count to keep the eigenvector and betweenness solvers responsive.</p>
 
-        <p>Eigenvector centrality is implemented as PageRank with damping factor &alpha;&nbsp;=&nbsp;0.85.<sup>1</sup> The classical eigenvector definition assigns zero to every node outside the largest strongly-connected component, which is fatal for a citation graph that contains many small disconnected sub-clusters. PageRank's damping term models a random walker who follows citation edges 85% of the time and teleports to a random node 15% of the time, ensuring every node receives a nonzero score and producing meaningful rankings across the full graph. Betweenness centrality is computed using Brandes's O(|V|&middot;|E|) algorithm, which counts for each node v the fraction of all-pairs shortest paths that pass through v.<sup>2</sup> Both metrics are normalized to a 0&ndash;100% scale relative to the highest-scoring article in the current filtered set, so the leader is always 1.0 and other scores are reported as fractions of that leader.</p>
+        <p><em>What each metric measures.</em> Before the implementation details, the conceptual difference is the analytically important thing. <strong>Eigenvector centrality</strong> propagates importance through edges: an article cited by five highly-cited articles scores higher than one cited by fifty peripheral articles, because the metric weights the score of each citing article by the citing article's own centrality. It rewards influence-by-association &mdash; being read by the work that other work reads. <strong>Betweenness centrality</strong> is structural rather than associative: it is high when removing the article from the network would lengthen the shortest paths between many pairs of other articles, regardless of those articles' citation counts. It rewards bridging &mdash; sitting on the routes between conversations that would otherwise be more distant. The two metrics often disagree, and the disagreement is the analytic point.<sup>3</sup> The Pruitt (2026) bibliometric analysis of <em>CCC</em> 1950&ndash;2022 used the same two-metric framing on a single-journal corpus; this tool extends it across the full multi-journal index.<sup>4</sup></p>
 
-        <p>The analytic distinction between the two metrics is consequential.<sup>3</sup> Eigenvector centrality propagates importance through edges: an article cited by five highly-cited articles scores higher than one cited by fifty peripheral articles, because the metric weights the score of each citing article by the citing article's own centrality. Betweenness centrality is structural: it is high when removing the article from the network would lengthen the shortest paths between many pairs of other articles, regardless of those articles' citation counts. The Pruitt (2026) bibliometric analysis of <em>CCC</em> 1950&ndash;2022 used the same two-metric framing on a single-journal corpus; this tool extends that framing across the full multi-journal index.<sup>4</sup></p>
+        <p><em>How the metrics are computed.</em> Eigenvector centrality is implemented as PageRank with damping factor &alpha;&nbsp;=&nbsp;0.85.<sup>1</sup> The classical eigenvector definition assigns zero to every node outside the largest strongly-connected component, which is fatal for a citation graph that contains many small disconnected sub-clusters. PageRank's damping term models a random walker who follows citation edges 85% of the time and teleports to a random node 15% of the time, ensuring every node receives a nonzero score and producing meaningful rankings across the full graph. Betweenness centrality is computed using Brandes's O(|V|&middot;|E|) algorithm, which counts for each node v the fraction of all-pairs shortest paths that pass through v.<sup>2</sup> Both metrics are normalized to a 0&ndash;100% scale relative to the highest-scoring article in the current filtered set, so the leader is always 1.0 and other scores are reported as fractions of that leader.</p>
 
         <p>Two limitations bear on interpretation. The metrics reflect structural position within the indexed corpus only: an article that is foundational to the broader field but rarely cited inside the indexed journals will not score highly, and the rankings tilt toward whichever sub-areas have the densest internal citation chains in this corpus. The metrics are also sensitive to the time-accumulation effect: older articles have had more years to accumulate citation paths, and they therefore dominate both rankings. The year-range filters are the standard way to control for this effect; restricting the corpus to a 1995&ndash;2010 window, for example, surfaces a substantively different set of bridge articles than the all-time view.</p>
 
@@ -1039,6 +1110,18 @@
       <p class="tab-intro"><strong>Community detection</strong> identifies clusters of articles that cite each other more densely than they cite work outside their group. These clusters correspond to research fronts, schools of thought, or topical specialisations. The algorithm (Louvain modularity optimisation) automatically discovers how many communities exist and which articles belong to each, without requiring predefined categories. Node colour indicates community membership; hover for details.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
 
+      {{ network_legend(
+          "internal citation count",
+          "community membership (Louvain partition)",
+          "symmetrized citation; reciprocal citations carry double weight"
+      ) }}
+
+      {{ how_to_read(
+          "How the citation network partitions into research fronts based on density of internal citation. Useful for identifying the field's emergent sub-areas as the citation behavior reveals them, rather than as editorial categories impose them.",
+          "A definitive taxonomy of the field's sub-areas. The Louvain partition is non-deterministic at boundary nodes and depends on the resolution parameter; two runs can disagree on a few articles, and a different resolution can split or merge clusters.",
+          "Adjust the resolution parameter from 0.5 to 1.5. Smaller values merge clusters into broader traditions; larger values fracture them into sub-specializations. Read the same data at multiple resolutions before deciding what counts as a community."
+      ) }}
+
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
@@ -1144,6 +1227,18 @@
 
       <p class="tab-intro">Co-citation analysis reveals which articles the field treats as intellectually related. Two articles are <strong>co-cited</strong> when a third article cites both of them in its reference list. The more often a pair is co-cited, the stronger the field's perception that they belong together. This is a fundamentally different view from direct citation: it captures how the <em>citing community</em> organizes knowledge, not just who cites whom.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: co-citation data depends on journals that deposit reference lists with CrossRef →</a></p>
+
+      {{ network_legend(
+          "total co-citation strength (sum of edge weights)",
+          "uniform (cluster position emerges from layout)",
+          "undirected; weight = number of citing articles co-citing the pair"
+      ) }}
+
+      {{ how_to_read(
+          "Which articles the citing community has come to treat as belonging together, and which articles bridge between visually distinct clusters. Useful for identifying perceived intellectual kinship and bridge texts.",
+          "A claim about which articles are similar in content. Co-citation reflects what later authors do with the pair, not what's actually inside the texts. Two articles can be heavily co-cited even if neither cites the other and their topics differ.",
+          "Look for nodes whose edges reach into multiple visual clusters. Those bridge articles are doing structural work the field rarely names directly &mdash; they connect conversations that the citing community otherwise treats as separate."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -1263,6 +1358,8 @@
         Click any node to open that article &nbsp;&middot;&nbsp; scroll to zoom &nbsp;&middot;&nbsp; drag to pan &nbsp;&middot;&nbsp; thicker edges = more frequent co-citation
       </p>
 
+      {{ network_trio_compare("article_cocit") }}
+
     </div><!-- /tab-cocitation -->
 
     <!-- ── Bibliographic Coupling tab ─────────────────────────── -->
@@ -1270,6 +1367,18 @@
 
       <p class="tab-intro"><strong>Bibliographic coupling</strong> links articles that cite the same references. Where <a href="#cocitation">co-citation</a> reveals which articles the field treats as intellectually related (cited <em>together</em> by later work), bibliographic coupling reveals which articles <em>draw on the same foundations</em>. Two articles with many shared references are reading &mdash; and building on &mdash; the same body of prior work, even if neither cites the other directly. This is the inverse of co-citation: it measures similarity of intellectual <em>input</em> rather than <em>reception</em>.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: bibliographic coupling requires reference lists deposited with CrossRef &rarr;</a></p>
+
+      {{ network_legend(
+          "total coupling strength (sum of edge weights)",
+          "uniform (cluster position emerges from layout)",
+          "undirected; weight = number of references the two articles share"
+      ) }}
+
+      {{ how_to_read(
+          "Which articles read the same prior work and share intellectual foundations. Useful for finding methodological siblings, locating clusters working from the same theoretical sources, and identifying review articles by their distinctive coupling signature.",
+          "A claim about which articles are about the same topic. Coupling-strength tilts toward articles whose reference lists are long and stay inside the indexed corpus &mdash; literature reviews and methodological surveys, especially. An article that engages prior work seriously but cites mostly external sources will look less coupled than its actual position warrants.",
+          "Compare the cluster structure here to the Article Co-Citation cluster structure. The disagreements between intellectual <em>input</em> (coupling) and <em>reception</em> (co-citation) are often analytically the most interesting places."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -1389,6 +1498,8 @@
         Click any node to open that article &nbsp;&middot;&nbsp; scroll to zoom &nbsp;&middot;&nbsp; drag to pan &nbsp;&middot;&nbsp; thicker edges = more shared references
       </p>
 
+      {{ network_trio_compare("coupling") }}
+
     </div><!-- /tab-bibcoupling -->
 
     <!-- ── Sleeping Beauties tab ──────────────────────────────── -->
@@ -1396,6 +1507,12 @@
 
       <p class="tab-intro"><strong>Sleeping Beauties</strong> are articles that went largely uncited for years after publication, then experienced a late surge of recognition. The concept comes from bibliometrics: some work is ahead of its time, or finds its audience only when the field&rsquo;s interests shift. This analysis ranks articles by the <strong>Beauty Coefficient</strong> (Ke et al., 2015), which quantifies how sharply an article&rsquo;s citation trajectory departs from a steady linear rise &mdash; the longer the sleep and the sharper the awakening, the higher the score.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      {{ how_to_read(
+          "Articles that went years with little citation before experiencing a surge of recognition. The Beauty Coefficient quantifies how dormant and how sharp the awakening was &mdash; useful for spotting articles whose late uptake may mark a disciplinary turn.",
+          "A claim about <em>why</em> an article was overlooked, or about whether it deserved to be. The metric registers temporal patterns, not reasons. Some sleepers wake because of a new theoretical turn, others because a single high-profile prince article reaches back, others because the corpus's coverage of citing work has improved.",
+          "After identifying a sleeping beauty, run the article through the Reading Path tool to see what recent articles are reaching back to it. Those are the &lsquo;princes&rsquo; that woke it up, and they often signal where the field's interests have shifted."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -1511,6 +1628,12 @@
 
       <p class="tab-intro"><strong>Journal citation flow</strong> shows which journals cite which other journals, and how much. Each chord connects two journals; the width at each end reflects the number of citations flowing in that direction. Asymmetric widths reveal directional intellectual relationships &mdash; for instance, whether <em>TCQ</em> cites <em>JBTC</em> more than the reverse, or whether composition journals draw heavily from rhetoric venues. Self-citations (a journal citing itself) appear as loops and indicate the degree of internal conversation within a venue.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      {{ how_to_read(
+          "Asymmetric citation flow between journals: who cites whom and who gets cited back, plus the size of the loop that marks within-venue self-reference.",
+          "A measure of which journal is more &lsquo;important&rsquo;. Asymmetries reflect coverage as much as field structure &mdash; a journal can't cite if it has no DOIs, so RSS-only venues will appear to be net recipients of citation when they're really just structurally invisible as citers.",
+          "Look for chords that are thick on one end and thin on the other. Those asymmetries often reveal sub-areas where one journal is the destination and another is the producer of citations toward it &mdash; a relationship the journals themselves rarely name."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -1632,6 +1755,12 @@
 
       <p class="tab-intro"><strong>Citation half-life</strong> measures how far back in time a journal&rsquo;s citations reach. The <em>citing half-life</em> is the median age of the works a journal cites &mdash; a short value means authors favour recent scholarship, while a long value means they draw on older literature. The <em>cited half-life</em> is the median age at which a journal&rsquo;s own articles are cited by others &mdash; a long value signals enduring influence. Together they reveal whether a journal is a fast-moving research front or a repository of lasting theoretical contributions.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      {{ how_to_read(
+          "How far back a journal's citations reach (cited half-life) and how recent the work that cites the journal tends to be (citing half-life).",
+          "A measure of a journal's &lsquo;age&rsquo; or &lsquo;currency.&rsquo; A long cited half-life can mean either that the journal returns to canon (deep history) or that its corpus is small enough to be dominated by a few old works.",
+          "Compare a journal's citing half-life to its cited half-life. When authors keep returning to old work but new work keeps citing the journal, that's a different pattern than a journal whose authors and citers all live in the recent literature &mdash; the first looks like a tradition, the second looks like a research front."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -1756,6 +1885,12 @@
       <p class="tab-intro"><strong>Main path analysis</strong> identifies the backbone of knowledge flow through the citation network &mdash; the single most-traversed chain of articles connecting the field&rsquo;s current frontier to its foundational works. Each edge in the citation graph is weighted by <em>Search Path Count</em> (SPC): the number of all possible source-to-sink paths that pass through it. The resulting main path highlights the articles that serve as critical conduits for the transmission of ideas across decades.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
 
+      {{ how_to_read(
+          "The most-traveled chain through the citation graph &mdash; a backbone of how ideas flow from frontier articles toward foundational ones. Useful for identifying landmark articles in a citation lineage.",
+          "A claim that this is <em>the</em> main path of the field. There are typically several high-traffic paths through a citation DAG; this tool surfaces the single chain with the highest aggregate flow, not all of them. Articles missing from the main path are not necessarily peripheral &mdash; they may sit on a parallel high-traffic route.",
+          "Restrict the corpus by year range or journal cluster and re-run. Watching how the main path shifts when you scope the field to a different slice is more informative than the headline result on the all-time view."
+      ) }}
+
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
@@ -1855,6 +1990,12 @@
       <p class="tab-coverage-link"><a href="/coverage"
         class="coverage-note-link">Coverage notes: citation data depends on
         journals that deposit reference lists with CrossRef &rarr;</a></p>
+
+      {{ how_to_read(
+          "How aggregate properties of the citation graph (density, clustering coefficient, modularity, growth rate) change year by year. Useful for spotting structural shifts in the field's citation behavior.",
+          "A claim about <em>why</em> the numbers move. A rising clustering coefficient could reflect tighter sub-area cohesion, or coverage gaps that drop the bridge edges between sub-areas. The metric describes structural shape, not its causes.",
+          "Compare the modularity track against the Community Detection cluster count for the same year. When modularity rises but the cluster count holds steady, the existing fronts are tightening; when cluster count rises, the field is fracturing into more specialised sub-areas."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
@@ -2018,6 +2159,12 @@
       <p class="tab-intro">Institutional output across the index — derived from author affiliation data collected via OpenAlex. The bar chart shows the 25 most productive institutions by article count; the line chart tracks the top 10 over time. Institutions are attributed at the per-article level (one article may contribute to multiple institutions). Articles without CrossRef DOIs have no OpenAlex record and contribute no affiliation data; institutions associated with journals indexed via RSS or scraping are undercounted.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: affiliation data requires a CrossRef DOI — RSS-only journals contribute no institution data →</a></p>
 
+      {{ how_to_read(
+          "Which universities OpenAlex has parsed as primary affiliations for the indexed articles, and how that distribution moves over time. Useful for spotting institutional clusters and tracking output trends.",
+          "A measure of &lsquo;where the field is happening&rsquo;. OpenAlex's affiliation parsing has known gaps: it gives priority to first-author institutions, misses adjuncts and irregular employees, and is sparse for articles without DOIs. Two-year colleges and small institutions are especially underrepresented.",
+          "Compare the rolled-up totals against the year-by-year line chart. Institutions that show up in the totals but as a flat line on the time chart are recent arrivals; long horizontal traces mark sustained programs."
+      ) }}
+
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>
         <div class="methodology-body">
@@ -2079,6 +2226,12 @@
       <p class="tab-coverage-link"><a href="/coverage"
         class="coverage-note-link">Coverage notes: reading paths depend on citation
         data deposited with CrossRef &rarr;</a></p>
+
+      {{ how_to_read(
+          "The bibliographic neighbourhood of a seed article: its backward citations, forward citations, co-citation neighbours, and bibliographic-coupling neighbours. The closest thing on the site to a working scholarly research workflow.",
+          "A claim that the top results are the &lsquo;best&rsquo; related articles. Relevance ranks combine four heterogeneous signals (citing, cited, co-cited, coupled); the ranking surfaces a productive starting set, not a definitive read.",
+          "Pick a seed article whose intellectual neighbourhood you already know, and check whether the tool reproduces it. The places where it surprises you &mdash; surfacing articles you didn't expect, or missing articles you did &mdash; are the places worth following."
+      ) }}
 
       <details class="abstract-toggle methodology-section">
         <summary class="methodology-summary">Methodology</summary>

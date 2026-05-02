@@ -6,6 +6,12 @@
       {% if new_count %}<span class="new-badge">{{ new_count }}</span>{% endif %}
     </a>
   </div>
+  <div class="nav-item{% if active_nav == 'atlas' %} active{% endif %}">
+    <a href="/atlas" class="feature-nav-link{% if active_nav == 'atlas' %} active-feature-link{% endif %}">
+      <span class="feature-nav-icon">&#9784;</span>
+      Atlas
+    </a>
+  </div>
   <div class="nav-item" id="nav-explore">
     <button class="nav-item-trigger" aria-haspopup="true" aria-expanded="false">
       <span class="feature-nav-icon">&#9678;</span>
@@ -13,24 +19,35 @@
       <span class="nav-chevron">&#9662;</span>
     </button>
     <div class="nav-dropdown">
-      <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
-      <a href="/explore#authors" class="nav-dropdown-item">Author Network</a>
-      <a href="/explore#bibcoupling" class="nav-dropdown-item">Bib. Coupling</a>
-      <a href="/explore#centrality" class="nav-dropdown-item">Centrality</a>
-      <a href="/citations" class="nav-dropdown-item">Citation Network</a>
-      <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
-      <a href="/explore#citations" class="nav-dropdown-item">Citations</a>
-      <a href="/explore#communities" class="nav-dropdown-item">Communities</a>
-      <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
+      {# Lead with the question-framed grid; promote it above the per-tool list. #}
+      <a href="/tools" class="nav-dropdown-item" style="font-weight:600;">Browse all tools &rarr;</a>
+
+      <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">What has the field published?</a>
+      <a href="/explore#timeline" class="nav-dropdown-item">Publication Timeline</a>
       <a href="/explore#institutions" class="nav-dropdown-item">Institutions</a>
-      <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Flow</a>
-      <a href="/explore#main-path" class="nav-dropdown-item">Main Path</a>
-      <a href="/explore#reading-path" class="nav-dropdown-item">Reading Path</a>
+
+      <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">How does the field cite?</a>
+      <a href="/explore#citnet" class="nav-dropdown-item">Citation Network</a>
+      <a href="/explore#citation-trends" class="nav-dropdown-item">Citation Trends</a>
+      <a href="/explore#journal-flow" class="nav-dropdown-item">Journal Citation Flow</a>
+      <a href="/explore#half-life" class="nav-dropdown-item">Half-Life</a>
+
+      <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">What belongs together?</a>
+      <a href="/explore#cocitation" class="nav-dropdown-item">Article Co-Citation</a>
+      <a href="/explore#author-cocitation" class="nav-dropdown-item">Author Co-Citation</a>
+      <a href="/explore#bibcoupling" class="nav-dropdown-item">Bibliographic Coupling</a>
+      <a href="/explore#communities" class="nav-dropdown-item">Community Detection</a>
+      <a href="/explore#centrality" class="nav-dropdown-item">Centrality Analysis</a>
+      <a href="/explore#main-path" class="nav-dropdown-item">Main Path Analysis</a>
       <a href="/explore#sleeping-beauties" class="nav-dropdown-item">Sleeping Beauties</a>
-      <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Evolution</a>
-      <a href="/explore#timeline" class="nav-dropdown-item">Timeline</a>
-      <a href="/explore#topics" class="nav-dropdown-item">Topics</a>
-      <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">Browse All Tools</a>
+      <a href="/explore#temporal-evolution" class="nav-dropdown-item">Temporal Network Evolution</a>
+
+      <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">Who works with whom?</a>
+      <a href="/explore#authors" class="nav-dropdown-item">Co-Authorship Network</a>
+
+      <a href="/tools" class="nav-dropdown-item nav-dropdown-divider">What is the field about?</a>
+      <a href="/explore#topics" class="nav-dropdown-item">Topic Co-Occurrence</a>
+      <a href="/explore#reading-path" class="nav-dropdown-item">Reading Path</a>
     </div>
   </div>
   {# Two render modes for the Datastories nav item:
@@ -125,6 +142,12 @@
     <a href="/coverage" class="feature-nav-link">
       <span class="feature-nav-icon">&#9707;</span>
       Coverage
+    </a>
+  </div>
+  <div class="nav-item">
+    <a href="/glossary" class="feature-nav-link">
+      <span class="feature-nav-icon">&#9745;</span>
+      Glossary
     </a>
   </div>
   <div class="nav-item">

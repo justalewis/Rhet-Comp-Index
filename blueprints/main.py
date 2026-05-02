@@ -268,6 +268,31 @@ def about():
     return render_template("about.html")
 
 
+@bp.route("/glossary")
+def glossary():
+    """Glossary of bibliometric terms used across the Explore and Datastories
+    tools. Plain-language definitions with Rhet/Comp examples; intended as
+    the destination for in-tool gloss links and as a standalone reference."""
+    return render_template("glossary.html")
+
+
+@bp.route("/atlas")
+def atlas():
+    """Atlas of the Field — turns the seven-cluster sidebar scheme into a
+    destination. For each cluster: orientation paragraph, journal list with
+    live article counts, and named entry points into the index and Explore
+    tools pre-filtered to that cluster.
+
+    Reuses the sidebar's journal_groups data (article counts already attached)
+    so this view stays consistent with the sidebar filter."""
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
+    return render_template(
+        "atlas.html",
+        journal_groups=journal_groups,
+        all_journals=all_journals,
+    )
+
+
 @bp.route("/coverage")
 def coverage():
     """Index coverage page — what's fully indexed, what's partial, what's missing.

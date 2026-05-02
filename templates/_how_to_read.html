@@ -1,0 +1,24 @@
+{# Per-tool "How to read this" interpretive guidance.
+
+   Distinct from a Methodology block, which explains how a number was
+   computed. This block explains what the number warrants: what claim
+   the tool can support, what claim it can't, and one productive move
+   to try with it. Three short sentences, no more.
+
+   Usage:
+       {% from "_how_to_read.html" import how_to_read %}
+       {{ how_to_read(
+           "what the tool warrants saying",
+           "what the tool does NOT warrant saying",
+           "one move to try"
+       ) }}
+#}
+{% macro how_to_read(warrants, does_not_warrant, try_this) -%}
+<aside class="how-to-read"
+       style="margin:1rem 0;padding:0.85rem 1.1rem;background:#f4ede0;border-left:3px solid #8b6045;font-size:0.91rem;color:#4a3f30;line-height:1.55;">
+  <p style="margin:0 0 0.4rem;font-weight:600;color:#5a3e28;letter-spacing:0.04em;text-transform:uppercase;font-size:0.76rem;">How to read this</p>
+  <p style="margin:0 0 0.35rem;"><strong>What it warrants:</strong> {{ warrants }}</p>
+  <p style="margin:0 0 0.35rem;"><strong>What it doesn't:</strong> {{ does_not_warrant }}</p>
+  <p style="margin:0;"><strong>Try this:</strong> {{ try_this }}</p>
+</aside>
+{%- endmacro %}

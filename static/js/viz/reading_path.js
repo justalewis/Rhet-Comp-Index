@@ -467,18 +467,59 @@ function rpRenderList(list, filter) {
     return;
   }
 
+  // Friendly labels for each relationship type. The raw type names
+  // (cites, cited_by, cocited, coupled) are bibliometric shorthand;
+  // the friendly form makes the directional relationship explicit
+  // ("seed cites this" vs. "this cites seed") so a reader who hasn't
+  // built the four-view trio in their head can still parse the row.
+  const REL_LABEL = {
+    cites:    "seed cites this",
+    cited_by: "this cites seed",
+    cocited:  "co-cited",
+    coupled:  "shared refs",
+  };
+
   container.innerHTML = filtered.map((a, i) => {
-    const relBadges = (a.rel_types || []).map(t =>
-      `<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.72rem;color:#fff;background:${RP_COLORS[t] || '#999'};margin-right:0.3rem;">${t.replace('_', ' ')}</span>`
-    ).join('');
+    // Build badges using the per-relationship weights when available,
+    // falling back to rel_types when they're not. Cocited and coupled
+    // get an explicit weight (e.g., "co-cited 12×") so the score
+    // components are legible inline rather than only in the reason text.
+    const rels = a.relationships || (a.rel_types || []).map(t => ({ type: t, weight: 1 }));
+    const seenTypes = new Set();
+    const relBadges = rels.map(r => {
+      if (seenTypes.has(r.type)) return '';
+      seenTypes.add(r.type);
+      const label = REL_LABEL[r.type] || r.type.replace('_', ' ');
+      const showWeight = (r.type === 'cocited' || r.type === 'coupled') && r.weight > 1;
+      const text = showWeight
+        ? `${label} ${r.weight}×`
+        : label;
+      return `<span style="display:inline-block;padding:0.1rem 0.45rem;border-radius:3px;font-size:0.72rem;color:#fff;background:${RP_COLORS[r.type] || '#999'};margin-right:0.3rem;">${text}</span>`;
+    }).join('');
+
+    // Build a compact score-breakdown hint: "+2 cites · +2 cited by ·
+    // +5 (capped) cocited" so a reader can see how the relevance number
+    // was assembled rather than treating it as opaque.
+    const breakdownParts = [];
+    rels.forEach(r => {
+      if (r.type === 'cites')    breakdownParts.push('+2 backward citation');
+      if (r.type === 'cited_by') breakdownParts.push('+2 forward citation');
+      if (r.type === 'cocited')  breakdownParts.push(`+${Math.min(r.weight, 5)} co-citation${r.weight > 5 ? ' (capped at 5)' : ''}`);
+      if (r.type === 'coupled')  breakdownParts.push(`+${Math.min(r.weight, 5)} coupling${r.weight > 5 ? ' (capped at 5)' : ''}`);
+    });
+    if (a.shared_tags)  breakdownParts.push('+1 shared topic');
+    if (a.same_journal) breakdownParts.push('+1 same journal');
+    const breakdown = breakdownParts.length
+      ? breakdownParts.join(' · ')
+      : 'no breakdown available';
 
     return `
     <div class="rp-list-item" style="padding:0.7rem 0;border-bottom:1px solid #ede8e0;${i === 0 ? 'border-top:1px solid #ede8e0;' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;flex-wrap:wrap;">
             <span style="font-weight:700;color:#8b6045;font-size:0.82rem;">#${i + 1}</span>
-            <span style="font-size:0.78rem;color:#5a3e28;">score ${a.score}</span>
+            <span style="font-size:0.78rem;color:#5a3e28;font-weight:600;" title="Composite relevance score: backward and forward citations weight +2 each, co-citation and coupling weights are summed (each capped at 5), shared topic and same-journal each add +1.">score ${a.score}</span>
             ${relBadges}
           </div>
           <a href="/article/${a.id}" style="font-weight:600;color:#3a2a18;text-decoration:none;font-size:0.95rem;" target="_blank">${escHtml(a.title || '(no title)')}</a>
@@ -487,7 +528,8 @@ function rpRenderList(list, filter) {
             ${escHtml(a.journal || '')}${a.pub_date ? ' · ' + a.pub_date.slice(0, 4) : ''}
             ${a.internal_cited_by_count ? ' · cited ' + a.internal_cited_by_count + '×' : ''}
           </div>
-          <div style="font-size:0.78rem;color:#8b6045;margin-top:0.15rem;font-style:italic;">${escHtml(a.reason || '')}</div>
+          <div style="font-size:0.74rem;color:#9c9890;margin-top:0.2rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escHtml(breakdown)}</div>
+          ${a.reason ? `<div style="font-size:0.78rem;color:#8b6045;margin-top:0.1rem;font-style:italic;">${escHtml(a.reason)}</div>` : ''}
         </div>
       </div>
     </div>`;

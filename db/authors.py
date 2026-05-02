@@ -397,3 +397,62 @@ def get_author_institution_summary(author_name):
                 ORDER BY cnt DESC
             """, (author_name,)).fetchall()
     return [(r["display_name"], r["cnt"]) for r in rows]
+
+
+def get_author_citing_venues(author_name: str, top_journals: int = 10) -> dict:
+    """Return where this author's work is being read, by venue and by cluster.
+
+    Aggregates the indexed articles whose CrossRef-deposited reference lists
+    cite at least one article by `author_name`. Groups by citing journal and
+    rolls up to the seven-cluster sidebar scheme.
+
+    Returns a dict with three keys:
+      - top_journals: list of {journal, count} sorted desc, capped at top_n
+      - by_cluster:   list of {cluster, count} sorted desc, every cluster
+                      with non-zero traffic; the cluster names match
+                      journals.JOURNAL_GROUPS labels
+      - total:        total citation-count across all citing articles
+
+    Coverage caveat: only journals that deposit reference lists with CrossRef
+    contribute to this signal. Authors whose work is read primarily in
+    RSS-only venues will appear less central than they are.
+    """
+    from journals import JOURNAL_GROUPS
+
+    with get_conn() as conn:
+        rows = conn.execute("""
+            SELECT citing.journal AS citing_journal,
+                   COUNT(*)       AS citation_count
+            FROM citations c
+            JOIN articles cited  ON cited.id  = c.target_article_id
+            JOIN articles citing ON citing.id = c.source_article_id
+            WHERE cited.authors LIKE ?
+              AND citing.journal IS NOT NULL AND citing.journal != ''
+            GROUP BY citing.journal
+            ORDER BY citation_count DESC
+        """, (f"%{author_name}%",)).fetchall()
+
+    journal_counts = [(r["citing_journal"], r["citation_count"]) for r in rows]
+    total = sum(c for _, c in journal_counts)
+
+    # Roll up to clusters using the canonical JOURNAL_GROUPS scheme.
+    journal_to_cluster = {}
+    for cluster_label, journals in JOURNAL_GROUPS:
+        for j in journals:
+            journal_to_cluster[j] = cluster_label
+
+    cluster_counts: dict[str, int] = {}
+    for journal, count in journal_counts:
+        cluster = journal_to_cluster.get(journal, "Other / unclustered")
+        cluster_counts[cluster] = cluster_counts.get(cluster, 0) + count
+
+    by_cluster = sorted(
+        ({"cluster": k, "count": v} for k, v in cluster_counts.items()),
+        key=lambda x: -x["count"],
+    )
+
+    return {
+        "top_journals": [{"journal": j, "count": c} for j, c in journal_counts[:top_journals]],
+        "by_cluster":   by_cluster,
+        "total":        total,
+    }

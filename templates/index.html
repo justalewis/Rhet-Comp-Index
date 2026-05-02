@@ -73,6 +73,25 @@
 {% endblock %}
 
 {% block content %}
+
+    <!-- ── First-visit orientation hero (suppressed when filters are active) ─ -->
+    {% if not active_journals and not selected_source and not active_q and not active_year_from and not active_year_to and not active_tag and page == 1 %}
+    <section class="home-hero" style="margin:0 0 2rem;padding:1.4rem 1.6rem;background:#fdfbf7;border:1px solid #e8e4de;border-radius:4px;">
+      <p style="margin:0 0 0.7rem;font-size:1.05rem;line-height:1.55;color:#3a3026;">
+        <strong>Pinakes</strong> is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication &mdash; more than 40,000 articles from 49 journals, plus 3,200+ scholarly books from seven university presses.
+      </p>
+      <p style="margin:0 0 1rem;font-size:0.96rem;line-height:1.55;color:#5a544c;">
+        The <a href="/explore" style="color:#5a3e28;">Explore tools</a> turn that corpus into questions you can ask: who's citing whom, what conversations cluster together, what's been reread, and what's been forgotten. Search the full index below, or start here:
+      </p>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0.5rem 1.6rem;font-size:0.92rem;line-height:1.5;">
+        <li>&rarr;&nbsp;<a href="/atlas" style="color:#5a3e28;"><strong>Atlas of the Field</strong></a> <span style="color:#9c9890;">enter the index through your sub-area</span></li>
+        <li>&rarr;&nbsp;<a href="/most-cited" style="color:#5a3e28;"><strong>Most Cited</strong></a> <span style="color:#9c9890;">what the field has treated as foundational</span></li>
+        <li>&rarr;&nbsp;<a href="/tools" style="color:#5a3e28;"><strong>Browse all tools</strong></a> <span style="color:#9c9890;">questions you can ask the corpus</span></li>
+        <li>&rarr;&nbsp;<a href="/about" style="color:#5a3e28;"><strong>About this project</strong></a> <span style="color:#9c9890;">what Pinakes is and what it isn't</span></li>
+      </ul>
+    </section>
+    {% endif %}
+
     <!-- Content header -->
     <div class="content-header">
       {% if active_journals and active_journals|length == 1 %}

@@ -14,6 +14,28 @@ import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 let sbDetailChart = null;
 let sbData        = null;
 
+
+/**
+ * Plain-language gloss for a Beauty Coefficient (B) value.
+ *
+ * The Ke et al. (2015) coefficient has no fixed scale — it grows with how
+ * much an article's actual citation curve diverges from a linear trajectory
+ * from publication to peak. The bands below are calibrated against the
+ * Pinakes corpus's distribution: most articles sit below B = 5, and B above
+ * roughly 50 indicates a substantively long sleep with a sharp awakening.
+ * Returns a short hint that helps a reader who doesn't yet have a feel for
+ * what the number means.
+ */
+function beautyCoefficientGloss(b) {
+  const v = Math.abs(b);
+  if (v < 2)   return "barely a sleeper";
+  if (v < 8)   return "shallow sleep, gentle wake";
+  if (v < 25)  return "moderate sleep, modest wake";
+  if (v < 60)  return "long sleep, clear wake";
+  if (v < 120) return "long sleep, sharp wake";
+  return "extreme sleeper, dramatic wake";
+}
+
 let _exportWired_loadSleepingBeauties = false;
 
 async function loadSleepingBeauties() {
@@ -76,20 +98,27 @@ function renderSleepingBeauties(container, data) {
     const last = first.split(' ').filter(Boolean).pop() || '';
     const byline = last + (auth.includes(';') ? ' et al.' : '');
 
-    // Build a sparkline from citation timeline
+    // Build a sparkline from citation timeline. Bars are dim during the
+    // sleep period and warm after the awakening year so the awakening is
+    // legible as a colour shift, not just a height jump. Each bar carries
+    // a <title> tooltip with year + citation count for hover-inspection.
     const tl = art.citation_timeline || [];
     const maxCount = Math.max(1, ...tl.map(t => t.count));
     const sparkH = 24;
-    const barW = Math.max(1, Math.min(4, Math.floor(200 / tl.length)));
-    const sparkW = barW * tl.length;
+    const barW = Math.max(1, Math.min(4, Math.floor(200 / Math.max(1, tl.length))));
+    const sparkW = Math.max(barW, barW * tl.length);
     let sparkBars = '';
     tl.forEach(t => {
       const h = Math.max(0.5, (t.count / maxCount) * sparkH);
       const isAwake = t.year >= art.awakening_year;
       const fill = isAwake ? '#b38a6a' : '#d4cec5';
-      sparkBars += `<rect x="${(t.year - tl[0].year) * barW}" y="${sparkH - h}" width="${Math.max(1, barW - 0.5)}" height="${h}" fill="${fill}"/>`;
+      sparkBars += `<rect x="${(t.year - tl[0].year) * barW}" y="${sparkH - h}" width="${Math.max(1, barW - 0.5)}" height="${h}" fill="${fill}"><title>${t.year}: ${t.count} citation${t.count !== 1 ? 's' : ''}</title></rect>`;
     });
-    const sparkSvg = `<svg width="${sparkW}" height="${sparkH}" style="vertical-align:middle;margin-left:0.5rem;" title="Citation timeline — click for detail">${sparkBars}</svg>`;
+    const sparkSvg = tl.length > 0
+      ? `<svg width="${sparkW}" height="${sparkH}" style="vertical-align:middle;margin-left:0.5rem;" role="img" aria-label="Citation timeline (click row for detail)">${sparkBars}</svg>`
+      : '<span style="color:#9c9890;font-size:0.78rem;">no timeline</span>';
+
+    const bGloss = beautyCoefficientGloss(art.beauty_coefficient);
 
     const li = document.createElement('li');
     li.className = 'article';
@@ -110,7 +139,10 @@ function renderSleepingBeauties(container, data) {
         </div>
         <div style="display:flex;align-items:center;gap:0.8rem;flex-shrink:0;">
           ${sparkSvg}
-          <span style="font-weight:700;font-size:0.92rem;color:#5a3e28;font-variant-numeric:tabular-nums;min-width:3rem;text-align:right;" title="Beauty Coefficient">B\u2009=\u2009${art.beauty_coefficient.toFixed(0)}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;min-width:7.2rem;">
+            <span style="font-weight:700;font-size:0.92rem;color:#5a3e28;font-variant-numeric:tabular-nums;" title="Beauty Coefficient (Ke et al. 2015) \u2014 quantifies how dormant and how sharp the awakening was">B\u2009=\u2009${art.beauty_coefficient.toFixed(0)}</span>
+            <span style="font-size:0.72rem;color:#9c9890;font-style:italic;line-height:1.2;margin-top:0.1rem;">${bGloss}</span>
+          </div>
         </div>
       </div>
     `;

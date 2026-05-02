@@ -1,0 +1,40 @@
+{#
+   Cross-comparison footer for the four citation/co-citation/coupling tools.
+   The four views ask different questions of the same data; readers
+   landing on any one of them benefit from a quick orientation to the
+   others. The macro highlights the current view in bold and links to
+   the others via tab hash anchors. Pass one of: "citation",
+   "article_cocit", "author_cocit", "coupling".
+#}
+{% macro network_trio_compare(current) -%}
+<aside class="trio-compare"
+       style="margin:1.4rem 0 0.4rem;padding:1rem 1.2rem;background:#faf6ef;border:1px solid #e8e4de;border-radius:4px;font-size:0.9rem;color:#5a544c;line-height:1.55;">
+  <p style="margin:0 0 0.5rem;font-weight:600;color:#5a3e28;letter-spacing:0.03em;">
+    Four views of the same data
+  </p>
+  <p style="margin:0 0 0.5rem;">
+    These four tools ask different questions of the citation graph. Each surfaces a different kind of relationship; the same article can sit at the center of one view and the periphery of another.
+  </p>
+  <ul style="list-style:none;margin:0;padding:0;">
+    <li style="margin-bottom:0.3rem;">
+      {% if current == "citation" %}<strong>Citation Network</strong>{% else %}<a href="#citnet" onclick="document.querySelector('[data-hash=citnet]').click();return false;" style="color:#5a3e28;">Citation Network</a>{% endif %}
+      <span style="color:#7a7268;">&mdash; <em>who cites whom</em>. Directed edges from citing article to cited article.</span>
+    </li>
+    <li style="margin-bottom:0.3rem;">
+      {% if current == "article_cocit" %}<strong>Article Co-Citation</strong>{% else %}<a href="#cocitation" onclick="document.querySelector('[data-hash=cocitation]').click();return false;" style="color:#5a3e28;">Article Co-Citation</a>{% endif %}
+      <span style="color:#7a7268;">&mdash; <em>which articles get cited together</em>. Perceived kinship as the citing community treats it (built up by later readers).</span>
+    </li>
+    <li style="margin-bottom:0.3rem;">
+      {% if current == "author_cocit" %}<strong>Author Co-Citation</strong>{% else %}<a href="#authorcocit" onclick="document.querySelector('[data-hash=authorcocit]').click();return false;" style="color:#5a3e28;">Author Co-Citation</a>{% endif %}
+      <span style="color:#7a7268;">&mdash; <em>which scholars get cited together</em>. The same kinship signal aggregated up to author level.</span>
+    </li>
+    <li>
+      {% if current == "coupling" %}<strong>Bibliographic Coupling</strong>{% else %}<a href="#bibcoupling" onclick="document.querySelector('[data-hash=bibcoupling]').click();return false;" style="color:#5a3e28;">Bibliographic Coupling</a>{% endif %}
+      <span style="color:#7a7268;">&mdash; <em>which articles read the same things</em>. Intellectual <em>input</em> as fixed at publication time (built into each article's reference list).</span>
+    </li>
+  </ul>
+  <p style="margin:0.7rem 0 0;font-size:0.86rem;color:#7a7268;">
+    Citation is directed; the other three are undirected. Co-citation accumulates as the field reads; coupling is fixed when the article is written. The same article can be central in one view and peripheral in another &mdash; the disagreement is the analytic point.
+  </p>
+</aside>
+{%- endmacro %}

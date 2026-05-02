@@ -11,6 +11,7 @@ from db import (
     get_author_institution_summary,
     get_author_timeline, get_author_coauthors, get_author_topics,
     get_author_cocitation_network, get_author_cocitation_partners,
+    get_author_citing_venues,
     get_new_article_count,
 )
 from journals import UNAVAILABLE_JOURNALS
@@ -66,6 +67,7 @@ def author_detail(name):
     affiliations_by_article = get_author_affiliations_per_article(name)
     institution_summary = get_author_institution_summary(name)
     author_books = get_author_books(name)
+    citing_venues = get_author_citing_venues(name, top_journals=10)
 
     return render_template(
         "author.html",
@@ -75,6 +77,7 @@ def author_detail(name):
         author_record=author_record,
         affiliations_by_article=affiliations_by_article,
         institution_summary=institution_summary,
+        citing_venues=citing_venues,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,

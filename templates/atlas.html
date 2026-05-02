@@ -1,0 +1,151 @@
+{% extends "base-core.html" %}
+
+{% block title %}Atlas of the Field — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="An Atlas of the Field: seven sub-areas of rhetoric and composition scholarship, each with its journals, its scholarly stakes, and entry points into the Pinakes Explore tools pre-filtered to that conversation.">
+{% endblock %}
+
+{# Hand-written orientation paragraphs for each of the 7 sidebar clusters.
+   Keys must match the JOURNAL_GROUPS labels in journals.py exactly. The
+   template falls back gracefully to "no orientation yet" if a cluster
+   exists in journal_groups but not here. #}
+{% set cluster_orientations = {
+  "Composition & Writing Studies":
+    "The flagship cluster of the field, anchored by <em>College Composition and Communication</em>, <em>College English</em>, and <em>Research in the Teaching of English</em>. These are the journals in which composition studies argues with itself about what it is &mdash; what counts as writing, who teaches it, what teachers know, and what kinds of evidence count for those claims. <em>Composition Studies</em>, <em>Composition Forum</em>, and <em>Pedagogy</em> sit alongside as venues for newer or more specialized work; <em>Teaching English in the Two-Year College</em> and <em>Basic Writing e-Journal</em> attend specifically to two-year college and basic-writing scholarship; <em>Assessing Writing</em> and the <em>Journal of Writing Analytics</em> hold the empirical and assessment wings.",
+  "Rhetoric":
+    "The rhetoric wing of the field, with three centers: <em>Rhetoric Society Quarterly</em> and <em>Rhetoric Review</em> for contemporary rhetorical theory and history, <em>Philosophy &amp; Rhetoric</em> for theoretical work at the boundary with philosophy, and <em>Rhetoric &amp; Public Affairs</em> for political and public-address scholarship. Around them sit smaller specialized venues &mdash; <em>Advances in the History of Rhetoric</em>, <em>Pre/Text</em>, <em>KB Journal</em>, <em>Peitho</em>, <em>Poroi</em> &mdash; that maintain conversations adjacent to or independent from the larger venues. <em>Written Communication</em> is grouped here as a methodological-rhetoric venue rather than a writing-studies venue, though the question of where it sits is itself a productive disagreement in the field's self-account.",
+  "Technical Communication":
+    "Technical and professional communication has its own journal infrastructure: <em>Technical Communication Quarterly</em>, the <em>Journal of Business and Technical Communication</em>, the <em>Journal of Technical Writing and Communication</em>, and <em>Business and Professional Communication Quarterly</em> are the four longest-running. <em>Communication Design Quarterly</em> and its earlier <em>Review</em> hold the ACM SIGDOC venue; the <em>Rhetoric of Health and Medicine</em> is a newer specialized journal in medical and health TPC; <em>Double Helix</em> holds the WAC-TPC border. The TPC cluster has the densest internal citation structure of any sub-area in the corpus and is the focus of the in-progress <em>Datastories</em> book project.",
+  "Writing Centers":
+    "Writing-center scholarship is a small but coherent cluster, anchored by <em>The Writing Center Journal</em> (the field's flagship), <em>Praxis</em> (online, peer-reviewed), <em>Writing Lab Newsletter</em> / <em>WLN</em> (the field's longstanding bulletin), and <em>The Peer Review</em> (IWCA's journal). Citation infrastructure here is uneven: <em>WLN</em> has CrossRef coverage in recent issues but partial coverage further back, and the older <em>Writing Lab Newsletter</em> is partially indexed. Much of the field's argumentative work sits in monographs and edited collections that the citation index sees only partially.",
+  "WAC / Writing Across the Curriculum":
+    "Writing Across the Curriculum is foundational to composition pedagogy, but its journal infrastructure in the index is small &mdash; <em>Across the Disciplines</em> and <em>The WAC Journal</em> are the two flagship venues, both hosted by the WAC Clearinghouse. The deeper scholarly work in WAC lives substantially in books and edited collections, especially the WAC Clearinghouse's own monograph series, which the citation index sees only partially. The networks here will tend to underweight WAC scholarship relative to its actual influence on composition pedagogy.",
+  "Digital & Multimodal":
+    "The digital and multimodal cluster names work that has built its own venues alongside the print-journal infrastructure. <em>Computers and Composition</em> is the longest-running and the most heavily indexed; <em>Kairos</em> is born-digital and webtext-native, with custom-scraped indexing because its articles aren't structured for CrossRef; the <em>Journal of Multimodal Rhetorics</em> is newer and has minimal CrossRef compliance. Citation networks here are partial in a specific way: <em>Kairos</em> articles are visible as nodes but contribute few outbound citation edges, because their reference lists aren't deposited.",
+  "Community Literacy":
+    "A small cluster centered on community-engaged writing and rhetoric. <em>Community Literacy Journal</em> is the flagship; <em>Reflections</em> is a complementary venue for community-engaged scholarship and pedagogy. The cluster overlaps substantively with WAC, with rhetoric of social engagement, and with parts of the technical-communication social-justice turn &mdash; expect the citation networks to show edges reaching into all three.",
+} %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/new">What's New</a>
+        <a href="/explore">Explore</a>
+        <a href="/authors">Authors</a>
+        <a href="/most-cited">Most Cited</a>
+        <a href="/books">Books</a>
+        <a href="/coverage">Coverage</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="about-content">
+
+    <h1 class="about-title">Atlas of the Field</h1>
+
+    <p>Rhetoric and composition is not a single conversation but a federation of sub-areas with overlapping interests, distinct journal infrastructures, and different histories of how they came to look the way they do. The seven clusters below organize the indexed corpus along the lines the field already uses to sort itself. Each cluster has a one-paragraph orientation, a list of indexed journals (with live article counts), and named entry points into the Explore tools pre-scoped to that conversation.</p>
+
+    <p style="font-size:0.92rem;color:#7a7268;">The cluster scheme is editorial &mdash; classifying journals by subfield is itself an argument, not a neutral sort, and a few journals could plausibly sit in more than one cluster. The list reflects how the field is most often organized for reference, not a definitive taxonomy. If you want to read across clusters, the <a href="/explore">Explore</a> tools all accept multi-cluster journal selections.</p>
+
+    {% set ns = namespace(rendered_count=0) %}
+    {% for group in journal_groups %}
+      {% if group.label in cluster_orientations %}
+      {% set ns.rendered_count = ns.rendered_count + 1 %}
+      {% set article_total = group.journals | sum(attribute="count") %}
+      {% set journal_count = group.journals | length %}
+      {% set journal_param_qs = group.journals | map(attribute="name") | map("urlencode") | map("string") | list %}
+
+      <section id="cluster-{{ loop.index }}" class="atlas-cluster" style="margin-top:2.4rem;padding-top:1.6rem;border-top:1px solid #e8e4de;">
+
+        <h2 style="margin:0 0 0.4rem;color:#5a3e28;">{{ group.label }}</h2>
+
+        <p style="margin:0 0 1rem;color:#7a7268;font-size:0.92rem;">
+          {{ journal_count }} indexed journal{% if journal_count != 1 %}s{% endif %}
+          &nbsp;&middot;&nbsp;
+          {{ "{:,}".format(article_total) }} indexed article{% if article_total != 1 %}s{% endif %}
+        </p>
+
+        <p style="line-height:1.65;">{{ cluster_orientations[group.label] | safe }}</p>
+
+        <div class="atlas-cluster-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem 2rem;margin-top:1.4rem;">
+
+          <!-- ── Journals in this cluster ───────────────────── -->
+          <div>
+            <h3 style="margin:0 0 0.6rem;font-size:0.95rem;color:#5a544c;letter-spacing:0.04em;text-transform:uppercase;">Journals in this cluster</h3>
+            <ul style="list-style:none;padding:0;margin:0;font-size:0.93rem;line-height:1.7;">
+              {% for j in group.journals %}
+              <li>
+                <a href="/?journal={{ j.name | urlencode }}" style="color:#5a3e28;">{{ j.name }}</a>
+                <span style="color:#9c9890;">({{ j.count or 0 }})</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- ── Entry points ───────────────────────────────── -->
+          <div>
+            <h3 style="margin:0 0 0.6rem;font-size:0.95rem;color:#5a544c;letter-spacing:0.04em;text-transform:uppercase;">Entry points</h3>
+            <ul style="list-style:none;padding:0;margin:0;font-size:0.93rem;line-height:1.65;">
+              <li style="margin-bottom:0.55rem;">
+                <a href="/?{% for j in group.journals %}journal={{ j.name | urlencode }}{% if not loop.last %}&amp;{% endif %}{% endfor %}" style="color:#5a3e28;font-weight:600;">Browse the cluster's articles &rarr;</a>
+                <br><span style="color:#9c9890;font-size:0.86rem;">All articles from these journals, in the main index.</span>
+              </li>
+              <li style="margin-bottom:0.55rem;">
+                <a href="/most-cited?journal={{ group.journals[0].name | urlencode if group.journals else '' }}" style="color:#5a3e28;font-weight:600;">Most-cited in this cluster &rarr;</a>
+                <br><span style="color:#9c9890;font-size:0.86rem;">Within-cluster citation rankings.</span>
+              </li>
+              <li style="margin-bottom:0.55rem;">
+                <a href="/explore#communities" style="color:#5a3e28;font-weight:600;">Map this cluster's communities &rarr;</a>
+                <br><span style="color:#9c9890;font-size:0.86rem;">Open Community Detection; use the journal multi-select to scope.</span>
+              </li>
+              <li style="margin-bottom:0.55rem;">
+                <a href="/explore#authors" style="color:#5a3e28;font-weight:600;">Co-authorship network &rarr;</a>
+                <br><span style="color:#9c9890;font-size:0.86rem;">Who has collaborated within this cluster.</span>
+              </li>
+              <li>
+                <a href="/explore#sleeping-beauties" style="color:#5a3e28;font-weight:600;">Sleeping Beauties in this cluster &rarr;</a>
+                <br><span style="color:#9c9890;font-size:0.86rem;">Articles whose recognition came late.</span>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+
+    {% if ns.rendered_count == 0 %}
+    <p style="margin-top:2rem;color:#9c9890;"><em>No clusters available yet &mdash; the sidebar journal groups have not been built. Try refreshing the index.</em></p>
+    {% endif %}
+
+    <p style="margin-top:2.6rem;padding-top:1.4rem;border-top:1px solid #e8e4de;">
+      <strong>Where the cluster scheme isn't enough.</strong> The seven groupings above are the field's most common reference shorthand, but a real conversation usually crosses them &mdash; basic writing scholarship lives partly in Composition &amp; Writing Studies and partly in TETYC, social-justice TPC threads cross from Technical Communication into Rhetoric, and writing-center work draws on WAC and Composition Studies in equal measure. The Explore tools all accept multi-cluster filtering, and the comparison views (<a href="/explore#cocitation">Article Co-Citation</a>, <a href="/explore#bibcoupling">Bibliographic Coupling</a>, <a href="/explore#author-cocitation">Author Co-Citation</a>) are useful for seeing the cross-cluster ties the cluster scheme itself flattens.
+    </p>
+
+    <p style="margin-top:1.4rem;"><a href="/about">&larr; Back to About</a> &middot; <a href="/coverage">Coverage notes</a> &middot; <a href="/glossary">Glossary</a></p>
+
+  </main>
+
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot;
+    <a href="/new">What's New</a> &middot;
+    <a href="/explore">Explore</a> &middot;
+    <a href="/authors">Authors</a> &middot;
+    <a href="/most-cited">Most Cited</a> &middot;
+    <a href="/books">Books</a> &middot;
+    <a href="/about">About</a> &middot;
+    <a href="/coverage">Coverage</a> &middot;
+    <a href="/glossary">Glossary</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    &copy; 2026 Justin Lewis
+  </footer>
+
+</div>
+{% endblock %}

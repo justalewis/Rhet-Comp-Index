@@ -1,0 +1,26 @@
+{# Network-visualization legend strip.
+
+   A consistent visual key for force-directed and other network views. The
+   three encodings (node size, node color, edge meaning) are the things a
+   first-time reader most needs to know to interpret a network graph. Each
+   tool passes its own descriptions; the styling stays consistent.
+
+   Usage:
+       {% from "_network_legend.html" import network_legend %}
+       {{ network_legend(
+            "internal citation count",
+            "journal cluster",
+            "citing → cited (arrowhead at the cited end)"
+       ) }}
+#}
+{% macro network_legend(node_size, node_color, edge_meaning) -%}
+<div class="network-legend"
+     style="margin:0.6rem 0 0.9rem;padding:0.55rem 0.9rem;background:#f8f4ec;border:1px solid #e8e4de;border-radius:3px;font-size:0.86rem;color:#5a544c;line-height:1.55;">
+  <span style="display:inline-block;color:#7a7268;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;font-size:0.74rem;margin-right:0.5rem;">Legend</span>
+  <strong>Node size:</strong> {{ node_size }}
+  &nbsp;&middot;&nbsp;
+  <strong>Color:</strong> {{ node_color }}
+  &nbsp;&middot;&nbsp;
+  <strong>Edge:</strong> {{ edge_meaning }}
+</div>
+{%- endmacro %}

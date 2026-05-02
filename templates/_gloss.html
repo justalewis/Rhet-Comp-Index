@@ -1,0 +1,23 @@
+{# Inline glossary link.
+
+   Renders a term as a subtle dotted-underlined link to its glossary
+   entry, so a reader who hits an unfamiliar bibliometric term can click
+   through for a plain-language definition without leaving the page they
+   are on (the link opens in a new tab).
+
+   Usage:
+       {% from "_gloss.html" import gloss %}
+       This is the {{ gloss("co-citation") }} graph...
+       Computed via {{ gloss("louvain", "the Louvain method") }}...
+
+   The first arg is the anchor (must match an id= in glossary.html, e.g.
+   "co-citation", "modularity", "beauty-coefficient"). The optional
+   second arg overrides the displayed text; if omitted, the anchor
+   itself is shown.
+#}
+{% macro gloss(term, label=None) -%}
+<a href="/glossary#{{ term }}" target="_blank" rel="noopener"
+   class="gloss-link"
+   style="color:inherit;text-decoration:none;border-bottom:1px dotted #b8a890;cursor:help;"
+   title="Open glossary entry in a new tab">{{ label if label else term }}</a>
+{%- endmacro %}

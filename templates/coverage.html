@@ -33,6 +33,17 @@
 
     <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, citation trend charts, Most Cited rankings, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
 
+    <aside class="coverage-tldr" style="margin:1.8rem 0 2.2rem;padding:1.2rem 1.4rem;background:#fdfbf7;border-left:4px solid #5a3e28;">
+      <p style="margin:0 0 0.5rem;font-size:0.86rem;font-weight:600;color:#5a3e28;letter-spacing:0.05em;text-transform:uppercase;">If you read nothing else on this page</p>
+      <p style="margin:0 0 0.7rem;line-height:1.55;">Three things to keep in mind before you read anything on the <a href="/explore">Explore</a> page:</p>
+      <ol style="margin:0;padding-left:1.4rem;line-height:1.6;">
+        <li style="margin-bottom:0.4rem;">Only about 28 of the 49 indexed journals are fully CrossRef-indexed with their reference lists. Citation networks, centrality scores, and coupling/co-citation views all underrepresent the others &mdash; they show what's been deposited, not what's been written.</li>
+        <li style="margin-bottom:0.4rem;">Some journals can be cited but cannot cite. If a venue has no DOIs, its references aren't deposited anywhere Pinakes can read them. Older content, especially pre-2000 NCTE journals, has the same problem at scale: most NCTE volumes before 2000 have no machine-readable reference lists at all.</li>
+        <li>Book chapters are partially indexed. This particularly affects writing-across-the-curriculum, writing-center, and edited-collection-heavy sub-areas, where a substantial share of the field's argumentative work lives in monographs rather than journals. The networks underweight that scholarship.</li>
+      </ol>
+      <p style="margin:0.8rem 0 0;font-size:0.92rem;color:#7a7268;">The rest of this page is the detailed accounting behind those three claims.</p>
+    </aside>
+
     {% if detailed %}
     <h2>Corpus Snapshot</h2>
 
@@ -69,6 +80,26 @@
     <p><strong>Full CrossRef indexing</strong> means a journal registers each article's metadata — title, authors, abstract, publication date, and reference list — with <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer">CrossRef</a> using a registered DOI. This enables: citation tracking (because CrossRef carries reference lists), OpenAlex enrichment (institutional affiliations, topic classifications, open-access status), and reliable author disambiguation. Most commercial publishers and NCTE do this for current content.</p>
 
     <p><strong>RSS or scrape-only indexing</strong> means Pinakes collects basic article metadata — title, authors, publication date — from an RSS feed or by parsing the journal's website. These articles appear in search results and the timeline, but they contribute <em>nothing</em> to the citation network, and OpenAlex enrichment is hit-or-miss without a DOI. Author affiliation data for these articles is largely absent.</p>
+
+    <h2>Coverage by Sub-Area</h2>
+
+    <p>The seven-cluster scheme used in the <a href="/atlas">Atlas of the Field</a> and the journal sidebar maps roughly onto distinct coverage profiles. Reading the index by sub-area rather than by individual journal helps locate where the citation networks overweight some scholarship and underweight others.</p>
+
+    <ul class="coverage-list" style="line-height:1.65;">
+      <li><strong>Composition &amp; Writing Studies</strong> &mdash; Strong CrossRef coverage on the flagship NCTE journals (<em>CCC</em>, <em>College English</em>, <em>RTE</em>) for current content, with the well-known era gap before 2000 where back-catalog content lives in JSTOR without article-level DOIs. <em>Composition Studies</em> is partially CrossRef-registered. <em>TETYC</em> is CrossRef-deposited but produces less citation traffic per article than the flagship venues. <em>Basic Writing e-Journal</em> has partial CrossRef coverage. Citation networks should read this cluster's pre-2000 scholarship as systematically underweighted.</li>
+
+      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Rhetoric &amp; Public Affairs</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). The smaller specialized rhetoric venues are mixed: <em>Peitho</em> has full CrossRef coverage; <em>Pre/Text</em> is manually indexed (analog only); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations. <em>Poroi</em> is fully indexed. <em>Peitho</em> contributes citation data; the smaller specialized rhetoric venues do not.</li>
+
+      <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Rhetoric of Health and Medicine</em> all have full CrossRef coverage with complete reference lists. This is the cluster where citation-network analyses are most reliable, which is also why it serves as the primary corpus for the in-progress <em>Datastories</em> project.</li>
+
+      <li><strong>Writing Centers</strong> &mdash; Mixed. <em>WLN: A Journal of Writing Center Scholarship</em> has full CrossRef coverage; <em>Writing Center Journal</em> is partially CrossRef-registered with stronger recent coverage; <em>Writing Lab Newsletter</em> (the older newsletter form) has partial coverage; <em>The Peer Review</em> (IWCA's open journal) has limited CrossRef compliance. Citation analyses underweight writing-center scholarship overall, and pre-2010 writing-center work is especially sparse.</li>
+
+      <li><strong>WAC / Writing Across the Curriculum</strong> &mdash; The two indexed journals (<em>Across the Disciplines</em>, <em>The WAC Journal</em>) are both hosted on the WAC Clearinghouse and have full CrossRef coverage. The bigger coverage limitation here is structural: a substantial share of WAC scholarship lives in monographs and edited collections from WAC Clearinghouse Press and other WAC-friendly publishers, and those books are only partially indexed. Citation networks systematically underweight WAC's monograph-based argumentative work.</li>
+
+      <li><strong>Digital &amp; Multimodal</strong> &mdash; Asymmetric. <em>Computers and Composition</em> has full CrossRef coverage, including reference lists. <em>Kairos</em> is born-digital and webtext-native, indexed via custom scraping; its articles appear as nodes but contribute no outbound citation edges, because their reference lists are not deposited. <em>Journal of Multimodal Rhetorics</em> has minimal CrossRef compliance. The cluster's central venue is well-indexed but the multimodal-webtext side is structurally invisible to citation-derived analyses.</li>
+
+      <li><strong>Community Literacy</strong> &mdash; <em>Community Literacy Journal</em> has full CrossRef coverage; <em>Reflections</em> is RSS-only and contributes no outbound citations. As with Writing Centers and WAC, much of the cluster's scholarly conversation lives in books and edited collections that are partially indexed.</li>
+    </ul>
 
     <h2>Journals: Full CrossRef Coverage</h2>
 

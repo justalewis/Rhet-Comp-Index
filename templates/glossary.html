@@ -1,0 +1,123 @@
+{% extends "base-core.html" %}
+
+{% block title %}Glossary — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="A plain-language glossary of the bibliometric terms used across Pinakes — citation, co-citation, coupling, centrality, modularity, sleeping beauties, half-life, and the data-source terms (CrossRef, OpenAlex, DOI) that determine what each tool can see.">
+{% endblock %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/new">What's New</a>
+        <a href="/explore">Explore</a>
+        <a href="/authors">Authors</a>
+        <a href="/most-cited">Most Cited</a>
+        <a href="/books">Books</a>
+        <a href="/coverage">Coverage</a>
+        <a href="/about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="about-content">
+
+    <h1 class="about-title">Glossary</h1>
+
+    <p>The Pinakes Explore and Datastories tools borrow vocabulary from bibliometrics &mdash; a sub-field of information science with its own conventions and quietly load-bearing assumptions. This page collects the terms a Rhet/Comp reader most often encounters across the toolkit, with short plain-language definitions and one example from the indexed corpus where one is useful.</p>
+
+    <p style="font-size:0.92rem;color:#7a7268;">Entries are grouped by what they describe: <a href="#concepts">citation concepts</a> (citation, co-citation, coupling, ego network), <a href="#metrics">metrics and methods</a> (centrality, modularity, Louvain, half-life, Beauty Coefficient, Gini, NMI/ARI, Jaccard, SPC / Hummon-Doreian, force-directed layout), and <a href="#data">data sources and identifiers</a> (CrossRef, OpenAlex, DOI / ISSN, normalization). Each entry has a stable anchor (e.g., <code>/glossary#co-citation</code>) so individual tool panels can link to it directly.</p>
+
+    <!-- ── Citation concepts ─────────────────────────────────── -->
+
+    <h2 id="concepts" style="margin-top:2.2rem;">Citation concepts</h2>
+
+    <h3 id="citation">Citation</h3>
+    <p>An article cites another when its reference list points at the second article. Citations are <em>directed</em>: A cites B is not the same as B cites A. Most analytical tools on Pinakes treat the citation as the basic atom of intellectual relationship; everything else (co-citation, coupling, centrality) is built up from citations as edges in a graph. Coverage matters here in a specific way: Pinakes can only see citations where the citing article's reference list has been deposited with <a href="#crossref">CrossRef</a>. Articles whose references aren't deposited are visible as targets but not as sources.</p>
+
+    <h3 id="co-citation">Co-citation</h3>
+    <p>Two articles are co-cited when a third article cites both of them. The more often that joint citation happens across many citing articles, the stronger the field's <em>perceived</em> kinship between the pair, even if neither cites the other directly. Co-citation is built up by the citing community, not by either endpoint, so it measures how the field treats two works as belonging together rather than what's actually inside them. Example: in the Pinakes corpus, Jones, Moore, and Walton's 2016 "Disrupting the Past" and Jones's 2016 "The Technical Communicator as Advocate" are co-cited 60 times &mdash; the heaviest article-to-article tie in the index, marking the pair as the foundational reference set of the social-justice technical-communication turn.</p>
+
+    <h3 id="bibliographic-coupling">Bibliographic coupling</h3>
+    <p>The mirror image of co-citation. Two articles are bibliographically coupled when their <em>own</em> reference lists overlap &mdash; that is, both cite the same prior work. Coupling-strength is fixed at the moment each article is published (it's built into the article's reference list), where co-citation accumulates over time as the field reads. Coupling is good at finding methodological siblings and review articles; it tends to over-weight articles whose reference lists are long and stay inside the indexed corpus.</p>
+
+    <h3 id="ego-network">Ego network</h3>
+    <p>A subgraph centered on a single &ldquo;ego&rdquo; node, including only that node, its direct neighbours, and the edges among them. The Pinakes per-article citation page (<code>/citations?article=ID</code>) is an ego network: it shows what the focal article cites, what cites it back, and the citations among the neighbours, without trying to render the whole field. Useful for getting your bearings around a single article without the visual noise of the full graph.</p>
+
+    <!-- ── Metrics and methods ───────────────────────────────── -->
+
+    <h2 id="metrics" style="margin-top:2.5rem;">Metrics and methods</h2>
+
+    <h3 id="centrality">Centrality &mdash; eigenvector and betweenness</h3>
+    <p>Two of the most common ways to measure the &ldquo;structural importance&rdquo; of a node in a graph; they often disagree and the disagreement is the point. <strong>Eigenvector centrality</strong> rewards influence-by-association: an article cited by five highly-cited articles scores higher than one cited by fifty peripheral articles, because the metric weights each citing article by the citing article's own centrality. <strong>Betweenness centrality</strong> rewards bridging: it is high when removing the article from the network would lengthen the shortest paths between many pairs of other articles. An article can be a structural epicenter (high eigenvector, low betweenness) or a structural bridge (low eigenvector, high betweenness); the Centrality tool surfaces both rankings side by side.</p>
+
+    <h3 id="modularity">Modularity (Q)</h3>
+    <p>A scalar that scores how well a network partitions into communities, computed as the difference between observed within-community edge weight and the expected weight under a degree-preserving random null model. Values above roughly 0.3 indicate meaningful community structure; below that, the partition is barely better than what you'd expect from random rewiring. The default Pinakes Community Detection run produces a Q of 0.587, which is well into the well-clustered range.</p>
+
+    <h3 id="louvain">Louvain method</h3>
+    <p>A community-detection algorithm that finds a partition by greedy local optimisation of <a href="#modularity">modularity</a>. The algorithm iteratively moves each node to whichever neighbouring community produces the largest modularity gain, then folds each community into a single super-node and repeats, terminating when no move improves the score. Louvain is fast and gives reproducible cluster-level structure, but its tie-breaking is non-deterministic, so two runs on the same input can disagree on a few low-degree boundary nodes.</p>
+
+    <h3 id="resolution-parameter">Resolution parameter (&gamma;)</h3>
+    <p>A knob on the Louvain objective that lets you favor finer or coarser community partitions. At &gamma; = 1.0 the algorithm uses the standard Newman-Girvan modularity. Values below 1.0 push the algorithm toward merging adjacent communities into broader traditions; values above 1.0 push it toward splitting communities into smaller, more topically-uniform clusters. The right value is a trade-off between communities that are large enough to be analytically informative and communities that are small enough to be topically coherent.</p>
+
+    <h3 id="half-life">Half-life &mdash; citing and cited</h3>
+    <p>Two related measures of how a journal sits in time. <strong>Citing half-life</strong> is the median age of the works a journal cites &mdash; a short citing half-life means the venue's authors mostly cite recent work, a long one means they reach back to canon. <strong>Cited half-life</strong> is the median age of a journal's own articles when they get cited by others &mdash; a long cited half-life signals enduring influence, a short one signals a fast-turnover research front. The two measures are independent: a venue can have a long cited half-life and a short citing half-life (or vice versa), and the combination is often more informative than either number alone.</p>
+
+    <h3 id="beauty-coefficient">Sleeping Beauty / Beauty Coefficient (B)</h3>
+    <p>A bibliometric metaphor for an article that goes years with little citation, then experiences a late surge of recognition. The <strong>Beauty Coefficient B</strong>, introduced by Ke, Ferrara, Radicchi, and Flammini (2015), quantifies how dormant and how sharp the awakening was: it sums the year-by-year gap between the article's actual citation curve and a hypothetical linear trajectory from publication to peak. An article that accumulates citations steadily produces B near zero; an article that stays near zero for years and then jumps sharply produces a large positive B. Example: Cargile Cook's 2002 "Layered Literacies" sits at B = 116.0 in the Pinakes corpus &mdash; near-zero citations through the mid-2010s, then awakened in 2024 to 16 citations after a 22-year sleep.</p>
+
+    <h3 id="lorenz-gini">Lorenz curve / Gini coefficient</h3>
+    <p>Two ways of summarizing how unevenly a quantity is distributed across a population. The <strong>Lorenz curve</strong> plots the cumulative share of the quantity (e.g., citations) against the cumulative share of the population (e.g., articles), ordered from least to most. A perfectly even distribution traces the 45&deg; diagonal; the further the curve sags below the diagonal, the more concentrated the quantity. The <strong>Gini coefficient</strong> is twice the area between the curve and the diagonal, on a 0&ndash;1 scale: 0 is perfect equality, 1 is total concentration in a single unit. Both are descriptive measures &mdash; they don't make claims about whether the distribution is fair or appropriate.</p>
+
+    <h3 id="nmi-ari">NMI and ARI &mdash; partition comparison</h3>
+    <p>Two standard scalar measures of how similar two clusterings of the same data are. <strong>NMI</strong> (normalized mutual information) is on a 0&ndash;1 scale where 0 is independent and 1 is identical; <strong>ARI</strong> (adjusted Rand index) ranges from roughly 0 (chance agreement) to 1 (identical), with negative values possible when partitions disagree more than chance. Used in Pinakes (especially in the Datastories tools) to compare, for instance, a Louvain partition against a bibliographic-coupling partition: an NMI of 0.45 says the two views agree on roughly the broad-strokes structure but disagree about almost half the boundary assignments.</p>
+
+    <h3 id="jaccard">Jaccard similarity</h3>
+    <p>A simple set-overlap measure: the size of the intersection of two sets divided by the size of their union. For two articles A and B, the Jaccard similarity of their reference lists is the count of shared references divided by the total count of distinct references they cite between them. Used to weight bibliographic-coupling edges so that two articles with very long reference lists don't get an inflated coupling score just because long lists are likely to overlap by chance.</p>
+
+    <h3 id="spc-main-path">Search Path Count (SPC) and the Hummon-Doreian main path</h3>
+    <p>A method for finding the &ldquo;backbone&rdquo; of a citation network. <strong>Search Path Count</strong> assigns each edge a weight equal to the number of all possible source-to-sink paths through the network that pass through that edge; the <strong>main path</strong> is the chain of edges with the highest aggregate SPC weight, traced from frontier articles backwards to foundational ones. Introduced by Hummon and Doreian (1989). The Pinakes Main Path tool surfaces the single highest-flow chain; it's worth remembering that there are usually several high-traffic paths through any citation DAG, and articles missing from the main path are not necessarily peripheral &mdash; they may sit on a parallel route.</p>
+
+    <h3 id="force-directed">Force-directed layout</h3>
+    <p>The visual algorithm behind most of the network graphs on Pinakes. Nodes repel each other via simulated electrical charge, while edges act as springs whose pull is proportional to edge weight. The simulation iterates until the configuration stabilizes; densely connected groups coalesce into visual clusters and lightly connected nodes drift to the periphery. Force-directed layouts are good at showing community structure visually but the absolute positions of nodes carry no meaning &mdash; only their relative distances and the visible clustering do.</p>
+
+    <h3 id="normalization">Normalization (citations per year, by-corpus rescaling)</h3>
+    <p>A general term for adjusting a raw count so it can be compared across populations of different size, age, or coverage. <strong>Citations per year</strong> divides total citation count by the number of years since publication, controlling for the age advantage of older articles. <strong>By-corpus rescaling</strong> reports a metric as a fraction of the leader in the current filtered set rather than as a raw number, so the leader is always 1.0 and other scores read as fractions. Centrality scores in Pinakes are normalized this way, which keeps the relative spread legible across filter changes but means absolute scores aren't comparable across runs.</p>
+
+    <!-- ── Data sources and identifiers ──────────────────────── -->
+
+    <h2 id="data" style="margin-top:2.5rem;">Data sources and identifiers</h2>
+
+    <h3 id="crossref">CrossRef</h3>
+    <p>The non-profit citation registry that operates the DOI system and stores deposited metadata for most academic publishing. When a journal &ldquo;deposits with CrossRef,&rdquo; it sends each article's metadata &mdash; title, authors, publication date, abstract, and crucially the <em>reference list</em> &mdash; to a public API. Pinakes pulls article metadata for indexed journals from CrossRef; the citation network exists because of CrossRef reference deposits. Journals that don't deposit references with CrossRef contribute zero edges to citation-derived analyses, which is why the <a href="/coverage">Coverage</a> page distinguishes between full-CrossRef and RSS-only indexing tiers.</p>
+
+    <h3 id="openalex">OpenAlex</h3>
+    <p>An open scholarly metadata project that enriches CrossRef records with institutional affiliations, topic classifications, open-access status, and citation counts from the broader scholarly literature. Pinakes uses OpenAlex for the institutions visualization, for global citation counts (as distinct from intra-corpus counts), and for some author-affiliation data. OpenAlex enrichment requires a DOI to look up an article, so articles indexed only through RSS or scraping have no OpenAlex enrichment regardless of the work's actual visibility.</p>
+
+    <h3 id="doi-issn">DOI and ISSN</h3>
+    <p>Two standard identifiers in academic publishing. A <strong>DOI</strong> (Digital Object Identifier) is a stable identifier for an individual article, book, or chapter &mdash; it's the long string starting with <code>10.</code> that resolves to the publisher's landing page. An <strong>ISSN</strong> (International Standard Serial Number) identifies a journal or serial publication as a whole. Pinakes uses ISSNs to query CrossRef for &ldquo;all articles in journal X,&rdquo; and DOIs to identify and match individual articles. The asymmetry matters: a journal can have an ISSN but no DOIs (so Pinakes can name it but not index its citations), or a journal can have DOIs without complete CrossRef registration (so some volumes show up and others don't).</p>
+
+    <p style="margin-top:2.2rem;"><a href="/about">&larr; Back to About</a> &middot; <a href="/coverage">Coverage notes</a> &middot; <a href="/explore">Explore tools</a></p>
+
+  </main>
+
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot;
+    <a href="/new">What's New</a> &middot;
+    <a href="/explore">Explore</a> &middot;
+    <a href="/authors">Authors</a> &middot;
+    <a href="/most-cited">Most Cited</a> &middot;
+    <a href="/books">Books</a> &middot;
+    <a href="/about">About</a> &middot;
+    <a href="/coverage">Coverage</a> &middot;
+    <a href="/glossary">Glossary</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    &copy; 2026 Justin Lewis
+  </footer>
+
+</div>
+{% endblock %}

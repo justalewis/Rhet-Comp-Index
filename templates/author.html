@@ -83,6 +83,55 @@
         <div id="author-cocitation-list"></div>
         <a href="/explore#author-cocitation" class="cocitation-link">See full co-citation network &rarr;</a>
       </div>
+
+      {% if citing_venues and citing_venues.total > 0 %}
+      <div class="insight-block">
+        <h3 class="insight-heading">Who Reads {{ author_name.split()[-1] if author_name else 'This Scholar' }}</h3>
+        {% set top_cluster = citing_venues.by_cluster[0] if citing_venues.by_cluster else None %}
+        {% if top_cluster %}
+        {% set top_share_pct = (top_cluster.count * 100 / citing_venues.total) | round(0, 'floor') | int %}
+        <p class="cocitation-hint">
+          {{ author_name }}'s work travels primarily in
+          <strong>{{ top_cluster.label if top_cluster.label is defined else top_cluster.cluster }}</strong>
+          ({{ top_share_pct }}% of indexed citations)
+          {% if citing_venues.by_cluster | length > 1 %}
+            &middot; {{ citing_venues.total }} total indexed citations from {{ citing_venues.by_cluster | length }} cluster{% if citing_venues.by_cluster | length != 1 %}s{% endif %}.
+          {% else %}
+            &middot; {{ citing_venues.total }} indexed citations.
+          {% endif %}
+        </p>
+        {% endif %}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.6rem;margin-top:0.7rem;">
+          <div>
+            <h4 style="margin:0 0 0.4rem;font-size:0.82rem;color:#7a7268;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">By cluster</h4>
+            <ul style="list-style:none;padding:0;margin:0;font-size:0.9rem;line-height:1.7;">
+              {% for c in citing_venues.by_cluster %}
+              <li>
+                <span style="color:#5a544c;">{{ c.cluster }}</span>
+                <span style="color:#9c9890;">&mdash; {{ c.count }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div>
+            <h4 style="margin:0 0 0.4rem;font-size:0.82rem;color:#7a7268;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">Top citing journals</h4>
+            <ul style="list-style:none;padding:0;margin:0;font-size:0.9rem;line-height:1.7;">
+              {% for j in citing_venues.top_journals %}
+              <li>
+                <a href="/?journal={{ j.journal | urlencode }}" style="color:#5a3e28;">{{ j.journal }}</a>
+                <span style="color:#9c9890;">&mdash; {{ j.count }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <p style="margin:0.8rem 0 0;font-size:0.82rem;color:#9c9890;">
+          Counts include only citations from indexed journals that deposit reference lists with CrossRef. Authors whose readers publish primarily in venues without reference deposits will appear less central than they are.
+          <a href="/coverage" style="color:#7a7268;">See coverage notes &rarr;</a>
+        </p>
+      </div>
+      {% endif %}
     </section>
 
     {% if articles %}
