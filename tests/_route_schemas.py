@@ -41,4 +41,6 @@ HTML_ROUTE_HEADINGS: dict[str, str] = {
     "/coverage":      "Corpus Snapshot",
     "/most-cited":    "Most cited in this index",
     "/books":         "Books",
+    "/glossary":      "Citation concepts",
+    "/atlas":         "Atlas of the Field",
 }
