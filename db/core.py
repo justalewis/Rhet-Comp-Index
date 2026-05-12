@@ -203,11 +203,11 @@ def _migrate_v4_to_v5(conn):
         CREATE TABLE IF NOT EXISTS citations (
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
             source_article_id INTEGER NOT NULL REFERENCES articles(id),
-            target_doi        TEXT    NOT NULL,
+            target_doi        TEXT,
             target_article_id INTEGER REFERENCES articles(id),
             raw_reference     TEXT,
-            created_at        TEXT    DEFAULT (datetime('now')),
-            UNIQUE(source_article_id, target_doi)
+            ord               INTEGER,
+            created_at        TEXT    DEFAULT (datetime('now'))
         )
     """)
     conn.execute(
@@ -218,6 +218,9 @@ def _migrate_v4_to_v5(conn):
     )
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_citations_target_id ON citations(target_article_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_citations_source_ord ON citations(source_article_id, ord)"
     )
 
 
@@ -353,6 +356,61 @@ def _migrate_v7_to_v8(conn):
     log.info("v7→v8 migration complete (institutions + fetch_log tables ready).")
 
 
+def _migrate_v8_to_v9(conn):
+    """Lift NOT NULL on citations.target_doi and add an `ord` column (v8 → v9).
+
+    Pre-v9, cite_fetcher.py dropped references that lacked a DOI, which in
+    humanities journals meant losing most of each article's bibliography
+    (book chapters, web pages, older journals). The new schema stores every
+    CrossRef reference verbatim — DOI-bearing or not — so the article page
+    can render the full reference list with in-index matches highlighted.
+
+    SQLite cannot DROP NOT NULL via ALTER, so we rebuild the table and
+    copy data over. Existing rows get ord=NULL (UNIQUE still holds because
+    SQLite treats each NULL as distinct); cite_fetcher.py wipes per-article
+    rows before re-inserting, so the NULL-ord legacy rows disappear as each
+    article is re-processed.
+
+    Idempotent: detects the migrated state via PRAGMA table_info.
+    """
+    cols = conn.execute("PRAGMA table_info(citations)").fetchall()
+    if not cols:
+        return  # citations table not yet created (shouldn't happen post-v4)
+
+    # cols rows: (cid, name, type, notnull, dflt_value, pk)
+    target_doi_notnull = any(c[1] == "target_doi" and c[3] == 1 for c in cols)
+    has_ord = any(c[1] == "ord" for c in cols)
+
+    if not target_doi_notnull and has_ord:
+        return  # already migrated
+
+    conn.executescript("""
+        CREATE TABLE citations_new (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_article_id INTEGER NOT NULL REFERENCES articles(id),
+            target_doi        TEXT,
+            target_article_id INTEGER REFERENCES articles(id),
+            raw_reference     TEXT,
+            ord               INTEGER,
+            created_at        TEXT    DEFAULT (datetime('now'))
+        );
+
+        INSERT INTO citations_new
+            (id, source_article_id, target_doi, target_article_id, raw_reference, ord, created_at)
+        SELECT id, source_article_id, target_doi, target_article_id, raw_reference, NULL, created_at
+        FROM citations;
+
+        DROP TABLE citations;
+        ALTER TABLE citations_new RENAME TO citations;
+
+        CREATE INDEX IF NOT EXISTS idx_citations_source ON citations(source_article_id);
+        CREATE INDEX IF NOT EXISTS idx_citations_target_doi ON citations(target_doi);
+        CREATE INDEX IF NOT EXISTS idx_citations_target_id ON citations(target_article_id);
+        CREATE INDEX IF NOT EXISTS idx_citations_source_ord ON citations(source_article_id, ord);
+    """)
+    log.info("v8→v9 migration complete (citations: target_doi nullable, ord column added).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -382,6 +440,9 @@ def init_db():
 
         # Always run v8 migration — idempotent via IF NOT EXISTS.
         _migrate_v7_to_v8(conn)
+
+        # Always run v9 migration — idempotent via PRAGMA inspection.
+        _migrate_v8_to_v9(conn)
 
         conn.commit()
 

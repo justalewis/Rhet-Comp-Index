@@ -69,9 +69,7 @@ def article_detail(article_id):
     related             = get_related_articles(article_id, limit=5)
     cited_by            = get_article_citations(article_id)
     all_refs            = get_article_all_references(article_id)
-    cites               = [r for r in all_refs if r["in_index"]]
-    outside_refs        = [r for r in all_refs if not r["in_index"]]
-    outside_count       = len(outside_refs)
+    in_index_count      = sum(1 for r in all_refs if r["in_index"])
     author_affiliations = get_article_affiliations(article_id)
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
@@ -85,9 +83,8 @@ def article_detail(article_id):
         article=article,
         related=related,
         cited_by=cited_by,
-        cites=cites,
-        outside_refs=outside_refs,
-        outside_count=outside_count,
+        all_refs=all_refs,
+        in_index_count=in_index_count,
         author_affiliations=author_affiliations,
         print_journals=print_journals,
         web_journals=web_journals,

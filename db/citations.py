@@ -59,30 +59,34 @@ def get_article_references(article_id):
 
 def get_article_all_references(article_id):
     """
-    Return ALL references for an article — both in-index and out-of-index.
+    Return ALL references for an article in CrossRef-deposit order.
 
     Each item is a dict with an 'in_index' key:
       in_index=True  — full article fields; the DOI matched an article in our DB
-      in_index=False — parsed CrossRef raw_reference metadata; DOI not in our index
+      in_index=False — parsed CrossRef raw_reference metadata (DOI not in our
+                       index, or no DOI at all — books, websites, older journals)
 
-    In-index refs come first (ordered by pub_date DESC), then out-of-index.
+    Ordered by `c.ord` (the reference's 0-indexed position in CrossRef's
+    deposited reference array), with NULLs last for legacy v8 rows that
+    pre-date the ord column.
     """
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT
                 c.target_article_id,
+                c.target_doi,
                 c.raw_reference,
+                c.ord,
                 a.id        AS a_id,
                 a.title     AS a_title,
                 a.authors   AS a_authors,
                 a.pub_date  AS a_pub_date,
-                a.journal   AS a_journal
+                a.journal   AS a_journal,
+                a.doi       AS a_doi
             FROM citations c
             LEFT JOIN articles a ON a.id = c.target_article_id
             WHERE c.source_article_id = ?
-            ORDER BY
-                CASE WHEN c.target_article_id IS NOT NULL THEN 0 ELSE 1 END,
-                a.pub_date DESC
+            ORDER BY c.ord IS NULL, c.ord, c.id
         """, (article_id,)).fetchall()
 
     results = []
@@ -95,6 +99,7 @@ def get_article_all_references(article_id):
                 "authors":  row["a_authors"],
                 "pub_date": row["a_pub_date"],
                 "journal":  row["a_journal"],
+                "doi":      row["a_doi"],
             })
         else:
             raw = {}
@@ -109,7 +114,7 @@ def get_article_all_references(article_id):
                 "authors":      raw.get("author") or "",
                 "year":         raw.get("year") or "",
                 "journal":      raw.get("journal-title") or raw.get("series-title") or "",
-                "doi":          raw.get("DOI") or "",
+                "doi":          raw.get("DOI") or row["target_doi"] or "",
                 "unstructured": raw.get("unstructured") or "",
             })
 
@@ -196,24 +201,42 @@ def get_outside_citation_count(article_id):
         ).fetchone()[0]
 
 
-def upsert_citation(source_article_id, target_doi, target_article_id, raw_reference):
+def upsert_citation(source_article_id, target_doi, target_article_id, raw_reference, ord=None):
     """
-    Insert a citation record.  Silently ignored if the (source, target_doi)
-    pair already exists (UNIQUE constraint).  Returns 1 if inserted, 0 if skipped.
+    Insert a citation record. Always inserts (no UNIQUE constraint as of v9 —
+    callers wipe per-article rows before re-inserting). Returns 1.
+
+    `target_doi` may be None for references without a DOI (books, web pages,
+    older journals). `ord` is the reference's 0-indexed position in CrossRef's
+    reference array, used to preserve original ordering on display.
     """
     with get_conn() as conn:
         conn.execute("""
-            INSERT OR IGNORE INTO citations
-                (source_article_id, target_doi, target_article_id, raw_reference)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO citations
+                (source_article_id, target_doi, target_article_id, raw_reference, ord)
+            VALUES (?, ?, ?, ?, ?)
         """, (
             source_article_id,
             target_doi,
             target_article_id,
             json.dumps(raw_reference) if raw_reference else None,
+            ord,
         ))
         conn.commit()
-        return conn.execute("SELECT changes()").fetchone()[0]
+        return 1
+
+
+def delete_citations_for_article(source_article_id):
+    """Wipe all citation rows where this article is the source.
+
+    Called by cite_fetcher.py before re-inserting an article's references, so
+    re-runs don't accumulate stale rows alongside fresh ones."""
+    with get_conn() as conn:
+        conn.execute(
+            "DELETE FROM citations WHERE source_article_id = ?",
+            (source_article_id,),
+        )
+        conn.commit()
 
 
 def mark_references_fetched(article_id, crossref_cited_by_count=None):

@@ -98,6 +98,7 @@ from .coverage import (
 )
 
 from .citations import (
+    delete_citations_for_article,
     get_article_all_references,
     get_article_citations,
     get_article_references,
@@ -132,6 +133,7 @@ __all__ = [
     "_build_where",
     "_sanitize_fts",
     "backfill_oa_status",
+    "delete_citations_for_article",
     "get_all_authors",
     "get_all_authors_with_institutions",
     "get_all_tags",

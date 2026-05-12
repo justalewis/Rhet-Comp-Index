@@ -26,6 +26,7 @@ import time
 import requests
 
 from db import (
+    delete_citations_for_article,
     get_articles_needing_citation_fetch,
     get_doi_to_article_id_map,
     get_conn,
@@ -96,7 +97,13 @@ def _fetch_crossref_work(doi: str) -> dict | None:
 def _process_article(article: dict, doi_map: dict) -> tuple[int, int]:
     """
     Fetch CrossRef data for one article, store its citations.
-    Returns (citations_inserted, total_references_with_doi).
+
+    Stores ALL references — DOI-bearing or not — so the article page can
+    render the full bibliography with in-index matches highlighted. Old
+    rows for this article are wiped first so re-runs don't pile up stale
+    references alongside fresh ones.
+
+    Returns (refs_inserted, refs_with_doi).
     Raises RateLimitError if CrossRef returns 429 — caller must not stamp the article.
     """
     article_id = article["id"]
@@ -111,27 +118,33 @@ def _process_article(article: dict, doi_map: dict) -> tuple[int, int]:
     cited_by_count = message.get("is-referenced-by-count")
     references     = message.get("reference", [])
 
-    citations_inserted = 0
-    dois_in_refs       = 0
+    # Wipe stale rows before inserting the fresh list. Safe even when the
+    # rebuild produces an empty reference list — clearing leaves the article
+    # with zero rows, matching CrossRef's current state.
+    delete_citations_for_article(article_id)
 
-    for ref in references:
+    refs_inserted = 0
+    refs_with_doi = 0
+
+    for ord_idx, ref in enumerate(references):
         ref_doi = ref.get("DOI")
-        if not ref_doi:
-            continue
+        target_doi_normalised = None
+        target_article_id     = None
+        if ref_doi:
+            refs_with_doi          += 1
+            target_doi_normalised   = ref_doi.strip().lower()
+            target_article_id       = doi_map.get(target_doi_normalised)
 
-        dois_in_refs       += 1
-        ref_doi_normalised  = ref_doi.strip().lower()
-        target_article_id   = doi_map.get(ref_doi_normalised)
-
-        citations_inserted += upsert_citation(
+        refs_inserted += upsert_citation(
             source_article_id = article_id,
-            target_doi        = ref_doi_normalised,
+            target_doi        = target_doi_normalised,
             target_article_id = target_article_id,
             raw_reference     = ref,
+            ord               = ord_idx,
         )
 
     mark_references_fetched(article_id, crossref_cited_by_count=cited_by_count)
-    return citations_inserted, dois_in_refs
+    return refs_inserted, refs_with_doi
 
 
 # ── Main entry points ──────────────────────────────────────────────────────────
@@ -161,17 +174,17 @@ def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
     doi_map = get_doi_to_article_id_map()
     log.info("DOI lookup map loaded: %d entries", len(doi_map))
 
-    processed        = 0
-    total_citations  = 0
-    total_doi_refs   = 0
-    errors           = 0
-    rate_limit_hits  = 0
+    processed       = 0
+    total_refs      = 0
+    total_doi_refs  = 0
+    errors          = 0
+    rate_limit_hits = 0
 
     for article in articles:
         try:
             ins, refs = _process_article(article, doi_map)
-            total_citations += ins
-            total_doi_refs  += refs
+            total_refs     += ins
+            total_doi_refs += refs
 
         except RateLimitError:
             rate_limit_hits += 1
@@ -204,16 +217,16 @@ def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
         processed += 1
         if processed % 100 == 0:
             log.info(
-                "  %d / %d  |  citations inserted: %d  |  DOI refs seen: %d  |  errors: %d",
-                processed, total, total_citations, total_doi_refs, errors,
+                "  %d / %d  |  refs stored: %d  |  of which DOI-bearing: %d  |  errors: %d",
+                processed, total, total_refs, total_doi_refs, errors,
             )
 
         time.sleep(REQUEST_DELAY)
 
     log.info(
-        "Fetch complete — processed: %d  |  citations inserted: %d  |  "
-        "DOI refs: %d  |  errors: %d  |  rate-limit hits: %d",
-        processed, total_citations, total_doi_refs, errors, rate_limit_hits,
+        "Fetch complete — processed: %d  |  refs stored: %d  |  "
+        "DOI-bearing: %d  |  errors: %d  |  rate-limit hits: %d",
+        processed, total_refs, total_doi_refs, errors, rate_limit_hits,
     )
     _recompute_counts()
 
