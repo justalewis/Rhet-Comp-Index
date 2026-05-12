@@ -1687,6 +1687,28 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   color: var(--text-light);
 }
 
+.citation-subcount {
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin-left: 0.3rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.citation-list--bibliography {
+  list-style: decimal outside;
+  padding-left: 1.75rem;
+  margin: 0;
+}
+
+.citation-list--bibliography > li::marker {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
 .citation-list {
   list-style: none;
   padding: 0;

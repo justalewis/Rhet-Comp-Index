@@ -51,8 +51,10 @@ def test_get_most_cited_tag_filter(seeded_db):
 # ── upsert_citation ──────────────────────────────────────────────────────────
 
 
-def test_upsert_citation_dedup(fixture_db):
-    # Seed two articles
+def test_upsert_citation_then_wipe(fixture_db):
+    # As of v9, upsert_citation always inserts (no UNIQUE constraint). Dedup is
+    # the caller's responsibility — cite_fetcher.py calls delete_citations_for_article
+    # before re-inserting an article's references.
     db.upsert_article("https://ex.org/a", "10.x/a", "A", None, None,
                        "2024-01-01", "College English", "crossref")
     db.upsert_article("https://ex.org/b", "10.x/b", "B", None, None,
@@ -60,10 +62,26 @@ def test_upsert_citation_dedup(fixture_db):
     rows_a = db.get_articles(limit=100)
     src_id = next(r["id"] for r in rows_a if r["doi"] == "10.x/a")
     tgt_id = next(r["id"] for r in rows_a if r["doi"] == "10.x/b")
-    first  = db.upsert_citation(src_id, "10.x/b", tgt_id, None)
-    second = db.upsert_citation(src_id, "10.x/b", tgt_id, None)
-    assert first == 1
-    assert second == 0
+
+    assert db.upsert_citation(src_id, "10.x/b", tgt_id, None, ord=0) == 1
+    assert db.upsert_citation(src_id, "10.x/b", tgt_id, None, ord=0) == 1
+
+    # delete-then-reinsert is the supported re-fetch pattern
+    db.delete_citations_for_article(src_id)
+    assert db.upsert_citation(src_id, "10.x/b", tgt_id, None, ord=0) == 1
+
+
+def test_upsert_citation_without_doi(fixture_db):
+    # v9: references without a DOI (books, web pages) can now be stored.
+    db.upsert_article("https://ex.org/a", "10.x/a", "A", None, None,
+                       "2024-01-01", "College English", "crossref")
+    src_id = db.get_articles(limit=10)[0]["id"]
+    raw = {"unstructured": "Smith, J. (1990). Some Book. New York: Press."}
+    assert db.upsert_citation(src_id, None, None, raw, ord=0) == 1
+    refs = db.get_article_all_references(src_id)
+    assert len(refs) == 1
+    assert refs[0]["in_index"] is False
+    assert refs[0]["unstructured"].startswith("Smith")
 
 
 # ── Network builders (smoke + structural) ────────────────────────────────────

@@ -266,41 +266,33 @@
           {% endif %}
         </div>
 
-        <!-- Cites -->
+        <!-- References (full bibliography from CrossRef; in-index entries linked) -->
         <div class="citation-col">
           <h4 class="citation-col-head">
-            Cites in this index
-            <span class="citation-count">({{ cites | length }})</span>
+            References
+            <span class="citation-count">({{ all_refs | length }})</span>
+            {%- if in_index_count and all_refs %}
+            <span class="citation-subcount">&middot; {{ in_index_count }} in this index</span>
+            {%- endif %}
           </h4>
-          {% if cites %}
-          <ol class="citation-list">
-            {% for r in cites[:5] %}{{ cite_item(r) }}{% endfor %}
+          {% if all_refs %}
+          <ol class="citation-list citation-list--bibliography">
+            {% for r in all_refs[:5] %}
+              {% if r.in_index %}{{ cite_item(r) }}{% else %}{{ cite_item_out(r) }}{% endif %}
+            {% endfor %}
           </ol>
-          {% if cites | length > 5 %}
+          {% if all_refs | length > 5 %}
           <details class="citation-overflow">
-            <summary>Show all {{ cites | length }} &rarr;</summary>
-            <ol class="citation-list">
-              {% for r in cites[5:] %}{{ cite_item(r) }}{% endfor %}
+            <summary>Show all {{ all_refs | length }} &rarr;</summary>
+            <ol class="citation-list citation-list--bibliography" start="6">
+              {% for r in all_refs[5:] %}
+                {% if r.in_index %}{{ cite_item(r) }}{% else %}{{ cite_item_out(r) }}{% endif %}
+              {% endfor %}
             </ol>
           </details>
           {% endif %}
           {% else %}
-          <p class="citation-empty">No references match articles in this index.</p>
-          {% endif %}
-
-          {% if outside_refs %}
-          <details class="citation-overflow citation-outside">
-            <summary class="citation-outside-summary">
-              Also cites {{ outside_refs | length }} work{{ 's' if outside_refs | length != 1 }} outside this index &darr;
-            </summary>
-            <ol class="citation-list citation-list--ext">
-              {% for r in outside_refs %}{{ cite_item_out(r) }}{% endfor %}
-            </ol>
-          </details>
-          {% elif outside_count > 0 %}
-          <p class="citation-outside-count">
-            Also cites {{ outside_count }} work{{ 's' if outside_count != 1 }} outside this index
-          </p>
+          <p class="citation-empty">No references on file for this article.</p>
           {% endif %}
         </div>
 
