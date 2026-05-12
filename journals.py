@@ -40,6 +40,7 @@ CROSSREF_JOURNALS = [
     {"name": "Assessing Writing",                              "issn": "1075-2935"},  # Elsevier — 1000 DOIs, 1994–present
     {"name": "Rhetoric of Health and Medicine",                "issn": "2573-5063"},  # U of Florida Press — 197 DOIs, 2018–present
     {"name": "Business and Professional Communication Quarterly", "issn": "2329-4922"},  # SAGE — 508 DOIs, 2013–present
+    {"name": "Reflections: A Journal of Community-Engaged Writing and Rhetoric", "issn": "1541-2075"},  # Penn State Libraries — 599 articles + references, 2000–2026
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
     # English Journal (NCTE): not indexed in CrossRef
@@ -158,14 +159,10 @@ SCRAPE_JOURNALS = [
         "notes": "IWCA WordPress site. Issues listed at /issues/. "
                  "Article slugs at root level.",
     },
-    {
-        "name": "Reflections: A Journal of Community-Engaged Writing and Rhetoric",
-        "url": "https://reflectionsjournal.net/",
-        "strategy": "reflections",
-        "notes": "WordPress. Archive page at /archive/ lists all articles with pipe-separated "
-                 "title|author format. Article pages have abstracts for ~2022+. "
-                 "Older issues (pre-Vol 21) link to PDFs — metadata from archive page only.",
-    },
+    # Reflections — moved to CROSSREF_JOURNALS in 2026-05 after Penn State Libraries
+    # deposited full metadata + references via CrossRef (ISSN 1541-2075,
+    # DOI prefix 10.59236). Scraper strategy "reflections" in scraper.py is now
+    # dead code — kept for reference but no longer invoked.
     {
         "name": "Composition Forum",
         "url": "https://compositionforum.com/",
