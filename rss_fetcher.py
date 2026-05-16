@@ -8,6 +8,7 @@ Usage:
     python rss_fetcher.py
 """
 
+import html
 import re
 import logging
 import requests
@@ -77,6 +78,7 @@ def _strip_html(text):
     if not text:
         return None
     clean = re.sub(r"<[^>]+>", " ", text)
+    clean = html.unescape(clean)
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean or None
 
@@ -175,7 +177,7 @@ def _harvest_oai(oai_url, journal_name, since_date=None):
 
             # Title
             title_el = metadata.find("dc:title", OAI_NS)
-            title = (title_el.text or "").strip() if title_el is not None else ""
+            title = html.unescape((title_el.text or "").strip()) if title_el is not None else ""
             if not title:
                 continue
 

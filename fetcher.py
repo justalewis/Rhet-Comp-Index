@@ -13,6 +13,7 @@ Usage:
 import sys
 import time
 import re
+import html
 import logging
 import requests
 from datetime import datetime
@@ -71,11 +72,52 @@ def _parse_authors(item):
 
 
 def _parse_abstract(item):
-    """Strip JATS XML tags from abstract."""
+    """Strip JATS XML tags and decode HTML entities from abstract."""
     raw = item.get("abstract", "")
     if not raw:
         return None
-    return re.sub(r"<[^>]+>", "", raw).strip() or None
+    cleaned = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+    return cleaned or None
+
+
+def _clean_title_part(s):
+    """Normalize one title or subtitle string from CrossRef.
+
+    Some deposits ship doubly-encoded entities ("&amp;#x3a;") and JATS
+    markup ("<i>De doctrina christiana</i>") inside the title field, so we
+    loop unescape until idempotent, strip XML/HTML tags, and collapse
+    whitespace.
+    """
+    if not s:
+        return ""
+    for _ in range(5):
+        decoded = html.unescape(s)
+        if decoded == s:
+            break
+        s = decoded
+    s = re.sub(r"<[^>]+>", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _full_title(item):
+    """Compose the canonical title from CrossRef's split title/subtitle arrays.
+
+    CrossRef stores titles like "Chicanx Filmmaking" + subtitle
+    "Producing the Next Generation of Resilient Cinema" as separate fields;
+    we join them with ": " to match how the work is cited.
+    """
+    titles = item.get("title", [])
+    if not titles:
+        return None
+    main = _clean_title_part(titles[0])
+    subtitles = item.get("subtitle", [])
+    if subtitles:
+        sub = _clean_title_part(subtitles[0])
+        if sub and sub not in main:
+            sep = "" if main.endswith(":") else ": "
+            main = f"{main}{sep}{sub}"
+    return main or None
 
 
 # ── Fetch ─────────────────────────────────────────────────────────────────────
@@ -92,7 +134,7 @@ def fetch_journal(issn, since_date=None):
 
     params = {
         "filter": f"issn:{issn},type:journal-article",
-        "select": "DOI,title,author,abstract,published-print,published-online,issued,container-title",
+        "select": "DOI,title,subtitle,author,abstract,published-print,published-online,issued,container-title",
         "rows": ROWS_PER_PAGE,
         "sort": "published",
         "order": "desc",
@@ -123,8 +165,7 @@ def fetch_journal(issn, since_date=None):
             if not doi:
                 continue
 
-            titles = item.get("title", [])
-            title = titles[0].strip() if titles else "(no title)"
+            title = _full_title(item) or "(no title)"
 
             url = f"https://doi.org/{doi}"
             pub_date = _parse_date(item)
