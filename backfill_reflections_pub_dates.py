@@ -6,9 +6,12 @@ stamped many articles with `issued = 2025-08-XX` — the DOI registration date,
 not the original publication date. Our fetcher trusted CrossRef's `issued`
 field, so those articles landed in the index with pub_date = 2025-08-XX.
 
-This script uses the journal's own /archive/ page (which lists every article
-under its real Volume/Issue heading) as the authoritative source for
-publication date, then updates affected rows by title match.
+The PSU OJS site exposes an OAI-PMH feed at /reflections/oai whose `<dc:date>`
+field carries the *original* publication date (e.g. 2004-12-01), and whose
+`<dc:identifier>` includes the DOI. We walk the feed, build a DOI -> date
+map, and update affected rows by DOI match — far more reliable than the
+earlier title-based archive-page heuristic, which missed special-issue
+headings that don't render as <h2>/<h3>.
 
 Usage:
     python backfill_reflections_pub_dates.py --dry-run
@@ -17,13 +20,26 @@ Usage:
 
 import argparse
 import logging
-import re
+import time
+import xml.etree.ElementTree as ET
+
+from curl_cffi import requests as curl_requests
 
 from db import get_conn, init_db
-from scraper import _parse_reflections_archive
 
 JOURNAL = "Reflections: A Journal of Community-Engaged Writing and Rhetoric"
 BAD_PUBDATE_PREFIX = "2025-08"
+OAI_BASE = "https://journals.psu.edu/reflections/oai"
+
+# PSU's WAF rejects Python's default TLS fingerprint, so a plain UA header
+# isn't enough — curl_cffi's Chrome impersonation is required.
+IMPERSONATE = "chrome120"
+
+OAI_NS = {
+    "oai": "http://www.openarchives.org/OAI/2.0/",
+    "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/",
+    "dc": "http://purl.org/dc/elements/1.1/",
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -33,39 +49,64 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def _norm_title(t: str) -> str:
-    """Aggressive normalization for cross-source title matching."""
-    if not t:
-        return ""
-    t = t.lower()
-    # Smart quotes / dashes → ASCII
-    for a, b in (("“", '"'), ("”", '"'),
-                 ("‘", "'"), ("’", "'"),
-                 ("–", "-"), ("—", "-")):
-        t = t.replace(a, b)
-    # Drop everything but letters, digits, and spaces
-    t = re.sub(r"[^a-z0-9\s]", " ", t)
-    t = re.sub(r"\s+", " ", t).strip()
-    return t
+def _harvest_oai_dates() -> dict[str, str]:
+    """Walk the Reflections OAI-PMH feed, return DOI -> dc:date map.
 
-
-def _title_keys(raw_title: str) -> list[str]:
-    """Yield normalized lookup keys for a title.
-
-    CrossRef stores titles and subtitles in separate arrays, and our fetcher
-    only persists `title[0]`. The archive page concatenates them as
-    "Title: Subtitle". So we index each archive entry both under its full
-    normalized form *and* under its pre-colon prefix, letting DB rows that
-    lost their subtitle still match.
+    A record's identifiers include both the article URL and the DOI; we
+    pick whichever starts with "10." as the DOI. Records missing either
+    a date or a DOI are skipped.
     """
-    full = _norm_title(raw_title)
-    keys = [full] if full else []
-    # Split on the first colon-style separator and add the prefix as a key.
-    pre = re.split(r"[:–—]| - ", raw_title, maxsplit=1)[0]
-    pre_norm = _norm_title(pre)
-    if pre_norm and pre_norm != full:
-        keys.append(pre_norm)
-    return keys
+    out: dict[str, str] = {}
+    params = {"verb": "ListRecords", "metadataPrefix": "oai_dc"}
+    page = 0
+    while True:
+        # PSU's WAF gets prickly with rapid OAI calls; one retry after a
+        # backoff handles the occasional connection reset.
+        resp = None
+        for attempt in (1, 2, 3):
+            try:
+                resp = curl_requests.get(OAI_BASE, params=params,
+                                         impersonate=IMPERSONATE, timeout=60)
+                resp.raise_for_status()
+                break
+            except Exception as e:
+                log.warning("OAI fetch attempt %d failed: %s", attempt, e)
+                time.sleep(5 * attempt)
+        if resp is None:
+            log.error("OAI page %d giving up after retries.", page + 1)
+            return out
+
+        root = ET.fromstring(resp.content)
+        for record in root.findall(".//oai:record", OAI_NS):
+            md = record.find(".//oai_dc:dc", OAI_NS)
+            if md is None:
+                continue
+            date_el = md.find("dc:date", OAI_NS)
+            if date_el is None or not (date_el.text or "").strip():
+                continue
+            date = date_el.text.strip()[:10]
+
+            doi = None
+            for ident in md.findall("dc:identifier", OAI_NS):
+                txt = (ident.text or "").strip()
+                if txt.startswith("10."):
+                    doi = txt.lower()
+                    break
+            if not doi:
+                continue
+            out[doi] = date
+
+        page += 1
+        token_el = root.find(".//oai:resumptionToken", OAI_NS)
+        token = (token_el.text or "").strip() if token_el is not None else ""
+        log.info("  OAI page %d  |  records collected: %d  |  token: %s",
+                 page, len(out), token or "(end)")
+        if not token:
+            break
+        params = {"verb": "ListRecords", "resumptionToken": token}
+        time.sleep(3)
+
+    return out
 
 
 def main():
@@ -76,37 +117,17 @@ def main():
 
     init_db()
 
-    log.info("Fetching Reflections archive page...")
-    archive = _parse_reflections_archive()
-    if not archive:
-        log.error("Archive page returned no rows — aborting.")
+    log.info("Walking Reflections OAI-PMH feed...")
+    doi_dates = _harvest_oai_dates()
+    log.info("OAI records with DOI + date: %d", len(doi_dates))
+    if not doi_dates:
+        log.error("No OAI records — aborting.")
         return
-
-    # Normalized title -> pub_date (YYYY-MM). Each archive entry contributes
-    # both its full and pre-colon-prefix keys, so DB rows that lost their
-    # subtitle (CrossRef stores title/subtitle separately) still match.
-    # Any key that maps to conflicting dates is dropped — better to log it as
-    # unmatched than guess wrong.
-    title_map: dict[str, str] = {}
-    collisions: set[str] = set()
-    for a in archive:
-        pub = a.get("pub_date")
-        if not pub:
-            continue
-        for key in _title_keys(a["title"]):
-            if key in title_map and title_map[key] != pub:
-                collisions.add(key)
-            else:
-                title_map[key] = pub
-    for c in collisions:
-        title_map.pop(c, None)
-    log.info("Archive title keys indexed: %d  (collisions dropped: %d)",
-             len(title_map), len(collisions))
 
     with get_conn() as conn:
         conn.execute("PRAGMA busy_timeout = 60000")
         rows = conn.execute(
-            "SELECT id, title, pub_date FROM articles "
+            "SELECT id, doi, title, pub_date FROM articles "
             "WHERE journal = ? AND pub_date LIKE ?",
             (JOURNAL, BAD_PUBDATE_PREFIX + "%"),
         ).fetchall()
@@ -114,24 +135,20 @@ def main():
                  BAD_PUBDATE_PREFIX, len(rows))
 
         updates: list[tuple[str, int]] = []
-        unmatched: list[tuple[int, str]] = []
+        unmatched: list[tuple[int, str, str]] = []
         for r in rows:
-            new_date = None
-            for key in _title_keys(r["title"]):
-                if key in title_map:
-                    new_date = title_map[key]
-                    break
+            doi = (r["doi"] or "").strip().lower()
+            new_date = doi_dates.get(doi)
             if new_date and new_date != r["pub_date"]:
                 updates.append((new_date, r["id"]))
             elif not new_date:
-                unmatched.append((r["id"], r["title"]))
+                unmatched.append((r["id"], r["doi"], r["title"]))
 
         log.info("Will update: %d   Unmatched: %d", len(updates), len(unmatched))
-
         if unmatched:
-            log.info("First 10 unmatched titles:")
-            for aid, t in unmatched[:10]:
-                log.info("  #%d  %s", aid, t)
+            log.info("First 10 unmatched (no OAI record for DOI):")
+            for aid, doi, t in unmatched[:10]:
+                log.info("  #%d  doi=%s  %s", aid, doi, t)
 
         if args.dry_run:
             log.info("Dry run — no writes performed.")
@@ -142,8 +159,7 @@ def main():
             return
 
         conn.executemany(
-            "UPDATE articles SET pub_date = ? WHERE id = ?",
-            updates,
+            "UPDATE articles SET pub_date = ? WHERE id = ?", updates,
         )
         conn.commit()
         log.info("Done — %d rows updated.", len(updates))
