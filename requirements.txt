@@ -6,6 +6,10 @@ flask-limiter>=3.5
 # bypasses this entirely.
 python-dotenv>=1.0
 requests>=2.31.0
+# curl_cffi: Chrome TLS-fingerprint impersonation. Needed only by the
+# Reflections OAI-PMH backfill — PSU's WAF rejects Python's default TLS
+# fingerprint, so plain `requests` returns connection-resets.
+curl_cffi>=0.7,<1.0
 feedparser>=6.0.11
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
