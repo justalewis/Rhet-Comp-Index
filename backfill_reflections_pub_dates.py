@@ -28,7 +28,6 @@ from curl_cffi import requests as curl_requests
 from db import get_conn, init_db
 
 JOURNAL = "Reflections: A Journal of Community-Engaged Writing and Rhetoric"
-BAD_PUBDATE_PREFIX = "2025-08"
 OAI_BASE = "https://journals.psu.edu/reflections/oai"
 
 # PSU's WAF rejects Python's default TLS fingerprint, so a plain UA header
@@ -126,13 +125,17 @@ def main():
 
     with get_conn() as conn:
         conn.execute("PRAGMA busy_timeout = 60000")
+        # Update *every* Reflections row whose OAI date differs — not just
+        # ones with the "2025-08" placeholder. The earlier title-based
+        # backfill landed many rows on coarse season-derived dates like
+        # "2004-01"; OAI gives us the precise "2004-12-01" and is the
+        # authority for this journal.
         rows = conn.execute(
             "SELECT id, doi, title, pub_date FROM articles "
-            "WHERE journal = ? AND pub_date LIKE ?",
-            (JOURNAL, BAD_PUBDATE_PREFIX + "%"),
+            "WHERE journal = ? AND doi IS NOT NULL",
+            (JOURNAL,),
         ).fetchall()
-        log.info("Candidate rows (pub_date starts with %s): %d",
-                 BAD_PUBDATE_PREFIX, len(rows))
+        log.info("Candidate rows (all Reflections with DOI): %d", len(rows))
 
         updates: list[tuple[str, int]] = []
         unmatched: list[tuple[int, str, str]] = []
