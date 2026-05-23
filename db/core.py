@@ -411,6 +411,33 @@ def _migrate_v8_to_v9(conn):
     log.info("v8→v9 migration complete (citations: target_doi nullable, ord column added).")
 
 
+def _migrate_v9_to_v10(conn):
+    """Add volume / issue / pages / first_page / last_page columns to articles
+    (v9 → v10). These were absent from the original CrossRef-only schema; manual
+    ingests of journals without DOIs (Pre/Text, JAC) need somewhere to store
+    structured citation data so incoming bibliographies can match on
+    (journal, volume, issue, first_page) when no DOI is available.
+
+    All five columns are nullable — existing rows stay NULL and the
+    CrossRef/OAI fetch paths are unaffected (they continue to ignore these
+    fields). Idempotent via column existence check.
+    """
+    existing = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
+    did_work = False
+    for col, typedef in [
+        ("volume",     "TEXT"),
+        ("issue",      "TEXT"),
+        ("pages",      "TEXT"),
+        ("first_page", "INTEGER"),
+        ("last_page",  "INTEGER"),
+    ]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {typedef}")
+            did_work = True
+    if did_work:
+        log.info("v9→v10 migration complete (volume/issue/pages columns added).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -443,6 +470,9 @@ def init_db():
 
         # Always run v9 migration — idempotent via PRAGMA inspection.
         _migrate_v8_to_v9(conn)
+
+        # Always run v10 migration — idempotent via column existence check.
+        _migrate_v9_to_v10(conn)
 
         conn.commit()
 

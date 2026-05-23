@@ -219,6 +219,19 @@ MANUAL_JOURNALS = [
                  "234 articles indexed from a hand-compiled record across 22 volumes. "
                  "Ingested via ingest_pretext.py.",
     },
+    {
+        "name": "JAC: A Journal of Rhetoric, Culture, and Politics",
+        "full_name": "JAC: A Journal of Rhetoric, Culture, and Politics",
+        "former_name": "JAC: Journal of Advanced Composition (1980–2012; renamed at vol 33, 2013)",
+        "issn": "0731-6755",
+        "years": "1980–2014",
+        "notes": "1,221 articles indexed from CompPile records across vols 1–34. "
+                 "No DOIs (subscription journal that ceased active publication c. 2014; "
+                 "never deposited in CrossRef). Three CSV variants of the title "
+                 "('JAC', 'JAC: Journal of Advanced Composition', "
+                 "'JAC: A Journal of Rhetoric, Culture, and Politics') all resolve "
+                 "to the canonical post-2013 name. Ingested via ingest_jac.py.",
+    },
 ]
 
 # ── Open-access classification ──────────────────────────────────────────────
@@ -301,6 +314,7 @@ JOURNAL_GROUPS = [
         "Poroi",
         "Advances in the History of Rhetoric",
         "Pre/Text",
+        "JAC: A Journal of Rhetoric, Culture, and Politics",
         "Peitho",
         "Present Tense: A Journal of Rhetoric in Society",
         "KB Journal: The Journal of the Kenneth Burke Society",
