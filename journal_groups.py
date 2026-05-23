@@ -48,6 +48,7 @@ JOURNAL_GROUPS = {
     "KB Journal: The Journal of the Kenneth Burke Society":     "RHET_COMP",
     "Poroi":                                                    "RHET_COMP",
     "Pre/Text":                                                 "RHET_COMP",
+    "Journal of Response to Writing":                           "RHET_COMP",
 
     # ── OTHER ──
     "Writing Center Journal":                                   "OTHER",

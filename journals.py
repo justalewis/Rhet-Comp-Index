@@ -90,6 +90,19 @@ RSS_JOURNALS = [
         # rss_fetcher.py will prefer this endpoint over the RSS feed when present.
         "oai_url": "https://licsjournal.org/index.php/LiCS/oai",
     },
+    {
+        "name": "Journal of Response to Writing",
+        "url":  "https://scholarsarchive.byu.edu/journalrw/",
+        "feed_url": "https://scholarsarchive.byu.edu/journalrw/recent.rss",
+        # BYU ScholarsArchive (bepress / Digital Commons) hosts dozens of
+        # journals on one shared OAI-PMH endpoint, so the set spec is required
+        # to scope harvesting to JoRW only.
+        "oai_url": "https://scholarsarchive.byu.edu/do/oai/",
+        "oai_set": "publication:journalrw",
+        # ISSN 2575-9809. No DOIs deposited (bepress has the metadata but BYU
+        # hasn't enabled CrossRef deposit) — candidate for DOI/reference-deposit
+        # outreach, same pattern as Reflections / LiCS.
+    },
 ]
 
 # ── Web-native journals requiring scraping ────────────────────────────────────
@@ -236,6 +249,7 @@ GOLD_OA_JOURNALS = {
     "The Peer Review",
     "Writing Center Journal",
     "Writing Lab Newsletter",
+    "Journal of Response to Writing",
     "Poroi",
     "Community Literacy Journal",
     "Composition Studies",
@@ -277,6 +291,7 @@ JOURNAL_GROUPS = [
         "Writing on the Edge",
         "Literacy in Composition Studies",
         "Basic Writing e-Journal",
+        "Journal of Response to Writing",
     ]),
     ("Rhetoric", [
         "Rhetoric Society Quarterly",

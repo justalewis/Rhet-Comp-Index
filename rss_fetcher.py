@@ -111,14 +111,32 @@ OAI_NS = {
     "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/",
 }
 
+# Issue-level wrappers that bepress / Digital Commons emit alongside articles.
+# Titles like "Full Issue", "Volume 11 Issue 2 Complete Issue", "JRW Spring 2024
+# Volume 10 Issue 1", "Journal of Response to Writing 10(2)" are PDF dumps of an
+# entire issue and shouldn't appear as articles in the index.
+_OAI_WRAPPER_TITLE_RE = re.compile(
+    r"^("
+    r"full\s+issue"
+    r"|complete\s+issue"
+    r"|volume\s+\d+(\s+(number|issue)\s+\d+)?(\s+(complete|full)(\s+issue)?)?\s*(\(\d{4}\))?"
+    r"|.*\bcomplete\s+issue\b"
+    r"|.*\bfull\s+issue\b"
+    r")\s*$",
+    re.I,
+)
 
-def _harvest_oai(oai_url, journal_name, since_date=None):
+
+def _harvest_oai(oai_url, journal_name, since_date=None, oai_set=None):
     """
     Harvest all article records from an OAI-PMH endpoint (Dublin Core format).
 
     Handles resumption tokens so the full archive is fetched regardless of
     how many records exist. If since_date (YYYY-MM-DD) is given, only records
     modified on or after that date are returned — useful for incremental runs.
+    If oai_set is given, only records in that OAI set are returned — needed
+    for repositories that host multiple journals on one endpoint (e.g. bepress
+    Digital Commons, where each journal is a set like "publication:journalrw").
 
     Returns count of new articles inserted.
     """
@@ -128,6 +146,8 @@ def _harvest_oai(oai_url, journal_name, since_date=None):
     params = {"verb": "ListRecords", "metadataPrefix": "oai_dc"}
     if since_date:
         params["from"] = since_date
+    if oai_set:
+        params["set"] = oai_set
 
     total_new = 0
     page = 0
@@ -179,6 +199,15 @@ def _harvest_oai(oai_url, journal_name, since_date=None):
             title_el = metadata.find("dc:title", OAI_NS)
             title = html.unescape((title_el.text or "").strip()) if title_el is not None else ""
             if not title:
+                continue
+            if _OAI_WRAPPER_TITLE_RE.match(title):
+                continue
+            # Authorless + abstractless wrappers (bepress: "JRW Spring 2024 Vol
+            # 10 Iss 1", "Journal of Response to Writing 10(2)") that don't
+            # match the explicit regex but are clearly not articles.
+            has_creator = metadata.find("dc:creator", OAI_NS) is not None
+            has_descr   = metadata.find("dc:description", OAI_NS) is not None
+            if not has_creator and not has_descr:
                 continue
 
             # URL — prefer an http dc:identifier over the OAI handle
@@ -364,7 +393,11 @@ def fetch_rss_journal(journal):
 
     # ── OAI-PMH path (OJS journals — full archive, incremental support) ───────
     if journal.get("oai_url"):
-        total_new = _harvest_oai(journal["oai_url"], name, since_date=since)
+        total_new = _harvest_oai(
+            journal["oai_url"], name,
+            since_date=since,
+            oai_set=journal.get("oai_set"),
+        )
         update_fetch_log(name)
         return total_new
 
