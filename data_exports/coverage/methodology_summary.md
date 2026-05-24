@@ -1,15 +1,15 @@
 # Pinakes Citation Coverage — Per-Journal Accounting
 
-*Generated 2026-04-17 22:21 UTC*
+*Generated 2026-05-24 00:13 UTC*
 
 ## Corpus totals
 
-- **51,843** articles across **51** journals
+- **53,160** articles across **53** journals
 - **3,495** books
 - **202,929** citation edges total; **44,885** (22.1%) resolved to internal article IDs
 - **46,566** articles had a reference-fetch attempted; **12,297** returned any reference data
 - **10,399** articles are cited from at least one other article in the corpus
-- OpenAlex enrichment: **46,061** articles (88.8%)
+- OpenAlex enrichment: **46,061** articles (86.6%)
 
 ## Per-journal summary
 
@@ -26,6 +26,7 @@
 | Teaching English in the Two-Year College | 1,513 | 1996–2025 | 1,513 (100.0%) | 169 | 1,585 | 448 (28.3%) | 196 | 53.3% | 100.0% |
 | Rhetoric Review | 1,390 | 1982–2026 | 1,390 (100.0%) | 775 | 8,198 | 1,969 (24.0%) | 488 | 35.4% | 100.0% |
 | Argumentation | 1,382 | 1987–2026 | 1,382 (100.0%) | 929 | 13,088 | 1,535 (11.7%) | 519 | 89.9% | 100.0% |
+| JAC: A Journal of Rhetoric, Culture, and Politics | 1,180 | 1980–2014 | 0 (0.0%) | 0 | 0 | 0 (0.0%) | 0 | 0.0% | 0.0% |
 | Pedagogy | 1,141 | 2001–2026 | 1,141 (100.0%) | 838 | 6,225 | 1,712 (27.5%) | 408 | 42.9% | 100.0% |
 | Technical Communication Quarterly | 1,112 | 1992–2026 | 1,112 (100.0%) | 834 | 14,618 | 5,134 (35.1%) | 698 | 43.6% | 100.0% |
 | Journal of Business and Technical Communication | 1,053 | 1989–2026 | 1,053 (100.0%) | 692 | 12,879 | 3,193 (24.8%) | 607 | 30.9% | 100.0% |
@@ -60,6 +61,7 @@
 | Praxis: A Writing Center Journal | 228 | 2012–2026 | 0 (0.0%) | 0 | 0 | 0 (0.0%) | 2 | 0.0% | 0.0% |
 | Rhetoric of Health and Medicine | 202 | 2018–2026 | 202 (100.0%) | 0 | 0 | 0 (0.0%) | 15 | 0.0% | 100.0% |
 | Literacy in Composition Studies | 191 | 2007–2026 | 163 (85.3%) | 140 | 5,850 | 1,414 (24.2%) | 82 | 20.6% | 85.3% |
+| Journal of Response to Writing | 137 | 2015–2026 | 0 (0.0%) | 0 | 0 | 0 (0.0%) | 0 | 0.0% | 0.0% |
 | Prompt: A Journal of Academic Writing Assignments | 127 | 2016–2026 | 127 (100.0%) | 0 | 0 | 0 (0.0%) | 2 | 0.0% | 100.0% |
 | Double Helix | 112 | 2012–2024 | 112 (100.0%) | 0 | 0 | 0 (0.0%) | 1 | 0.0% | 100.0% |
 | Basic Writing e-Journal | 108 | 1999–2020 | 0 (0.0%) | 0 | 0 | 0 (0.0%) | 1 | 0.0% | 0.0% |

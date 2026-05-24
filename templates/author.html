@@ -23,13 +23,28 @@
       </span>
     </div>
 
+    {# Author names are stored "Last, First [Middle]" in the DB, so the surname
+       is everything before the first comma. The earlier `.split()[-1]`
+       returned the first name on comma-formatted entries. #}
+    {% set author_surname = (author_name.split(',')[0] if ',' in author_name else author_name.split()[-1]).strip() %}
     <div class="author-comppile-link">
-      <a href="https://wacclearinghouse.org/comppile/search/"
-         target="_blank" rel="noopener noreferrer"
-         class="comppile-ref-link"
-         title="Search CompPile for articles by {{ author_name.split()[-1] }}. CompPile is the field&#39;s comprehensive bibliography with 117,000+ records including books, dissertations, and edited collections.">
-        &#128218; Search for {{ author_name.split()[-1] }} in CompPile →
-      </a>
+      {# Same POST-form pattern as the article page; CompPile's search ignores
+         URL query params. Pre-populates the advanced Author field with the
+         surname. #}
+      <form action="https://wacclearinghouse.org/comppile/search/index.cfm"
+            method="post" target="_blank" rel="noopener noreferrer"
+            class="comppile-search-form">
+        <input type="hidden" name="searchtype"    value="2">
+        <input type="hidden" name="SearchField1"  value="Author">
+        <input type="hidden" name="Boolean1"      value="AND">
+        <input type="hidden" name="stringtype1"   value="wildcard">
+        <input type="hidden" name="AndOr"         value="1">
+        <input type="hidden" name="searchstring1" value="{{ author_surname }}">
+        <button type="submit" class="comppile-ref-link"
+                title="Search CompPile (advanced, Author field) for: {{ author_surname }}">
+          &#128218; Search for {{ author_surname }} in CompPile →
+        </button>
+      </form>
     </div>
 
     {% if author_record %}

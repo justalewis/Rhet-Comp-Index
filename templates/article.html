@@ -127,12 +127,23 @@
 
         <dt>CompPile</dt>
         <dd>
-          <a href="https://wacclearinghouse.org/comppile/search/"
-             target="_blank" rel="noopener noreferrer"
-             class="comppile-ref-link"
-             title="Search for this article in CompPile — the field&#39;s comprehensive bibliography of rhetoric and composition scholarship, with 117,000+ records including books, dissertations, and edited collections. Search by title: {{ article.title | truncate(80, true, '…') }}">
-            Search in CompPile &#8599;
-          </a>
+          {# CompPile's search form posts to index.cfm — GET with query params
+             does not trigger a search. We submit a tiny hidden form so the
+             title pre-populates the advanced Title field on click. #}
+          <form action="https://wacclearinghouse.org/comppile/search/index.cfm"
+                method="post" target="_blank" rel="noopener noreferrer"
+                class="comppile-search-form">
+            <input type="hidden" name="searchtype"    value="2">
+            <input type="hidden" name="SearchField1"  value="Title">
+            <input type="hidden" name="Boolean1"      value="AND">
+            <input type="hidden" name="stringtype1"   value="wildcard">
+            <input type="hidden" name="AndOr"         value="1">
+            <input type="hidden" name="searchstring1" value="{{ article.title }}">
+            <button type="submit" class="comppile-ref-link"
+                    title="Search CompPile (advanced, Title field) for: {{ article.title | truncate(80, true, '…') }}">
+              Search in CompPile &#8599;
+            </button>
+          </form>
         </dd>
 
         {% if article.oa_url or article.oa_status %}

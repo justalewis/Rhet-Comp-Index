@@ -37,7 +37,7 @@
       <p style="margin:0 0 0.5rem;font-size:0.86rem;font-weight:600;color:#5a3e28;letter-spacing:0.05em;text-transform:uppercase;">If you read nothing else on this page</p>
       <p style="margin:0 0 0.7rem;line-height:1.55;">Three things to keep in mind before you read anything on the <a href="/explore">Explore</a> page:</p>
       <ol style="margin:0;padding-left:1.4rem;line-height:1.6;">
-        <li style="margin-bottom:0.4rem;">Only about 28 of the 49 indexed journals are fully CrossRef-indexed with their reference lists. Citation networks, centrality scores, and coupling/co-citation views all underrepresent the others &mdash; they show what's been deposited, not what's been written.</li>
+        <li style="margin-bottom:0.4rem;">Only about 28 of the 53 indexed journals are fully CrossRef-indexed with their reference lists. Citation networks, centrality scores, and coupling/co-citation views all underrepresent the others &mdash; they show what's been deposited, not what's been written.</li>
         <li style="margin-bottom:0.4rem;">Some journals can be cited but cannot cite. If a venue has no DOIs, its references aren't deposited anywhere Pinakes can read them. Older content, especially pre-2000 NCTE journals, has the same problem at scale: most NCTE volumes before 2000 have no machine-readable reference lists at all.</li>
         <li>Book chapters are partially indexed. This particularly affects writing-across-the-curriculum, writing-center, and edited-collection-heavy sub-areas, where a substantial share of the field's argumentative work lives in monographs rather than journals. The networks underweight that scholarship.</li>
       </ol>
@@ -86,9 +86,9 @@
     <p>The seven-cluster scheme used in the <a href="/atlas">Atlas of the Field</a> and the journal sidebar maps roughly onto distinct coverage profiles. Reading the index by sub-area rather than by individual journal helps locate where the citation networks overweight some scholarship and underweight others.</p>
 
     <ul class="coverage-list" style="line-height:1.65;">
-      <li><strong>Composition &amp; Writing Studies</strong> &mdash; Strong CrossRef coverage on the flagship NCTE journals (<em>CCC</em>, <em>College English</em>, <em>RTE</em>) for current content, with the well-known era gap before 2000 where back-catalog content lives in JSTOR without article-level DOIs. <em>Composition Studies</em> is partially CrossRef-registered. <em>TETYC</em> is CrossRef-deposited but produces less citation traffic per article than the flagship venues. <em>Basic Writing e-Journal</em> has partial CrossRef coverage. Citation networks should read this cluster's pre-2000 scholarship as systematically underweighted.</li>
+      <li><strong>Composition &amp; Writing Studies</strong> &mdash; Strong CrossRef coverage on the flagship NCTE journals (<em>CCC</em>, <em>College English</em>, <em>RTE</em>) for current content, with the well-known era gap before 2000 where back-catalog content lives in JSTOR without article-level DOIs. <em>Composition Studies</em> is partially CrossRef-registered. <em>TETYC</em> is CrossRef-deposited but produces less citation traffic per article than the flagship venues. <em>Basic Writing e-Journal</em> has partial CrossRef coverage. <em>Journal of Response to Writing</em> is OAI-PMH harvested from BYU's bepress repository &mdash; titles, authors, and abstracts are present, but no DOIs and no reference lists. Citation networks should read this cluster's pre-2000 scholarship as systematically underweighted.</li>
 
-      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Rhetoric &amp; Public Affairs</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). The smaller specialized rhetoric venues are mixed: <em>Peitho</em> has full CrossRef coverage; <em>Pre/Text</em> is manually indexed (analog only); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations. <em>Poroi</em> is fully indexed. <em>Peitho</em> contributes citation data; the smaller specialized rhetoric venues do not.</li>
+      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Rhetoric &amp; Public Affairs</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). The smaller specialized rhetoric venues are mixed: <em>Peitho</em> has full CrossRef coverage; <em>Pre/Text</em> is manually indexed (analog only); <em>JAC</em> is manually indexed from CompPile records (1980&ndash;2014; subscription journal that never deposited DOIs); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations. <em>Poroi</em> is fully indexed. <em>Peitho</em> contributes citation data; the smaller specialized rhetoric venues do not.</li>
 
       <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Rhetoric of Health and Medicine</em> all have full CrossRef coverage with complete reference lists. This is the cluster where citation-network analyses are most reliable, which is also why it serves as the primary corpus for the in-progress <em>Datastories</em> project.</li>
 
@@ -140,14 +140,15 @@
 
     <p>These journals are in the index but contribute reduced data to the visualizations. The technical reason varies by venue.</p>
 
-    <h3>Manually indexed print journals — analog only</h3>
-    <p>These journals were never digitized, never registered DOIs, and have no web presence. Coverage comes from hand-compiled article indexes. Records include title, author, volume/issue, and date only. No links to source material exist.</p>
+    <h3>Manually indexed print journals — no DOIs</h3>
+    <p>These journals exist only as print-era records: no DOIs, no machine-readable reference lists, no web presence (or no machine-readable web presence). Coverage comes from hand-compiled article indexes or secondary bibliographic sources. Records include title, author, volume/issue, and date; some include keywords and annotations.</p>
     <ul class="coverage-list coverage-list--partial">
       <li><em>Pre/Text: A Journal of Rhetorical Theory</em> (ed. Victor J. Vitanza, 1980–2016) — 234 articles across volumes 1–22; volumes 19–20 not indexed. The journal is one of the most significant theory-oriented publications in the history of rhetoric and composition and was never digitized.</li>
+      <li><em>JAC: A Journal of Rhetoric, Culture, and Politics</em> (originally <em>JAC: Journal of Advanced Composition</em>, 1980–2014) — 1,180 articles across volumes 1–34, sourced from <a href="https://wacclearinghouse.org/comppile/" target="_blank" rel="noopener noreferrer">CompPile</a> records. JAC was a subscription print journal that ceased active publication around 2014 and never deposited DOIs. Records include CompPile's keyword vocabulary and annotations (annotations present for about 1% of entries). Book reviews are tagged as such.</li>
     </ul>
 
     <h3>RSS or scrape only — no CrossRef DOIs</h3>
-    <p>These are legitimate field journals that have not registered DOIs. Pinakes collects title, author, and date from RSS feeds or by parsing the journal website. No citation data, no OpenAlex enrichment, no reference lists.</p>
+    <p>These are legitimate field journals that have not registered DOIs. Pinakes collects title, author, and date from RSS feeds, OAI-PMH endpoints, or by parsing the journal website. No citation data, no OpenAlex enrichment, no reference lists.</p>
     <ul class="coverage-list coverage-list--partial">
       <li><em>Kairos: A Journal of Rhetoric, Technology, and Pedagogy</em> — custom HTML format; scraped manually per issue</li>
       <li><em>Enculturation</em> — RSS only</li>
@@ -155,6 +156,7 @@
       <li><em>Present Tense: A Journal of Rhetoric in Society</em> — RSS only</li>
       <li><em>KB Journal</em> (Kenneth Burke Society) — RSS only</li>
       <li><em>Reflections: A Journal of Community-Engaged Writing and Rhetoric</em> — RSS only</li>
+      <li><em>Journal of Response to Writing</em> (BYU ScholarsArchive, bepress) — OAI-PMH harvest. Full archive (2015–present) with titles, authors, and abstracts; no DOIs. Strong candidate for the DOI-deposit outreach pattern Reflections recently completed with Penn State Libraries.</li>
     </ul>
 
     <h3>OJS installations without CrossRef registration</h3>

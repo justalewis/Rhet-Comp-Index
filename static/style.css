@@ -3137,6 +3137,22 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   text-decoration: none;
 }
 
+/* CompPile's search ignores URL params, so we submit a hidden POST form.
+   The form wrapper should behave like the inline link it replaced, and the
+   <button> inside it should look identical to the original <a>. */
+.comppile-search-form {
+  display: inline;
+  margin: 0;
+}
+button.comppile-ref-link {
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--text-muted);
+  padding: 0;
+  cursor: pointer;
+  /* font-family / size / color inherited from .comppile-ref-link above */
+}
+
 .author-comppile-link {
   margin: -0.25rem 0 0.85rem;
   font-family: var(--font-ui);
