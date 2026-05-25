@@ -40,7 +40,15 @@ CROSSREF_JOURNALS = [
     {"name": "Assessing Writing",                              "issn": "1075-2935"},  # Elsevier — 1000 DOIs, 1994–present
     {"name": "Rhetoric of Health and Medicine",                "issn": "2573-5063"},  # U of Florida Press — 197 DOIs, 2018–present
     {"name": "Business and Professional Communication Quarterly", "issn": "2329-4922"},  # SAGE — 508 DOIs, 2013–present
+    {"name": "IEEE Transactions on Professional Communication", "issn": "0361-1434"},  # IEEE — 3,229 DOIs, 1972–present (print ISSN; online 1558-1500 returns incomplete results)
     {"name": "Reflections: A Journal of Community-Engaged Writing and Rhetoric", "issn": "1541-2075"},  # Penn State Libraries — 599 articles + references, 2000–2026
+    # Previously orphaned CrossRef-discovered journals (indexed before being declared here)
+    {"name": "Rhetorica",                                      "issn": "1533-8541"},  # U California Press / ISHR — 2,062 DOIs, 1983–present (online ISSN; print 0734-8584 returns half)
+    {"name": "Argumentation",                                  "issn": "0920-427X"},  # Springer — 1,382 DOIs, 1987–present
+    {"name": "Res Rhetorica",                                  "issn": "2392-3113"},  # Polish Rhetorical Society — 308 DOIs, OA
+    {"name": "Journal of Writing Research",                    "issn": "2030-1006"},  # 295 DOIs, 2008–present
+    {"name": "Writing and Pedagogy",                           "issn": "1756-5839"},  # Equinox — 334 DOIs, 2009–present
+    {"name": "Journal of Academic Writing",                    "issn": "2225-8973"},  # EATAW — 245 DOIs, OA
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
     # English Journal (NCTE): not indexed in CrossRef
@@ -299,6 +307,9 @@ JOURNAL_GROUPS = [
         "Pedagogy",
         "Teaching English in the Two-Year College",
         "Assessing Writing",
+        "Journal of Writing Research",
+        "Journal of Academic Writing",
+        "Writing and Pedagogy",
         "Journal of Writing Analytics",
         "Prompt: A Journal of Academic Writing Assignments",
         "Writing on the Edge",
@@ -313,6 +324,9 @@ JOURNAL_GROUPS = [
         "Rhetoric & Public Affairs",
         "Poroi",
         "Advances in the History of Rhetoric",
+        "Rhetorica",
+        "Res Rhetorica",
+        "Argumentation",
         "Pre/Text",
         "JAC: A Journal of Rhetoric, Culture, and Politics",
         "Peitho",
@@ -325,6 +339,7 @@ JOURNAL_GROUPS = [
         "Technical Communication Quarterly",
         "Journal of Business and Technical Communication",
         "Journal of Technical Writing and Communication",
+        "IEEE Transactions on Professional Communication",
         "Communication Design Quarterly",
         "Communication Design Quarterly Review",
         "Business and Professional Communication Quarterly",
@@ -360,6 +375,7 @@ ALL_JOURNAL_NAMES = (
     [j["name"] for j in CROSSREF_JOURNALS]
     + [j["name"] for j in RSS_JOURNALS]
     + [j["name"] for j in SCRAPE_JOURNALS]
-    + [j["name"] for j in DIGITAL_PRESS_JOURNALS]
+    # DIGITAL_PRESS_JOURNALS (e.g. CCDP) are book presses, not journals — they
+    # belong in /books (which reads from the books table), not the journal nav.
     + [j["name"] for j in MANUAL_JOURNALS]
 )
