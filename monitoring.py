@@ -105,6 +105,11 @@ def init_sentry(component: str) -> bool:
         traces_sample_rate=0.01,    # 1% performance sampling
         profiles_sample_rate=0.0,   # off — preserves quota
         send_default_pii=False,
+        # SystemExit and KeyboardInterrupt are raised when gunicorn aborts
+        # a worker (typically mid-request during a Fly.io deploy). They're
+        # expected operational signals, not application bugs; filtering them
+        # here keeps the issue feed focused on real errors.
+        ignore_errors=[SystemExit, KeyboardInterrupt],
         release=os.environ.get("FLY_RELEASE_VERSION", "dev"),
         environment=os.environ.get("FLY_APP_NAME", "local"),
         before_send=_scrub_pii,

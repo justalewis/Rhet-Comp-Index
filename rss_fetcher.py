@@ -160,6 +160,13 @@ def _harvest_oai(oai_url, journal_name, since_date=None, oai_set=None):
                 timeout=30,
             )
             resp.raise_for_status()
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Third-party OJS instances go up and down. Log at warning so
+            # Sentry's default LoggingIntegration (event_level=ERROR) doesn't
+            # page on expected upstream availability blips.
+            log.warning("  OAI request failed for %s (upstream timeout/connection): %s",
+                        journal_name, e)
+            break
         except requests.RequestException as e:
             log.error("  OAI request failed for %s: %s", journal_name, e)
             break
@@ -316,6 +323,10 @@ def _harvest_wp_api(api_url, journal_name, since_date=None):
             if resp.status_code == 400:
                 break
             resp.raise_for_status()
+        except (requests.Timeout, requests.ConnectionError) as e:
+            log.warning("  WP API request failed for %s (upstream timeout/connection): %s",
+                        journal_name, e)
+            break
         except requests.RequestException as e:
             log.error("  WP API request failed for %s: %s", journal_name, e)
             break
