@@ -28,7 +28,7 @@ def _get_sidebar():
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_timeline():
-    """JSON: article counts per year per journal, 1990–present."""
+    """JSON: article counts per year per journal, full history (1900 sanity floor)."""
     raw = get_timeline_data()
 
     # Collect all years and journals

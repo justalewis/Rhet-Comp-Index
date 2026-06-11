@@ -190,12 +190,18 @@ def get_related_articles(article_id, limit=5):
 
 
 def get_timeline_data():
-    """Return list of {year, journal, count} dicts for the timeline chart."""
+    """Return list of {year, journal, count} dicts for the timeline chart.
+
+    Full history: the corpus reaches back to the 1930s and the timeline
+    should show it. (A 1990 floor here used to hide ~17,000 pre-1990
+    articles — 31% of the corpus — with no indication in the UI.) The
+    sanity floor of 1900 only drops obviously malformed dates.
+    """
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT SUBSTR(pub_date,1,4) AS year, journal, COUNT(*) AS count
             FROM articles
-            WHERE pub_date IS NOT NULL AND SUBSTR(pub_date,1,4) >= '1990'
+            WHERE pub_date IS NOT NULL AND SUBSTR(pub_date,1,4) >= '1900'
             GROUP BY year, journal
             ORDER BY year, journal
         """).fetchall()

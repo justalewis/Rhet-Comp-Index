@@ -33,6 +33,31 @@ jobs:
             exit 1
           fi
 
+  prewarm:
+    name: Trigger /api/admin/prewarm
+    runs-on: ubuntu-latest
+    # The fetch invalidates the Datastories disk cache whenever it changes
+    # the data, so re-warm the heavy analyses (sampled betweenness, SPC
+    # main paths, Louvain, author co-citation) right after it lands. The
+    # endpoint returns 200 immediately and computes in a background
+    # thread; the day's first visitors then get disk-cache speed instead
+    # of a multi-minute compute.
+    needs: fetch
+    steps:
+      - name: Wait 15 minutes for the async fetch to finish most of its work
+        run: sleep 900
+
+      - name: POST /api/admin/prewarm
+        run: |
+          response=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -X POST https://pinakes.xyz/api/admin/prewarm \
+            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}")
+          echo "HTTP status: $response"
+          if [ "$response" != "200" ]; then
+            echo "::error::POST /api/admin/prewarm returned $response"
+            exit 1
+          fi
+
   backup:
     name: Trigger /api/admin/run-backup
     runs-on: ubuntu-latest
@@ -52,7 +77,7 @@ jobs:
           # The endpoint returns 200 immediately and runs the
           # snapshot→zstd→age→B2 pipeline in a background thread (the
           # pipeline itself takes 2–5 minutes on a 1-CPU Fly machine,
-          # which exceeds gunicorn's 120-second worker timeout if run
+          # which exceeds gunicorn's worker timeout if run
           # synchronously, producing a 502). Success or failure of the
           # actual backup surfaces in `fly logs` as "Backup succeeded:
           # {...}" / "Backup failed: {...}" lines, and the heartbeat

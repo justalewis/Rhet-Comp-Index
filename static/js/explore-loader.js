@@ -130,38 +130,46 @@ function showTab(name, btn) {
     citnetLoaded = true;
     window.loadCitationNetwork();
   }
+  // These tools auto-load with default parameters on first activation.
+  // They were click-to-compute when the computations were assumed heavy;
+  // the June 2026 audit measured every one of them under a second
+  // server-side, so the gate added friction without protecting anything.
+  // The panel button remains as "Recompute" for parameter changes.
   if (name === 'centrality' && !centralityLoaded) {
-    // Don't auto-load — user clicks "Compute" to start
     centralityLoaded = true;
+    window.loadCentrality();
   }
   if (name === 'communities' && !communitiesLoaded) {
     communitiesLoaded = true;
+    window.loadCommunities();
   }
   if (name === 'cocitation' && !cocitationLoaded) {
-    // Don't auto-load — user clicks "Compute" to start
     cocitationLoaded = true;
+    window.loadCocitation();
   }
   if (name === 'bibcoupling' && !bibcouplingLoaded) {
-    // Don't auto-load — user clicks "Compute" to start
     bibcouplingLoaded = true;
+    window.loadBibcoupling();
   }
   if (name === 'sleepers' && !sleepersLoaded) {
-    // Don't auto-load — user clicks "Compute" to start
     sleepersLoaded = true;
+    window.loadSleepingBeauties();
   }
   if (name === 'journalflow' && !journalflowLoaded) {
-    // Don't auto-load — user clicks "Compute" to start
     journalflowLoaded = true;
+    window.loadJournalFlow();
   }
   if (name === 'halflife' && !halflifeLoaded) {
-    // Don't auto-load — user clicks "Compute" to start
     halflifeLoaded = true;
+    window.loadHalfLife();
   }
   if (name === 'mainpath' && !mainpathLoaded) {
     mainpathLoaded = true;
+    window.loadMainPath();
   }
   if (name === 'temporal' && !temporalLoaded) {
     temporalLoaded = true;
+    window.loadTemporalEvolution();
   }
   if (name === 'readingpath' && !readingpathLoaded) {
     readingpathLoaded = true;

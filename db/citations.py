@@ -7,6 +7,7 @@ import logging
 from itertools import combinations
 
 from .core import get_conn
+from datastories_cache import cached
 
 log = logging.getLogger(__name__)
 
@@ -1813,6 +1814,7 @@ def get_main_path(min_citations=1, journals=None,
     }
 
 
+@cached("explore_temporal_evolution")
 def get_temporal_network_evolution(min_citations=1, journals=None,
                                    year_from=None, year_to=None,
                                    window_size=1, max_nodes_per_window=500,
@@ -2342,6 +2344,7 @@ def get_reading_path(article_id):
     }
 
 
+@cached("explore_author_cocitation")
 def get_author_cocitation_network(min_cocitations=3, max_authors=200,
                                   year_from=None, year_to=None,
                                   journals=None):

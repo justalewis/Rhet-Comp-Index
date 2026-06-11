@@ -760,9 +760,11 @@ def ds_border_crossers(cluster=None, journals=None,
                        year_from=None, year_to=None):
     """Articles with high betweenness centrality at the TPC/RC divide.
 
-    Computes exact betweenness on the undirected citation graph; returns the
-    top 25 with their boundary-crossing flow stats and a 1-hop neighbourhood
-    subgraph for D3 rendering. Heavy: 30-90 s on the full corpus.
+    Computes pivot-sampled betweenness (k=256, fixed seed) on the undirected
+    citation graph; returns the top 25 with their boundary-crossing flow
+    stats and a 1-hop neighbourhood subgraph for D3 rendering. Sampled
+    because exact Brandes exceeds 25 minutes at the 2026 corpus size.
+    Still the heaviest tool here: expect ~30-90 s cold.
     """
     import networkx as nx
 
@@ -796,8 +798,18 @@ def ds_border_crossers(cluster=None, journals=None,
                 "cited_by": r["internal_cited_by_count"] or 0,
             }
 
-    # Exact betweenness
-    bc = nx.betweenness_centrality(G)
+    # Betweenness via pivot sampling (Brandes-Pich): exact Brandes is
+    # O(V*E) — over 25 minutes at the June 2026 corpus size (13k nodes,
+    # 45k edges) and growing, which no request or pre-warm budget survives.
+    # Sampling k=256 source pivots approximates the scores at roughly
+    # k/V of the cost while preserving the top-of-ranking order this tool
+    # reports. Fixed seed keeps runs reproducible. Falls back to exact on
+    # graphs small enough that sampling would be silly.
+    n_nodes = G.number_of_nodes()
+    if n_nodes > 512:
+        bc = nx.betweenness_centrality(G, k=min(256, n_nodes), seed=42)
+    else:
+        bc = nx.betweenness_centrality(G)
 
     # Boundary-crossing degree per node
     def _boundary_score(n):

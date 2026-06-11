@@ -205,7 +205,7 @@
 
     <!-- ── Timeline tab ──────────────────────────────────────── -->
     <div id="tab-timeline" class="tab-panel" style="display:none;">
-      <p class="tab-intro">Article output over time, broken down by journal. Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record.</p>
+      <p class="tab-intro">Article output over time, broken down by journal, across the full indexed history (the earliest records reach the 1930s). Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record. Pre-1990 coverage is sparse for most journals; the early decades of the curve reflect what publishers have deposited, not necessarily what was published.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: not all journals contribute equal data to this chart →</a></p>
 
       {{ how_to_read(
@@ -221,7 +221,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Publication Timeline shows how article output is distributed across years and journals. Each colored band in a year's stacked bar represents one journal's contribution to that year's published total. Read horizontally, the chart traces each venue's publishing rhythm; read vertically, it reads as a profile of the field's annual scholarly throughput.</p>
 
-        <p>Run with default parameters against the full Pinakes index, the chart spans 1990 to 2026 and aggregates 35,108 articles across 51 indexed journals. <em>College English</em> contributes the tallest single column (2,622 indexed articles), followed by <em>College Composition and Communication</em> (2,455), <em>IEEE Transactions on Professional Communication</em> (1,918), <em>Rhetorica</em> (1,900), and <em>Computers and Composition</em> (1,543). The five-journal block accounts for roughly a third of the entire indexed corpus.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) against the full Pinakes index, the chart spans 1990 to 2026 and aggregates 35,108 articles across 51 indexed journals. <em>College English</em> contributes the tallest single column (2,622 indexed articles), followed by <em>College Composition and Communication</em> (2,455), <em>IEEE Transactions on Professional Communication</em> (1,918), <em>Rhetorica</em> (1,900), and <em>Computers and Composition</em> (1,543). The five-journal block accounts for roughly a third of the entire indexed corpus.</p>
 
         <p>Use the tool to compare journal output trajectories, locate publication surges that often track editorial transitions or special-issue runs, and read off the relative scale at which each venue contributes to the field's record.</p>
 
@@ -276,7 +276,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Topic Co-Occurrence heatmap shows how often pairs of disciplinary topics appear together on the same article. Each cell answers the question: of the articles in the index, how many were tagged with both topic A and topic B? Darker cells mark thematic intersections; faded cells mark topic pairs that rarely sit together in the same paper.</p>
 
-        <p>Run with default parameters against the full Pinakes index, the heatmap renders a 61&times;61 grid. The single heaviest pair is "teacher development" and "writing pedagogy," which co-occur on 1,394 indexed articles. "Rhetorical criticism" and "book reviews" follow at 1,307; rhetorical criticism also pairs heavily with classical rhetoric (1,163), discourse analysis (1,146), modern rhetorical theory (1,108), and argument (1,101); the pattern reflects both the centrality of rhetorical criticism as a research mode and its high base rate inside the indexed corpus. The pedagogy/teacher-development pair is the only intersection in the heatmap that is not anchored to rhetorical criticism on at least one side.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) against the full Pinakes index, the heatmap renders a 61&times;61 grid. The single heaviest pair is "teacher development" and "writing pedagogy," which co-occur on 1,394 indexed articles. "Rhetorical criticism" and "book reviews" follow at 1,307; rhetorical criticism also pairs heavily with classical rhetoric (1,163), discourse analysis (1,146), modern rhetorical theory (1,108), and argument (1,101); the pattern reflects both the centrality of rhetorical criticism as a research mode and its high base rate inside the indexed corpus. The pedagogy/teacher-development pair is the only intersection in the heatmap that is not anchored to rhetorical criticism on at least one side.</p>
 
         <p>Use the tool to locate dense thematic overlap, identify recognized sub-fields at the intersection of two terms, and notice asymmetries (a topic that appears in heavy pairs across the row but rarely on the diagonal of any other topic's row).</p>
 
@@ -333,7 +333,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Co-Authorship Network maps which authors have written articles together inside the indexed journals. Each circle is one author, sized by their total number of indexed publications; each line is a co-authorship tie, weighted by the number of articles the pair has written together. Authors who collaborate frequently sit close to each other; authors who collaborate rarely or not at all drift apart or, in the case of pure solo authors, sit alone at the periphery as isolates.</p>
 
-        <p>Run with default parameters &mdash; 150 most-published authors, minimum three indexed publications &mdash; the graph contains 266 co-authorship edges connecting 125 of the 150 displayed nodes; the remaining 25 are isolates (frequent solo publishers with no co-author inside the displayed set). The single heaviest tie is between Joe Erickson and Kevin Roozen at 65 shared articles, followed by Cynthia L. Selfe and Gail E. Hawisher at 58, then Jennifer L. Holberg and Marcy Taylor at 45. Selfe and Enos are the most prolific authors in the rendered set at 105 indexed articles each, though only Selfe sits inside one of the densest collaborative clusters; Enos's 105 articles are largely solo, which is a substantively different career profile.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; 150 most-published authors, minimum three indexed publications &mdash; the graph contains 266 co-authorship edges connecting 125 of the 150 displayed nodes; the remaining 25 are isolates (frequent solo publishers with no co-author inside the displayed set). The single heaviest tie is between Joe Erickson and Kevin Roozen at 65 shared articles, followed by Cynthia L. Selfe and Gail E. Hawisher at 58, then Jennifer L. Holberg and Marcy Taylor at 45. Selfe and Enos are the most prolific authors in the rendered set at 105 indexed articles each, though only Selfe sits inside one of the densest collaborative clusters; Enos's 105 articles are largely solo, which is a substantively different career profile.</p>
 
         <p>Use the tool to identify collaborative communities, locate high-traffic mentor-student dyads (long-running pairs with double-digit shared output), and notice the difference between productive solo authors and productive collaborators &mdash; both are common in rhetoric and composition, and the graph distinguishes them visually.</p>
 
@@ -437,7 +437,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Author Co-Citation graph maps which scholars the citing community treats as intellectually related. Two authors are co-cited when a later article's reference list includes at least one work by each. A pair's edge weight is the number of indexed articles that have cited both of them; node size reflects each author's total co-citation strength &mdash; the sum of weights across every co-citation tie that author holds. This is the field's mental map of who belongs together as an argument-frame, not who has ever collaborated.</p>
 
-        <p>Run with default parameters &mdash; minimum three co-citations, top 200 authors by total strength &mdash; the graph contains 4,870 edges across the 200 displayed nodes. The single heaviest tie pairs Natasha N. Jones with Rebecca Walton at 111 articles co-citing both. The heaviest cluster in the graph is the social-justice technical-communication group: of the top ten ties, eight involve Jones, Walton, Godwin Y. Agboka, Kristen R. Moore, or Angela M. Haas, with Jones&ndash;Agboka at 103, Walton&ndash;Agboka at 94, and Moore&ndash;Jones at 86. Ranked by total co-citation strength, Jones leads at 3,947 (across 11 indexed articles), followed by Jeffrey T. Grabill (3,689 across 17 articles) and Clay Spinuzzi (3,001 across 32 articles). The strength-per-article ratios reward an author whose smaller corpus is heavily co-cited with a tight neighborhood, which is what the Jones&ndash;Walton&ndash;Agboka pattern surfaces.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum three co-citations, top 200 authors by total strength &mdash; the graph contains 4,870 edges across the 200 displayed nodes. The single heaviest tie pairs Natasha N. Jones with Rebecca Walton at 111 articles co-citing both. The heaviest cluster in the graph is the social-justice technical-communication group: of the top ten ties, eight involve Jones, Walton, Godwin Y. Agboka, Kristen R. Moore, or Angela M. Haas, with Jones&ndash;Agboka at 103, Walton&ndash;Agboka at 94, and Moore&ndash;Jones at 86. Ranked by total co-citation strength, Jones leads at 3,947 (across 11 indexed articles), followed by Jeffrey T. Grabill (3,689 across 17 articles) and Clay Spinuzzi (3,001 across 32 articles). The strength-per-article ratios reward an author whose smaller corpus is heavily co-cited with a tight neighborhood, which is what the Jones&ndash;Walton&ndash;Agboka pattern surfaces.</p>
 
         <p>Use the tool to identify schools of thought (densely connected clusters), locate scholars who bridge clusters (nodes with edges into multiple groups), and distinguish heavily-published authors whose work is dispersed across multiple conversations from authors whose smaller corpus is concentrated in a single tightly-knit citation neighborhood.</p>
 
@@ -544,7 +544,7 @@
             </details>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadAuthorCocitation()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadAuthorCocitation()">Recompute</button>
 
         </div>
       </div><!-- /citnet-controls -->
@@ -599,7 +599,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Citations tool ranks indexed articles by the number of other indexed articles that cite them. Each row shows one article and an internal citation count: the number of distinct indexed articles whose CrossRef reference list contains a DOI matching that article. The list is a frequency snapshot of <em>internal</em> influence, not a measure of an article's total scholarly reach.</p>
 
-        <p>Run with default parameters (no filters), the tool ranks all articles in the index by descending citation count. The single most-cited article inside the corpus is Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future: An Antenarrative of Technical Communication" in <em>Technical Communication Quarterly</em>, with 146 internal citations. Jones's solo 2016 piece "The Technical Communicator as Advocate" follows at 144, then Edbauer's 2005 "Unframing Models of Public Distribution" at 135 and Russell's 1997 "Rethinking Genre in School and Society" at 129. The distribution falls quickly: the fifth-ranked article carries 120 citations, the tenth 76, the twenty-fifth 51, and the fiftieth 42, which gives a quick read on how concentrated the field's internal citation traffic is at the top.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index; no filters), the tool ranks all articles in the index by descending citation count. The single most-cited article inside the corpus is Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future: An Antenarrative of Technical Communication" in <em>Technical Communication Quarterly</em>, with 146 internal citations. Jones's solo 2016 piece "The Technical Communicator as Advocate" follows at 144, then Edbauer's 2005 "Unframing Models of Public Distribution" at 135 and Russell's 1997 "Rethinking Genre in School and Society" at 129. The distribution falls quickly: the fifth-ranked article carries 120 citations, the tenth 76, the twenty-fifth 51, and the fiftieth 42, which gives a quick read on how concentrated the field's internal citation traffic is at the top.</p>
 
         <p>Use the tool to identify the articles the indexed journals are reading and re-citing, surface concentrations of influence inside particular sub-areas (filter by topic or by journal to narrow the scope), and locate the year-by-year shape of the citation distribution.</p>
 
@@ -732,7 +732,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Citation Trends chart tracks how densely the indexed articles cite each other, year by year. The y-axis plots the average number of <em>internal references</em> per article &mdash; that is, on average, how many of each year's articles' reference-list entries point to <em>other</em> articles in the indexed corpus. The metric measures internal connectedness, not external impact.</p>
 
-        <p>Run with default parameters across the full index, the line rises monotonically across the indexed period. In 1990 the average article carries 0.47 internal references; the metric crosses 1.0 in 2007 (1.06), reaches 2.62 in 2022, 3.25 in 2024, and 3.33 in 2025. Total internal references peak in 2024 at 3,466 across 1,068 articles. The 2026 datapoint reads 4.01 references per article but rests on only 345 indexed articles &mdash; a partial-year sample whose mean is unstable and whose value will fall as the year fills out.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the full index, the line rises monotonically across the indexed period. In 1990 the average article carries 0.47 internal references; the metric crosses 1.0 in 2007 (1.06), reaches 2.62 in 2022, 3.25 in 2024, and 3.33 in 2025. Total internal references peak in 2024 at 3,466 across 1,068 articles. The 2026 datapoint reads 4.01 references per article but rests on only 345 indexed articles &mdash; a partial-year sample whose mean is unstable and whose value will fall as the year fills out.</p>
 
         <p>Use the tool to read the field's growing internal citation density, identify decades where indexed articles began citing each other in earnest, and compare a single journal's trajectory against the all-journals baseline.</p>
 
@@ -802,7 +802,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Citation Network displays the actual directed citation graph between indexed articles. Each circle is one article, sized by how many indexed articles cite it; each arrow points from a citing article to the article it cites. Density and clustering in the rendered graph reveal which articles are at the center of the field's internal conversation and which sub-areas form tight citation neighborhoods around shared landmark texts.</p>
 
-        <p>Run with default parameters &mdash; minimum five internal citations, all years, all journals &mdash; the graph displays 500 articles connected by 1,315 directed citation edges. Ranked by in-graph degree (citations received from other displayed nodes), the central node is Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future" with 38 incident edges, followed by Russell's 1997 "Rethinking Genre in School and Society" at 32, Carolyn D. Rude's "Contemporary Research Methodologies in Technical Communication" at 29, and Haas's 2012 "Race, Rhetoric, and Technology" at 27. The technical-communication and genre-theory clusters dominate the rendered structure; rhetoric-of-science and writing-center sub-areas appear as smaller, looser neighborhoods at the periphery.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum five internal citations, all years, all journals &mdash; the graph displays 500 articles connected by 1,315 directed citation edges. Ranked by in-graph degree (citations received from other displayed nodes), the central node is Jones, Moore, and Walton's 2016 "Disrupting the Past to Disrupt the Future" with 38 incident edges, followed by Russell's 1997 "Rethinking Genre in School and Society" at 32, Carolyn D. Rude's "Contemporary Research Methodologies in Technical Communication" at 29, and Haas's 2012 "Race, Rhetoric, and Technology" at 27. The technical-communication and genre-theory clusters dominate the rendered structure; rhetoric-of-science and writing-center sub-areas appear as smaller, looser neighborhoods at the periphery.</p>
 
         <p>Use the tool to identify landmark articles by visual centrality, locate sub-area clusters formed by shared internal citation, trace citation chains between specific articles by clicking and following edges, and read off the structural difference between heavily-interconnected sub-fields and sparsely-connected ones.</p>
 
@@ -944,7 +944,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Centrality tool computes two structural-importance scores on the indexed citation network: <strong>eigenvector centrality</strong> (implemented as PageRank), which rewards articles embedded in the most heavily-connected region of the field, and <strong>betweenness centrality</strong>, which rewards articles that sit on the shortest paths between sub-areas. The two metrics often disagree, and the disagreement is the analytic point: an article can be deeply embedded in a single cluster (high eigenvector, low betweenness) or sparsely connected but structurally indispensable as a bridge between clusters (low eigenvector, high betweenness).</p>
 
-        <p>Run with default parameters &mdash; minimum two internal citations, all years, all journals &mdash; the tool computes both metrics across 600 nodes connected by 1,624 edges. Stephen P. Witte's 1992 "Context, Text, Intertext" leads the eigenvector ranking at 1.0 (the normalized maximum), followed by Greg Myers's 1985 "The Social Construction of Two Biologists' Proposals" at 0.998 and Lucille Parkinson McCarthy's 1987 "A Stranger in Strange Lands" at 0.765. The betweenness ranking is led by Russell's 1997 "Rethinking Genre in School and Society" at 1.0, with Geisler et al.'s 2001 "IText" at 0.464 and Johndan Johnson-Eilola's 1996 "Relocating the Value of Work" at 0.449.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum two internal citations, all years, all journals &mdash; the tool computes both metrics across 600 nodes connected by 1,624 edges. Stephen P. Witte's 1992 "Context, Text, Intertext" leads the eigenvector ranking at 1.0 (the normalized maximum), followed by Greg Myers's 1985 "The Social Construction of Two Biologists' Proposals" at 0.998 and Lucille Parkinson McCarthy's 1987 "A Stranger in Strange Lands" at 0.765. The betweenness ranking is led by Russell's 1997 "Rethinking Genre in School and Society" at 1.0, with Geisler et al.'s 2001 "IText" at 0.464 and Johndan Johnson-Eilola's 1996 "Relocating the Value of Work" at 0.449.</p>
 
         <p>The two top-tens overlap on Witte and Russell but otherwise pull in different directions. Russell's "Rethinking Genre" is the field's heaviest <em>bridge</em>: a 1997 piece that sits on more shortest paths than any other article in the network, despite ranking only seventh on eigenvector. Witte's "Context, Text, Intertext" is the inverse signature &mdash; deeply embedded in a tightly connected neighborhood that pulls its eigenvector score toward 1.0 while sitting only fifth on betweenness.</p>
 
@@ -1042,7 +1042,7 @@
             </details>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadCentrality()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadCentrality()">Recompute</button>
 
         </div>
 
@@ -1129,7 +1129,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Community Detection tool partitions the citation network into clusters of articles that cite each other more densely than they cite work elsewhere in the index. The algorithm finds the partition automatically rather than working from a predefined topic list, which means the resulting communities are emergent groupings driven by citation behavior rather than by editorial classification or subject tagging. Each community amounts to a research front: a group of articles whose authors have read each other and built on each other's work.</p>
 
-        <p>Run with default parameters &mdash; minimum two internal citations, resolution 1.0, all years and journals &mdash; the algorithm partitions 527 articles connected by 1,621 edges into 17 communities with a modularity Q of 0.587. The dominant cluster (C0, 91 articles) is the genre / activity-systems community led by Russell's 1997 "Rethinking Genre" and rooted in <em>Written Communication</em>, JBTC, and TCQ. The second cluster (C1, 77 articles) is the social-justice technical-communication community led by Jones, Moore, and Walton's 2016 "Disrupting the Past" and concentrated in TCQ. The third (C2, 71 articles) is the digital-rhetoric / computers-and-composition cluster led by Cooper and Selfe's 1990 "Computer Conferences and Learning" and rooted in <em>Computers and Composition</em>. Smaller communities surface the assessment cluster (C6, anchored by Flower and Hayes 1981 "A Cognitive Process Theory of Writing" in <em>Assessing Writing</em>), the intercultural TC cluster (C7), and the writing-center / service-learning cluster (C5).</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum two internal citations, resolution 1.0, all years and journals &mdash; the algorithm partitions 527 articles connected by 1,621 edges into 17 communities with a modularity Q of 0.587. The dominant cluster (C0, 91 articles) is the genre / activity-systems community led by Russell's 1997 "Rethinking Genre" and rooted in <em>Written Communication</em>, JBTC, and TCQ. The second cluster (C1, 77 articles) is the social-justice technical-communication community led by Jones, Moore, and Walton's 2016 "Disrupting the Past" and concentrated in TCQ. The third (C2, 71 articles) is the digital-rhetoric / computers-and-composition cluster led by Cooper and Selfe's 1990 "Computer Conferences and Learning" and rooted in <em>Computers and Composition</em>. Smaller communities surface the assessment cluster (C6, anchored by Flower and Hayes 1981 "A Cognitive Process Theory of Writing" in <em>Assessing Writing</em>), the intercultural TC cluster (C7), and the writing-center / service-learning cluster (C5).</p>
 
         <p>Use the tool to identify the field's research fronts as the citation graph reveals them, locate which journals concentrate in which communities, and read off how stable or fragmented a sub-area is from the size of its cluster and the cohesion of its journal mix.</p>
 
@@ -1201,7 +1201,7 @@
               </div>
             </details>
           </div>
-          <button class="filter-apply-btn" onclick="loadCommunities()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadCommunities()">Recompute</button>
         </div>
       </div>
 
@@ -1247,7 +1247,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Article Co-Citation graph maps which articles the citing community treats as part of the same intellectual conversation. Two articles are co-cited when a third article includes both in its reference list; the more often that joint citation happens, the stronger the field's perceived kinship between the pair. Direct citation records who cites whom; co-citation records who is treated as belonging together: a different question.</p>
 
-        <p>Run with default parameters &mdash; minimum three co-citations, top 400 articles by co-citation strength &mdash; the graph contains 3,435 edges. Ranked by total co-citation strength, the article most embedded in the co-citation structure is Agboka's 2013 "Participatory Localization" at 1,083, followed by Jones's 2016 "The Technical Communicator as Advocate" at 1,056, Jones, Moore, and Walton's 2016 "Disrupting the Past" at 1,000, and Haas's 2012 "Race, Rhetoric, and Technology" at 878. The single heaviest co-citation tie pairs Jones, Moore, and Walton (2016) with Jones (2016) at 60 co-citations &mdash; an unusually high number that reflects both texts being routinely cited together as the foundational pair of the social-justice TC turn. Agboka and Haas pair at 52, Agboka and Jones at 49, Jones and Haas at 49.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum three co-citations, top 400 articles by co-citation strength &mdash; the graph contains 3,435 edges. Ranked by total co-citation strength, the article most embedded in the co-citation structure is Agboka's 2013 "Participatory Localization" at 1,083, followed by Jones's 2016 "The Technical Communicator as Advocate" at 1,056, Jones, Moore, and Walton's 2016 "Disrupting the Past" at 1,000, and Haas's 2012 "Race, Rhetoric, and Technology" at 878. The single heaviest co-citation tie pairs Jones, Moore, and Walton (2016) with Jones (2016) at 60 co-citations &mdash; an unusually high number that reflects both texts being routinely cited together as the foundational pair of the social-justice TC turn. Agboka and Haas pair at 52, Agboka and Jones at 49, Jones and Haas at 49.</p>
 
         <p>Use the tool to identify the field's perceived intellectual groupings, locate the central texts of recognised research fronts, and find articles that bridge clusters &mdash; nodes whose edges reach into multiple visually distinct neighborhoods.</p>
 
@@ -1339,7 +1339,7 @@
             </details>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadCocitation()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadCocitation()">Recompute</button>
 
         </div>
 
@@ -1387,7 +1387,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>Bibliographic Coupling links articles that cite the same prior work. Two articles are bibliographically coupled when they both include a reference to a third indexed article; the coupling strength of the pair is the number of references they share. A high coupling strength means the two articles are reading the same foundational literature &mdash; engaged with the same conversation, working from the same theoretical sources, or addressing the same body of empirical work &mdash; even if neither cites the other directly. Where Co-Citation measures perceived kinship from the field's reception of prior work, bibliographic coupling measures intellectual <em>input</em> as fixed at the moment of publication.</p>
 
-        <p>Run with default parameters &mdash; minimum three shared references, top 400 articles by coupling strength &mdash; the graph contains 5,065 edges. Ranked by total coupling strength, the most heavily-coupled article is Jones, Moore, and Walton's 2016 "Disrupting the Past" at 797, followed by Moeggenberg, Edenfield, and Holmes's 2022 "Trans Oppression Through Technical Rhetorics" at 762, Itchuaqiyaq, Edenfield, and Grant-Davie's 2022 "Sex Work and Professional Risk Communication" at 674, Edenfield, Colton, and Holmes's 2019 "Always Already Geopolitical" at 646, and Petersen and Walton's 2018 "Bridging Analysis and Action" at 620. The single heaviest coupling tie pairs Moran and Tebeaux's 2012 history-of-technical-communication article with Edward Malone's 2007 piece on the same topic at 46 shared references &mdash; a coupling that signals two articles drawing on essentially the same source corpus, which is the structural fingerprint of historical-survey work.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum three shared references, top 400 articles by coupling strength &mdash; the graph contains 5,065 edges. Ranked by total coupling strength, the most heavily-coupled article is Jones, Moore, and Walton's 2016 "Disrupting the Past" at 797, followed by Moeggenberg, Edenfield, and Holmes's 2022 "Trans Oppression Through Technical Rhetorics" at 762, Itchuaqiyaq, Edenfield, and Grant-Davie's 2022 "Sex Work and Professional Risk Communication" at 674, Edenfield, Colton, and Holmes's 2019 "Always Already Geopolitical" at 646, and Petersen and Walton's 2018 "Bridging Analysis and Action" at 620. The single heaviest coupling tie pairs Moran and Tebeaux's 2012 history-of-technical-communication article with Edward Malone's 2007 piece on the same topic at 46 shared references &mdash; a coupling that signals two articles drawing on essentially the same source corpus, which is the structural fingerprint of historical-survey work.</p>
 
         <p>Use the tool to identify recent articles that share intellectual foundations even before the field has co-cited them, locate methodological clusters where authors are reading the same theoretical sources, and surface coupling patterns that mark survey or review articles as distinct from primary research articles.</p>
 
@@ -1479,7 +1479,7 @@
             </details>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadBibcoupling()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadBibcoupling()">Recompute</button>
 
         </div>
 
@@ -1521,7 +1521,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Sleeping Beauties tool surfaces articles whose citation history is sharply non-linear: years of dormancy after publication, then a late surge of recognition. The metaphor &mdash; that an article "sleeps" until a "prince" paper or a disciplinary turn makes it newly relevant &mdash; is bibliometric rather than literary, and the algorithm operationalizes it via the Beauty Coefficient, a scalar that scores how far an article's actual citation curve departs from a steady linear rise toward its peak year.</p>
 
-        <p>Run with default parameters &mdash; minimum five total citations, all years and journals &mdash; the tool returns the top 50 articles ranked by Beauty Coefficient. The leading sleeper is Kelli Cargile Cook's 2002 "Layered Literacies: A Theoretical Frame for Technical Communication Pedagogy" with B = 116.0: published in <em>Technical Communication Quarterly</em> with near-zero citations through the mid-2010s, then awakened in 2024 to a peak of 16 citations after sleeping for 22 years. Robert J. Connors's 1984 "Journals in Composition Studies" follows at B = 101.0 with a 35-year sleep that ended in 2019, and the 1974 "Students' Right to Their Own Language" introduction sits at B = 63.0 with a 44-year sleep that ended in 2018. The pattern is interpretable: each leading sleeper exemplifies a disciplinary turn that made earlier work newly citable &mdash; pedagogy as a frontier in TC scholarship for Cargile Cook, the historical-self-study turn for Connors, the social-justice turn for "Students' Right."</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum five total citations, all years and journals &mdash; the tool returns the top 50 articles ranked by Beauty Coefficient. The leading sleeper is Kelli Cargile Cook's 2002 "Layered Literacies: A Theoretical Frame for Technical Communication Pedagogy" with B = 116.0: published in <em>Technical Communication Quarterly</em> with near-zero citations through the mid-2010s, then awakened in 2024 to a peak of 16 citations after sleeping for 22 years. Robert J. Connors's 1984 "Journals in Composition Studies" follows at B = 101.0 with a 35-year sleep that ended in 2019, and the 1974 "Students' Right to Their Own Language" introduction sits at B = 63.0 with a 44-year sleep that ended in 2018. The pattern is interpretable: each leading sleeper exemplifies a disciplinary turn that made earlier work newly citable &mdash; pedagogy as a frontier in TC scholarship for Cargile Cook, the historical-self-study turn for Connors, the social-justice turn for "Students' Right."</p>
 
         <p>Use the tool to identify articles whose late uptake marks a disciplinary turn, locate texts that may now be in their "prince" phase &mdash; articles attracting fresh citations because the field's interests have shifted to where the article was already pointing, and read citation timelines for the underlying shape rather than the headline number.</p>
 
@@ -1602,7 +1602,7 @@
             </select>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadSleepingBeauties()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadSleepingBeauties()">Recompute</button>
 
         </div>
       </div><!-- /citnet-controls -->
@@ -1642,7 +1642,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Journal Citation Flow chord diagram aggregates the article-level citation graph up to the journal level. Each cell in the underlying 36&times;36 matrix counts the number of times articles published in journal A cite articles published in journal B. The chord diagram renders that matrix visually: each arc on the ring is one journal, and each chord connecting two arcs has two ends whose widths show the citation flow in each direction. Where a chord is markedly wider at one end, the citation relationship is asymmetric &mdash; one journal cites the other more than it is cited in return.</p>
 
-        <p>Run with default parameters across the 36 indexed journals, the matrix carries 44,640 inter-journal citations of which 20,530 (46.0%) are self-citations &mdash; articles citing other articles in the same journal. Among cross-journal flows the heaviest single edge runs from <em>Journal of Technical Writing and Communication</em> to <em>Technical Communication Quarterly</em> at 1,157 citations, followed by TCQ to <em>Journal of Business and Technical Communication</em> at 1,065, JBTC to TCQ at 881, and <em>Written Communication</em> to <em>Research in the Teaching of English</em> at 788. Ranked by total outbound flow the top three citing journals are <em>Computers and Composition</em> (5,672 outbound citations), TCQ (5,119), and <em>IEEE Transactions on Professional Communication</em> (4,227); ranked by inbound flow the top three are TCQ (6,341 inbound), <em>Computers and Composition</em> (4,632), and JBTC (4,337). TCQ is the field's structural attractor: a citing source for many venues and the most-cited target overall.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the 36 indexed journals, the matrix carries 44,640 inter-journal citations of which 20,530 (46.0%) are self-citations &mdash; articles citing other articles in the same journal. Among cross-journal flows the heaviest single edge runs from <em>Journal of Technical Writing and Communication</em> to <em>Technical Communication Quarterly</em> at 1,157 citations, followed by TCQ to <em>Journal of Business and Technical Communication</em> at 1,065, JBTC to TCQ at 881, and <em>Written Communication</em> to <em>Research in the Teaching of English</em> at 788. Ranked by total outbound flow the top three citing journals are <em>Computers and Composition</em> (5,672 outbound citations), TCQ (5,119), and <em>IEEE Transactions on Professional Communication</em> (4,227); ranked by inbound flow the top three are TCQ (6,341 inbound), <em>Computers and Composition</em> (4,632), and JBTC (4,337). TCQ is the field's structural attractor: a citing source for many venues and the most-cited target overall.</p>
 
         <p>Use the tool to identify dominant citing-cited dyads, locate hubs that pull citations from across the field, and read off how concentrated or dispersed each venue's citation footprint is. The 46% self-citation rate is itself the most important number on the diagram: it indicates that nearly half of all internal citation traffic stays within the same venue rather than crossing journal boundaries.</p>
 
@@ -1731,7 +1731,7 @@
             </details>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadJournalFlow()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadJournalFlow()">Recompute</button>
 
         </div>
       </div><!-- /citnet-controls -->
@@ -1769,7 +1769,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>Citation Half-Life reports two complementary medians for each indexed journal: how far back in time the journal's authors typically reach when citing earlier work (citing half-life), and how long the journal's own articles continue to attract citations from later work (cited half-life). A short citing half-life signals a fast-moving research front where recent work dominates the reference lists; a long cited half-life signals a journal whose articles have lasting influence on the field's conversation.</p>
 
-        <p>Run with default parameters across the indexed corpus, the citing half-life ranges from 5 to 10 years across journals with sufficient citation history. <em>College Composition and Communication</em> and <em>Argumentation</em> have the longest citing half-lives at 8 years, indicating that their authors regularly reach back nearly a decade for sources. <em>Rhetorica</em>, <em>Rhetoric &amp; Public Affairs</em>, and <em>Research in the Teaching of English</em> sit at 5 years, reading recent work more heavily. Cited half-lives spread further, from 2 years (<em>Literacy in Composition Studies</em>) to 10 years (<em>College Composition and Communication</em>): CCC is the longest-tail venue in the index, a journal whose articles continue to be cited by other journals roughly a decade after publication, which is the bibliometric signature of a venue with deep canonical authority.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the citing half-life ranges from 5 to 10 years across journals with sufficient citation history. <em>College Composition and Communication</em> and <em>Argumentation</em> have the longest citing half-lives at 8 years, indicating that their authors regularly reach back nearly a decade for sources. <em>Rhetorica</em>, <em>Rhetoric &amp; Public Affairs</em>, and <em>Research in the Teaching of English</em> sit at 5 years, reading recent work more heavily. Cited half-lives spread further, from 2 years (<em>Literacy in Composition Studies</em>) to 10 years (<em>College Composition and Communication</em>): CCC is the longest-tail venue in the index, a journal whose articles continue to be cited by other journals roughly a decade after publication, which is the bibliometric signature of a venue with deep canonical authority.</p>
 
         <p>Use the tool to identify which journals serve as the field's long-memory venues (long cited half-life), which journals operate as fast-moving research fronts (short citing half-life), and where the two metrics disagree &mdash; a venue with short citing but long cited half-life is reading new but being read for a long time, which is the structural fingerprint of a flagship journal.</p>
 
@@ -1860,7 +1860,7 @@
             </select>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadHalfLife()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadHalfLife()">Recompute</button>
 
         </div>
       </div><!-- /citnet-controls -->
@@ -1898,7 +1898,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>Main Path Analysis traces the single most important chain of articles connecting today's writing-studies work to its foundational sources. Think of the citation network as a river system: every article cites earlier ones, every newer article gets cited by someone, and most citations are tributaries. The main path is the trunk, the route along which the most intellectual traffic flows.</p>
 
-        <p>Run with default parameters against the full Pinakes index, the tool returns a 25-article chain that begins with Agboka and Dorpenyo's 2022 "Curricular Efforts in Technical Communication After the Social Justice Turn" at the frontier and ends with Carol Berkenkotter's 1981 "Understanding a Writer's Awareness of Audience" at the foundation. Between those endpoints sit Russell's 1997 "Rethinking Genre in School and Society" (the most-cited article on the entire path, with 129 citations inside the index), Berkenkotter and Huckin's 1993 sociocognitive-genre piece, and Spivey's 1990 work on text transformation. The path threads through four decades of genre theory, activity systems, and professional communication research; reading it from bottom to top is one compressed way to follow how the field arrived at its current concerns.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) against the full Pinakes index, the tool returns a 25-article chain that begins with Agboka and Dorpenyo's 2022 "Curricular Efforts in Technical Communication After the Social Justice Turn" at the frontier and ends with Carol Berkenkotter's 1981 "Understanding a Writer's Awareness of Audience" at the foundation. Between those endpoints sit Russell's 1997 "Rethinking Genre in School and Society" (the most-cited article on the entire path, with 129 citations inside the index), Berkenkotter and Huckin's 1993 sociocognitive-genre piece, and Spivey's 1990 work on text transformation. The path threads through four decades of genre theory, activity systems, and professional communication research; reading it from bottom to top is one compressed way to follow how the field arrived at its current concerns.</p>
 
         <p>Use the tool to ask: what work is the writing-studies citation graph most actively channelling? Which articles, if removed from the index, would disrupt the field's transmission of ideas most?</p>
 
@@ -1962,7 +1962,7 @@
               </div>
             </details>
           </div>
-          <button class="filter-apply-btn" onclick="loadMainPath()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadMainPath()">Recompute</button>
         </div>
       </div>
 
@@ -2004,7 +2004,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Temporal Network Evolution tool slices the indexed citation graph into time windows and reports a panel of structural metrics for each slice. The visualization renders those metrics as time series, which lets the analyst read off the field's growth, consolidation, and fragmentation phases at a glance &mdash; whether the network is becoming more cohesive over time, whether modular structure is intensifying or weakening, and whether the field's intellectual chains are becoming longer or shorter.</p>
 
-        <p>Run with default parameters &mdash; minimum one citation, five-year windows &mdash; the tool returns 18 windows from 1939&ndash;1943 to 2024&ndash;2028. The cumulative graph at the most recent window contains 6,673 articles and 22,930 citations. Three structural movements are legible. First, the giant component fraction rises from roughly 0.10 in the 1984&ndash;1988 window to 0.58 in the 2019&ndash;2023 window: across forty years the field has knitted itself into a cohesive citation network where the largest connected component now contains the majority of indexed articles. Second, average degree rises from 0.64 in 1984&ndash;1988 to 1.94 in 2019&ndash;2023; the citation graph is densifying. Third, modularity Q falls from 0.907 in 2009&ndash;2013 to 0.820 in 2019&ndash;2023; the field remains modular, but cross-cluster citation traffic has grown enough to soften the boundaries between research fronts.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) &mdash; minimum one citation, five-year windows &mdash; the tool returns 18 windows from 1939&ndash;1943 to 2024&ndash;2028. The cumulative graph at the most recent window contains 6,673 articles and 22,930 citations. Three structural movements are legible. First, the giant component fraction rises from roughly 0.10 in the 1984&ndash;1988 window to 0.58 in the 2019&ndash;2023 window: across forty years the field has knitted itself into a cohesive citation network where the largest connected component now contains the majority of indexed articles. Second, average degree rises from 0.64 in 1984&ndash;1988 to 1.94 in 2019&ndash;2023; the citation graph is densifying. Third, modularity Q falls from 0.907 in 2009&ndash;2013 to 0.820 in 2019&ndash;2023; the field remains modular, but cross-cluster citation traffic has grown enough to soften the boundaries between research fronts.</p>
 
         <p>Use the tool to identify structural turning points, distinguish growth phases (rising node and edge counts) from consolidation phases (rising giant-component fraction or falling modularity), and locate the windows in which today's research fronts crystallized.</p>
 
@@ -2112,7 +2112,7 @@
             </select>
           </div>
 
-          <button class="filter-apply-btn" onclick="loadTemporalEvolution()">Compute</button>
+          <button class="filter-apply-btn" onclick="loadTemporalEvolution()">Recompute</button>
 
         </div>
       </div>
@@ -2172,7 +2172,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Institutions tool reports article output by author affiliation across the indexed corpus. Each row in the bar chart credits one institution with the count of indexed articles on which any of its affiliated scholars appears as an author; the line chart tracks the same counts year over year for the top ten institutions, which makes individual programs' rises and plateaus legible against the field-wide baseline.</p>
 
-        <p>Run with default parameters across the indexed corpus, the bar chart returns Pennsylvania State University at the top with 249 indexed articles, followed by the University of Texas at Austin (239), Texas Tech University (219), Arizona State University (210), Iowa State University (182), Purdue University (178), and Carnegie Mellon University (178). The top 25 is dominated by large public research universities; the concentration tracks the long-standing placement of writing-studies and technical-communication PhD programs at land-grant and flagship public institutions. The only private universities in the top 25 are Carnegie Mellon, Rensselaer Polytechnic Institute, and Texas Christian. The line-chart view of the top ten over time shows that this distribution is not static: Penn State, Arizona State, and Texas Tech have each gone through multi-year publication peaks tied to specific program-building moments, while older programs at the University of Iowa and Carnegie Mellon show flatter, longer-tail trajectories.</p>
+        <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the bar chart returns Pennsylvania State University at the top with 249 indexed articles, followed by the University of Texas at Austin (239), Texas Tech University (219), Arizona State University (210), Iowa State University (182), Purdue University (178), and Carnegie Mellon University (178). The top 25 is dominated by large public research universities; the concentration tracks the long-standing placement of writing-studies and technical-communication PhD programs at land-grant and flagship public institutions. The only private universities in the top 25 are Carnegie Mellon, Rensselaer Polytechnic Institute, and Texas Christian. The line-chart view of the top ten over time shows that this distribution is not static: Penn State, Arizona State, and Texas Tech have each gone through multi-year publication peaks tied to specific program-building moments, while older programs at the University of Iowa and Carnegie Mellon show flatter, longer-tail trajectories.</p>
 
         <p>Use the tool to identify the institutional concentration of the field's published output, locate program-building peaks tied to particular years, and read off how institutional output complements rather than tracks scholarly individual output.</p>
 

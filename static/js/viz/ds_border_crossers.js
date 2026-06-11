@@ -18,7 +18,7 @@ async function loadDsBorderCrossers() {
   }
   const loading = document.getElementById('ds-bc-loading');
   if (loading) loading.style.display = 'block';
-  setLoading('ds-bc-bars', 'Computing exact betweenness centrality (first run can take a minute)…');
+  setLoading('ds-bc-bars', 'Estimating betweenness centrality (sampled; first run can take a minute)…');
   try {
     const data = await (() => { const _qs = filterParams('tab-ds-border-crossers').toString(); return fetchJson('/api/datastories/ch4-border-crossers' + (_qs ? ('?' + _qs) : '')); })();
     window.__dsBcData = data;

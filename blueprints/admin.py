@@ -98,9 +98,9 @@ def run_backup_now():
     """Kick off the SQLite backup pipeline asynchronously and return 200
     immediately. The pipeline (snapshot → zstd → age → B2 upload → retention
     prune) takes 2–5 minutes for the current ~190 MB DB on a 1-CPU Fly
-    machine — longer than gunicorn's 120-second worker timeout, so a
-    synchronous endpoint returns 502 (worker killed mid-pipeline). Going
-    async sidesteps the timeout entirely.
+    machine — longer than gunicorn's worker timeout (300s per the
+    Dockerfile CMD), so a synchronous endpoint returns 502 (worker killed
+    mid-pipeline). Going async sidesteps the timeout entirely.
 
     Called by .github/workflows/cron.yml at 03:00 UTC daily, hitting
     pinakes.xyz with the PINAKES_ADMIN_TOKEN GitHub secret. The cron
@@ -121,6 +121,88 @@ def run_backup_now():
     t = threading.Thread(target=_run_backup_in_background, daemon=True)
     t.start()
     return jsonify({"status": "backup started"}), 200
+
+
+# ── Maintenance pipeline (citations, enrichment, retag) ───────────────────
+
+def _run_maintenance_in_background():
+    """Background-thread target for /api/admin/run-maintenance. Runs the
+    enrichment half of weekly_maintenance (the cron's daily /fetch already
+    covers article ingest, steps 1-3): citation harvesting, OpenAlex
+    enrichment, LiCS reference scrape, retag + FTS rebuild, OA backfill,
+    OpenAlex citation counts. cite_fetcher resyncs the denormalized
+    internal_cited_by_count / internal_cites_count columns at the end of
+    its run, so rankings stay consistent with the citations table."""
+    try:
+        from weekly_maintenance import run_pipeline
+        rc = run_pipeline(steps=(4, 5, 6, 7, 8, 9))
+        log.info("Maintenance pipeline finished (exit status %s).", rc)
+    except Exception:  # noqa: BLE001
+        log.exception("Maintenance pipeline raised unhandled exception")
+
+
+@bp.route("/api/admin/run-maintenance", methods=["POST"])
+@require_admin_token
+def run_maintenance_now():
+    """Kick off the citation/enrichment maintenance pipeline asynchronously
+    and return 200 immediately (the pipeline runs for tens of minutes —
+    far beyond the worker timeout). Called weekly by
+    .github/workflows/cron.yml; safe to trigger manually after large
+    ingests (deep refresh, new journal). Success/failure surfaces in fly
+    logs as the per-step summary lines."""
+    t = threading.Thread(target=_run_maintenance_in_background, daemon=True)
+    t.start()
+    return jsonify({"status": "maintenance started"}), 200
+
+
+# ── Datastories cache pre-warm ─────────────────────────────────────────────
+
+def _run_prewarm_in_background():
+    """Background-thread target for /api/admin/prewarm. Recomputes the
+    default-parameter cache entries for every disk-cached heavy analysis so
+    the first human visitor after a data change gets disk-cache speed
+    instead of a multi-minute compute (or a worker timeout). Order matters:
+    ds_books_everyone_reads aggregates the other tools' cached results, so
+    it runs last. Calls the compute functions directly — not over HTTP — so
+    no request timeout applies."""
+    from db import datastories as ds
+    from db.citations import (
+        get_author_cocitation_network, get_temporal_network_evolution,
+    )
+    jobs = [
+        ("speed_of_influence",   lambda: ds.ds_speed_of_influence()),
+        ("shifting_currents",    lambda: ds.ds_shifting_currents()),
+        ("two_maps",             lambda: ds.ds_two_maps()),
+        ("walls_bridges",        lambda: ds.ds_walls_bridges()),
+        ("communities_time",     lambda: ds.ds_communities_time()),
+        ("shared_foundations",   lambda: ds.ds_shared_foundations()),
+        ("uneven_debts",         lambda: ds.ds_uneven_debts()),
+        ("first_spark",          lambda: ds.ds_first_spark()),
+        ("border_crossers",      lambda: ds.ds_border_crossers()),
+        ("author_cocitation",    lambda: get_author_cocitation_network()),
+        ("temporal_evolution",   lambda: get_temporal_network_evolution()),
+        ("books_everyone_reads", lambda: ds.ds_books_everyone_reads()),
+    ]
+    import time as _time
+    for name, job in jobs:
+        t0 = _time.time()
+        try:
+            job()
+            log.info("prewarm: %s done in %.1fs", name, _time.time() - t0)
+        except Exception:  # noqa: BLE001
+            log.exception("prewarm: %s failed after %.1fs", name, _time.time() - t0)
+    log.info("prewarm: all jobs attempted")
+
+
+@bp.route("/api/admin/prewarm", methods=["POST"])
+@require_admin_token
+def prewarm_now():
+    """Kick off the Datastories/Explore cache pre-warm asynchronously.
+    Called nightly by cron.yml after the fetch lands, so the day's first
+    visitors never pay the heavy computes."""
+    t = threading.Thread(target=_run_prewarm_in_background, daemon=True)
+    t.start()
+    return jsonify({"status": "prewarm started"}), 200
 
 
 # ── Disciplinary Calendar add-event ────────────────────────────────────────

@@ -1,0 +1,42 @@
+# Weekly maintenance: triggers the citation/enrichment pipeline against
+# production. The daily cron (cron.yml) covers article ingest and backup;
+# this workflow covers everything that keeps the citation graph and
+# enrichment data in sync with the article index — the half of
+# weekly_maintenance.py that was previously never scheduled:
+#
+#   step 4  cite_fetcher        (CrossRef reference lists for new articles;
+#                                resyncs internal_cited_by/cites counters)
+#   step 5  OpenAlex enrichment (abstracts, OA status, affiliations)
+#   step 6  LiCS reference scrape
+#   step 7  retag + FTS rebuild
+#   step 8  OA status backfill
+#   step 9  OpenAlex citation counts
+#
+# Runs Sundays at 04:00 UTC, an hour after that day's fetch. The endpoint
+# returns 200 immediately and runs the pipeline in a background thread;
+# per-step summaries surface in fly logs.
+#
+# Required repository secret: PINAKES_ADMIN_TOKEN (same as cron.yml).
+
+name: Weekly maintenance
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+
+jobs:
+  maintenance:
+    name: Trigger /api/admin/run-maintenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/admin/run-maintenance
+        run: |
+          response=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -X POST https://pinakes.xyz/api/admin/run-maintenance \
+            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}")
+          echo "HTTP status: $response"
+          if [ "$response" != "200" ]; then
+            echo "::error::POST /api/admin/run-maintenance returned $response"
+            exit 1
+          fi

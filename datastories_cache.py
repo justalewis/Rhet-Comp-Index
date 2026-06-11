@@ -14,6 +14,7 @@ manual cache-bust step is needed.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import logging
 import os
@@ -37,14 +38,31 @@ def _cache_dir() -> Path:
 
 
 def _db_fingerprint() -> str:
-    """A short token that changes when the DB file changes. Combines mtime
-    and size so a swap-in restore doesn't return stale results."""
-    from db import DB_PATH
+    """A short token that changes when the DATA changes, not when the file
+    is merely touched. The old mtime+size fingerprint invalidated the whole
+    cache every night because the 03:00 cron always writes the DB
+    (fetch_log timestamps at minimum) even when nothing new lands; under
+    that scheme the heavy analyses were effectively always cold. Hashing
+    the row populations means the cache survives no-op fetches and backup
+    touches, and still invalidates on any insert, delete, or repoint in
+    articles or citations."""
     try:
-        st = os.stat(DB_PATH)
-        return f"{int(st.st_mtime)}-{st.st_size}"
-    except OSError:
+        from db import get_conn
+        with get_conn() as conn:
+            a_max, a_n = conn.execute(
+                "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM articles"
+            ).fetchone()
+            c_max, c_n = conn.execute(
+                "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM citations"
+            ).fetchone()
+        return f"{a_max}-{a_n}-{c_max}-{c_n}"
+    except Exception:  # noqa: BLE001 — missing DB/tables: treat as no-cache
         return "0-0"
+
+
+# name -> inspect.Signature for every @cached function, so get_if_cached
+# can canonicalize lookups the same way the decorator canonicalizes stores.
+_SIGNATURES: dict = {}
 
 
 def _key(func_name: str, args: tuple, kwargs: dict) -> str:
@@ -71,11 +89,22 @@ def cached(func_name: str | None = None, max_entries: int = 24):
     """
     def decorator(fn):
         name = func_name or fn.__name__
+        sig = inspect.signature(fn)
+        _SIGNATURES[name] = sig
 
         @wraps(fn)
         def wrapped(*args, **kwargs):
             fp = _db_fingerprint()
-            key = _key(name, args, kwargs)
+            # Canonicalize the call through the signature so fn(),
+            # fn(cluster=None), and fn(None) hash to the same key — the
+            # pre-warm job calls bare defaults while the blueprints pass
+            # explicit kwargs, and both must hit the same entry.
+            try:
+                bound = sig.bind(*args, **kwargs)
+                bound.apply_defaults()
+                key = _key(name, (), dict(bound.arguments))
+            except TypeError:
+                key = _key(name, args, kwargs)
             path = _path_for(name, key)
             if path.is_file():
                 try:
@@ -155,7 +184,16 @@ def get_if_cached(func_name: str, *args, **kwargs):
     partial master list quickly than to chain 60–90s computes that exceed
     gunicorn's worker timeout."""
     fp = _db_fingerprint()
-    key = _key(func_name, args, kwargs)
+    sig = _SIGNATURES.get(func_name)
+    if sig is not None:
+        try:
+            bound = sig.bind(*args, **kwargs)
+            bound.apply_defaults()
+            key = _key(func_name, (), dict(bound.arguments))
+        except TypeError:
+            key = _key(func_name, args, kwargs)
+    else:
+        key = _key(func_name, args, kwargs)
     path = _path_for(func_name, key)
     if not path.is_file():
         return None

@@ -134,13 +134,15 @@ def test_route_count_matches_expected(client):
     """A removed or added route is caught immediately."""
     rules = [r for r in client.application.url_map.iter_rules()
              if r.endpoint != "static"]
-    # 78 user-defined routes:
+    # 80 user-defined routes:
     #    45  pre-datastories baseline (42 +/health/ready, /health/deep, /api/admin/run-backup)
     #  + 26  /api/datastories/* (always-registered now; was conditionally registered)
     #  +  4  /datastories landing, /datastories/login, /datastories/logout, /datastories/tools
     #  +  1  /api/admin/disciplinary-event (P3.8: admin add-event endpoint)
     #  +  2  /glossary, /atlas (audit Now+Next: orientation pages)
-    assert len(rules) == 78, (
-        f"Expected 78 routes, got {len(rules)}. "
+    #  +  2  /api/admin/run-maintenance, /api/admin/prewarm (2026-06 tool audit:
+    #        scheduled citation/enrichment pipeline + nightly cache pre-warm)
+    assert len(rules) == 80, (
+        f"Expected 80 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )

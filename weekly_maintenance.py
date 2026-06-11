@@ -130,7 +130,9 @@ STEPS = [
 ]
 
 
-def run_pipeline(only_step=None):
+def run_pipeline(only_step=None, steps=None):
+    """Run the pipeline. only_step=N runs a single step; steps=(4,5,9) runs
+    a subset in order; both None runs everything."""
     from db import init_db
     init_db()
 
@@ -142,6 +144,8 @@ def run_pipeline(only_step=None):
     results = {}
     for num, name, func in STEPS:
         if only_step is not None and num != only_step:
+            continue
+        if steps is not None and num not in steps:
             continue
         log.info("")
         log.info("── Step %d: %s ──", num, name)
