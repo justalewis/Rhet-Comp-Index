@@ -71,7 +71,11 @@ const JFLOW_ABBREV = {
   'Writing Lab Newsletter': 'WLN',
 };
 
-function jflowAbbrev(name) { return JFLOW_ABBREV[name] || name; }
+// Exported: half_life.js and main_path.js label their charts with the same
+// abbreviations. (In the pre-modular monolith this was shared scope; as a
+// bare global in ES modules it threw ReferenceError at render time, which
+// silently broke both tools' charts — found in the June 2026 audit.)
+export function jflowAbbrev(name) { return JFLOW_ABBREV[name] || name; }
 
 let _exportWired_loadJournalFlow = false;
 

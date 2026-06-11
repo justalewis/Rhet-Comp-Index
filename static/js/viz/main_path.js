@@ -9,6 +9,7 @@ import { renderExportToolbar } from "../shared/export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
+import { jflowAbbrev } from "./journal_flow.js";
 
 
 function toggleAllMpJournals(master) {
