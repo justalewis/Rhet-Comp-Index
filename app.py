@@ -84,11 +84,26 @@ def _get_sidebar():
 
 # ── Background-fetch worker (called by /fetch admin route) ──────────────────
 
-def _run_background_fetch():
+def _run_background_fetch(deep=False):
     """Background-thread target for /fetch. Module-level so tests can patch
     it directly rather than mocking threading.Thread (which would also
-    intercept Flask-Limiter's internal Timer use)."""
+    intercept Flask-Limiter's internal Timer use).
+
+    deep=False (default, daily cron + "Refresh all sources"): incremental
+    CrossRef fetch from each journal's last-fetch date, plus RSS/OAI and
+    scraper passes.
+
+    deep=True ("Deep refresh" button / {"deep": true} body): full corpus
+    revalidation via deep_refresh.deep_refresh() — audits CrossRef coverage
+    per journal, walks every full catalog, inserts missing articles, fills
+    missing metadata on existing rows, then re-runs RSS/OAI and scrapers.
+    Takes tens of minutes; safe to re-run (insert-or-ignore + fill-only)."""
     try:
+        if deep:
+            from deep_refresh import deep_refresh as run_deep
+            run_deep()
+            return
+
         from db import backfill_oa_status
         backfill_oa_status()
 

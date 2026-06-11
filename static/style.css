@@ -211,6 +211,19 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 .fetch-btn:hover:not(:disabled) { background: var(--accent-hover); }
 .fetch-btn:disabled { opacity: 0.6; cursor: default; }
 
+/* Secondary variant for the deep refresh — outlined, quieter than the
+   primary fetch button so the expensive action isn't the inviting one. */
+.fetch-btn--deep {
+  margin-top: 0.7rem;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.fetch-btn--deep:hover:not(:disabled) {
+  background: var(--active-bg);
+  color: var(--accent-hover);
+}
+
 .fetch-note {
   margin-top: 0.4rem;
   font-family: var(--font-ui);

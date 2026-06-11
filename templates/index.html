@@ -65,10 +65,15 @@
     </div>
 
     <div class="sidebar-footer">
-      <button id="fetch-btn" class="fetch-btn" onclick="triggerFetch()">
+      <button id="fetch-btn" class="fetch-btn" onclick="triggerFetch(false)">
         Refresh all sources
       </button>
       <p class="fetch-note">CrossRef · RSS feeds · Web scraping</p>
+      <button id="deep-fetch-btn" class="fetch-btn fetch-btn--deep" onclick="triggerFetch(true)"
+              title="Recheck every journal's full back catalog against CrossRef, fill missing metadata, and re-run all harvesters. Takes a while.">
+        Deep refresh
+      </button>
+      <p class="fetch-note">Full back-catalog recheck</p>
     </div>
 {% endblock %}
 
@@ -356,24 +361,32 @@
 
 <script>
 // ── Fetch trigger ────────────────────────────────────────────────────────────
-function triggerFetch() {
-  const btn    = document.getElementById('fetch-btn');
+function triggerFetch(deep) {
+  const btn    = document.getElementById(deep ? 'deep-fetch-btn' : 'fetch-btn');
   const status = document.getElementById('fetch-status');
+  const label  = btn.textContent.trim();
   btn.disabled = true;
-  btn.textContent = 'Fetching…';
-  status.textContent = 'Fetch running in the background (CrossRef + RSS + scraping). Reload in a few minutes to see new articles.';
+  btn.textContent = deep ? 'Deep refresh running…' : 'Fetching…';
+  status.textContent = deep
+    ? 'Deep refresh running in the background: per-journal CrossRef audit, full back-catalog walk, RSS/OAI and scraper re-runs. This takes a while; reload later to see the results.'
+    : 'Fetch running in the background (CrossRef + RSS + scraping). Reload in a few minutes to see new articles.';
   status.style.display = 'block';
 
-  fetch('/fetch', { method: 'POST' })
+  fetch('/fetch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deep: !!deep }),
+  })
     .then(r => r.json())
     .then(() => {
-      status.textContent = 'Fetch started. Reload in a moment to see new articles.';
-      btn.textContent = 'Fetching in background…';
+      status.textContent = deep
+        ? 'Deep refresh started. It runs for tens of minutes; reload later.'
+        : 'Fetch started. Reload in a moment to see new articles.';
     })
     .catch(() => {
       status.textContent = 'The fetch didn\'t start. Try again in a minute.';
       btn.disabled = false;
-      btn.textContent = 'Refresh all sources';
+      btn.textContent = label;
     });
 }
 

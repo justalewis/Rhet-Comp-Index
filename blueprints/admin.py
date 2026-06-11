@@ -20,15 +20,24 @@ bp = Blueprint("admin", __name__)
 @limiter.limit(LIMITS["fetch"], exempt_when=fetch_auth_failing)
 @require_admin_token
 def trigger_fetch():
-    """Kick off an incremental fetch of all sources in a background thread.
+    """Kick off a fetch of all sources in a background thread.
     Requires `Authorization: Bearer <PINAKES_ADMIN_TOKEN>`.
+
+    Default: incremental fetch (new articles since each journal's last
+    fetch). With a JSON body of {"deep": true} (or ?deep=1): full corpus
+    revalidation — per-journal CrossRef coverage audit, complete catalog
+    walk with metadata fill on existing rows, then RSS/OAI and scraper
+    re-runs. See deep_refresh.py.
 
     Resolves _run_background_fetch through the app module on each call so
     `patch("app._run_background_fetch", mock)` in tests still intercepts."""
+    body = request.get_json(silent=True) or {}
+    deep = bool(body.get("deep")) or request.args.get("deep") == "1"
     import app as _app
-    t = threading.Thread(target=_app._run_background_fetch, daemon=True)
+    t = threading.Thread(target=_app._run_background_fetch,
+                         kwargs={"deep": deep}, daemon=True)
     t.start()
-    return jsonify({"status": "fetch started"})
+    return jsonify({"status": "deep refresh started" if deep else "fetch started"})
 
 
 @bp.route("/health")
