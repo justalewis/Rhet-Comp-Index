@@ -11,6 +11,8 @@ Covered journals and strategies:
   wcj         — Writing Center Journal (Purdue Digital Commons) — bepress meta tags
   peer_review — The Peer Review (IWCA WordPress) — validated ToC + article enrichment
   reflections — Reflections (reflectionsjournal.net) — archive page + article enrichment
+  wpa         — WPA: Writing Program Administration (CWPA) — single archive page,
+                103 issues (vol 1, 1977 – present), two PDF URL eras
 
 Metadata quality note: scraped articles often lack author lists and abstracts.
 The source field is set to 'scrape' so the UI can flag these entries.
@@ -23,7 +25,7 @@ import re
 import time
 import logging
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString, Tag
 
 from db import init_db, get_conn, upsert_article, update_fetch_log
 from journals import SCRAPE_JOURNALS, RSS_JOURNALS
@@ -4152,6 +4154,359 @@ def scrape_reflections():
     return total_new
 
 
+# ── WPA: Writing Program Administration ───────────────────────────────────────
+# CWPA's association CMS (TCS Software) serves the ENTIRE run — 103 issues,
+# vol 1 (1977) through the current issue — as inline accordion HTML on a single
+# archive page. One GET fetches everything; issue ToCs list titles, authors,
+# and per-article PDF links.
+#
+# Two PDF URL eras, both live (verified 2026-06):
+#   vols 1–40:    http://associationdatabase.co/archives/{vol}n{iss}/{slug}.pdf
+#   vols 40.3+:   https://wpacouncil.org/aws/CWPA/asset_manager/get_file/{id}
+#
+# ToC formats vary by era and the markup is hand-compiled (sloppy in places):
+#   modern:  <a>Title</a><br/>Author and Author          (link may sit in <strong>)
+#   old:     Lastname, First[; co-authors]. "<a>Title</a>." WPA … 9.3 (1986): 5-6.
+#   quirks:  one title split across adjacent same-href links; several entries
+#            sharing one <p>; the title's first/last letters outside the link.
+#
+# Access: a one-year moving wall — the newest two issues' PDFs bounce to a
+# members-only login; everything older serves freely (oa_status='bronze').
+# Walled rows get oa_status=NULL and are healed to bronze on a later run once
+# the wall moves past them.
+#
+# robots.txt (checked 2026-06): blocks BLEXBot only.
+
+WPA_ARCHIVE_URL = "https://wpacouncil.org/aws/CWPA/pt/sp/journal-archives"
+WPA_NAME = "WPA: Writing Program Administration"
+
+# 'WPA 35.2 (Spring 2012)' / 'WPA 33.1-2 (Fall/Winter 2009)' / 'WPA 1.1'
+_WPA_ISSUE_RE = re.compile(r"WPA\s+(\d+)\.([\d\-–/]+)\s*(?:\(([^)]*)\))?", re.I)
+_WPA_SEASON_MONTHS = {"spring": "04", "summer": "06", "fall": "09", "winter": "01"}
+
+# Non-article rows: housekeeping matter and full-issue download links
+_WPA_SKIP_TITLES = re.compile(
+    r"^(frontmatter|front matter|backmatter|back matter|cover|contents|"
+    r"table of contents|advertisements?|announcements?|masthead|"
+    r"membership form|ads and back cover|.{0,40}\bads?\b|"
+    r"contributors?|back cover|index to volume.*|.*as one pdf file.*|"
+    r"(view|download) the entire issue.*|complete issue|full issue)$", re.I
+)
+# Citation tails / boilerplate that must never be stored as an author string
+_WPA_NOT_AUTHORS = re.compile(
+    r"WPA:\s*Writing Program Administration|^\W+$|^\d", re.I
+)
+# Corporate authors that must not be split on 'and'/commas
+_WPA_CORPORATE_RE = re.compile(
+    r"\b(council|committee|board|officers|caucus|task force|consultants?)\b", re.I
+)
+
+
+def _wpa_clean(text):
+    return re.sub(r"\s+", " ", (text or "").replace("\xa0", " ")).strip()
+
+
+def _wpa_parse_date(vol, label):
+    """'35.2' + 'Spring 2012' → '2012-04'. Falls back to the volume-number
+    formula (vol 49 = Fall 2025) for early issues without a year label."""
+    label = (label or "").lower()
+    m = re.search(r"\b((?:19|20)\d{2})\b", label)
+    year = m.group(1) if m else None
+    month = None
+    for season, mm in _WPA_SEASON_MONTHS.items():
+        if season in label:
+            month = mm
+            break
+    if not year:
+        year = str(1976 + int(vol) + (1 if month in ("04", "06") else 0))
+    return f"{year}-{month or '01'}"
+
+
+def _wpa_strip_period(s):
+    """Drop a trailing period unless it belongs to an initial ('Jeffrey T.')."""
+    s = s.strip()
+    if s.endswith(".") and not re.search(r"\b[A-Z]\.$", s):
+        return s[:-1].strip()
+    return s
+
+
+def _wpa_invert_pair(chunk):
+    """'Boehm, Diane' → 'Diane Boehm'; multi-comma chunks split into names."""
+    parts = [p.strip() for p in chunk.split(",") if p.strip()]
+    if len(parts) == 2 and len(parts[0].split()) <= 2 and len(parts[1].split()) <= 3:
+        return [f"{_wpa_strip_period(parts[1])} {parts[0]}"]
+    return [_wpa_strip_period(p) for p in parts]
+
+
+def _wpa_invert_mla_authors(raw):
+    """
+    Hand-compiled WPA ToCs cite the first author inverted, with either
+    semicolon- or comma-delimited co-authors (and the occasional ',and'):
+      'Ede, Lisa S., and Andrea A. Lunsford' → 'Lisa S. Ede; Andrea A. Lunsford'
+      'Mirtz, Ruth; Keith Rhodes, Susan Taylor,and Kim van Alkemade'
+        → 'Ruth Mirtz; Keith Rhodes; Susan Taylor; Kim van Alkemade'
+    """
+    raw = re.sub(r"\[.*?\]", "", _wpa_clean(raw))     # '[with responses by …]'
+    raw = re.sub(r"\breview essays?\b\.?\s*", "", raw, flags=re.I)
+    # Review rows glom the book title onto the author block — truncate at the
+    # first sentence break that isn't an initial ('Mountford. Women's Ways…')
+    raw = re.split(r"(?<!\b[A-Z])\.\s+(?=[A-Z\"“])", raw)[0]
+    raw = re.sub(r'[\s."“”\'’]+$', "", raw).rstrip(",;")
+    if not raw:
+        return None
+    if _WPA_CORPORATE_RE.search(raw):
+        return raw
+    text = re.sub(r",?\s*\band\b\s+", ", ", raw)
+    names = []
+    if ";" in text:
+        for i, chunk in enumerate(c for c in text.split(";") if c.strip()):
+            if i == 0:
+                names.extend(_wpa_invert_pair(chunk))
+            else:
+                names.extend(_wpa_strip_period(p)
+                             for p in chunk.split(",") if p.strip())
+    else:
+        parts = [p.strip() for p in text.split(",") if p.strip()]
+        if not parts:
+            return None
+        if len(parts) >= 2 and len(parts[0].split()) <= 2:
+            # 'Lastname, First [, First Last, …]' — re-join the inverted pair
+            names = [f"{_wpa_strip_period(parts[1])} {parts[0]}"] + \
+                    [_wpa_strip_period(p) for p in parts[2:]]
+        else:
+            names = [_wpa_strip_period(p) for p in parts]
+    names = [re.sub(r"\d+$", "", n).strip() for n in names]   # footnote markers
+    names = [n for n in names if len(n) >= 3]
+    return "; ".join(names) if names else None
+
+
+def _wpa_normalize_authors(raw):
+    """'A, B, and C' / 'A and B' → 'A; B; C' (names already first-last)."""
+    raw = _wpa_clean(raw)
+    raw = re.sub(r"^reviewed\s+by\s+", "", raw, flags=re.I).strip()
+    if not raw or _WPA_NOT_AUTHORS.search(raw):
+        return None
+    if _WPA_CORPORATE_RE.search(raw):
+        return raw
+    text = re.sub(r"\s+&\s+", ", ", raw)
+    text = re.sub(r",?\s*\band\b\s+", ", ", text)
+    parts = [_wpa_strip_period(re.sub(r"\d+$", "", p.strip()))
+             for p in text.split(",") if p.strip()]
+    parts = [p for p in parts if len(p) >= 3]
+    # A single 'author' of five-plus words is a stray sub-entry title, not a name
+    if len(parts) == 1 and len(parts[0].split()) >= 5:
+        return None
+    return "; ".join(parts) if parts else None
+
+
+def _wpa_node_text(node):
+    """Flatten a node to text, turning <br> into newlines."""
+    if isinstance(node, NavigableString):
+        return str(node)
+    if node.name == "br":
+        return "\n"
+    parts = []
+    for d in node.descendants:
+        if isinstance(d, NavigableString):
+            parts.append(str(d))
+        elif d.name == "br":
+            parts.append("\n")
+    return "".join(parts)
+
+
+def _wpa_link_ok(href):
+    return ("asset_manager/get_file" in href
+            or "associationdatabase.co/archives" in href)
+
+
+def _wpa_iter_entries(p):
+    """
+    Yield (a_tag, link_text, before_text, after_text) for every qualifying
+    link in <p>. Merges one title split across adjacent same-href links
+    ('L' + 'etter from the Editors'), drops empty <a>&nbsp;</a> links, and
+    bounds each entry's text segments by its neighboring links so multiple
+    entries sharing one <p> don't bleed into each other. after_text is the
+    first <br>-line following the link.
+    """
+    children = list(p.children)
+    links = []   # [{a, text, lo, hi}] — lo/hi = child-index span of the link
+    for i, child in enumerate(children):
+        if not isinstance(child, Tag):
+            continue
+        a = child if child.name == "a" and child.get("href") else \
+            child.find("a", href=True)
+        if a is None or not _wpa_link_ok(a["href"]):
+            continue
+        text = _wpa_clean(a.get_text(" ", strip=True))
+        if links and a["href"] == links[-1]["a"]["href"]:
+            gap = _wpa_clean("".join(
+                _wpa_node_text(c) for c in children[links[-1]["hi"] + 1:i]))
+            if not gap:
+                links[-1]["text"] += text
+                links[-1]["hi"] = i
+                continue
+        links.append({"a": a, "text": text, "lo": i, "hi": i})
+    links = [lk for lk in links if lk["text"]]
+    for n, lk in enumerate(links):
+        lo = links[n - 1]["hi"] + 1 if n > 0 else 0
+        hi = links[n + 1]["lo"] if n + 1 < len(links) else len(children)
+        before = _wpa_clean("".join(_wpa_node_text(c)
+                                    for c in children[lo:lk["lo"]]))
+        after_raw = "".join(_wpa_node_text(c)
+                            for c in children[lk["hi"] + 1:hi])
+        after_lines = [_wpa_clean(ln) for ln in after_raw.split("\n")
+                       if _wpa_clean(ln)]
+        after = after_lines[0] if after_lines else ""
+        yield lk["a"], lk["text"], before, after
+
+
+def _wpa_extract_entry(link_text, before, after):
+    """Return (title, authors) for one link + its surrounding text."""
+    title = link_text.strip('"').rstrip(".").strip()
+    # Repair sloppy markup where the title's first letter(s) sit outside the
+    # link: 'Emerson, Lisa. "T<a>he WAC Matrix…</a>'
+    m = re.search(r'["“]([A-Za-z\'’]{1,3})$', before)
+    if m:
+        title = m.group(1) + title
+        before = before[:m.start()]
+    elif re.fullmatch(r"[A-Za-z]{1,2}", before):
+        title = before + title
+        before = ""
+    elif (title and title[0].islower() and before
+          and re.search(r"(?:^|[\s\"“])([A-Za-z])$", before)):
+        title = before[-1] + title
+        before = before[:-1]
+    # …or the title's tail sits after the link: '<a>…Hunge</a>r' /
+    # '<a>Metaphors</a> for Writing Transfer…'
+    if re.fullmatch(r"[a-z]{1,2}", after):
+        title += after
+        after = ""
+    elif re.match(r"^[a-z]", after) and not _WPA_NOT_AUTHORS.search(after):
+        title += " " + after
+        after = ""
+    before = before.strip().strip('"').strip()
+    # Review rows where reviewer + book info surround the link
+    before = re.sub(r"\breview of\b.*$", "", before, flags=re.I).strip()
+    # Old-style review rows: link text 'Jane Doe reviews', book info after
+    m = re.match(r"^(.{3,70}?)\s+reviews?$", title, re.I)
+    if m and after:
+        return f"Review: {after.rstrip('.')}", _wpa_normalize_authors(m.group(1))
+    # …or the link text IS the reviewer and the book info follows
+    if (after and " by " in f" {after} " and len(title.split()) <= 3
+            and title == title.title()):
+        return f"Review: {after.split(' by ')[0].strip().rstrip(',.')}", \
+               _wpa_normalize_authors(title)
+    if len(before) >= 4 and not _WPA_NOT_AUTHORS.search(before):
+        return title, _wpa_invert_mla_authors(before)
+    authors = None
+    if after and not _WPA_NOT_AUTHORS.search(after):
+        authors = _wpa_normalize_authors(after)
+    return title, authors
+
+
+def scrape_wpa():
+    name = WPA_NAME
+    log.info("Scraping: %s", name)
+
+    _, soup = _get(WPA_ARCHIVE_URL)
+    if soup is None:
+        update_fetch_log(name)
+        return 0
+
+    # (url, title, authors, pub_date, behind_wall) for every parsed entry
+    parsed = []
+    seen_urls = set()
+    issue_ord = 0   # page lists issues newest-first
+
+    for div in soup.find_all("div", class_="tcs_accordion_content"):
+        h3 = div.find_previous("h3")
+        if not h3:
+            continue
+        m = _WPA_ISSUE_RE.search(h3.get_text(" ", strip=True))
+        if not m:
+            continue
+        vol, iss, label = m.group(1), m.group(2), m.group(3)
+        issue_ord += 1
+        # One-year moving wall: the newest two issues' PDFs are members-only
+        behind_wall = issue_ord <= 2
+        pub_date = _wpa_parse_date(vol, label)
+        issue_entries = []
+        full_issue_url = None
+
+        for el in div.find_all(["p", "h3"]):
+            if el.name == "h3":
+                # Linked section headers (e.g. a symposium PDF) — one entry
+                a = el.find("a", href=True)
+                if a and _wpa_link_ok(a["href"]):
+                    title_text = _wpa_clean(a.get_text(" ", strip=True))
+                    stripped = title_text.strip('"').rstrip(".").strip()
+                    if _WPA_SKIP_TITLES.match(stripped):
+                        if "entire issue" in title_text.lower():
+                            full_issue_url = a["href"].strip()
+                    elif len(title_text) >= 3:
+                        issue_entries.append(
+                            (title_text, None, a["href"].strip()))
+                continue
+            for a, link_text, before, after in _wpa_iter_entries(el):
+                href = a["href"].strip()
+                if _WPA_SKIP_TITLES.match(
+                        link_text.strip('"').rstrip(".").strip()):
+                    if "entire issue" in link_text.lower():
+                        full_issue_url = href
+                    continue
+                title, authors = _wpa_extract_entry(link_text, before, after)
+                if not title or len(title) < 3:
+                    continue
+                issue_entries.append((title, authors, href))
+
+        # Earliest newsletter issues (1.1, 2.3) have no per-article ToC —
+        # index the full-issue PDF at the issue level (the WLN pattern)
+        if not issue_entries and full_issue_url:
+            issue_entries.append(
+                (f"{WPA_NAME} {vol}.{iss} (complete issue)",
+                 None, full_issue_url))
+
+        for title, authors, href in issue_entries:
+            if href in seen_urls:
+                continue
+            seen_urls.add(href)
+            parsed.append((href, title, authors, pub_date, behind_wall))
+
+    if not parsed:
+        log.warning("  %s — archive page parsed to zero entries", name)
+        update_fetch_log(name)
+        return 0
+
+    total = 0
+    for url, title, authors, pub_date, behind_wall in parsed:
+        total += upsert_article(
+            url=url, doi=None, title=title, authors=authors,
+            abstract=None, pub_date=pub_date,
+            journal=name, source="scrape",
+            tags=auto_tag(title, None),
+            oa_status=None if behind_wall else "bronze",
+            oa_url=None if behind_wall else url,
+        )
+
+    # Heal previously walled rows once the moving wall has passed them
+    open_urls = [(u,) for u, _, _, _, w in parsed if not w]
+    with get_conn() as conn:
+        healed = conn.executemany("""
+            UPDATE articles
+            SET oa_status = 'bronze', oa_url = url
+            WHERE url = ? AND journal = 'WPA: Writing Program Administration'
+              AND oa_status IS NULL
+        """, open_urls).rowcount
+        conn.commit()
+    if healed:
+        log.info("  %s — %d articles cleared the moving wall", name, healed)
+
+    update_fetch_log(name)
+    log.info("  %s — %d new articles (%d parsed from %d issues)",
+             name, total, len(parsed), issue_ord)
+    return total
+
+
 # ── Dispatch ──────────────────────────────────────────────────────────────────
 
 SCRAPERS = {
@@ -4168,6 +4523,7 @@ SCRAPERS = {
     "peer_review":   scrape_peer_review,
     "comp_forum":    scrape_comp_forum,
     "reflections":   scrape_reflections,
+    "wpa":           scrape_wpa,
 }
 
 

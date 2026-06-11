@@ -50,6 +50,7 @@ JOURNAL_GROUPS = {
     "Pre/Text":                                                 "RHET_COMP",
     "JAC: A Journal of Rhetoric, Culture, and Politics":        "RHET_COMP",
     "Journal of Response to Writing":                           "RHET_COMP",
+    "WPA: Writing Program Administration":                      "RHET_COMP",
 
     # ── OTHER ──
     "Writing Center Journal":                                   "OTHER",

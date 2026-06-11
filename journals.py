@@ -185,6 +185,16 @@ SCRAPE_JOURNALS = [
     # DOI prefix 10.59236). Scraper strategy "reflections" in scraper.py is now
     # dead code — kept for reference but no longer invoked.
     {
+        "name": "WPA: Writing Program Administration",
+        "url": "https://wpacouncil.org/aws/CWPA/pt/sp/journal-archives",
+        "strategy": "wpa",
+        "notes": "CWPA association CMS (TCS Software). Not in CrossRef (0 DOIs; "
+                 "ISSN 0196-4682). Entire run (vol 1, 1977 – present) on one "
+                 "archive page; ~970 articles with titles + authors. One-year "
+                 "moving wall: newest two issues members-only, older PDFs free "
+                 "(bronze OA). DOI/reference-registration outreach candidate.",
+    },
+    {
         "name": "Composition Forum",
         "url": "https://compositionforum.com/",
         "strategy": "comp_forum",
@@ -316,6 +326,7 @@ JOURNAL_GROUPS = [
         "Literacy in Composition Studies",
         "Basic Writing e-Journal",
         "Journal of Response to Writing",
+        "WPA: Writing Program Administration",
     ]),
     ("Rhetoric", [
         "Rhetoric Society Quarterly",
