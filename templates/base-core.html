@@ -4,6 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Pinakes{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    /* Last-resort token values for when the design-system CDN is
+       unreachable. tokens.css (linked next) defines the same names later
+       in the cascade, so it wins whenever it loads. */
+    :root {
+      --bg: #F7F5F1;
+      --accent: #2C4A3A;
+      --accent-hover: #1F3A2C;
+      --font-display: Georgia, 'Times New Roman', serif;
+      --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-mono: ui-monospace, Consolas, 'Courier New', monospace;
+    }
+  </style>
+  <!-- Lewis Design System tokens (colors, type, spacing) — must load before
+       style.css, which maps Pinakes variables onto these tokens. -->
+  <link rel="stylesheet" href="https://justalewis.github.io/lewis-design-system/v1/tokens.css">
   <link rel="stylesheet" href="/static/style.css?v={{ version }}">
   <link rel="stylesheet" href="/static/style-scandi.css?v={{ version }}">
   <link rel="stylesheet" href="/static/style-terminal.css?v={{ version }}">

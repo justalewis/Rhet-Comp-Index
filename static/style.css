@@ -3,21 +3,25 @@
 
 :root {
   --sidebar-w:   270px;
-  --bg:          #fafaf8;
-  --bg-sidebar:  #f2f0eb;
-  --border:      #ddd9d0;
-  --text:        #1a1a18;
-  --text-muted:  #6b6760;
-  --text-light:  #9c9890;
-  --accent:      #5a3e28;
-  --accent-hover:#3e2a18;
-  --link:        #2c5282;
-  --link-hover:  #1a365d;
-  --active-bg:   #e8e2d8;
-  --sidebar-hover: #e8e2d8;
-  --font-body:   Georgia, 'Times New Roman', Times, serif;
-  --font-ui:     system-ui, -apple-system, sans-serif;
-  --font-mono:   'Courier New', Courier, monospace;
+
+  /* Default theme = Lewis Design System (v1 tokens.css, linked before this
+     file in base-core.html). The tokens supply --bg, --paper, --ink,
+     --accent, --accent-hover, --font-display, --font-body (Inter),
+     --font-mono, surfaces, spacing, radii, and shadows directly; the
+     Pinakes-specific names below map onto them, with literal fallbacks in
+     case the tokens CDN is unreachable. The terminal/scandi themes override
+     all of these on `html.terminal body` / `html.scandi body`, which beats
+     :root for every descendant, so they are unaffected by the tokens. */
+  --bg-sidebar:    var(--surface-taupe-soft, #f2f0eb);
+  --border:        var(--rule, #ddd9d0);
+  --text:          var(--ink, #1a1a18);
+  --text-muted:    var(--muted, #6b6760);
+  --text-light:    var(--muted-2, #9c9890);
+  --link:          var(--accent, #2c5282);
+  --link-hover:    var(--accent-hover, #1a365d);
+  --active-bg:     var(--status-good-bg, #e8e2d8);
+  --sidebar-hover: var(--surface-sage-soft, #e8e2d8);
+  --font-ui:       var(--font-body, system-ui, -apple-system, sans-serif);
 }
 
 html { font-size: 16px; }
@@ -3576,4 +3580,34 @@ button.comppile-ref-link {
   .insight-row { flex-direction: column; }
   #author-network-container { height: 260px; }
   #author-topics-container { height: auto; }
+}
+
+/* ════ Lewis Design System adoption layer ═══════════════════════════
+   Editorial display face (Cormorant Garamond via --font-display) for
+   primary headings. Body copy and UI chrome use the DS body face
+   (Inter) through the :root variable mappings above. Fallbacks keep
+   the old serif if the tokens CDN is unreachable. Scoped away from
+   the terminal/scandi themes, which keep their own faces. */
+
+html:not(.terminal):not(.scandi) .sidebar-header h1 {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight, -0.01em);
+}
+
+html:not(.terminal):not(.scandi) .content-header h2 {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+html:not(.terminal):not(.scandi) .article-title {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+html:not(.terminal):not(.scandi) .book-detail-title {
+  font-family: var(--font-display, Georgia, serif);
 }
