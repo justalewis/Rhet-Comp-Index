@@ -29,15 +29,15 @@
 
     <h1 class="about-title">Index Coverage</h1>
 
-    <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing — and explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
+    <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing; it also explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
 
     <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, citation trend charts, Most Cited rankings, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
 
-    <aside class="coverage-tldr" style="margin:1.8rem 0 2.2rem;padding:1.2rem 1.4rem;background:#fdfbf7;border-left:4px solid #5a3e28;">
-      <p style="margin:0 0 0.5rem;font-size:0.86rem;font-weight:600;color:#5a3e28;letter-spacing:0.05em;text-transform:uppercase;">If you read nothing else on this page</p>
+    <aside class="coverage-tldr" style="margin:1.8rem 0 2.2rem;padding:1.2rem 1.4rem;background:var(--paper, #fdfbf7);border-left:4px solid var(--accent, #2C4A3A);">
+      <p style="margin:0 0 0.5rem;font-size:0.86rem;font-weight:600;color:var(--accent, #2C4A3A);letter-spacing:0.05em;text-transform:uppercase;">If you read nothing else on this page</p>
       <p style="margin:0 0 0.7rem;line-height:1.55;">Three things to keep in mind before you read anything on the <a href="/explore">Explore</a> page:</p>
       <ol style="margin:0;padding-left:1.4rem;line-height:1.6;">
-        <li style="margin-bottom:0.4rem;">Only about 28 of the 53 indexed journals are fully CrossRef-indexed with their reference lists. Citation networks, centrality scores, and coupling/co-citation views all underrepresent the others &mdash; they show what's been deposited, not what's been written.</li>
+        <li style="margin-bottom:0.4rem;">Only about 29 of the 54 indexed journals are fully CrossRef-indexed with their reference lists. Citation networks, centrality scores, and coupling/co-citation views all underrepresent the others: they show what's been deposited, not what's been written.</li>
         <li style="margin-bottom:0.4rem;">Some journals can be cited but cannot cite. If a venue has no DOIs, its references aren't deposited anywhere Pinakes can read them. Older content, especially pre-2000 NCTE journals, has the same problem at scale: most NCTE volumes before 2000 have no machine-readable reference lists at all.</li>
         <li>Book chapters are partially indexed. This particularly affects writing-across-the-curriculum, writing-center, and edited-collection-heavy sub-areas, where a substantial share of the field's argumentative work lives in monographs rather than journals. The networks underweight that scholarship.</li>
       </ol>
@@ -48,8 +48,7 @@
     <h2>Corpus Snapshot</h2>
 
     <p class="coverage-snapshot-meta">Live counts generated
-       <time datetime="{{ detailed.generated_at }}">{{ detailed.generated_at[:10] }}</time>.
-       Run <code>python coverage_report.py</code> to refresh.</p>
+       <time datetime="{{ detailed.generated_at }}">{{ detailed.generated_at[:10] }}</time>.</p>
 
     <ul class="coverage-stats-grid">
       <li><span class="stat-num">{{ "{:,}".format(detailed.totals.articles_total) }}</span>
@@ -70,16 +69,16 @@
           <span class="stat-label">OpenAlex-enriched ({{ detailed.totals.articles_openalex_enriched_pct }}%)</span></li>
     </ul>
 
-    <p>The vocabulary used below: <em>outbound</em> means an article's own reference list is in the index — the article cites others. <em>Inbound</em> means at least one other article in the index cites it. <em>Resolved edges</em> are citations whose target DOI matched an article already indexed in Pinakes; the unresolved remainder are citations to books, conference proceedings, other journals, or works outside the corpus. <em>Intra-journal</em> edges are citations where source and target are in the same journal — a measure of within-journal self-reference.</p>
+    <p>The vocabulary used below: <em>outbound</em> means an article's own reference list is in the index (the article cites others). <em>Inbound</em> means at least one other article in the index cites it. <em>Resolved edges</em> are citations whose target DOI matched an article already indexed in Pinakes; the unresolved remainder are citations to books, conference proceedings, other journals, or works outside the corpus. <em>Intra-journal</em> edges are citations where source and target are in the same journal, a measure of within-journal self-reference.</p>
     {% endif %}
 
     <h2>Two Tiers of Indexing</h2>
 
-    <p>Pinakes draws from two kinds of sources. The distinction matters for everything downstream — citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
+    <p>Pinakes draws from two kinds of sources. The distinction matters for everything downstream: citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
 
-    <p><strong>Full CrossRef indexing</strong> means a journal registers each article's metadata — title, authors, abstract, publication date, and reference list — with <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer">CrossRef</a> using a registered DOI. This enables: citation tracking (because CrossRef carries reference lists), OpenAlex enrichment (institutional affiliations, topic classifications, open-access status), and reliable author disambiguation. Most commercial publishers and NCTE do this for current content.</p>
+    <p><strong>Full CrossRef indexing</strong> means a journal registers each article's metadata (title, authors, abstract, publication date, reference list) with <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer">CrossRef</a> using a registered DOI. This enables: citation tracking (because CrossRef carries reference lists), OpenAlex enrichment (institutional affiliations, topic classifications, open-access status), and reliable author disambiguation. Most commercial publishers and NCTE do this for current content.</p>
 
-    <p><strong>RSS or scrape-only indexing</strong> means Pinakes collects basic article metadata — title, authors, publication date — from an RSS feed or by parsing the journal's website. These articles appear in search results and the timeline, but they contribute <em>nothing</em> to the citation network, and OpenAlex enrichment is hit-or-miss without a DOI. Author affiliation data for these articles is largely absent.</p>
+    <p><strong>RSS or scrape-only indexing</strong> means Pinakes collects basic article metadata (title, authors, publication date) from an RSS feed or by parsing the journal's website. These articles appear in search results and the timeline, but they contribute <em>nothing</em> to the citation network, and OpenAlex enrichment is hit-or-miss without a DOI. Author affiliation data for these articles is largely absent.</p>
 
     <h2>Coverage by Sub-Area</h2>
 
@@ -88,9 +87,9 @@
     <ul class="coverage-list" style="line-height:1.65;">
       <li><strong>Composition &amp; Writing Studies</strong> &mdash; Strong CrossRef coverage on the flagship NCTE journals (<em>CCC</em>, <em>College English</em>, <em>RTE</em>) for current content, with the well-known era gap before 2000 where back-catalog content lives in JSTOR without article-level DOIs. <em>Composition Studies</em> is partially CrossRef-registered. <em>TETYC</em> is CrossRef-deposited but produces less citation traffic per article than the flagship venues. <em>Basic Writing e-Journal</em> has partial CrossRef coverage. <em>Journal of Response to Writing</em> is OAI-PMH harvested from BYU's bepress repository &mdash; titles, authors, and abstracts are present, but no DOIs and no reference lists. Citation networks should read this cluster's pre-2000 scholarship as systematically underweighted.</li>
 
-      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Rhetoric &amp; Public Affairs</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). The smaller specialized rhetoric venues are mixed: <em>Peitho</em> has full CrossRef coverage; <em>Pre/Text</em> is manually indexed (analog only); <em>JAC</em> is manually indexed from CompPile records (1980&ndash;2014; subscription journal that never deposited DOIs); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations. <em>Poroi</em> is fully indexed. <em>Peitho</em> contributes citation data; the smaller specialized rhetoric venues do not.</li>
+      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Rhetoric &amp; Public Affairs</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). The smaller specialized rhetoric venues are mixed: <em>Peitho</em> has full CrossRef coverage; <em>Pre/Text</em> is manually indexed (analog only); <em>JAC</em> is manually indexed from CompPile records (1980&ndash;2014; subscription journal that never deposited DOIs); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations. <em>Poroi</em> is fully indexed.</li>
 
-      <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Rhetoric of Health and Medicine</em> all have full CrossRef coverage with complete reference lists. This is the cluster where citation-network analyses are most reliable, which is also why it serves as the primary corpus for the in-progress <em>Datastories</em> project.</li>
+      <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Rhetoric of Health and Medicine</em> all have full CrossRef coverage with complete reference lists. This is the cluster where citation-network analyses are most reliable; the in-progress <em>Datastories</em> project uses it as its primary corpus for that reason.</li>
 
       <li><strong>Writing Centers</strong> &mdash; Mixed. <em>WLN: A Journal of Writing Center Scholarship</em> has full CrossRef coverage; <em>Writing Center Journal</em> is partially CrossRef-registered with stronger recent coverage; <em>Writing Lab Newsletter</em> (the older newsletter form) has partial coverage; <em>The Peer Review</em> (IWCA's open journal) has limited CrossRef compliance. Citation analyses underweight writing-center scholarship overall, and pre-2010 writing-center work is especially sparse.</li>
 
@@ -98,7 +97,7 @@
 
       <li><strong>Digital &amp; Multimodal</strong> &mdash; Asymmetric. <em>Computers and Composition</em> has full CrossRef coverage, including reference lists. <em>Kairos</em> is born-digital and webtext-native, indexed via custom scraping; its articles appear as nodes but contribute no outbound citation edges, because their reference lists are not deposited. <em>Journal of Multimodal Rhetorics</em> has minimal CrossRef compliance. The cluster's central venue is well-indexed but the multimodal-webtext side is structurally invisible to citation-derived analyses.</li>
 
-      <li><strong>Community Literacy</strong> &mdash; <em>Community Literacy Journal</em> has full CrossRef coverage; <em>Reflections</em> is RSS-only and contributes no outbound citations. As with Writing Centers and WAC, much of the cluster's scholarly conversation lives in books and edited collections that are partially indexed.</li>
+      <li><strong>Community Literacy</strong> &mdash; <em>Community Literacy Journal</em> has full CrossRef coverage. <em>Reflections</em>, RSS-only until spring 2026, now has full CrossRef coverage: Penn State Libraries deposited its complete metadata and reference lists in May 2026, and the journal contributes citation edges. As with Writing Centers and WAC, much of the cluster's scholarly conversation lives in books and edited collections that are partially indexed.</li>
     </ul>
 
     <h2>Journals: Full CrossRef Coverage</h2>
@@ -134,6 +133,7 @@
       <li><em>Peitho</em> (Coalition of Feminist Scholars in Communication, via WAC Clearinghouse)</li>
       <li><em>Community Literacy Journal</em></li>
       <li><em>Poroi</em></li>
+      <li><em>Reflections: A Journal of Community-Engaged Writing and Rhetoric</em> (Penn State Libraries; full metadata and reference lists deposited May 2026)</li>
     </ul>
 
     <h2>Journals: Partial or Limited Coverage</h2>
@@ -155,8 +155,8 @@
       <li><em>Composition Forum</em> — RSS only</li>
       <li><em>Present Tense: A Journal of Rhetoric in Society</em> — RSS only</li>
       <li><em>KB Journal</em> (Kenneth Burke Society) — RSS only</li>
-      <li><em>Reflections: A Journal of Community-Engaged Writing and Rhetoric</em> — RSS only</li>
-      <li><em>Journal of Response to Writing</em> (BYU ScholarsArchive, bepress) — OAI-PMH harvest. Full archive (2015–present) with titles, authors, and abstracts; no DOIs. Strong candidate for the DOI-deposit outreach pattern Reflections recently completed with Penn State Libraries.</li>
+      <li><em>Journal of Response to Writing</em> (BYU ScholarsArchive, bepress) — OAI-PMH harvest. Full archive (2015–present) with titles, authors, and abstracts; no DOIs. Strong candidate for the DOI-deposit outreach pattern Reflections completed with Penn State Libraries in May 2026.</li>
+      <li><em>WPA: Writing Program Administration</em> (Council of Writing Program Administrators) — full run (1977–present, 103 issues) indexed from the CWPA archive page. Titles and authors throughout; no abstracts. The journal has never registered a DOI, so it contributes no citation edges. DOI-registration outreach to the incoming editorial team is in progress.</li>
     </ul>
 
     <h3>OJS installations without CrossRef registration</h3>
@@ -164,7 +164,6 @@
     <ul class="coverage-list coverage-list--partial">
       <li><em>Young Scholars in Writing</em> — undergraduate research journal; OJS, no CrossRef</li>
       <li><em>Journal of Writing Assessment</em> — inconsistent CrossRef registration; some issues registered, some not</li>
-      <li><em>Writing Program Administration (WPA)</em> — older issues are JSTOR-only with no DOIs; recent issues are better</li>
       <li><em>Xchanges</em> — technical communication OA journal; OJS but minimal CrossRef</li>
       <li><em>Basic Writing e-Journal</em> — partial CrossRef; some volumes missing</li>
       <li><em>The Peer Review</em> (IWCA) — writing center journal; limited metadata structure</li>
@@ -186,7 +185,7 @@
 
     <h2>Books: University Presses with Gaps</h2>
 
-    <p>The books index covers roughly 3,200 titles from seven publishers. The gaps in book coverage stem from a structural problem distinct from the journal situation: CrossRef's data model was designed around journals, where a container (journal title + ISSN) gives you a reliable handle on a series. For books, the equivalent would be the series ISSN — a standard that exists but that most publishers either don't register or don't include in their CrossRef deposits. This means you can't query CrossRef for "all books in X series" the way you can query for "all articles in X journal."</p>
+    <p>The books index covers roughly 3,200 titles from seven publishers. The gaps in book coverage stem from a structural problem distinct from the journal situation: CrossRef's data model was designed around journals, where a container (journal title + ISSN) gives you a reliable handle on a series. For books, the equivalent would be the series ISSN, a standard that exists but that most publishers either don't register or don't include in their CrossRef deposits. This means you can't query CrossRef for "all books in X series" the way you can query for "all articles in X journal."</p>
 
     <h3>Series metadata missing from CrossRef</h3>
     <p>These publishers have DOI-registered books but don't include series names in CrossRef, making their relevant series undiscoverable by automated query. Coverage in Pinakes comes from manually curated title lists and direct ISBN lookups.</p>

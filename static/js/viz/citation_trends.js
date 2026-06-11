@@ -39,7 +39,7 @@ async function loadCitTrends() {
 
   if (!rows || rows.length === 0) {
     noteEl.textContent =
-      'No citation data yet — run python cite_fetcher.py to populate.';
+      'No citation data yet. Reference lists are still being fetched from CrossRef.';
     if (citTrendsChart) { citTrendsChart.destroy(); citTrendsChart = null; }
     return;
   }

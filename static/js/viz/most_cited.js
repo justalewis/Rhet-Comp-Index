@@ -43,7 +43,7 @@ async function loadCitations() {
   }
 
   if (!data || data.length === 0) {
-    container.innerHTML = '<p class="explore-hint">No citation data yet — run <code>python cite_fetcher.py</code> to populate.</p>';
+    container.innerHTML = '<p class="explore-hint">No citation data yet. Reference lists are still being fetched from CrossRef.</p>';
     return;
   }
 

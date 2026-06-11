@@ -44,9 +44,9 @@
 
     <h2 style="margin-top:2rem;">About the project</h2>
 
-    <p>Datastories uses the bibliometric infrastructure I've built on Pinakes to check the inherited narratives of TPC against what actually got published, cited, and connected over the field's roughly seventy-year history as a distinct scholarly enterprise. Each chapter begins with a specific computational method (main path analysis, community detection, bibliographic coupling, sleeping beauty indexing, and so on), surfaces a pattern in the citation or co-authorship data, and holds that pattern up against the disciplinary self-accounts TPC scholars have inherited or constructed. Sometimes the data confirms what we thought we knew; more often, in my testing so far, it complicates the picture.</p>
+    <p>Datastories uses the bibliometric infrastructure I've built on Pinakes to check the inherited narratives of TPC against what actually got published, cited, and connected over the field's roughly seventy-year history as a distinct scholarly enterprise. Each chapter begins with a specific computational method (main path analysis, community detection, bibliographic coupling, sleeping beauty indexing, and so on), surfaces a pattern in the citation or co-authorship data, and holds that pattern up against the disciplinary self-accounts TPC scholars have inherited or constructed. Sometimes the data confirms the field's received account; more often, in my testing so far, it complicates the picture.</p>
 
-    <p>The project takes its theoretical bearings from Maureen Daly Goggin's <em>Authoring a Discipline</em> (2000), which coined the term <em>disciplinography</em> and argued that journals are the sites where disciplines are authored, and from Derek Mueller's <em>Network Sense</em> (2017), which computationally operationalized disciplinography for rhetoric and composition. To my knowledge, no one has yet done this kind of work for TPC specifically. Pinakes makes it possible, with a different corpus, a substantially different set of computational tools, and a different set of questions about field identity.</p>
+    <p>The project takes its theoretical bearings from Maureen Daly Goggin's <em>Authoring a Discipline</em> (2000), which coined the term <em>disciplinography</em> and argued that journals are the sites where disciplines are authored, and from Derek Mueller's <em>Network Sense</em> (2017), which computationally operationalized disciplinography for rhetoric and composition. To my knowledge, no one has yet done this kind of work for TPC specifically. Pinakes makes it possible, with a different corpus and a substantially different set of computational tools and questions about field identity.</p>
 
     <p>The argument across the book is twofold: first, that bibliometric data becomes meaningful only when it is narrated, situated, and questioned; and second, that the distance between the stories a field tells about itself and the stories its data tells back is a productive space for disciplinographic work.</p>
 
@@ -61,7 +61,7 @@
     <p>If you've landed here and you're curious about the project, I'd be glad to hear from you. You can reach me at <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a>.</p>
 
     <aside style="margin:1.6rem 0 0;padding:1rem 1.2rem;background:#f8f4ec;border-left:3px solid #b8a890;font-size:0.93rem;color:#5a544c;line-height:1.55;">
-      <strong>If you found this page from the Rhet/Comp index nav</strong> &mdash; <em>Datastories</em> is a TPC-specific application of the same bibliometric infrastructure that powers the public side of Pinakes. Most of what these chapters do (citation networks, community detection, bibliographic coupling, sleeping-beauty indexing, co-authorship maps) has a Rhet/Comp parallel one tab over. If you're new here and looking for the rhetoric-and-composition tools, try <a href="/explore" style="color:#5a3e28;">Explore</a> or read <a href="/about" style="color:#5a3e28;">About</a> for the broader project's framing.
+      <strong>If you found this page from the Rhet/Comp index nav:</strong> <em>Datastories</em> is a TPC-specific application of the same bibliometric infrastructure that powers the public side of Pinakes. Most of what these chapters do (citation networks, community detection, bibliographic coupling, sleeping-beauty indexing, co-authorship maps) has a Rhet/Comp parallel one tab over. If you're new here and looking for the rhetoric-and-composition tools, try <a href="/explore" style="color:var(--accent, #2C4A3A);">Explore</a> or read <a href="/about" style="color:var(--accent, #2C4A3A);">About</a> for the broader project's framing.
     </aside>
 
     <p style="margin-top:2rem;">— Justin</p>
@@ -69,22 +69,22 @@
     <!-- ── Login form ───────────────────────────────────────── -->
     <section style="margin-top:3rem;padding:1.5rem 1.6rem;background:#fdfbf7;border:1px solid #e8e4de;border-radius:4px;max-width:38rem;">
       {% if authed %}
-        <h3 style="margin-top:0;font-size:1.05rem;color:#5a3e28;">You're already signed in.</h3>
+        <h3 style="margin-top:0;font-size:1.05rem;color:var(--accent, #2C4A3A);">You're already signed in.</h3>
         <p style="font-size:0.92rem;color:#7a7268;margin-bottom:0.8rem;">Your session is good for {{ ttl_days }} days from your last sign-in.</p>
         <p style="margin:0.6rem 0 0;">
-          <a href="/datastories/tools" style="display:inline-block;padding:0.5rem 1.1rem;background:#5a3e28;color:#fdfbf7;text-decoration:none;border-radius:2px;font-size:0.92rem;">Open the tools →</a>
+          <a href="/datastories/tools" style="display:inline-block;padding:0.5rem 1.1rem;background:var(--accent, #2C4A3A);color:#fdfbf7;text-decoration:none;border-radius:2px;font-size:0.92rem;">Open the tools →</a>
           <form action="/datastories/logout" method="post" style="display:inline;margin-left:0.6rem;">
             <button type="submit" style="background:transparent;border:1px solid #c8c4bc;padding:0.5rem 0.9rem;cursor:pointer;font-size:0.86rem;color:#7a7268;border-radius:2px;">Sign out</button>
           </form>
         </p>
       {% else %}
-        <h3 style="margin-top:0;font-size:1.05rem;color:#5a3e28;">Sign in to access the tools</h3>
+        <h3 style="margin-top:0;font-size:1.05rem;color:var(--accent, #2C4A3A);">Sign in to access the tools</h3>
         <form action="/datastories/login" method="post" autocomplete="off" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-top:0.6rem;">
           <label for="ds-password" style="font-size:0.86rem;color:#7a7268;">Password</label>
           <input type="password" id="ds-password" name="password" required autofocus
                  style="flex:1;min-width:220px;padding:0.5rem 0.7rem;border:1px solid #c8c4bc;font-size:0.95rem;border-radius:2px;">
           <button type="submit"
-                  style="padding:0.5rem 1.1rem;background:#5a3e28;color:#fdfbf7;border:0;cursor:pointer;font-size:0.92rem;border-radius:2px;">Sign in</button>
+                  style="padding:0.5rem 1.1rem;background:var(--accent, #2C4A3A);color:#fdfbf7;border:0;cursor:pointer;font-size:0.92rem;border-radius:2px;">Sign in</button>
         </form>
         <p style="margin:0.8rem 0 0;font-size:0.82rem;color:#9c9890;">No account needed. One shared password for everyone I've invited. Sessions last {{ ttl_days }} days.</p>
       {% endif %}

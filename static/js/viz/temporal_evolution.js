@@ -79,7 +79,7 @@ async function loadTemporalEvolution() {
   }
 
   if (!data.windows || data.windows.length === 0) {
-    statsEl.textContent = 'No data matches these filters \u2014 try lowering the minimum citation count.';
+    statsEl.textContent = 'No data matches these filters. Try lowering the minimum citation count.';
     return;
   }
 

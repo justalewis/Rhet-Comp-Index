@@ -68,7 +68,7 @@ async function loadHalfLife() {
   if (!data.journals || data.journals.length === 0) {
     container.innerHTML =
       '<p class="explore-hint">No citation data available for these filters \u2014 ' +
-      'try widening the year range or run <code>python cite_fetcher.py</code>.</p>';
+      'try widening the year range.</p>';
     return;
   }
 

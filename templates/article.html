@@ -331,7 +331,7 @@
         {% if journal_coverage.coverage_pct == 0 and journal_coverage.fetched_count == 0 %}
         <p class="citation-coverage-note">Citation data is not available for <em>{{ article.journal }}</em>. This journal's publisher does not deposit reference lists with CrossRef.</p>
         {% elif journal_coverage.coverage_pct < 50 %}
-        <p class="citation-coverage-note">Citation coverage for <em>{{ article.journal }}</em> is partial — {{ journal_coverage.coverage_pct }}% of articles have reference data available from CrossRef.</p>
+        <p class="citation-coverage-note">Citation coverage for <em>{{ article.journal }}</em> is partial: {{ journal_coverage.coverage_pct }}% of articles have reference data available from CrossRef.</p>
         {% endif %}
       {% endif %}
     </div><!-- /citation-context -->

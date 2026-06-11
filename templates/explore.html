@@ -35,7 +35,7 @@
           <div class="accordion-cards">
             <a class="accordion-card" data-tab="timeline" data-hash="timeline">
               <div class="accordion-card-name">Publication Timeline</div>
-              <div class="accordion-card-desc">Article output per year across all 44 journals, filterable by venue.</div>
+              <div class="accordion-card-desc">Article output per year across every indexed journal, filterable by venue.</div>
             </a>
             <a class="accordion-card" data-tab="institutions" data-hash="institutions">
               <div class="accordion-card-name">Institutions</div>
@@ -260,7 +260,7 @@
 
     <!-- ── Topics tab ────────────────────────────────────────── -->
     <div id="tab-topics" class="tab-panel" style="display:none;">
-      <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap — a quick way to see which research threads are most tightly intertwined. Tags are drawn from a 61-term disciplinary vocabulary and matched against title and abstract text, currently covering about 73% of indexed articles. Journals without abstracts in the index are underrepresented.</p>
+      <p class="tab-intro">Topic co-occurrence heatmap: how often pairs of subject tags appear together on the same article. Darker cells indicate stronger thematic overlap: a quick way to see which research threads are most tightly intertwined. Tags are drawn from a 61-term disciplinary vocabulary and matched against title and abstract text, currently covering about 61% of indexed articles. Journals without abstracts in the index are underrepresented.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: journals indexed via RSS or scraping often lack abstracts and are underrepresented here →</a></p>
 
       {{ how_to_read(
@@ -276,7 +276,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Topic Co-Occurrence heatmap shows how often pairs of disciplinary topics appear together on the same article. Each cell answers the question: of the articles in the index, how many were tagged with both topic A and topic B? Darker cells mark thematic intersections; faded cells mark topic pairs that rarely sit together in the same paper.</p>
 
-        <p>Run with default parameters against the full Pinakes index, the heatmap renders a 61&times;61 grid. The single heaviest pair is "teacher development" and "writing pedagogy," which co-occur on 1,394 indexed articles. "Rhetorical criticism" and "book reviews" follow at 1,307; rhetorical criticism also pairs heavily with classical rhetoric (1,163), discourse analysis (1,146), modern rhetorical theory (1,108), and argument (1,101), reflecting both the centrality of rhetorical criticism as a research mode and its high base rate inside the indexed corpus. The pedagogy/teacher-development pair is the only intersection in the heatmap that is not anchored to rhetorical criticism on at least one side.</p>
+        <p>Run with default parameters against the full Pinakes index, the heatmap renders a 61&times;61 grid. The single heaviest pair is "teacher development" and "writing pedagogy," which co-occur on 1,394 indexed articles. "Rhetorical criticism" and "book reviews" follow at 1,307; rhetorical criticism also pairs heavily with classical rhetoric (1,163), discourse analysis (1,146), modern rhetorical theory (1,108), and argument (1,101); the pattern reflects both the centrality of rhetorical criticism as a research mode and its high base rate inside the indexed corpus. The pedagogy/teacher-development pair is the only intersection in the heatmap that is not anchored to rhetorical criticism on at least one side.</p>
 
         <p>Use the tool to locate dense thematic overlap, identify recognized sub-fields at the intersection of two terms, and notice asymmetries (a topic that appears in heavy pairs across the row but rarely on the diagonal of any other topic's row).</p>
 
@@ -589,7 +589,7 @@
     <!-- ── Citations tab ─────────────────────────────────────── -->
     <div id="tab-citations" class="tab-panel" style="display:none;">
 
-      <p class="tab-intro">Articles most cited by other work indexed here — a rough measure of internal influence within the field as captured by this database. Filter by year, journal, or topic. Coverage depends on publisher reference deposit practices; see the per-journal table below.</p>
+      <p class="tab-intro">Articles most cited by other work indexed here: a rough measure of internal influence within the field as captured by this database. Filter by year, journal, or topic. Coverage depends on publisher reference deposit practices; see the per-journal table below.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: only journals that deposit reference lists with CrossRef contribute citation data — many do not →</a></p>
 
       <details class="abstract-toggle methodology-section">
@@ -720,7 +720,7 @@
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation counts reflect only journals that deposit reference lists with CrossRef →</a></p>
 
       {{ how_to_read(
-          "How densely the indexed articles cite each other year by year &mdash; a measure of internal connectedness over time.",
+          "How densely the indexed articles cite each other year by year: a measure of internal connectedness over time.",
           "A claim about how engaged the field is with prior work, or about whether scholarship has gotten more rigorous. Coverage growth is the dominant cause of the upward curve: more journals deposit reference lists now than in 1990, and the indexed corpus has more eligible internal targets to cite.",
           "Read the slope across a 5-year window rather than the absolute level. Compare a single journal's trajectory against the all-journals baseline to see whether the venue's citation behavior is unusual relative to the field's overall trend."
       ) }}
@@ -955,7 +955,7 @@
 
         <p><em>What each metric measures.</em> Before the implementation details, the conceptual difference is the analytically important thing. <strong>Eigenvector centrality</strong> propagates importance through edges: an article cited by five highly-cited articles scores higher than one cited by fifty peripheral articles, because the metric weights the score of each citing article by the citing article's own centrality. It rewards influence-by-association &mdash; being read by the work that other work reads. <strong>Betweenness centrality</strong> is structural rather than associative: it is high when removing the article from the network would lengthen the shortest paths between many pairs of other articles, regardless of those articles' citation counts. It rewards bridging &mdash; sitting on the routes between conversations that would otherwise be more distant. The two metrics often disagree, and the disagreement is the analytic point.<sup>3</sup> The Pruitt (2026) bibliometric analysis of <em>CCC</em> 1950&ndash;2022 used the same two-metric framing on a single-journal corpus; this tool extends it across the full multi-journal index.<sup>4</sup></p>
 
-        <p><em>How the metrics are computed.</em> Eigenvector centrality is implemented as PageRank with damping factor &alpha;&nbsp;=&nbsp;0.85.<sup>1</sup> The classical eigenvector definition assigns zero to every node outside the largest strongly-connected component, which is fatal for a citation graph that contains many small disconnected sub-clusters. PageRank's damping term models a random walker who follows citation edges 85% of the time and teleports to a random node 15% of the time, ensuring every node receives a nonzero score and producing meaningful rankings across the full graph. Betweenness centrality is computed using Brandes's O(|V|&middot;|E|) algorithm, which counts for each node v the fraction of all-pairs shortest paths that pass through v.<sup>2</sup> Both metrics are normalized to a 0&ndash;100% scale relative to the highest-scoring article in the current filtered set, so the leader is always 1.0 and other scores are reported as fractions of that leader.</p>
+        <p><em>How the metrics are computed.</em> Eigenvector centrality is implemented as PageRank with damping factor &alpha;&nbsp;=&nbsp;0.85.<sup>1</sup> The classical eigenvector definition assigns zero to every node outside the largest strongly-connected component, which is fatal for a citation graph that contains many small disconnected sub-clusters. PageRank's damping term models a random walker who follows citation edges 85% of the time and teleports to a random node 15% of the time, so every node receives a nonzero score and the rankings stay meaningful across the full graph. Betweenness centrality is computed using Brandes's O(|V|&middot;|E|) algorithm, which counts for each node v the fraction of all-pairs shortest paths that pass through v.<sup>2</sup> Both metrics are normalized to a 0&ndash;100% scale relative to the highest-scoring article in the current filtered set, so the leader is always 1.0 and other scores are reported as fractions of that leader.</p>
 
         <p>Two limitations bear on interpretation. The metrics reflect structural position within the indexed corpus only: an article that is foundational to the broader field but rarely cited inside the indexed journals will not score highly, and the rankings tilt toward whichever sub-areas have the densest internal citation chains in this corpus. The metrics are also sensitive to the time-accumulation effect: older articles have had more years to accumulate citation paths, and they therefore dominate both rankings. The year-range filters are the standard way to control for this effect; restricting the corpus to a 1995&ndash;2010 window, for example, surfaces a substantively different set of bridge articles than the all-time view.</p>
 
@@ -1088,7 +1088,7 @@
 
           <div>
             <h4 class="chart-section-head">Top 25 — Eigenvector Centrality</h4>
-            <p class="explore-hint" style="margin-top:0;">Articles connected to the most highly-connected work in the network. High eigenvector centrality means an article is cited by (or cites) other influential articles — not just many articles, but the <em>right</em> articles.</p>
+            <p class="explore-hint" style="margin-top:0;">Articles connected to the most highly-connected work in the network. High eigenvector centrality means an article is cited by (or cites) other influential articles; the metric weights <em>who</em> cites you more heavily than how many do.</p>
             <ol class="article-list" id="cent-table-eigen" style="font-size:0.85rem;"></ol>
           </div>
 
@@ -1237,7 +1237,7 @@
       {{ how_to_read(
           "Which articles the citing community has come to treat as belonging together, and which articles bridge between visually distinct clusters. Useful for identifying perceived intellectual kinship and bridge texts.",
           "A claim about which articles are similar in content. Co-citation reflects what later authors do with the pair, not what's actually inside the texts. Two articles can be heavily co-cited even if neither cites the other and their topics differ.",
-          "Look for nodes whose edges reach into multiple visual clusters. Those bridge articles are doing structural work the field rarely names directly &mdash; they connect conversations that the citing community otherwise treats as separate."
+          "Look for nodes whose edges reach into multiple visual clusters. Those bridge articles connect conversations that the citing community otherwise treats as separate; the field rarely names that connecting role directly."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -1245,7 +1245,7 @@
         <div class="methodology-body">
 
         <h4 class="methodology-heading">Tool orientation</h4>
-        <p>The Article Co-Citation graph maps which articles the citing community treats as part of the same intellectual conversation. Two articles are co-cited when a third article includes both in its reference list; the more often that joint citation happens, the stronger the field's perceived kinship between the pair. Direct citation records who cites whom; co-citation records who is treated as belonging together &mdash; a different question.</p>
+        <p>The Article Co-Citation graph maps which articles the citing community treats as part of the same intellectual conversation. Two articles are co-cited when a third article includes both in its reference list; the more often that joint citation happens, the stronger the field's perceived kinship between the pair. Direct citation records who cites whom; co-citation records who is treated as belonging together: a different question.</p>
 
         <p>Run with default parameters &mdash; minimum three co-citations, top 400 articles by co-citation strength &mdash; the graph contains 3,435 edges. Ranked by total co-citation strength, the article most embedded in the co-citation structure is Agboka's 2013 "Participatory Localization" at 1,083, followed by Jones's 2016 "The Technical Communicator as Advocate" at 1,056, Jones, Moore, and Walton's 2016 "Disrupting the Past" at 1,000, and Haas's 2012 "Race, Rhetoric, and Technology" at 878. The single heaviest co-citation tie pairs Jones, Moore, and Walton (2016) with Jones (2016) at 60 co-citations &mdash; an unusually high number that reflects both texts being routinely cited together as the foundational pair of the social-justice TC turn. Agboka and Haas pair at 52, Agboka and Jones at 49, Jones and Haas at 49.</p>
 
@@ -1631,7 +1631,7 @@
 
       {{ how_to_read(
           "Asymmetric citation flow between journals: who cites whom and who gets cited back, plus the size of the loop that marks within-venue self-reference.",
-          "A measure of which journal is more &lsquo;important&rsquo;. Asymmetries reflect coverage as much as field structure &mdash; a journal can't cite if it has no DOIs, so RSS-only venues will appear to be net recipients of citation when they're really just structurally invisible as citers.",
+          "A measure of which journal is more &lsquo;important&rsquo;. Asymmetries reflect coverage as much as field structure: a journal can't cite if it has no DOIs, so RSS-only venues will appear to be net recipients of citation when they're really just structurally invisible as citers.",
           "Look for chords that are thick on one end and thin on the other. Those asymmetries often reveal sub-areas where one journal is the destination and another is the producer of citations toward it &mdash; a relationship the journals themselves rarely name."
       ) }}
 
@@ -1886,7 +1886,7 @@
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
 
       {{ how_to_read(
-          "The most-traveled chain through the citation graph &mdash; a backbone of how ideas flow from frontier articles toward foundational ones. Useful for identifying landmark articles in a citation lineage.",
+          "The most-traveled chain through the citation graph: a backbone of how ideas flow from frontier articles toward foundational ones. Useful for identifying landmark articles in a citation lineage.",
           "A claim that this is <em>the</em> main path of the field. There are typically several high-traffic paths through a citation DAG; this tool surfaces the single chain with the highest aggregate flow, not all of them. Articles missing from the main path are not necessarily peripheral &mdash; they may sit on a parallel high-traffic route.",
           "Restrict the corpus by year range or journal cluster and re-run. Watching how the main path shifts when you scope the field to a different slice is more informative than the headline result on the all-time view."
       ) }}
@@ -2004,7 +2004,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Temporal Network Evolution tool slices the indexed citation graph into time windows and reports a panel of structural metrics for each slice. The visualization renders those metrics as time series, which lets the analyst read off the field's growth, consolidation, and fragmentation phases at a glance &mdash; whether the network is becoming more cohesive over time, whether modular structure is intensifying or weakening, and whether the field's intellectual chains are becoming longer or shorter.</p>
 
-        <p>Run with default parameters &mdash; minimum one citation, five-year windows &mdash; the tool returns 18 windows from 1939&ndash;1943 to 2024&ndash;2028. The cumulative graph at the most recent window contains 6,673 articles and 22,930 citations. Three structural movements are legible. First, the giant component fraction rises from roughly 0.10 in the 1984&ndash;1988 window to 0.58 in the 2019&ndash;2023 window: across forty years the field has knitted itself into a cohesive citation network where the largest connected component now contains the majority of indexed articles. Second, average degree rises from 0.64 in 1984&ndash;1988 to 1.94 in 2019&ndash;2023, reflecting a citation graph that is densifying. Third, modularity Q falls from 0.907 in 2009&ndash;2013 to 0.820 in 2019&ndash;2023; the field remains modular, but cross-cluster citation traffic has grown enough to soften the boundaries between research fronts.</p>
+        <p>Run with default parameters &mdash; minimum one citation, five-year windows &mdash; the tool returns 18 windows from 1939&ndash;1943 to 2024&ndash;2028. The cumulative graph at the most recent window contains 6,673 articles and 22,930 citations. Three structural movements are legible. First, the giant component fraction rises from roughly 0.10 in the 1984&ndash;1988 window to 0.58 in the 2019&ndash;2023 window: across forty years the field has knitted itself into a cohesive citation network where the largest connected component now contains the majority of indexed articles. Second, average degree rises from 0.64 in 1984&ndash;1988 to 1.94 in 2019&ndash;2023; the citation graph is densifying. Third, modularity Q falls from 0.907 in 2009&ndash;2013 to 0.820 in 2019&ndash;2023; the field remains modular, but cross-cluster citation traffic has grown enough to soften the boundaries between research fronts.</p>
 
         <p>Use the tool to identify structural turning points, distinguish growth phases (rising node and edge counts) from consolidation phases (rising giant-component fraction or falling modularity), and locate the windows in which today's research fronts crystallized.</p>
 
@@ -2172,7 +2172,7 @@
         <h4 class="methodology-heading">Tool orientation</h4>
         <p>The Institutions tool reports article output by author affiliation across the indexed corpus. Each row in the bar chart credits one institution with the count of indexed articles on which any of its affiliated scholars appears as an author; the line chart tracks the same counts year over year for the top ten institutions, which makes individual programs' rises and plateaus legible against the field-wide baseline.</p>
 
-        <p>Run with default parameters across the indexed corpus, the bar chart returns Pennsylvania State University at the top with 249 indexed articles, followed by the University of Texas at Austin (239), Texas Tech University (219), Arizona State University (210), Iowa State University (182), Purdue University (178), and Carnegie Mellon University (178). The top 25 is dominated by large public research universities, reflecting the long-standing concentration of writing-studies and technical-communication PhD programs at land-grant and flagship public institutions; the only private universities in the top 25 are Carnegie Mellon, Rensselaer Polytechnic Institute, and Texas Christian. The line-chart view of the top ten over time shows that this distribution is not static: Penn State, Arizona State, and Texas Tech have each gone through multi-year publication peaks tied to specific program-building moments, while older programs at the University of Iowa and Carnegie Mellon show flatter, longer-tail trajectories.</p>
+        <p>Run with default parameters across the indexed corpus, the bar chart returns Pennsylvania State University at the top with 249 indexed articles, followed by the University of Texas at Austin (239), Texas Tech University (219), Arizona State University (210), Iowa State University (182), Purdue University (178), and Carnegie Mellon University (178). The top 25 is dominated by large public research universities; the concentration tracks the long-standing placement of writing-studies and technical-communication PhD programs at land-grant and flagship public institutions. The only private universities in the top 25 are Carnegie Mellon, Rensselaer Polytechnic Institute, and Texas Christian. The line-chart view of the top ten over time shows that this distribution is not static: Penn State, Arizona State, and Texas Tech have each gone through multi-year publication peaks tied to specific program-building moments, while older programs at the University of Iowa and Carnegie Mellon show flatter, longer-tail trajectories.</p>
 
         <p>Use the tool to identify the institutional concentration of the field's published output, locate program-building peaks tied to particular years, and read off how institutional output complements rather than tracks scholarly individual output.</p>
 
@@ -2260,7 +2260,7 @@
 
         <p>The <strong>relationship-set toggles</strong> in the table header let the user filter the reading list to a single relationship type or any combination of the four. Toggling off "Backward citations" restricts the list to articles that cite the seed or share intellectual neighborhoods with it, which is the right move when the question is "what came after this article and is related to it?" rather than "what is this article reading?"</p>
 
-        <p>The <strong>graph view</strong> renders the relationship graph with color-coded edges (blue for backward, green for forward, orange for co-citation, purple for coupling). Nodes that appear in multiple relationship sets carry multi-color borders. Node size scales with composite relevance score; click any node to switch the seed to that article and re-run the neighborhood query against the new seed. This recursive traversal is the primary use of the graph view: starting from a known anchor, the user can navigate outward through whichever relationship channel they want to follow.</p>
+        <p>The <strong>graph view</strong> renders the relationship graph with color-coded edges (blue for backward, green for forward, orange for co-citation, purple for coupling). Nodes that appear in multiple relationship sets carry multi-color borders. Node size scales with composite relevance score; click any node to switch the seed to that article and re-run the neighborhood query against the new seed. This recursive traversal is the primary use of the graph view: starting from a known anchor, the user can move outward through whichever relationship channel they want to follow.</p>
 
         <h4 class="methodology-heading">References</h4>
         <ol class="methodology-refs">

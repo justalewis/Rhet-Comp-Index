@@ -47,7 +47,7 @@
 {# Per-code default messages, used when the handler doesn't pass one. #}
 {% set default_messages = {
     404: "The page you're looking for doesn't exist.",
-    429: "Rate limit exceeded — please slow down and try again in a moment.",
+    429: "Too many requests. Wait a moment and try again.",
     500: "Something went wrong on our end.",
 } %}
 {% set display_message = message or default_messages.get(code) or "An error occurred." %}

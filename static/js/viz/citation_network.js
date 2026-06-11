@@ -85,8 +85,7 @@ async function loadCitationNetwork() {
 
   if (!data.nodes || data.nodes.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No articles match these filters — try a lower minimum citation count, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+      '<p class="explore-hint">No articles match these filters — try a lower minimum citation count.</p>';
     return;
   }
 

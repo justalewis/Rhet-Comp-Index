@@ -75,7 +75,7 @@ async function loadCommunities() {
 
   if (!data.nodes || data.nodes.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No articles match these filters \u2014 try a lower minimum.</p>';
+      '<p class="explore-hint">No articles match these filters. Try a lower minimum.</p>';
     return;
   }
 

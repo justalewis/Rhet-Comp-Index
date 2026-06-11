@@ -90,8 +90,7 @@ async function loadCentrality() {
 
   if (!centData.nodes || centData.nodes.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No articles match these filters \u2014 try a lower minimum citation count, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+      '<p class="explore-hint">No articles match these filters. Try a lower minimum citation count.</p>';
     return;
   }
 

@@ -604,7 +604,7 @@ async function loadCitations() {
   }
 
   if (!data || data.length === 0) {
-    container.innerHTML = '<p class="explore-hint">No citation data yet — run <code>python cite_fetcher.py</code> to populate.</p>';
+    container.innerHTML = '<p class="explore-hint">No citation data yet. Reference lists are still being fetched from CrossRef.</p>';
     return;
   }
 
@@ -709,7 +709,7 @@ async function loadCitTrends() {
 
   if (!rows || rows.length === 0) {
     noteEl.textContent =
-      'No citation data yet — run python cite_fetcher.py to populate.';
+      'No citation data yet. Reference lists are still being fetched from CrossRef.';
     if (citTrendsChart) { citTrendsChart.destroy(); citTrendsChart = null; }
     return;
   }
@@ -890,8 +890,7 @@ async function loadCitationNetwork() {
 
   if (!data.nodes || data.nodes.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No articles match these filters — try a lower minimum citation count, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+      '<p class="explore-hint">No articles match these filters — try a lower minimum citation count.</p>';
     return;
   }
 
@@ -1168,8 +1167,7 @@ async function loadCentrality() {
 
   if (!centData.nodes || centData.nodes.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No articles match these filters \u2014 try a lower minimum citation count, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+      '<p class="explore-hint">No articles match these filters. Try a lower minimum citation count.</p>';
     return;
   }
 
@@ -2070,8 +2068,7 @@ async function loadJournalFlow() {
 
   if (!data.journals || data.journals.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No citation flows match these filters \u2014 try a lower minimum, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+      '<p class="explore-hint">No citation flows match these filters. Try a lower minimum.</p>';
     return;
   }
 
@@ -2267,7 +2264,7 @@ async function loadHalfLife() {
   if (!data.journals || data.journals.length === 0) {
     container.innerHTML =
       '<p class="explore-hint">No citation data available for these filters \u2014 ' +
-      'try widening the year range or run <code>python cite_fetcher.py</code>.</p>';
+      'try widening the year range.</p>';
     return;
   }
 
@@ -2629,7 +2626,7 @@ async function loadCommunities() {
 
   if (!data.nodes || data.nodes.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No articles match these filters \u2014 try a lower minimum.</p>';
+      '<p class="explore-hint">No articles match these filters. Try a lower minimum.</p>';
     return;
   }
 
@@ -2967,7 +2964,7 @@ async function loadTemporalEvolution() {
   }
 
   if (!data.windows || data.windows.length === 0) {
-    statsEl.textContent = 'No data matches these filters \u2014 try lowering the minimum citation count.';
+    statsEl.textContent = 'No data matches these filters. Try lowering the minimum citation count.';
     return;
   }
 

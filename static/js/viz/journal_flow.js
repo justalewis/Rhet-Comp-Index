@@ -114,8 +114,7 @@ async function loadJournalFlow() {
 
   if (!data.journals || data.journals.length === 0) {
     container.innerHTML =
-      '<p class="explore-hint">No citation flows match these filters \u2014 try a lower minimum, ' +
-      'or run <code>python cite_fetcher.py</code> to populate citation data.</p>';
+      '<p class="explore-hint">No citation flows match these filters. Try a lower minimum.</p>';
     return;
   }
 
