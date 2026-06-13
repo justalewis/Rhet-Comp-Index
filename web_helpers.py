@@ -165,6 +165,26 @@ def format_period(period):
     return period
 
 
+def redact_authors(value):
+    """Jinja filter: render redaction tokens as the friendly display phrase.
+
+    Accepts a single author string or a ``;``-joined list and replaces any
+    stored redaction token ("Redacted Author 7f3a2c") with the human phrase
+    "Name Redacted by Author Request", passing real names through untouched.
+
+    The DATA layer already swapped redacted names for tokens everywhere, so a
+    token rendering raw is not a name leak — this filter is the display polish
+    that makes redacted bylines read the way an author was promised. Apply it
+    to the *visible text* of an author byline; leave the token in the ``href``
+    so the (preserved) author page stays reachable at its token URL."""
+    from redaction import is_redaction_token, DISPLAY_TEXT
+    if not value:
+        return value
+    parts = [p.strip() for p in str(value).split(";")]
+    out = [DISPLAY_TEXT if is_redaction_token(p) else p for p in parts if p]
+    return "; ".join(out)
+
+
 def display_date(pub_date):
     """Convert ISO date string to a short human-readable form."""
     if not pub_date:

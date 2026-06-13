@@ -52,7 +52,7 @@ from db import backfill_oa_status as _backfill_oa
 from web_helpers import (  # noqa: F401
     _safe_int, _safe_float,
     _bibtex_key, _to_bibtex, _to_ris,
-    format_period, display_date,
+    format_period, display_date, redact_authors,
     cache_response,
     inject_globals,
     register_error_handlers,
@@ -187,6 +187,7 @@ def create_app() -> Flask:
     # Jinja filters
     flask_app.jinja_env.filters["format_period"] = format_period
     flask_app.jinja_env.filters["display_date"]  = display_date
+    flask_app.jinja_env.filters["redact_authors"] = redact_authors
 
     # Context
     flask_app.context_processor(inject_globals)
@@ -207,6 +208,7 @@ def create_app() -> Flask:
     from blueprints.books        import bp as books_bp
     from blueprints.institutions import bp as institutions_bp
     from blueprints.admin        import bp as admin_bp
+    from blueprints.redaction    import bp as redaction_bp
 
     flask_app.register_blueprint(main_bp)
     flask_app.register_blueprint(articles_bp)
@@ -216,6 +218,7 @@ def create_app() -> Flask:
     flask_app.register_blueprint(books_bp)
     flask_app.register_blueprint(institutions_bp)
     flask_app.register_blueprint(admin_bp)
+    flask_app.register_blueprint(redaction_bp)
 
     # Datastories blueprint — always registered. The landing page at
     # /datastories is public; the tools at /datastories/tools and the

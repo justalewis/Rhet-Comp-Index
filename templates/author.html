@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ author_name }} — Pinakes{% endblock %}
+{% block title %}{{ author_name | redact_authors }} — Pinakes{% endblock %}
 
 {% block sidebar_footer %}
     <div class="sidebar-comppile">
@@ -17,7 +17,7 @@
 {% block content %}
 
     <div class="content-header">
-      <h2>{{ author_name }}</h2>
+      <h2>{{ author_name | redact_authors }}</h2>
       <span class="result-count">
         {{ articles | length }} article{% if articles | length != 1 %}s{% endif %}{% if author_books %} · {{ author_books | length }} book{% if author_books | length != 1 %}s{% endif %}{% endif %}
       </span>
@@ -25,8 +25,12 @@
 
     {# Author names are stored "Last, First [Middle]" in the DB, so the surname
        is everything before the first comma. The earlier `.split()[-1]`
-       returned the first name on comma-formatted entries. #}
-    {% set author_surname = (author_name.split(',')[0] if ',' in author_name else author_name.split()[-1]).strip() %}
+       returned the first name on comma-formatted entries. For a redacted
+       author there is no surname to surface — use a neutral label. #}
+    {% set author_surname = 'This Scholar' if is_redacted else (author_name.split(',')[0] if ',' in author_name else author_name.split()[-1]).strip() %}
+    {# The CompPile-by-author search is a name-based external lookup; it makes
+       no sense for a redacted author (the name is gone), so hide it. #}
+    {% if not is_redacted %}
     <div class="author-comppile-link">
       {# Same POST-form pattern as the article page; CompPile's search ignores
          URL query params. Pre-populates the advanced Author field with the
@@ -46,8 +50,15 @@
         </button>
       </form>
     </div>
+    {% endif %}
 
-    {% if author_record %}
+    {% if is_redacted %}
+    <div class="author-profile-meta author-redacted-note">
+      <span class="author-redacted-tag">This author's name has been redacted at their request. Their scholarship remains indexed and continues to count in the site's metrics.</span>
+    </div>
+    {% endif %}
+
+    {% if author_record and not is_redacted %}
     <div class="author-profile-meta">
       {% if author_record.institution_name %}
       <span class="author-profile-institution">{{ author_record.institution_name }}</span>
@@ -58,7 +69,7 @@
     </div>
     {% endif %}
 
-    {% if institution_summary %}
+    {% if institution_summary and not is_redacted %}
     <div class="author-affiliation-summary">
       <span class="author-affiliation-label">Affiliations:</span>
       {% for inst_name, inst_count in institution_summary[:3] %}
@@ -94,19 +105,19 @@
 
       <div class="insight-block" id="cocitation-block" style="display:none;">
         <h3 class="insight-heading">Co-Cited With</h3>
-        <p class="cocitation-hint">Scholars most frequently cited alongside {{ author_name }} by subsequent articles in the index.</p>
+        <p class="cocitation-hint">Scholars most frequently cited alongside {{ author_name | redact_authors }} by subsequent articles in the index.</p>
         <div id="author-cocitation-list"></div>
         <a href="/explore#author-cocitation" class="cocitation-link">See full co-citation network &rarr;</a>
       </div>
 
       {% if citing_venues and citing_venues.total > 0 %}
       <div class="insight-block">
-        <h3 class="insight-heading">Who Reads {{ author_name.split()[-1] if author_name else 'This Scholar' }}</h3>
+        <h3 class="insight-heading">Who Reads {{ author_surname }}</h3>
         {% set top_cluster = citing_venues.by_cluster[0] if citing_venues.by_cluster else None %}
         {% if top_cluster %}
         {% set top_share_pct = (top_cluster.count * 100 / citing_venues.total) | round(0, 'floor') | int %}
         <p class="cocitation-hint">
-          {{ author_name }}'s work travels primarily in
+          {{ author_surname if is_redacted else author_name }}'s work travels primarily in
           <strong>{{ top_cluster.label if top_cluster.label is defined else top_cluster.cluster }}</strong>
           ({{ top_share_pct }}% of indexed citations)
           {% if citing_venues.by_cluster | length > 1 %}
@@ -176,7 +187,7 @@
 
         {% if a.authors %}
         <div class="article-authors">
-          {{ a.authors }}
+          {{ a.authors | redact_authors }}
           {% if a.citation_count and a.citation_count > 0 %}
           <span class="cite-count">(cited {{ a.citation_count }}&times;)</span>
           {% endif %}

@@ -117,6 +117,21 @@ def step_9_openalex_citations():
     return stats
 
 
+def step_10_redaction_resweep():
+    """Re-apply the author-redaction ledger across every table.
+
+    Steps 1–5 above re-pull author names from CrossRef/OpenAlex; a redacted
+    author whose name the choke-points somehow missed would be resurrected.
+    This self-healing sweep swaps any reappeared name back to its token,
+    rebuilds FTS, and busts the Datastories cache — so the weekly run can
+    never leave a redacted name exposed. No-op (and cheap) when the ledger is
+    empty. MUST run last, after all ingestion."""
+    from redaction import resweep_all
+    totals = resweep_all()
+    log.info("Redaction resweep: %s", totals)
+    return totals
+
+
 STEPS = [
     (1, "CrossRef incremental fetch",     step_1_crossref),
     (2, "RSS feed fetch",                 step_2_rss),
@@ -127,6 +142,7 @@ STEPS = [
     (7, "Retag + FTS rebuild",            step_7_retag),
     (8, "OA status backfill",             step_8_oa_backfill),
     (9, "OpenAlex citation counts",       step_9_openalex_citations),
+    (10, "Author-redaction resweep",      step_10_redaction_resweep),
 ]
 
 

@@ -438,6 +438,90 @@ def _migrate_v9_to_v10(conn):
         log.info("v9→v10 migration complete (volume/issue/pages columns added).")
 
 
+def _migrate_v10_to_v11(conn):
+    """Add the author-redaction ledger and its meta table (v10 → v11).
+
+    The redaction feature replaces a redacted author's name with a stable
+    per-author token everywhere the name string is used as identity
+    (articles.authors, the normalized author/affiliation/institution tables,
+    books). The ledger is the durable record that lets every ingest path
+    re-apply suppression after an upstream re-fetch hands the real name back,
+    and (because we retain the plaintext name) lets a redaction be reversed.
+
+    The ledger is a LOCKED table: no render / API / export path reads it.
+    Only redaction.py (the suppression re-applier and admin review) touches it.
+
+    Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS redaction_ledger (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            token         TEXT    NOT NULL UNIQUE,
+            name          TEXT    NOT NULL,
+            name_hash     TEXT    NOT NULL,
+            name_variants TEXT,                 -- JSON array of additional name forms
+            redacted_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+            request_id    INTEGER,              -- FK to redaction_requests (v12); nullable
+            created_by    TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_redaction_name_hash
+            ON redaction_ledger(name_hash);
+
+        -- Small key/value store for the per-install redaction salt (so the
+        -- token suffix is not a bare, dictionary-reversible hash of the name).
+        CREATE TABLE IF NOT EXISTS redaction_meta (
+            key   TEXT PRIMARY KEY,
+            value TEXT
+        );
+    """)
+    log.info("v10→v11 migration complete (redaction ledger ready).")
+
+
+def _migrate_v11_to_v12(conn):
+    """Add the redaction request queue + append-only audit log (v11 → v12).
+
+    redaction_requests holds opt-out requests pending identity verification
+    (ORCID or email) and admin review. redaction_audit is append-only proof of
+    every state change — created / verified / approved / denied — written
+    BEFORE the redaction fires, so a review record survives even if the request
+    row is later purged. Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS redaction_requests (
+            id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+            author_name_claimed     TEXT    NOT NULL,
+            name_variants           TEXT,                 -- JSON array
+            requester_email         TEXT,
+            requester_orcid         TEXT,
+            verification_method     TEXT    NOT NULL,     -- 'email' | 'orcid'
+            verification_token_hash TEXT,                 -- sha256 of one-time email token; NULL once used
+            verification_status     TEXT    NOT NULL DEFAULT 'pending',
+                                                          -- pending | verified | approved | denied
+            created_at              TEXT    NOT NULL DEFAULT (datetime('now')),
+            verified_at             TEXT,
+            decided_at              TEXT,
+            decided_by              TEXT,
+            note                    TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_redaction_requests_status
+            ON redaction_requests(verification_status);
+        CREATE INDEX IF NOT EXISTS idx_redaction_requests_token
+            ON redaction_requests(verification_token_hash);
+
+        CREATE TABLE IF NOT EXISTS redaction_audit (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id  INTEGER,
+            event       TEXT    NOT NULL,
+            actor       TEXT,
+            detail      TEXT,
+            at          TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_redaction_audit_request
+            ON redaction_audit(request_id);
+    """)
+    log.info("v11→v12 migration complete (redaction request queue + audit ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -473,6 +557,12 @@ def init_db():
 
         # Always run v10 migration — idempotent via column existence check.
         _migrate_v9_to_v10(conn)
+
+        # Always run v11 migration — idempotent via IF NOT EXISTS.
+        _migrate_v10_to_v11(conn)
+
+        # Always run v12 migration — idempotent via IF NOT EXISTS.
+        _migrate_v11_to_v12(conn)
 
         conn.commit()
 

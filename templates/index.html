@@ -247,7 +247,7 @@
           <li class="article">
 
             {# COinS for Zotero/Mendeley auto-detection #}
-            <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ a.title | urlencode }}&amp;rft.jtitle={{ a.journal | urlencode }}{% if a.pub_date %}&amp;rft.date={{ a.pub_date | urlencode }}{% endif %}{% if a.doi %}&amp;rft_id=info%3Adoi%2F{{ a.doi | urlencode }}{% endif %}{% if a.authors %}&amp;rft.au={{ a.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
+            <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ a.title | urlencode }}&amp;rft.jtitle={{ a.journal | urlencode }}{% if a.pub_date %}&amp;rft.date={{ a.pub_date | urlencode }}{% endif %}{% if a.doi %}&amp;rft_id=info%3Adoi%2F{{ a.doi | urlencode }}{% endif %}{% if a.authors and not a.authors.split(';')[0].strip().startswith('Redacted Author ') %}&amp;rft.au={{ a.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
 
             <!-- Journal + date line -->
             <div class="article-meta-top">
@@ -278,7 +278,7 @@
             <!-- Authors + citation count -->
             {% if a.authors %}
             <div class="article-authors">
-              {{ a.authors }}
+              {{ a.authors | redact_authors }}
               {% if a.citation_count and a.citation_count > 0 %}
               <span class="cite-count">(cited {{ a.citation_count }}&times;)</span>
               {% endif %}

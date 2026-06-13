@@ -25,6 +25,11 @@ def upsert_article(url, doi, title, authors, abstract, pub_date, journal, source
     oa_url    — direct URL to open-access version, or None
     """
     with get_conn() as conn:
+        # Author-redaction choke-point: a redacted author's newly-published
+        # work must come in already suppressed, or the next fetch resurrects
+        # the name. apply_suppression is exact-match and exception-safe.
+        from redaction import apply_suppression
+        authors = apply_suppression(authors, conn=conn)
         conn.execute("""
             INSERT OR IGNORE INTO articles
                 (url, doi, title, authors, abstract, pub_date,

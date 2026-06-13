@@ -26,6 +26,11 @@ def upsert_book(doi, isbn, title, record_type, book_type,
     with None, which SQLite allows for multiple NULL values.
     """
     with get_conn() as conn:
+        # Author-redaction choke-point (see redaction.py): suppress any
+        # redacted name in the author/editor fields before the row lands.
+        from redaction import apply_suppression
+        authors = apply_suppression(authors, conn=conn)
+        editors = apply_suppression(editors, conn=conn)
         # Update-if-exists by DOI
         if doi:
             row = conn.execute(

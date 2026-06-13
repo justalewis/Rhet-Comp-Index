@@ -1,0 +1,109 @@
+{% extends "base-core.html" %}
+
+{% block title %}Request Name Removal — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="Request removal of your name from the Pinakes index. Your scholarship stays indexed; your name is replaced with a neutral placeholder.">
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/about">About</a>
+        <a href="/explore">Explore</a>
+        <a href="/authors">Authors</a>
+        <a href="/coverage">Coverage</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="about-content">
+    <h1 class="about-title">Request Name Removal</h1>
+
+    {% if stage == "form" %}
+    <p>If you would rather not have your name appear in this index, you can ask to have it removed. Your scholarship stays in the database and keeps counting in the site's metrics — citations, co-authorship, the network maps. What changes is that your name and identifying traces are replaced with a neutral tag, <em>“Name Redacted by Author Request,”</em> everywhere they appear.</p>
+    <br>
+    <p>The process has two steps. First you verify the email address, which confirms the request is really coming from you. Then I review it by hand before anything changes. This is a courtesy I extend to authors who ask; it is not an automated takedown.</p>
+    <br>
+    <p>A few honest limits, up front: removal covers your own bylines and author profile. It cannot guarantee your name is scrubbed from inside the bibliographies of <em>other</em> people's articles, where it appears as a citation — those are third-party records I only partly control. And a name can linger in encrypted backups for the length of the backup-retention window before it ages out. The <a href="/about">About page</a> says more about both.</p>
+    <br>
+
+    {% if error %}<p class="redaction-form-error" style="color:#9a2a2a;">{{ error }}</p><br>{% endif %}
+
+    <form method="post" action="/redaction-request" class="redaction-form" style="max-width:34rem;">
+      <label style="display:block;margin-bottom:1rem;">
+        <strong>Name as it appears on your work</strong> <span style="color:#9a2a2a;">*</span><br>
+        <span style="font-size:0.88rem;color:#6a655c;">The exact byline used in the index, e.g. “Jane Q. Smith”.</span><br>
+        <input type="text" name="author_name" required value="{{ author_name or '' }}"
+               style="width:100%;padding:0.5rem;margin-top:0.3rem;" autocomplete="off">
+      </label>
+
+      <label style="display:block;margin-bottom:1rem;">
+        <strong>Other name forms your work appears under</strong><br>
+        <span style="font-size:0.88rem;color:#6a655c;">Optional. One per line (e.g. “J. Smith”, “Jane Smith”). The index treats each spelling as a separate author, so listing your variants helps remove all of them.</span><br>
+        <textarea name="variants" rows="3" style="width:100%;padding:0.5rem;margin-top:0.3rem;">{{ variants or '' }}</textarea>
+      </label>
+
+      <label style="display:block;margin-bottom:1rem;">
+        <strong>Your email</strong><br>
+        <span style="font-size:0.88rem;color:#6a655c;">We send a one-time confirmation link here. It is never published. (Required for email verification; optional if you verify with ORCID.)</span><br>
+        <input type="email" name="email" value="{{ email or '' }}"
+               style="width:100%;padding:0.5rem;margin-top:0.3rem;" autocomplete="off">
+      </label>
+
+      <label style="display:block;margin-bottom:1.4rem;">
+        <strong>ORCID iD</strong><br>
+        <span style="font-size:0.88rem;color:#6a655c;">Optional. Helps confirm your identity during review.</span><br>
+        <input type="text" name="orcid" value="{{ orcid or '' }}" placeholder="0000-0000-0000-0000"
+               style="width:100%;padding:0.5rem;margin-top:0.3rem;" autocomplete="off">
+      </label>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0.8rem;align-items:center;">
+        <button type="submit" name="method" value="email" class="fetch-btn" style="padding:0.6rem 1.4rem;">Verify by email</button>
+        {% if orcid_available %}
+        <button type="submit" name="method" value="orcid" class="fetch-btn" style="padding:0.6rem 1.4rem;">Verify with ORCID</button>
+        <span style="font-size:0.85rem;color:#6a655c;">ORCID sign-in is the quickest way to prove the work is yours.</span>
+        {% endif %}
+      </div>
+    </form>
+    <br>
+    <p style="font-size:0.88rem;color:#6a655c;">Questions, or want to remove a name you can't verify by email? Write to <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a>.</p>
+
+    {% elif stage == "submitted" %}
+    <p>Thanks. If <strong>{{ email }}</strong> is a valid address, a confirmation link is on its way. Open it to verify your email, and I'll review the request before anything in the index changes.</p>
+    <br>
+    <p>The link expires after a single use. If it doesn't arrive within a few minutes, check spam, or email <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a> directly.</p>
+    <br>
+    <p><a href="/">← Back to the index</a></p>
+
+    {% elif stage == "verified" %}
+    <p>Your email is verified — thank you. The request is now in my review queue. Once I've confirmed it, your name will be replaced with the <em>“Name Redacted by Author Request”</em> tag across the index, and your scholarship will stay where it is.</p>
+    <br>
+    <p>You don't need to do anything else. If you have questions in the meantime, write to <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a>.</p>
+    <br>
+    <p><a href="/">← Back to the index</a></p>
+
+    {% elif stage == "invalid" %}
+    <p>That confirmation link isn't valid — it may have already been used, or it may have been mistyped. Each link works once.</p>
+    <br>
+    <p>You can <a href="/redaction-request">start a new request</a>, or email <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a> for help.</p>
+    {% endif %}
+
+  </main>
+
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot;
+    <a href="/about">About</a> &middot;
+    <a href="/explore">Explore</a> &middot;
+    <a href="/coverage">Coverage</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    &copy; 2026 Justin Lewis
+  </footer>
+
+</div>
+{% endblock %}
