@@ -12,6 +12,25 @@
 #                          error reporting is silently disabled. The free
 #                          Sentry tier is sufficient for current traffic.
 #
+# Author-redaction secrets (all optional; the feature degrades gracefully):
+#   SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+#                        — outbound email for the redaction-request verification
+#                          link (notifications.py). When SMTP_HOST/SMTP_FROM are
+#                          unset, the link is logged instead of sent. Recommended
+#                          host: Resend (smtp.resend.com:587, user "resend",
+#                          password = API key), sending from a verified
+#                          pinakes.xyz subdomain.
+#   SMTP_REPLY_TO        — optional Reply-To (e.g. justalewis1@gmail.com) so
+#                          replies to a no-reply sender still reach you.
+#   ORCID_CLIENT_ID, ORCID_CLIENT_SECRET
+#                        — ORCID OAuth verification (orcid_oauth.py). When unset,
+#                          the "Verify with ORCID" button is hidden. Register the
+#                          redirect URI https://pinakes.xyz/redaction-request/orcid/callback
+#                          in the ORCID developer console. ORCID_ENV=sandbox to test.
+#   REDACTION_SALT       — salt for redaction tokens (redaction.py). Recommended;
+#                          falls back to an auto-generated DB salt. Set it before
+#                          the first production redaction so tokens stay stable.
+#
 # Backup secrets (all six required for /api/admin/run-backup to succeed;
 # missing any one causes the endpoint to return a failure dict and write
 # no heartbeat. Reads at runtime, not at startup):

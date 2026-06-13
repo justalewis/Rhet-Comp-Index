@@ -124,6 +124,14 @@ def create_app() -> Flask:
     init_sentry("web")
 
     flask_app = Flask(__name__)
+    # Behind Fly.io's TLS-terminating proxy, honor X-Forwarded-Proto/Host so
+    # url_for(..., _external=True) builds https:// absolute URLs. This matters
+    # for the author-redaction email verification link, and is REQUIRED for the
+    # ORCID OAuth redirect_uri — ORCID rejects an http:// callback that doesn't
+    # match the registered https:// URI. (IP-based rate limiting reads
+    # Fly-Client-IP directly, so x_for is intentionally left untrusted.)
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    flask_app.wsgi_app = ProxyFix(flask_app.wsgi_app, x_proto=1, x_host=1)
     Compress(flask_app)
     limiter.init_app(flask_app)
 

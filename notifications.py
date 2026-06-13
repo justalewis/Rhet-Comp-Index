@@ -8,6 +8,8 @@ SendGrid/SES call later without touching callers.
 Env vars (all read at call time, so tests/dev can set them per-process):
     SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD,
     SMTP_FROM (the From: address; also gates whether email is "configured"),
+    SMTP_REPLY_TO (optional Reply-To, e.g. an inbox you read — useful when
+        SMTP_FROM is a no-reply domain sender with no mailbox behind it),
     SMTP_STARTTLS (default "1").
 
 Graceful degradation: if SMTP isn't configured, send_email logs the message
@@ -49,6 +51,9 @@ def send_email(to: str, subject: str, body: str) -> bool:
     msg["From"] = sender
     msg["To"] = to
     msg["Subject"] = subject
+    reply_to = os.environ.get("SMTP_REPLY_TO")
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.set_content(body)
 
     host = os.environ["SMTP_HOST"]
