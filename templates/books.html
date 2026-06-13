@@ -124,9 +124,9 @@
         <div class="book-card-title">{{ b.title }}</div>
         <div class="book-card-people">
           {% if b.editors %}
-            <span class="book-card-role">Ed.</span> {{ b.editors|truncate(60, true, '…') }}
+            <span class="book-card-role">Ed.</span> {{ b.editors|redact_authors|truncate(60, true, '…') }}
           {% elif b.authors %}
-            {{ b.authors|truncate(60, true, '…') }}
+            {{ b.authors|redact_authors|truncate(60, true, '…') }}
           {% endif %}
         </div>
         {% if b.publisher %}

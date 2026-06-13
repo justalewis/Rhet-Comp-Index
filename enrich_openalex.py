@@ -288,6 +288,16 @@ def enrich_openalex():
             if not _name_matches(display_name, authors_str):
                 continue
 
+            # Author-redaction guard (defense in depth): enrich writes the
+            # normalized author tables directly, bypassing upsert_article's
+            # choke-point. Never (re)create a row for a suppressed name. The
+            # _name_matches gate above usually catches this already (the
+            # article's authors field holds the token, not the name), but a
+            # lingering variant must not slip a real name back in.
+            from redaction import apply_suppression
+            if apply_suppression(display_name) != display_name:
+                continue
+
             # UPSERT into authors table
             try:
                 with get_conn() as conn:

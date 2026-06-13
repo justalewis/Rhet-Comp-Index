@@ -105,6 +105,11 @@ def init_sentry(component: str) -> bool:
         traces_sample_rate=0.01,    # 1% performance sampling
         profiles_sample_rate=0.0,   # off — preserves quota
         send_default_pii=False,
+        # Do NOT attach local variables to stack frames. An author name sitting
+        # in a local (e.g. `name = "Jane Smith"`) when a view raises would
+        # otherwise be shipped to Sentry, leaking a name redaction was meant to
+        # remove. _scrub_pii cleans the request envelope but not frame locals.
+        include_local_variables=False,
         # SystemExit and KeyboardInterrupt are raised when gunicorn aborts
         # a worker (typically mid-request during a Fly.io deploy). They're
         # expected operational signals, not application bugs; filtering them

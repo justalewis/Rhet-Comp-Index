@@ -164,7 +164,7 @@
               <a href="/article/{{ a.id }}">{{ a.title }}</a>
             </div>
             <div class="most-cited-meta">
-              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() | redact_authors }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
               {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
               <span class="most-cited-journal">{{ a.journal }}</span>
               <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }} in this index</span>
@@ -183,7 +183,7 @@
               <a href="/article/{{ a.id }}">{{ a.title }}</a>
             </div>
             <div class="most-cited-meta">
-              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() | redact_authors }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
               {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
               <span class="most-cited-journal">{{ a.journal }}</span>
               <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }} in this index</span>
@@ -212,7 +212,7 @@
           <div class="most-cited-body">
             <div class="most-cited-title"><a href="/article/{{ a.id }}">{{ a.title }}</a></div>
             <div class="most-cited-meta">
-              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() | redact_authors }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
               {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
               <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }}</span>
             </div>
@@ -242,7 +242,7 @@
             <div class="most-cited-body">
               <div class="most-cited-title"><a href="/article/{{ a.id }}">{{ a.title }}</a></div>
               <div class="most-cited-meta">
-                {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+                {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() | redact_authors }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
                 {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
                 <span class="most-cited-journal">{{ a.journal }}</span>
                 <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }}</span>
@@ -275,7 +275,7 @@
           <div class="most-cited-body">
             <div class="most-cited-title"><a href="/article/{{ a.id }}">{{ a.title }}</a></div>
             <div class="most-cited-meta">
-              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
+              {% if a.authors %}<span class="most-cited-byline">{{ a.authors.split(';')[0].strip() | redact_authors }}{% if ';' in a.authors %} et al.{% endif %}</span>{% endif %}
               {% if a.pub_date %}<span class="most-cited-journal">{{ a.pub_date[:4] }}</span>{% endif %}
               <span class="most-cited-journal">{{ a.journal }}</span>
               <span class="most-cited-count">Cited by {{ a.internal_cited_by_count }}</span>

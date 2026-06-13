@@ -8,7 +8,8 @@
 {% if article.authors %}
 {% for author in article.authors.split(';') %}
 {% set a = author.strip() %}
-{% if a %}<meta name="citation_author" content="{{ a }}">
+{# Skip redacted authors entirely — don't feed a placeholder token to Zotero/Scholar. #}
+{% if a and not a.startswith('Redacted Author ') %}<meta name="citation_author" content="{{ a }}">
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -23,7 +24,7 @@
 {% if article.authors %}
 {% for author in article.authors.split(';') %}
 {% set a = author.strip() %}
-{% if a %}<meta name="DC.creator" content="{{ a }}">
+{% if a and not a.startswith('Redacted Author ') %}<meta name="DC.creator" content="{{ a }}">
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -50,7 +51,7 @@
 {% block content %}
 
     {# ── COinS span for Zotero browser connector auto-detection ── #}
-    <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ article.title | urlencode }}&amp;rft.jtitle={{ article.journal | urlencode }}{% if article.pub_date %}&amp;rft.date={{ article.pub_date | urlencode }}{% endif %}{% if article.doi %}&amp;rft_id=info%3Adoi%2F{{ article.doi | urlencode }}{% endif %}{% if article.authors %}&amp;rft.au={{ article.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
+    <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ article.title | urlencode }}&amp;rft.jtitle={{ article.journal | urlencode }}{% if article.pub_date %}&amp;rft.date={{ article.pub_date | urlencode }}{% endif %}{% if article.doi %}&amp;rft_id=info%3Adoi%2F{{ article.doi | urlencode }}{% endif %}{% if article.authors and not article.authors.split(';')[0].strip().startswith('Redacted Author ') %}&amp;rft.au={{ article.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
 
     <div class="detail-header">
       <div class="article-meta-top">
@@ -90,8 +91,10 @@
         {% set a = author.strip() %}
         {% if a %}
         <span class="detail-author-item">
-          <a href="/author/{{ a | urlencode }}" class="author-link">{{ a }}</a>
-          {% if author_affiliations and a in author_affiliations and author_affiliations[a].institution_name %}
+          <a href="/author/{{ a | urlencode }}" class="author-link">{{ a | redact_authors }}</a>
+          {# Hide the inline institution for a redacted author — name + paper +
+             affiliation would re-identify. The data stays for institution metrics. #}
+          {% if author_affiliations and a in author_affiliations and author_affiliations[a].institution_name and not a.startswith('Redacted Author ') %}
           <span class="author-affiliation-inline">{{ author_affiliations[a].institution_name }}</span>
           {% endif %}
         </span>{% if not loop.last %}; {% endif %}
@@ -206,11 +209,12 @@
       {%- set year = r.pub_date[:4] if r.pub_date else '' %}
       {%- set raw_authors = r.authors or '' %}
       {%- set first = raw_authors.split(';')[0].strip() if raw_authors else '' %}
+      {%- set is_red = first.startswith('Redacted Author ') %}
       {%- set last_name = first.split()[-1] if first.split() else '' %}
       {%- set multi = ';' in raw_authors %}
       <li class="citation-item">
         <div class="citation-byline">
-          {%- if last_name %}{{ last_name }}{%- if multi %} et al.{%- endif %}{%- endif %}
+          {%- if is_red %}Name Redacted{%- if multi %} et al.{%- endif %}{%- elif last_name %}{{ last_name }}{%- if multi %} et al.{%- endif %}{%- endif %}
           {%- if year %} ({{ year }}){%- endif %}
         </div>
         <div class="citation-title">
@@ -230,7 +234,7 @@
       {%- endif %}
       <li class="citation-item citation-item--ext">
         <div class="citation-byline">
-          {%- if r.authors %}{{ r.authors }}{%- endif %}
+          {%- if r.authors %}{{ r.authors | redact_authors }}{%- endif %}
           {%- if r.year %} ({{ r.year }}){%- endif %}
         </div>
         {%- if display %}
@@ -351,7 +355,7 @@
             <a class="article-detail-link" href="{{ r.url }}" target="_blank" rel="noopener" title="View on publisher site">&#8599;</a>
           </div>
           {% if r.authors %}
-          <div class="article-authors">{{ r.authors }}</div>
+          <div class="article-authors">{{ r.authors | redact_authors }}</div>
           {% endif %}
           {% if r.tags %}
           <div class="article-tags">

@@ -35,6 +35,9 @@ LIMITS: dict[str, str] = {
     "stats":     "20 per minute",
     "search":   "120 per minute",
     "fetch":      "6 per hour",
+    # Public author-redaction request form. Low cap so a script can't flood the
+    # admin review queue or trigger verification-email spam.
+    "redaction_request": "5 per hour",
 }
 
 
