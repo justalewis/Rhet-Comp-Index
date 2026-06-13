@@ -57,10 +57,10 @@
       {% if book.editors %}
       <p class="book-detail-people">
         <span class="book-detail-role">Edited by</span>
-        {{ book.editors }}
+        {{ book.editors | redact_authors }}
       </p>
       {% elif book.authors %}
-      <p class="book-detail-people">{{ book.authors }}</p>
+      <p class="book-detail-people">{{ book.authors | redact_authors }}</p>
       {% endif %}
 
       {% if book.isbn %}
@@ -123,7 +123,7 @@
             {% endif %}
           </div>
           {% if ch.authors %}
-          <div class="book-chapter-authors">{{ ch.authors }}</div>
+          <div class="book-chapter-authors">{{ ch.authors | redact_authors }}</div>
           {% endif %}
           {% if ch.pages %}
           <div class="book-chapter-pages">pp. {{ ch.pages }}</div>
@@ -147,7 +147,7 @@
               {% endif %}
             </div>
             {% if ch.authors %}
-            <div class="book-chapter-authors">{{ ch.authors }}</div>
+            <div class="book-chapter-authors">{{ ch.authors | redact_authors }}</div>
             {% endif %}
             <div class="book-chapter-footer">
               {% if ch.pages %}
@@ -180,7 +180,7 @@
       {% if book.book_type == 'edited-collection' %}
       {% if book.editors %}
       <p class="book-citation-text">
-        {{ book.editors }}{% if ',' not in book.editors %},{% endif %}
+        {{ book.editors | redact_authors }}{% if ',' not in book.editors %},{% endif %}
         {% if book.editors.count(';') == 0 %}ed.{% else %}eds.{% endif %}
         <em>{{ book.title }}</em>.
         {% if book.publisher %}{{ book.publisher }},{% endif %}
@@ -191,7 +191,7 @@
       {% else %}
       {% if book.authors %}
       <p class="book-citation-text">
-        {{ book.authors }}.
+        {{ book.authors | redact_authors }}.
         <em>{{ book.title }}</em>.
         {% if book.publisher %}{{ book.publisher }},{% endif %}
         {% if book.year %}{{ book.year }}.{% endif %}

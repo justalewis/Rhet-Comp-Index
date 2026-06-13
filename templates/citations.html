@@ -26,7 +26,7 @@
         {% for author in article.authors.split(';') %}
         {% set a = author.strip() %}
         {% if a %}
-        <a href="/author/{{ a | urlencode }}" class="author-link">{{ a }}</a>{% if not loop.last %}; {% endif %}
+        <a href="/author/{{ a | urlencode }}" class="author-link">{{ a | redact_authors }}</a>{% if not loop.last %}; {% endif %}
         {% endif %}
         {% endfor %}
       </div>

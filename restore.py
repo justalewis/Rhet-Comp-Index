@@ -143,6 +143,18 @@ def cmd_restore(args) -> int:
         print(f"WARNING: integrity check failed: {rows}", file=sys.stderr)
         return 1
 
+    # Re-apply author redactions to the restored file BEFORE it goes live, so a
+    # restore can never resurrect a name an author asked us to remove. Uses the
+    # restored DB's own ledger; --redaction-ledger merges an external export
+    # first (the path for restoring a backup taken before the redaction landed).
+    try:
+        applied = _apply_redactions(out_path, args.redaction_ledger)
+        print(f"Author-redaction re-applied to restored DB: {applied}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARNING: redaction re-apply failed: {exc}. "
+              f"Run `python redaction.py resweep` against the live DB after promoting.",
+              file=sys.stderr)
+
     print()
     print("Next steps to put this back into production:")
     print(f"  1. Stop Fly app:    flyctl scale count app=0 scheduler=0")
@@ -151,6 +163,30 @@ def cmd_restore(args) -> int:
     print(f"  3. Restart:         flyctl scale count app=1 scheduler=1")
     print(f"  4. Smoke check:     curl https://pinakes.xyz/health/ready")
     return 0
+
+
+def _apply_redactions(out_path: Path, extra_ledger_path: str | None) -> dict:
+    """Re-apply the author-redaction ledger to a restored DB file.
+
+    Temporarily points the db layer at *out_path* (not the live DB), ensures the
+    ledger schema exists, optionally merges an external ledger export, then runs
+    the resweep so every redacted name is swapped for its token. Idempotent."""
+    import json as _json
+    import db as _dbpkg
+    import redaction
+
+    prev_path = _dbpkg.DB_PATH
+    try:
+        _dbpkg.DB_PATH = str(out_path)
+        _dbpkg.init_db()  # ensure redaction_ledger / FTS exist on the restored file
+        if extra_ledger_path:
+            entries = _json.loads(Path(extra_ledger_path).read_text(encoding="utf-8"))
+            added = redaction.import_ledger(entries)
+            print(f"  Merged {added} external ledger entries from {extra_ledger_path}")
+        return redaction.resweep_all()
+    finally:
+        _dbpkg.DB_PATH = prev_path
+        redaction._bust_suppression_cache()
 
 
 def cmd_verify(args) -> int:
@@ -189,6 +225,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", help="Output path for restored DB (required with --latest/--date).")
     parser.add_argument("--age-key", help="Path to the age private key file (required with --latest/--date).")
     parser.add_argument("--force", action="store_true", help="Overwrite --out if it exists.")
+    parser.add_argument("--redaction-ledger", metavar="LEDGER.json",
+                        help="Optional off-box ledger export (from `python redaction.py "
+                             "export-ledger`) to re-apply when restoring a backup taken "
+                             "before a redaction landed.")
 
     args = parser.parse_args(argv)
 

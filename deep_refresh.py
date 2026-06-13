@@ -251,6 +251,15 @@ def deep_refresh(gaps_only=False):
     from db import backfill_oa_status
     oa = backfill_oa_status()
 
+    # Re-apply the author-redaction ledger last: the full-catalog walk and the
+    # RSS/scraper re-harvests above re-pull author names from upstream, so a
+    # redacted name could slip back in. resweep_all() swaps any reappeared name
+    # to its token, rebuilds FTS, and busts the Datastories cache. No-op when
+    # the ledger is empty.
+    from redaction import resweep_all
+    redaction_totals = resweep_all()
+    log.info("Redaction resweep: %s", redaction_totals)
+
     summary = {
         "audit": audit,
         "crossref_new": crossref_new,
@@ -258,6 +267,7 @@ def deep_refresh(gaps_only=False):
         "rss_new": rss_new,
         "scrape_new": scrape_new,
         "oa_tagged": oa.get("tagged", 0),
+        "redaction_resweep": redaction_totals,
         "minutes": round((time.time() - t0) / 60, 1),
     }
     log.info("Deep refresh complete in %.1f min — %d new via CrossRef, "

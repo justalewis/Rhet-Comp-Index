@@ -2,7 +2,7 @@
 
 import logging
 
-from flask import Blueprint, request, render_template, jsonify
+from flask import Blueprint, request, render_template, jsonify, abort
 
 from db import (
     get_authors_by_letter, get_all_authors_with_institutions,
@@ -59,7 +59,20 @@ def authors_list():
 
 @bp.route("/author/<path:name>")
 def author_detail(name):
-    """All articles by a specific author."""
+    """All articles by a specific author.
+
+    Redaction handling: a redacted author's page is served at their *token*
+    URL (e.g. /author/Redacted%20Author%207f3a2c) and renders under the
+    "Name Redacted by Author Request" tag. A request for the author's old
+    *real-name* URL is 404'd rather than redirected — a redirect would echo
+    the suppressed name in the Location header and the logs."""
+    from redaction import apply_suppression, is_redaction_token
+
+    is_redacted = is_redaction_token(name)
+    # Old real-name URL of a now-redacted author → 404 (don't leak the name).
+    if not is_redacted and apply_suppression(name) != name:
+        abort(404)
+
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     articles = get_author_articles(name)
@@ -72,6 +85,7 @@ def author_detail(name):
     return render_template(
         "author.html",
         author_name=name,
+        is_redacted=is_redacted,
         articles=articles,
         author_books=author_books,
         author_record=author_record,
