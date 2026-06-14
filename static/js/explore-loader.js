@@ -186,6 +186,22 @@ function showTab(name, btn) {
   openAccordionForHash(activeHash);
 }
 
+// Wire an accordion tool-card to its (hidden) tab button. The .explore-tabs
+// bar is display:none — the accordion IS the on-page navigation — so without
+// this, clicking a card did nothing and the viz only loaded via a full-page
+// nav from the sidebar. Mirrors datastories-loader.js.
+function clickAccordionCard(card) {
+  const tab = card.getAttribute('data-tab');
+  if (!tab) return;
+  const btn = document.querySelector('.explore-tab[onclick*="\'' + tab + '\'"]');
+  if (btn) btn.click();
+  // Scroll the now-visible panel into view.
+  setTimeout(() => {
+    const panel = document.getElementById('tab-' + tab);
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
 // ── Inline-handler globals ────────────────────────────────────
 window.toggleAccordion = toggleAccordion;
 window.showTab = showTab;
@@ -236,6 +252,16 @@ window.addEventListener('DOMContentLoaded', function () {
   // the first request uses the persisted filter set, not the HTML defaults.
   persistExploreFilters();
 
+  // Wire accordion tool-card clicks to their (hidden) tab button. The
+  // .explore-tabs bar is display:none, so the accordion is the real on-page
+  // nav — without this, clicking a card did nothing.
+  document.querySelectorAll('.accordion-card[data-tab]').forEach(card => {
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      clickAccordionCard(card);
+    });
+  });
+
   // Build a lookup: hash → tab name (from data-hash attributes)
   const hashMap = {};
   document.querySelectorAll('.explore-tab[data-hash]').forEach(b => {
@@ -261,4 +287,15 @@ window.addEventListener('DOMContentLoaded', function () {
   // No hash and no ?tab= — activate the default tab (first / Author Network)
   const defaultBtn = document.querySelector('.explore-tab.active');
   if (defaultBtn) defaultBtn.click();
+});
+
+// When the URL hash changes while this page is already open — e.g. clicking a
+// different Explore link in the sidebar dropdown without a full page reload —
+// activate the matching tab. showTab() updates the hash via replaceState, which
+// does NOT fire hashchange, so this only responds to real navigations (no loop).
+window.addEventListener('hashchange', function () {
+  const hash = location.hash.replace('#', '');
+  if (!hash) return;
+  const btn = document.querySelector('.explore-tab[data-hash="' + hash + '"]');
+  if (btn && !btn.classList.contains('active')) btn.click();
 });

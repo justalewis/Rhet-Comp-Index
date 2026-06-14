@@ -68,8 +68,9 @@ headers.txt
 _methodology_notes/
 _methodology_examples/
 
-# Substack drafts (local only, not part of the app) — both Word and Markdown
-Change Documentation/Substack*
+# Working documentation drafts (audits, scope notes, Substack drafts) — local
+# only, never push to the public repo.
+Change Documentation/
 
 # Secrets / credentials — NEVER commit
 Backblaze application key.docx
