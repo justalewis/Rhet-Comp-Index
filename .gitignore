@@ -67,3 +67,22 @@ headers.txt
 # Methodology overhaul scratch space (notes + raw example outputs)
 _methodology_notes/
 _methodology_examples/
+
+# Substack drafts (local only, not part of the app) — both Word and Markdown
+Change Documentation/Substack*
+
+# Secrets / credentials — NEVER commit
+Backblaze application key.docx
+*application key*.docx
+*.age.key
+
+# Throwaway agent worktrees (nested git clones — would corrupt this repo)
+.claude/worktrees/
+
+# Office temp lock files
+~$*
+
+# Separate sibling projects that live under this folder but are not part of
+# this app (each should be versioned in its own repo, not committed here).
+canvas-sandbox/
+google-forms/
