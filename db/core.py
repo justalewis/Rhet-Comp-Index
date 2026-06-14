@@ -22,9 +22,13 @@ def get_conn():
     # WAL mode lets readers and writers run concurrently — essential when
     # cite_fetcher.py is running alongside the live web server.
     conn.execute("PRAGMA journal_mode=WAL")
-    # Wait up to 10 s if another connection holds a write lock rather than
-    # immediately raising "database is locked".
-    conn.execute("PRAGMA busy_timeout=10000")
+    # Wait up to 30 s if another connection holds the write lock rather than
+    # immediately raising "database is locked". A scrape/fetch writes in many
+    # short transactions; a concurrent writer (another fetch, a redaction
+    # approval, OpenAlex enrichment) can briefly hold the lock, and the old
+    # 10 s was occasionally too short. The standalone batch scripts already use
+    # 60 s; 30 s is the web middle ground (WAL means reads never wait on this).
+    conn.execute("PRAGMA busy_timeout=30000")
     # Performance PRAGMAs — safe with WAL and single-writer architecture.
     conn.execute("PRAGMA cache_size = -20000")       # 20 MB page cache (default ~2 MB)
     conn.execute("PRAGMA mmap_size = 134217728")     # 128 MB memory-mapped I/O

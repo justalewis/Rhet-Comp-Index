@@ -260,3 +260,30 @@ def test_run_backup_endpoint_swallows_failure_and_skips_heartbeat(
     for t in started_threads:
         t.join(timeout=2.0)
     wh.assert_not_called()
+
+
+def test_fetch_rejected_when_one_is_already_running(client, monkeypatch):
+    """A second /fetch while one is in progress returns 409 and spawns no second
+    writer thread — the guard against the SQLite 'database is locked' contention
+    from overlapping fetches."""
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real")
+    import app as _app
+
+    started_threads = []
+    real_thread_init = threading.Thread.__init__
+
+    def capturing_init(self, *a, **kw):
+        real_thread_init(self, *a, **kw)
+        started_threads.append(self)
+
+    assert _app._fetch_lock.acquire(blocking=False)  # simulate a fetch in flight
+    try:
+        with patch.object(threading.Thread, "__init__", capturing_init):
+            resp = client.post("/fetch", headers={"Authorization": "Bearer real"})
+        assert resp.status_code == 409
+        assert "in progress" in resp.get_json()["status"]
+        fetch_threads = [t for t in started_threads
+                         if getattr(t, "_target", None) is _app._run_background_fetch]
+        assert fetch_threads == []  # no second background fetch thread started
+    finally:
+        _app._fetch_lock.release()

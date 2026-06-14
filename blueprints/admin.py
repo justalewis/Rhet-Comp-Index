@@ -34,6 +34,10 @@ def trigger_fetch():
     body = request.get_json(silent=True) or {}
     deep = bool(body.get("deep")) or request.args.get("deep") == "1"
     import app as _app
+    # Don't start a second fetch on top of a running one — overlapping writer
+    # threads against the same SQLite file caused "database is locked".
+    if _app._fetch_lock.locked():
+        return jsonify({"status": "fetch already in progress; ignored"}), 409
     t = threading.Thread(target=_app._run_background_fetch,
                          kwargs={"deep": deep}, daemon=True)
     t.start()

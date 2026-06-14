@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 
 # Load local .env before any module imports that might read env vars at
@@ -63,6 +64,14 @@ from web_helpers import (  # noqa: F401
 log = logging.getLogger(__name__)
 
 
+# Serializes the background fetch so overlapping triggers (the daily cron plus a
+# manual "Refresh all sources", or two clicks) don't run two writer threads
+# against the same SQLite file — that contention surfaced as "database is
+# locked" in the scraper's per-article upserts. The /fetch endpoint checks this
+# before spawning a thread; _run_background_fetch holds it for the run.
+_fetch_lock = threading.Lock()
+
+
 # ── Sidebar cache (process-wide, mutated by tests' conftest) ────────────────
 
 _sidebar_cache = None
@@ -97,7 +106,13 @@ def _run_background_fetch(deep=False):
     revalidation via deep_refresh.deep_refresh() — audits CrossRef coverage
     per journal, walks every full catalog, inserts missing articles, fills
     missing metadata on existing rows, then re-runs RSS/OAI and scrapers.
-    Takes tens of minutes; safe to re-run (insert-or-ignore + fill-only)."""
+    Takes tens of minutes; safe to re-run (insert-or-ignore + fill-only).
+
+    Guarded by _fetch_lock: if a fetch is already running, this trigger is a
+    no-op rather than a second concurrent writer thread."""
+    if not _fetch_lock.acquire(blocking=False):
+        log.warning("Background fetch skipped — another fetch is already running.")
+        return
     try:
         if deep:
             from deep_refresh import deep_refresh as run_deep
@@ -115,6 +130,8 @@ def _run_background_fetch(deep=False):
         scrape_fetch()
     except Exception as e:
         log.error("Background fetch error: %s", e)
+    finally:
+        _fetch_lock.release()
 
 
 # ── Factory ─────────────────────────────────────────────────────────────────
