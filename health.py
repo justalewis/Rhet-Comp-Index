@@ -29,13 +29,29 @@ log = logging.getLogger(__name__)
 
 START_TIME = time.time()
 
-try:
-    APP_VERSION = subprocess.check_output(
-        ["git", "rev-parse", "--short", "HEAD"],
-        stderr=subprocess.DEVNULL,
-    ).decode().strip()
-except Exception:
-    APP_VERSION = "dev"
+def _compute_app_version() -> str:
+    """A version string that changes on every deploy — used as the ?v= cache
+    buster on every static asset (see web_helpers.inject_globals / templates).
+
+    On Fly the container has no .git, so `git rev-parse` fails and we MUST NOT
+    fall back to a constant: a constant ?v= means browsers cache every JS/CSS
+    file forever and never pick up a deploy. Fly sets FLY_RELEASE_VERSION
+    (e.g. "v123") on every release, so prefer that; fall back to the git SHA
+    for local dev, then a literal only as a last resort.
+    """
+    fly = os.environ.get("FLY_RELEASE_VERSION") or os.environ.get("FLY_MACHINE_VERSION")
+    if fly:
+        return fly
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip() or "dev"
+    except Exception:
+        return "dev"
+
+
+APP_VERSION = _compute_app_version()
 
 # PRAGMA integrity_check is expensive on a large DB. Cache for 6 hours.
 _INTEGRITY_CACHE: dict = {"ts": 0.0, "result": None}
