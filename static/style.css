@@ -2385,7 +2385,9 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
 
 .nav-dropdown-item {
   display: block;
-  padding: 0.28rem 0.9rem;
+  /* Slightly deeper left pad so tool links read as nested beneath their
+     section header (which sits at 0.9rem). */
+  padding: 0.28rem 0.9rem 0.28rem 1.25rem;
   font-family: var(--font-ui);
   font-size: 0.73rem;
   color: var(--text-muted);
@@ -2404,10 +2406,30 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   font-weight: 600;
 }
 
+/* Section header inside a nav dropdown (the question-framed group labels in
+   Explore, the chapter labels in Datastories). Distinct from the tool links:
+   small uppercase label, muted, with a top rule + breathing room above so each
+   group reads as a group rather than another clickable row. */
 .nav-dropdown-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 0.2rem 0.5rem;
+  margin-top: 0.55rem;
+  padding: 0.4rem 0.9rem 0.15rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.82;
+}
+/* The first group header needs no top rule/gap (it butts against "Browse all
+   tools" / "About Datastories"). */
+.nav-dropdown > .nav-dropdown-item:first-of-type + .nav-dropdown-divider {
+  margin-top: 0.2rem;
+}
+.nav-dropdown-divider:hover {
+  background: transparent;
+  color: var(--accent);
+  opacity: 1;
 }
 
 /* ── Page & tab intros ─────────────────────────────────────────── */
@@ -3571,12 +3593,8 @@ button.comppile-ref-link {
   border-bottom: 1px solid var(--border-color, #e8e4de);
 }
 
-/* ── Feature nav dropdown divider ─────────────────────────────── */
-.nav-dropdown-divider {
-  border-top: 1px solid var(--border);
-  margin-top: 0.25rem;
-  padding-top: 0.45rem;
-}
+/* (Section-header styling for .nav-dropdown-divider now lives with the
+   .nav-dropdown rules above; the old duplicate here was overriding it.) */
 
 /* ── Misc helper classes ──────────────────────────────────────── */
 .cocitation-hint {

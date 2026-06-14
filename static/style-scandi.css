@@ -1379,8 +1379,10 @@ html.scandi .nav-dropdown-item.active {
 }
 
 html.scandi .nav-dropdown-divider {
-  background: var(--border);
-  height: 0.5px;
+  /* .nav-dropdown-divider is a text section-header, not a bare line — keep the
+     header style from style.css; just align the top rule to the scandi border. */
+  background: transparent;
+  border-top-color: var(--border);
 }
 
 /* ── Page & tab intros ───────────────────────────────────────── */
