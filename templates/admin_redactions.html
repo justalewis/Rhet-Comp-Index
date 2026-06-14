@@ -1,0 +1,216 @@
+{% extends "base-core.html" %}
+
+{% block title %}Redaction Review — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/about">About</a>
+        <a href="/redaction-request">Request form</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="about-content" style="max-width:54rem;">
+    <h1 class="about-title">Redaction Review</h1>
+    <p style="color:#6a655c;">Author opt-out requests. Verified requests await your decision; approving redacts the named author across the index (reversible). Nothing here is visible without your admin token.</p>
+
+    <!-- ── Token gate ─────────────────────────────────────────── -->
+    <div id="token-bar" style="margin:1.4rem 0;padding:1rem;border:1px solid var(--border,#e0dccf);border-radius:6px;background:#faf8f3;">
+      <label style="font-weight:600;font-size:0.9rem;">Admin token</label>
+      <div style="font-size:0.84rem;color:#6a655c;margin:0.2rem 0 0.5rem;">Your <code>PINAKES_ADMIN_TOKEN</code>. Held only in this tab (sessionStorage); cleared when you close it.</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <input type="password" id="token-input" autocomplete="off" placeholder="Bearer token"
+               style="flex:1;min-width:16rem;padding:0.5rem;font-family:var(--font-mono,monospace);">
+        <button id="connect-btn" class="fetch-btn" style="padding:0.5rem 1.2rem;">Connect</button>
+      </div>
+      <div id="token-error" style="color:#9a2a2a;font-size:0.85rem;margin-top:0.5rem;display:none;"></div>
+    </div>
+
+    <div id="toolbar" style="display:none;margin:0.6rem 0 1rem;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+      <button id="refresh-btn" class="fetch-btn" style="padding:0.4rem 1rem;">Refresh</button>
+      <button id="history-btn" class="fetch-btn" style="padding:0.4rem 1rem;">Load decided history</button>
+      <button id="lock-btn" class="fetch-btn" style="padding:0.4rem 1rem;background:#7a7268;">Forget token</button>
+      <span id="status-msg" style="color:#6a655c;font-size:0.85rem;"></span>
+    </div>
+
+    <div id="queue"></div>
+  </main>
+
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot; <a href="/about">About</a> &middot; <a href="/redaction-request">Request form</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
+  </footer>
+</div>
+
+<style>
+  .req-card { border:1px solid var(--border,#e0dccf); border-radius:6px; padding:0.9rem 1.1rem; margin-bottom:0.8rem; background:#fff; }
+  .req-name { font-size:1.05rem; font-weight:700; }
+  .req-meta { font-size:0.84rem; color:#6a655c; margin-top:0.25rem; line-height:1.6; }
+  .req-meta code { background:#f2efe8; padding:0.05rem 0.3rem; border-radius:3px; }
+  .badge { display:inline-block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:0.12rem 0.5rem; border-radius:10px; }
+  .badge-verified { background:#e3f0e3; color:#2c4a3a; }
+  .badge-pending  { background:#f6efda; color:#8a6d1a; }
+  .badge-approved { background:#e3e9f0; color:#2a3a55; }
+  .badge-denied   { background:#f0e3e3; color:#7a2a2a; }
+  .req-actions { margin-top:0.7rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .btn-approve { background:#7a2a2a; color:#fff; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .btn-deny    { background:none; color:#5a544c; border:1px solid var(--border,#cfc9bb); padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .btn-audit   { background:none; color:#6a655c; border:none; cursor:pointer; font-size:0.8rem; text-decoration:underline; }
+  .audit-box   { margin-top:0.6rem; font-size:0.8rem; color:#5a544c; border-left:2px solid var(--border,#e0dccf); padding-left:0.7rem; }
+  .section-head { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#8a8276; margin:1.2rem 0 0.6rem; }
+</style>
+
+<script>
+(function () {
+  const KEY = 'pinakes-admin-token';
+  const $ = (id) => document.getElementById(id);
+
+  const tok = () => sessionStorage.getItem(KEY) || '';
+  const headers = () => ({ 'Authorization': 'Bearer ' + tok() });
+
+  async function api(path, method) {
+    const resp = await fetch(path, { method: method || 'GET', headers: headers() });
+    if (resp.status === 401 || resp.status === 403) { gateError('Token rejected (' + resp.status + ').'); throw new Error('auth'); }
+    if (resp.status === 503) { gateError('Server has no admin token configured.'); throw new Error('503'); }
+    return resp;
+  }
+
+  function gateError(msg) {
+    sessionStorage.removeItem(KEY);
+    $('token-bar').style.display = 'block';
+    $('toolbar').style.display = 'none';
+    const e = $('token-error'); e.textContent = msg; e.style.display = 'block';
+  }
+
+  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function fmt(ts) { return ts ? esc(ts) + ' UTC' : '—'; }
+  function variants(v) { if (!v) return ''; try { const a = JSON.parse(v); return Array.isArray(a) && a.length ? ' · variants: ' + a.map(esc).join(', ') : ''; } catch (e) { return ''; } }
+
+  function card(r) {
+    const st = r.verification_status;
+    const actions = (st === 'verified')
+      ? `<div class="req-actions">
+           <button class="btn-approve" data-id="${r.id}" data-act="approve" data-name="${esc(r.author_name_claimed)}">Approve &amp; redact</button>
+           <button class="btn-deny" data-id="${r.id}" data-act="deny">Deny</button>
+           <button class="btn-audit" data-audit="${r.id}">audit trail</button>
+         </div>`
+      : `<div class="req-actions"><button class="btn-audit" data-audit="${r.id}">audit trail</button></div>`;
+    return `<div class="req-card" id="card-${r.id}">
+      <div><span class="req-name">${esc(r.author_name_claimed)}</span>
+        <span class="badge badge-${st}">${esc(st)}</span></div>
+      <div class="req-meta">
+        Request #${r.id} · via ${esc(r.verification_method)}${variants(r.name_variants)}<br>
+        email: <code>${esc(r.requester_email) || '—'}</code>${r.requester_orcid ? ' · ORCID: <code>' + esc(r.requester_orcid) + '</code>' : ''}<br>
+        created ${fmt(r.created_at)} · verified ${fmt(r.verified_at)}${r.decided_at ? ' · decided ' + fmt(r.decided_at) + ' by ' + esc(r.decided_by) : ''}
+      </div>
+      ${actions}
+      <div class="audit-box" id="audit-${r.id}" style="display:none;"></div>
+    </div>`;
+  }
+
+  function section(title, rows) {
+    if (!rows.length) return '';
+    return `<div class="section-head">${title} (${rows.length})</div>` + rows.map(card).join('');
+  }
+
+  async function load() {
+    setStatus('Loading…');
+    const resp = await api('/api/admin/redaction-requests');
+    const data = await resp.json();
+    const reqs = data.requests || [];
+    const verified = reqs.filter(r => r.verification_status === 'verified');
+    const pending  = reqs.filter(r => r.verification_status === 'pending');
+    let html = '';
+    if (!reqs.length) html = '<p style="color:#6a655c;">No open requests.</p>';
+    html += section('Awaiting your review', verified);
+    html += section('Pending email verification', pending);
+    $('queue').innerHTML = html;
+    $('token-bar').style.display = 'none';
+    $('toolbar').style.display = 'flex';
+    wireCards();
+    setStatus(reqs.length + ' open request' + (reqs.length === 1 ? '' : 's') + '. ' + new Date().toLocaleTimeString());
+  }
+
+  async function loadHistory() {
+    setStatus('Loading history…');
+    const [a, d] = await Promise.all([
+      api('/api/admin/redaction-requests?status=approved').then(r => r.json()),
+      api('/api/admin/redaction-requests?status=denied').then(r => r.json()),
+    ]);
+    const decided = [...(a.requests || []), ...(d.requests || [])]
+      .sort((x, y) => (y.decided_at || '').localeCompare(x.decided_at || ''));
+    let block = $('history-block');
+    if (!block) { block = document.createElement('div'); block.id = 'history-block'; $('queue').appendChild(block); }
+    block.innerHTML = decided.length ? section('Decided', decided) : '<div class="section-head">Decided (0)</div><p style="color:#6a655c;">None yet.</p>';
+    wireCards();
+    setStatus('History loaded.');
+  }
+
+  function wireCards() {
+    document.querySelectorAll('.btn-approve, .btn-deny').forEach(b => {
+      b.onclick = () => decide(b.getAttribute('data-id'), b.getAttribute('data-act'), b.getAttribute('data-name'));
+    });
+    document.querySelectorAll('.btn-audit').forEach(b => {
+      b.onclick = () => toggleAudit(b.getAttribute('data-audit'));
+    });
+  }
+
+  async function decide(id, act, name) {
+    if (act === 'approve') {
+      if (!confirm('Redact "' + name + '" across the index?\n\nThe scholarship stays and keeps counting; the name is replaced everywhere with "Name Redacted by Author Request". This is reversible via the CLI.\n\nProceed?')) return;
+    }
+    setStatus((act === 'approve' ? 'Approving' : 'Denying') + ' #' + id + '…');
+    try {
+      const resp = await api('/api/admin/redaction-request/' + id + '/' + act, 'POST');
+      const data = await resp.json();
+      if (!resp.ok) { setStatus('Error: ' + (data.error || resp.status)); return; }
+      await load();
+    } catch (e) { /* gateError already shown */ }
+  }
+
+  async function toggleAudit(id) {
+    const box = $('audit-' + id);
+    if (box.style.display === 'block') { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.textContent = 'Loading…';
+    try {
+      const resp = await api('/api/admin/redaction-request/' + id + '/audit');
+      const data = await resp.json();
+      const rows = data.audit || [];
+      box.innerHTML = rows.length
+        ? rows.map(a => `<div><strong>${esc(a.event)}</strong> — ${fmt(a.at)}${a.actor ? ' · ' + esc(a.actor) : ''}${a.detail ? '<br><span style="color:#8a8276;">' + esc(a.detail) + '</span>' : ''}</div>`).join('')
+        : 'No audit rows.';
+    } catch (e) { box.textContent = 'Could not load audit.'; }
+  }
+
+  function setStatus(m) { $('status-msg').textContent = m; }
+
+  function connect() {
+    const v = $('token-input').value.trim();
+    if (!v) return;
+    sessionStorage.setItem(KEY, v);
+    $('token-input').value = '';
+    $('token-error').style.display = 'none';
+    load().catch(() => {});
+  }
+
+  $('connect-btn').onclick = connect;
+  $('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+  $('refresh-btn').onclick = () => load().catch(() => {});
+  $('history-btn').onclick = () => loadHistory().catch(() => {});
+  $('lock-btn').onclick = () => { sessionStorage.removeItem(KEY); location.reload(); };
+
+  // Auto-load if a token is already in this tab's session.
+  if (tok()) load().catch(() => {});
+})();
+</script>
+{% endblock %}
