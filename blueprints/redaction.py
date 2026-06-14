@@ -211,3 +211,25 @@ def admin_deny(rid):
     redaction.decide_request(rid, "denied", actor=actor)
     log.info("Redaction request #%s DENIED by %s", rid, actor)
     return jsonify({"status": "denied", "request_id": rid})
+
+
+@bp.route("/api/admin/redaction-request/<int:rid>/audit", methods=["GET"])
+@require_admin_token
+def admin_request_audit(rid):
+    """The append-only audit trail for one request (created / verified /
+    approved / denied), shown in the admin review page."""
+    if not redaction.get_request(rid):
+        abort(404)
+    return jsonify({"audit": redaction.get_audit(rid)})
+
+
+@bp.route("/admin/redactions", methods=["GET"])
+def admin_redactions_page():
+    """The admin review page for redaction requests.
+
+    The page shell is public; it shows nothing until the admin pastes their
+    PINAKES_ADMIN_TOKEN, which is held in sessionStorage and sent as a Bearer
+    header on every fetch to the token-gated /api/admin/* endpoints above. No
+    requester data is ever embedded in the HTML — it all loads client-side
+    through the authenticated API."""
+    return render_template("admin_redactions.html")

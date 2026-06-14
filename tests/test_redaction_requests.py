@@ -131,3 +131,28 @@ def test_request_form_renders(client):
     body = resp.get_data(as_text=True)
     assert "Request Name Removal" in body
     assert 'name="author_name"' in body
+
+
+def test_admin_review_page_renders_public_shell(client):
+    # The page shell is public; data loads client-side via the token-gated API.
+    resp = client.get("/admin/redactions")
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert "Redaction Review" in body
+    assert "pinakes-admin-token" in body  # sessionStorage key wired
+    # No requester data is embedded server-side.
+    assert "requester_email" not in body or "data.requests" in body
+
+
+def test_audit_endpoint_requires_token_and_returns_trail(client, admin_env):
+    rid, token = redaction.create_request(JANE, email="a@b.edu")
+    redaction.verify_request_by_token(token)
+    # Gated
+    assert client.get(f"/api/admin/redaction-request/{rid}/audit").status_code in (401, 403, 503)
+    # With token → created + verified events
+    resp = client.get(f"/api/admin/redaction-request/{rid}/audit", headers=admin_env)
+    assert resp.status_code == 200
+    events = [a["event"] for a in resp.get_json()["audit"]]
+    assert events[:2] == ["created", "verified"]
+    # Unknown request → 404
+    assert client.get("/api/admin/redaction-request/99999/audit", headers=admin_env).status_code == 404

@@ -147,7 +147,9 @@ def test_route_count_matches_expected(client):
     #        GET /redaction-request/orcid/callback (ORCID OAuth),
     #        GET /api/admin/redaction-requests,
     #        POST /api/admin/redaction-request/<id>/approve + /deny
-    assert len(rules) == 87, (
-        f"Expected 87 routes, got {len(rules)}. "
+    #  +  2  redaction admin review page: GET /admin/redactions,
+    #        GET /api/admin/redaction-request/<id>/audit
+    assert len(rules) == 89, (
+        f"Expected 89 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
