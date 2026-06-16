@@ -201,8 +201,10 @@ Rhet-Comp-Index/
 |---|---|
 | [Architecture](docs/architecture.md) | How Pinakes is built — system overview, data flow, ingestion, deployment |
 | [Methodology](docs/methodology.md) | What each Explore tool measures, how it's computed, and the scholarly references |
+| [Author redaction](docs/author-redaction.md) | The author opt-out ("right to be forgotten") feature — token model, data model, suppression spine, request flow |
 | [Journal coverage](docs/journal-coverage.md) | Every venue indexed by Pinakes with its ingestion path |
 | [Disaster recovery runbook](docs/runbooks/disaster-recovery.md) | Restoring from off-machine backups |
+| [Author redaction runbook](docs/runbooks/author-redaction.md) | Operating the opt-out feature — config, reviewing requests, undo, restore |
 | [Refactor notes](docs/refactor-notes/) | Audit trail for the structural improvements (sessions A1 through G1) |
 
 ## Contributing

@@ -37,9 +37,9 @@ Ingestion writes through `db.articles.upsert_article`, which is idempotent on UR
 
 ## Storage layer
 
-A single SQLite file at `/data/articles.db` on a 3 GB Fly volume. WAL mode is on; busy_timeout is 10 s; the cache is set to 20 MB and `mmap_size` to 128 MB. Configuration is in [`db/core.py:get_conn`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/db/core.py#L16) — read it before changing anything; the PRAGMAs are load-bearing.
+A single SQLite file at `/data/articles.db` on a 3 GB Fly volume. WAL mode is on; busy_timeout is 30 s (raised from 10 s after a scrape lost a write race to a concurrent writer); the cache is set to 20 MB and `mmap_size` to 128 MB. Configuration is in [`db/core.py:get_conn`](../db/core.py) — read it before changing anything; the PRAGMAs are load-bearing. The single-writer invariant is also enforced operationally: the background fetch holds a process-level lock (`app._fetch_lock`), so an overlapping `/fetch` trigger is a no-op rather than a second writer thread.
 
-The schema has nine tables across eight migration versions, all auto-applied at app startup by `db.core.init_db`:
+The schema has thirteen tables across twelve migration versions, all auto-applied at app startup by `db.core.init_db`:
 
 | Table | Purpose |
 |---|---|
@@ -53,6 +53,10 @@ The schema has nine tables across eight migration versions, all auto-applied at 
 | `institutions` | OpenAlex institution records |
 | `article_author_institutions` | Per-article author institution affiliations |
 | `openalex_fetch_log` | Per-article OpenAlex fetch status, for resumable enrichment |
+| `redaction_ledger` | One row per redacted author: token, retained name, variants — the locked table behind the opt-out feature ([author-redaction.md](author-redaction.md)) |
+| `redaction_meta` | Key/value store; holds the per-install redaction salt |
+| `redaction_requests` | Author opt-out requests pending verification + review |
+| `redaction_audit` | Append-only audit trail of every request's lifecycle |
 
 The choice to stay on SQLite rather than Postgres is deliberate. The corpus is read-heavy with one writer; SQLite in WAL mode handles this cleanly. The full file is under 200 MB; a relational service would add operational surface (a second container, network round-trips, retry logic) for no measurable benefit at this scale. If the corpus ever grows past ~ 5 GB or horizontal scaling becomes necessary, the migration target is Postgres on Fly's managed offering — but Pinakes is nowhere near that.
 
@@ -86,9 +90,15 @@ The vocabulary's scope notes are being refined against [CompPile](http://comppil
 
 ## Web app
 
-Flask + Jinja2 templates + D3 (loaded from CDN) for the visualisations. The application factory [`app.py:create_app`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/app.py) wires together eight Blueprints (`admin`, `main`, `articles`, `authors`, `citations`, `stats`, `books`, `institutions`) and registers shared middleware: gzip compression, security headers (X-Frame-Options DENY, HSTS, CSP), the [Flask-Limiter](https://flask-limiter.readthedocs.io/) tiered rate limiter (60/min default, 20/min on graph computations, 120/min on search), and the [admin-token decorator](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/auth.py) on mutating endpoints.
+Flask + Jinja2 templates + D3 (loaded from CDN) for the visualisations. The application factory [`app.py:create_app`](../app.py) wires together nine Blueprints (`admin`, `main`, `articles`, `authors`, `citations`, `stats`, `books`, `institutions`, `redaction`) and registers shared middleware (including `ProxyFix`, so `url_for(_external=True)` builds `https://` URLs behind Fly's TLS-terminating proxy): gzip compression, security headers (X-Frame-Options DENY, HSTS, CSP), the [Flask-Limiter](https://flask-limiter.readthedocs.io/) tiered rate limiter (60/min default, 20/min on graph computations, 120/min on search), and the [admin-token decorator](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/auth.py) on mutating endpoints.
 
 Per-visualization JavaScript lives in [`static/js/viz/`](../static/js/viz/) — eighteen ES modules loaded eagerly at page load by [`static/js/explore-loader.js`](../static/js/explore-loader.js). Eager rather than lazy: inline `onclick=` handlers in the templates would otherwise race against module loads. Browser baseline: Chrome 91+, Firefox 89+, Safari 15+.
+
+Static assets are cache-busted with `?v={{ version }}`, where `version` is `APP_VERSION` — Fly's per-release `FLY_RELEASE_VERSION`/`FLY_MACHINE_VERSION` in production, the git short SHA locally. The container has no `.git`, so deriving the version from the env (not `git rev-parse`) is what makes a deploy actually invalidate cached JS/CSS in browsers.
+
+## Author redaction
+
+An author opt-out ("right to be forgotten") feature: a verified author can have their name removed from the index while the scholarship — and every metric it feeds — stays intact. Because author identity in Pinakes *is* the name string (no integer id), the name is replaced everywhere it's stored by a stable per-author token that renders as "Name Redacted by Author Request"; the token becomes the new identity key, so metrics are preserved by construction. Suppression is re-applied on every ingest (two choke-points in `upsert_article`/`upsert_book` plus a post-fetch `resweep_all`) so an upstream re-fetch can't resurrect the name. Requests flow through a public form → email or ORCID verification → an admin-gated review page (`/admin/redactions`) → an audited approve/deny. The full design — token model, data model, the resurrection problem, render/durability/reversibility, and the request flow — is in [author-redaction.md](author-redaction.md); operations are in [runbooks/author-redaction.md](runbooks/author-redaction.md).
 
 ## Deployment
 
@@ -131,7 +141,7 @@ Pytest harness with three rings, all pure-offline (HTTP stubbed via `responses` 
 2. **Route smoke tests** for every URL in `app.url_map`, including the JSON shape contract for `/api/*`, the BibTeX/RIS grammar for `/export`, and the security-header presence on every response.
 3. **Ingestion parser tests** with captured fixture payloads for CrossRef, RSS, and the scraper, exercising both happy paths and malformed inputs.
 
-CI runs the full suite (currently 351 tests in around 8 seconds) on every push and pull request. The deploy workflow is gated on test passage. Test infrastructure is documented in [`refactor-notes/01-test-harness.md`](refactor-notes/01-test-harness.md).
+CI runs the full suite (over 400 tests, in a few seconds) on every push and pull request. The deploy workflow is gated on test passage. Test infrastructure is documented in [`refactor-notes/01-test-harness.md`](refactor-notes/01-test-harness.md).
 
 ## What we explicitly do not do
 
