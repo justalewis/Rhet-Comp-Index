@@ -41,6 +41,35 @@ def _state_serializer():
     return URLSafeTimedSerializer(current_app.secret_key, salt="redaction-orcid")
 
 
+def _notify_admin_of_verified(rid):
+    """Email the admin that a verified request is awaiting review. Fired when a
+    request becomes actionable (identity verified), NOT on every raw submission
+    — that keeps unverified/abandoned/spam attempts out of the inbox.
+
+    Recipient is REDACTION_NOTIFY_EMAIL, falling back to SMTP_REPLY_TO (which is
+    the operator's own address). Best-effort; send_email never raises."""
+    import os
+    notify = os.environ.get("REDACTION_NOTIFY_EMAIL") or os.environ.get("SMTP_REPLY_TO")
+    if not notify:
+        return
+    req = redaction.get_request(rid)
+    if not req:
+        return
+    try:
+        review_url = url_for("redaction.admin_redactions_page", _external=True)
+    except Exception:  # noqa: BLE001 — url building shouldn't block the notice
+        review_url = "https://pinakes.xyz/admin/redactions"
+    send_email(
+        notify,
+        "Pinakes: a name-removal request is awaiting your review",
+        "Someone has verified their identity for an author opt-out request, "
+        "and it's waiting for your decision.\n\n"
+        f"Claimed name: {req['author_name_claimed']}\n"
+        f"Verified via:  {req['verification_method']}\n\n"
+        f"Review and approve/deny here:\n  {review_url}\n",
+    )
+
+
 # ── Public ────────────────────────────────────────────────────────────────────
 
 @bp.route("/redaction-request", methods=["GET"])
@@ -151,6 +180,7 @@ def orcid_callback():
         rid, (result or {}).get("orcid"), (result or {}).get("name"))
     log.info("Redaction request #%s ORCID-verified (name_match=%s, ip=%s)",
              rid, matches, _client_ip())
+    _notify_admin_of_verified(rid)
     return render_template("redaction_request.html", stage="verified")
 
 
@@ -161,6 +191,7 @@ def verify(token):
     if rid is None:
         return render_template("redaction_request.html", stage="invalid"), 404
     log.info("Redaction request #%s email-verified (ip=%s)", rid, _client_ip())
+    _notify_admin_of_verified(rid)
     return render_template("redaction_request.html", stage="verified")
 
 

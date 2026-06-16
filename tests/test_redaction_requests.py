@@ -79,6 +79,31 @@ def test_verify_link_marks_verified(client, captured_emails):
     assert "verified" in resp.get_data(as_text=True).lower()
 
 
+def test_admin_notified_when_request_verified(client, captured_emails, monkeypatch):
+    """On verification, the admin gets an email pointing to the review page —
+    so a real request doesn't sit unnoticed."""
+    monkeypatch.setenv("REDACTION_NOTIFY_EMAIL", "admin@pinakes.xyz")
+    client.post("/redaction-request", data={"author_name": JANE, "email": "a@b.edu"})
+    assert len(captured_emails) == 1  # verification link to the requester
+    token = re.search(r"/redaction-request/verify/(\S+)", captured_emails[0][2]).group(1)
+
+    client.get("/redaction-request/verify/" + token)
+    assert len(captured_emails) == 2  # + admin notification
+    to, subject, adminbody = captured_emails[1]
+    assert to == "admin@pinakes.xyz"
+    assert "review" in subject.lower()
+    assert JANE in adminbody and "/admin/redactions" in adminbody
+
+
+def test_no_admin_notification_when_unconfigured(client, captured_emails, monkeypatch):
+    monkeypatch.delenv("REDACTION_NOTIFY_EMAIL", raising=False)
+    monkeypatch.delenv("SMTP_REPLY_TO", raising=False)
+    client.post("/redaction-request", data={"author_name": JANE, "email": "a@b.edu"})
+    token = re.search(r"/redaction-request/verify/(\S+)", captured_emails[0][2]).group(1)
+    client.get("/redaction-request/verify/" + token)
+    assert len(captured_emails) == 1  # only the requester email; admin notify is a no-op
+
+
 def test_admin_queue_and_approve_redacts(client, admin_env, captured_emails):
     # submit + verify
     client.post("/redaction-request", data={"author_name": JANE, "email": "a@b.edu"})

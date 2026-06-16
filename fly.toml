@@ -22,6 +22,9 @@
 #                          pinakes.xyz subdomain.
 #   SMTP_REPLY_TO        — optional Reply-To (e.g. justalewis1@gmail.com) so
 #                          replies to a no-reply sender still reach you.
+#   REDACTION_NOTIFY_EMAIL — where to email the operator when a redaction
+#                          request is verified and awaiting review. Falls back to
+#                          SMTP_REPLY_TO when unset; no notice if neither is set.
 #   ORCID_CLIENT_ID, ORCID_CLIENT_SECRET
 #                        — ORCID OAuth verification (orcid_oauth.py). When unset,
 #                          the "Verify with ORCID" button is hidden. Register the
