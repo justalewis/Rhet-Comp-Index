@@ -1,6 +1,6 @@
 # Author redaction runbook
 
-How to run the author opt-out ("Name Redacted by Author Request") feature: configure it, review requests, redact by hand, and handle the durability edge cases (restore, backups).
+How to run the author opt-out ("Name Redacted by Author Request") feature: configure it, review requests, redact by hand, and handle the durability edge cases (restore, backups). For how it works under the hood — the token model, the suppression spine, the data model — see the design doc, [author-redaction.md](../author-redaction.md).
 
 ## What it does, in one paragraph
 
@@ -12,17 +12,25 @@ A redacted author's name is replaced everywhere it is used as identity — `arti
 |---|---|---|
 | `REDACTION_SALT` | Salts the token hash so the public token can't be brute-forced to the name. If unset, a random salt is generated once and stored in `redaction_meta`. Set it explicitly in production so it's stable and known. | Recommended |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Send the email-verification link. If unset, the link is logged instead of sent (fine for dev; not for prod). | For the email path |
-| `ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET` | ORCID OAuth verification (the "Verify with ORCID" button appears only when both are set). `ORCID_ENV=sandbox` to test against sandbox.orcid.org. | For the ORCID path |
+| `SMTP_REPLY_TO` | Reply-To on outgoing mail; also the fallback recipient for the "request awaiting review" notification. | Recommended |
+| `REDACTION_NOTIFY_EMAIL` | Where to email you when a request is verified and waiting. Falls back to `SMTP_REPLY_TO`; no notice if neither is set. | Optional |
+| `ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET` | ORCID OAuth verification (the "Verify with ORCID" button appears only when both are set). `ORCID_ENV=sandbox` to test against sandbox.orcid.org. Register the redirect URI `https://pinakes.xyz/redaction-request/orcid/callback` in the ORCID developer app. | For the ORCID path |
 
-`PINAKES_ADMIN_TOKEN` (already set for the cron endpoints) gates the review queue.
+`PINAKES_ADMIN_TOKEN` (already set for the cron endpoints) gates the review queue and the admin page. `PINAKES_SECRET_KEY` (required in prod regardless) signs the ORCID `state`.
+
+**SMTP host:** any SMTP provider works. A transactional provider sending from a verified `pinakes.xyz` subdomain (e.g. Resend) gives the best deliverability; a Gmail account with an App Password (`smtp.gmail.com:587`, `SMTP_FROM` = the Gmail address) is the zero-DNS fallback.
 
 ## The request flow
 
-1. Author submits `/redaction-request` (linked from `/about` and the About-page footer).
+1. Author submits `/redaction-request` (linked from `/about` and the nav's About submenu).
 2. They verify identity — ORCID OAuth, or an emailed one-time link.
-3. Verified requests land in the review queue. **You approve by hand** before anything changes.
+3. On verification you get an email (to `REDACTION_NOTIFY_EMAIL`, or your `SMTP_REPLY_TO`) with the claimed name and a link to the review page. The request sits in the queue; **you approve by hand** before anything changes.
 
-### Review and decide (admin API)
+### Review and decide — the admin page (primary)
+
+Go to **`https://pinakes.xyz/admin/redactions`**, paste your `PINAKES_ADMIN_TOKEN`, and click **Connect**. Verified requests appear under "Awaiting your review" with **Approve & redact** (confirms first) / **Deny** / an **audit trail** toggle; "Load decided history" shows past decisions. The token is held only in that browser tab (`sessionStorage`) and never embedded in the page — all data loads through the token-gated API below.
+
+### Review and decide — the API (equivalent)
 
 ```bash
 TOKEN=...   # PINAKES_ADMIN_TOKEN
@@ -30,6 +38,10 @@ TOKEN=...   # PINAKES_ADMIN_TOKEN
 # List pending + verified requests (includes requester email/ORCID — admin only)
 curl -s -H "Authorization: Bearer $TOKEN" \
   https://pinakes.xyz/api/admin/redaction-requests | jq
+
+# Audit trail for one request (created / verified / approved / denied)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  https://pinakes.xyz/api/admin/redaction-request/42/audit | jq
 
 # Approve request #42 → writes the audit row, then redacts the author
 curl -s -X POST -H "Authorization: Bearer $TOKEN" \
