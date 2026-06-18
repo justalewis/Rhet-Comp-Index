@@ -61,6 +61,7 @@ JOURNAL_GROUPS = {
     "The WAC Journal":                                          "OTHER",
     "Journal of Writing Analytics":                             "OTHER",
     "Prompt: A Journal of Academic Writing Assignments":        "OTHER",
+    "Open Words: Access and English Studies":                   "OTHER",
     "Community Literacy Journal":                               "OTHER",
     "Reflections: A Journal of Community-Engaged Writing and Rhetoric": "OTHER",
     "Journal of Multimodal Rhetorics":                          "OTHER",

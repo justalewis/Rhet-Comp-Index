@@ -35,6 +35,7 @@ CROSSREF_JOURNALS = [
     {"name": "Prompt: A Journal of Academic Writing Assignments", "issn": "2476-0943"},  # WAC Clearinghouse — 127 DOIs, 2016–present
     {"name": "Peitho",                                         "issn": "2169-0774"},  # Coalition of Feminist Scholars / WAC Clearinghouse — 114 DOIs
     {"name": "Double Helix",                                   "issn": "2372-7497"},  # WAC Clearinghouse — 112 DOIs, 2012–2024
+    {"name": "Open Words: Access and English Studies",         "issn": "2690-392X"},  # WAC Clearinghouse — 136 DOIs, 2006–2023 (online ISSN; references backfilled via CrossRef 2026-06)
     # Other CrossRef-indexed journals
     {"name": "Advances in the History of Rhetoric",            "issn": "1936-0835"},  # Penn State UP — 312 DOIs, 1998–2019
     {"name": "Assessing Writing",                              "issn": "1075-2935"},  # Elsevier — 1000 DOIs, 1994–present
@@ -266,6 +267,7 @@ GOLD_OA_JOURNALS = {
     "Prompt: A Journal of Academic Writing Assignments",
     "Peitho",
     "Double Helix",
+    "Open Words: Access and English Studies",
     # Independent OA journals
     "Kairos: A Journal of Rhetoric, Technology, and Pedagogy",
     "Enculturation",
@@ -325,6 +327,7 @@ JOURNAL_GROUPS = [
         "Writing on the Edge",
         "Literacy in Composition Studies",
         "Basic Writing e-Journal",
+        "Open Words: Access and English Studies",
         "Journal of Response to Writing",
         "WPA: Writing Program Administration",
     ]),

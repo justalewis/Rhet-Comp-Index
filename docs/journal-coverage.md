@@ -34,6 +34,7 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 | Prompt: A Journal of Academic Writing Assignments | 2476-0943 | ✓ |  |
 | Peitho | 2169-0774 | ✓ |  |
 | Double Helix | 2372-7497 | ✓ |  |
+| Open Words: Access and English Studies | 2690-392X | ✓ | WAC Clearinghouse — 136 DOIs, 2006–2023; references backfilled via CrossRef 2026-06 |
 | Advances in the History of Rhetoric | 1936-0835 |  |  |
 | Assessing Writing | 1075-2935 |  |  |
 | Rhetoric of Health and Medicine | 2573-5063 | ✓ |  |
@@ -78,6 +79,6 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 
 ## Summary
 
-**45 venues** in total — 28 via CrossRef, 4 via RSS/OAI/WP, 11 via custom scraper, 1 via book-publisher scraper, 1 manually indexed. 25 are gold OA.
+**46 venues** in total — 29 via CrossRef, 4 via RSS/OAI/WP, 11 via custom scraper, 1 via book-publisher scraper, 1 manually indexed. 26 are gold OA.
 
 Live article counts per journal: see https://pinakes.xyz/coverage. For the SQL behind those numbers, see [`coverage_report.py`](../coverage_report.py).
