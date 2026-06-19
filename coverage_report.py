@@ -26,11 +26,15 @@ Outputs:
 
 import csv
 import json
+import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
 
-DB_PATH = Path(__file__).with_name("articles.db")
+# Honor DB_PATH so this can run against the prod volume DB (/data/articles.db),
+# matching the convention used by the db module and the other maintenance
+# scripts. Falls back to the local dev copy next to this file.
+DB_PATH = Path(os.environ.get("DB_PATH") or Path(__file__).with_name("articles.db"))
 OUT_DIR = Path(__file__).parent / "data_exports" / "coverage"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 

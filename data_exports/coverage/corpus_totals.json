@@ -1,13 +1,13 @@
 {
-  "articles_total": 53160,
-  "journals_total": 53,
+  "articles_total": 54068,
+  "journals_total": 55,
   "books_total": 3495,
-  "citations_total": 202929,
-  "citations_resolved_total": 44885,
-  "citations_resolved_pct": 22.1,
-  "articles_openalex_enriched": 46061,
-  "articles_openalex_enriched_pct": 86.6,
-  "articles_refs_attempted": 46566,
-  "articles_with_outbound": 12297,
-  "articles_with_inbound": 10399
+  "citations_total": 510552,
+  "citations_resolved_total": 54425,
+  "citations_resolved_pct": 10.7,
+  "articles_openalex_enriched": 46857,
+  "articles_openalex_enriched_pct": 86.7,
+  "articles_refs_attempted": 47497,
+  "articles_with_outbound": 14712,
+  "articles_with_inbound": 12157
 }
