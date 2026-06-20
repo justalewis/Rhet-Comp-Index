@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import logging
+from collections import Counter, defaultdict
 from itertools import combinations
 
 from .core import get_conn
@@ -160,10 +161,44 @@ def get_article_by_id(article_id):
         return dict(row) if row else None
 
 
+# Inverted tag index: tag -> list of article ids. The "related articles"
+# query used to score every one of the ~54k rows with one `tags LIKE
+# '%|tag|%'` per source tag (no index possible with a leading wildcard),
+# evaluated twice per row — ~640ms locally, 2-3.5s on the prod single CPU,
+# and it dominated the article-page load. Tags come from a fixed 61-term
+# vocabulary, so an in-memory inverted index is tiny (61 keys) and turns the
+# query into a dict lookup. Built once per process and rebuilt when the
+# corpus changes (fingerprint = max id + row count, same idea as the
+# datastories cache). The first article hit after a deploy/fetch pays the
+# one-time scan; every hit after is sub-millisecond.
+_TAG_INDEX = None          # dict[str, list[int]]
+_TAG_INDEX_FP = None       # (max_id, row_count)
+
+
+def _tag_index(conn):
+    global _TAG_INDEX, _TAG_INDEX_FP
+    fp = tuple(conn.execute(
+        "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM articles").fetchone())
+    if _TAG_INDEX is not None and _TAG_INDEX_FP == fp:
+        return _TAG_INDEX
+    idx = defaultdict(list)
+    for r in conn.execute(
+        "SELECT id, tags FROM articles WHERE tags IS NOT NULL AND tags != ''"
+    ):
+        for t in r["tags"].strip("|").split("|"):
+            t = t.strip()
+            if t:
+                idx[t].append(r["id"])
+    _TAG_INDEX = idx
+    _TAG_INDEX_FP = fp
+    return idx
+
+
 def get_related_articles(article_id, limit=5):
     """
     Find articles sharing the most tags with the given article.
-    Returns up to `limit` articles sorted by shared-tag count desc.
+    Returns up to `limit` articles sorted by shared-tag count desc, then by
+    publication date desc.
     """
     with get_conn() as conn:
         src = conn.execute(
@@ -175,23 +210,29 @@ def get_related_articles(article_id, limit=5):
         if not tags:
             return []
 
-        # Build a score expression using parameterized CASE for each tag
-        case_parts = []
-        case_params = []
+        idx = _tag_index(conn)
+        scores = Counter()
         for t in tags:
-            case_parts.append("CASE WHEN tags LIKE ? THEN 1 ELSE 0 END")
-            case_params.append(f"%|{t}|%")
-        cases = " + ".join(case_parts)
-        # case_params appear twice: once in SELECT, once in WHERE
-        rows = conn.execute(f"""
-            SELECT *, ({cases}) AS shared_count
-            FROM articles
-            WHERE id != ? AND tags IS NOT NULL AND tags != ''
-              AND ({cases}) > 0
-            ORDER BY shared_count DESC, pub_date DESC
-            LIMIT ?
-        """, case_params + [article_id] + case_params + [limit]).fetchall()
-        return [dict(r) for r in rows]
+            for aid in idx.get(t, ()):
+                if aid != article_id:
+                    scores[aid] += 1
+        if not scores:
+            return []
+
+        # Over-fetch the highest-scoring candidates, then break ties by
+        # pub_date (fetched with the rows) — generous enough that the true
+        # top `limit` by (shared_count, pub_date) is always present.
+        top_ids = [aid for aid, _ in scores.most_common(max(limit * 20, 100))]
+        placeholders = ",".join("?" * len(top_ids))
+        rows = conn.execute(
+            f"SELECT * FROM articles WHERE id IN ({placeholders})", top_ids
+        ).fetchall()
+        ranked = sorted(
+            (dict(r) for r in rows),
+            key=lambda r: (scores[r["id"]], r["pub_date"] or ""),
+            reverse=True,
+        )
+        return ranked[:limit]
 
 
 def get_timeline_data():
