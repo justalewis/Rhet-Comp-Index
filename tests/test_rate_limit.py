@@ -39,6 +39,24 @@ def test_client_ip_key_fly_header_overrides_xff(app):
         assert client_ip_key() == "1.2.3.4"
 
 
+def test_client_ip_key_trusts_cf_when_peer_is_cloudflare(app):
+    # Peer (Fly-Client-IP) is a Cloudflare edge IP → trust CF-Connecting-IP
+    # as the real visitor.
+    headers = {"Fly-Client-IP": "162.158.0.1",
+               "CF-Connecting-IP": "203.0.113.55"}
+    with app.test_request_context(headers=headers):
+        assert client_ip_key() == "203.0.113.55"
+
+
+def test_client_ip_key_ignores_spoofed_cf_from_non_cloudflare_peer(app):
+    # Peer is NOT Cloudflare → CF-Connecting-IP is untrusted (spoof attempt);
+    # fall back to the actual peer so the block / rate limit can't be evaded.
+    headers = {"Fly-Client-IP": "47.79.205.10",
+               "CF-Connecting-IP": "8.8.8.8"}
+    with app.test_request_context(headers=headers):
+        assert client_ip_key() == "47.79.205.10"
+
+
 def test_client_ip_key_falls_back_to_remote_addr(app):
     with app.test_request_context(environ_base={"REMOTE_ADDR": "192.0.2.99"}):
         assert client_ip_key() == "192.0.2.99"

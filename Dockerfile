@@ -57,8 +57,10 @@ EXPOSE 8080
 # causing the single worker to deadlock on startup. Without --preload the worker
 # imports the app after forking, which is safe.
 # --access-logfile -  : emit one access line per request to stdout (Fly logs).
-# --access-logformat   : include the real client IP (Fly-Client-IP header, the
-#   same one rate_limit.py keys on) and the User-Agent, so an abusive crawler
-#   can be identified and blocked. Added during the 2026-06-20 incident: a bot
-#   was overwhelming the box and there was no way to attribute the traffic.
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--worker-class", "gthread", "--timeout", "300", "--capture-output", "--log-level", "info", "--access-logfile", "-", "--access-logformat", "cip=%({Fly-Client-IP}i)s %(s)s %(M)sms \"%(r)s\" ua=\"%(a)s\"", "app:app"]
+# --access-logformat   : log the real client IP and User-Agent so an abusive
+#   crawler can be identified and blocked (added in the 2026-06-20 incident:
+#   the box was being overwhelmed with no way to attribute the traffic).
+#   cip = CF-Connecting-IP (real visitor when fronted by Cloudflare; "-" when
+#   the request hits Fly directly); peer = Fly-Client-IP (the TCP peer: the
+#   real visitor on direct hits, or the Cloudflare edge IP behind Cloudflare).
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--worker-class", "gthread", "--timeout", "300", "--capture-output", "--log-level", "info", "--access-logfile", "-", "--access-logformat", "cip=%({CF-Connecting-IP}i)s peer=%({Fly-Client-IP}i)s %(s)s %(M)sms \"%(r)s\" ua=\"%(a)s\"", "app:app"]

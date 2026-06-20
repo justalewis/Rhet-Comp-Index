@@ -24,6 +24,7 @@ Storage:
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 
 from flask import request
@@ -32,6 +33,30 @@ from flask_limiter import Limiter
 from auth import token_check_passes
 
 log = logging.getLogger(__name__)
+
+# Cloudflare's published edge ranges (cloudflare.com/ips — a stable list).
+# When the site is fronted by Cloudflare, the TCP peer Fly reports in
+# Fly-Client-IP is one of these, and the real visitor IP is in the
+# CF-Connecting-IP header. We trust CF-Connecting-IP ONLY when the peer is
+# genuinely Cloudflare, so a client hitting the Fly origin directly can't spoof
+# that header to dodge the IP block or poison rate-limit buckets.
+_CLOUDFLARE_CIDRS = [ipaddress.ip_network(c) for c in (
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+    "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+    "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+    "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+    "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32",
+    "2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32",
+)]
+
+
+def _is_cloudflare_peer(ip: str) -> bool:
+    """True if `ip` is in Cloudflare's edge ranges."""
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return any(addr in net for net in _CLOUDFLARE_CIDRS)
 
 # Per-tier limit strings. Exposed as a dict so app.py decorates routes by
 # name rather than re-stating the values, and so tests can read them back.
@@ -48,19 +73,25 @@ LIMITS: dict[str, str] = {
 
 
 def client_ip_key() -> str:
-    """Return a stable per-client identifier for rate-limit bucketing.
+    """Return a stable per-client identifier for rate-limit bucketing, the IP
+    denylist, and access attribution.
 
     Order of preference:
-        1. Fly-Client-IP header (set by the Fly proxy; the only header we
-           trust on production traffic).
-        2. First comma-separated value of X-Forwarded-For (the original
-           client; subsequent values are intermediate proxies).
-        3. request.remote_addr.
-        4. "127.0.0.1" if remote_addr is None (Flask test client).
+        1. CF-Connecting-IP (the real visitor IP) — trusted ONLY when the
+           request actually arrived from a Cloudflare edge, i.e. Fly-Client-IP
+           is in Cloudflare's ranges. This prevents a direct-to-origin client
+           from spoofing the header.
+        2. Fly-Client-IP — the TCP peer Fly saw (a direct visitor, or the
+           Cloudflare edge IP when CF-Connecting-IP isn't trusted).
+        3. First comma-separated value of X-Forwarded-For.
+        4. request.remote_addr, else "127.0.0.1" (Flask test client).
     """
-    fly = request.headers.get("Fly-Client-IP")
+    fly = (request.headers.get("Fly-Client-IP") or "").strip()
+    cf = (request.headers.get("CF-Connecting-IP") or "").strip()
+    if cf and fly and _is_cloudflare_peer(fly):
+        return cf
     if fly:
-        return fly.strip()
+        return fly
 
     xff = request.headers.get("X-Forwarded-For")
     if xff:
