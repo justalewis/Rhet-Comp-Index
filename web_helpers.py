@@ -5,7 +5,9 @@ Flask instance."""
 
 from __future__ import annotations
 
+import ipaddress
 import logging
+import os
 import re
 import time
 from functools import wraps
@@ -143,6 +145,54 @@ def cache_response(seconds=300):
             return resp
         return wrapped
     return decorator
+
+
+# ── IP denylist ─────────────────────────────────────────────────────────────
+# Hard block for abusive networks, applied before any routing or DB work so a
+# flood can't tie up the (small, single-machine) worker pool. The default entry
+# is the Alibaba Cloud range that ran a distributed, User-Agent-rotating
+# scraper across the whole /21 — walking /article, /export, /citations, and the
+# infinite /explore?seed=N space — and repeatedly exhausted the worker
+# (incident 2026-06-20). Per-IP rate limiting can't catch it (hundreds of IPs,
+# each under the cap) and UA blocking can't (rotating fake browser UAs), so the
+# range is denied wholesale; real traffic from cloud-hosting IPs is ~nil for a
+# scholarly index. Extend without a code change via PINAKES_BLOCKED_CIDRS
+# (comma-separated CIDRs); this is a stopgap until Cloudflare fronts the site.
+_DEFAULT_BLOCKED_CIDRS = "47.79.200.0/21"
+
+
+def _load_blocked_networks():
+    raw = os.environ.get("PINAKES_BLOCKED_CIDRS", _DEFAULT_BLOCKED_CIDRS)
+    nets = []
+    for chunk in raw.split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        try:
+            nets.append(ipaddress.ip_network(chunk, strict=False))
+        except ValueError:
+            log.warning("Ignoring invalid CIDR in blocklist: %r", chunk)
+    return nets
+
+
+_BLOCKED_NETWORKS = _load_blocked_networks()
+
+
+def block_denied_ips():
+    """before_request hook: 403 any client in a denied network, cheaply, before
+    rate limiting / routing / DB access. Registered first so abusive traffic
+    costs essentially nothing. No-op when the blocklist is empty."""
+    if not _BLOCKED_NETWORKS:
+        return None
+    from rate_limit import client_ip_key
+    try:
+        addr = ipaddress.ip_address(client_ip_key())
+    except ValueError:
+        return None
+    for net in _BLOCKED_NETWORKS:
+        if addr in net:
+            return make_response("Forbidden", 403)
+    return None
 
 
 def redirect_www():

@@ -58,7 +58,7 @@ from web_helpers import (  # noqa: F401
     inject_globals,
     register_error_handlers,
     not_found, server_error, rate_limit_exceeded,
-    set_security_headers, redirect_www,
+    set_security_headers, redirect_www, block_denied_ips,
 )
 
 log = logging.getLogger(__name__)
@@ -217,7 +217,9 @@ def create_app() -> Flask:
     # Context
     flask_app.context_processor(inject_globals)
 
-    # Middleware
+    # Middleware. block_denied_ips runs first so denied networks are 403'd
+    # before any routing, rate-limiting, or DB work (incident 2026-06-20).
+    flask_app.before_request(block_denied_ips)
     flask_app.before_request(redirect_www)
     flask_app.after_request(set_security_headers)
 

@@ -154,3 +154,12 @@ def test_route_count_matches_expected(client):
         f"Expected 90 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
+
+
+def test_blocked_ip_range_returns_403(client):
+    """Clients in the default-denied Alibaba range are 403'd before routing
+    (incident 2026-06-20); ordinary clients pass through."""
+    blocked = client.get("/", headers={"Fly-Client-IP": "47.79.205.10"})
+    assert blocked.status_code == 403
+    ok = client.get("/", headers={"Fly-Client-IP": "203.0.113.7"})
+    assert ok.status_code == 200
