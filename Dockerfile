@@ -56,4 +56,9 @@ EXPOSE 8080
 # (e.g. fetch_institutions.py) that may be holding a write lock at deploy time,
 # causing the single worker to deadlock on startup. Without --preload the worker
 # imports the app after forking, which is safe.
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--worker-class", "gthread", "--timeout", "300", "--capture-output", "--log-level", "info", "app:app"]
+# --access-logfile -  : emit one access line per request to stdout (Fly logs).
+# --access-logformat   : include the real client IP (Fly-Client-IP header, the
+#   same one rate_limit.py keys on) and the User-Agent, so an abusive crawler
+#   can be identified and blocked. Added during the 2026-06-20 incident: a bot
+#   was overwhelming the box and there was no way to attribute the traffic.
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--worker-class", "gthread", "--timeout", "300", "--capture-output", "--log-level", "info", "--access-logfile", "-", "--access-logformat", "cip=%({Fly-Client-IP}i)s %(s)s %(M)sms \"%(r)s\" ua=\"%(a)s\"", "app:app"]

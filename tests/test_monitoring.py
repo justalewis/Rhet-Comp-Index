@@ -83,8 +83,23 @@ def test_init_sentry_initializes_with_dsn(fresh_monitoring, monkeypatch):
     assert kwargs["send_default_pii"] is False
     assert kwargs["release"] == "v123"
     assert kwargs["environment"] == "pinakes-test"
-    assert kwargs["before_send"] is monitoring._scrub_pii
+    assert kwargs["before_send"] is monitoring._before_send
     tag_mock.assert_called_once_with("component", "web")
+
+
+def test_before_send_drops_client_disconnect_noise():
+    """gunicorn socket-write timeouts to dead clients (errno 110/104/32/...)
+    are benign crawler/slow-client noise and must be dropped, not reported."""
+    exc = TimeoutError()
+    exc.errno = 110
+    assert monitoring._before_send({}, {"exc_info": (TimeoutError, exc, None)}) is None
+    # A gunicorn.error log event with the socket message is also dropped.
+    assert monitoring._before_send(
+        {"logger": "gunicorn.error",
+         "logentry": {"message": "Socket error processing request."}}, {}
+    ) is None
+    # A normal event still passes through (and gets PII-scrubbed).
+    assert monitoring._before_send({"logger": "app", "request": {}}, {}) is not None
 
 
 def test_init_sentry_idempotent(fresh_monitoring, monkeypatch):

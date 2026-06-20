@@ -33,9 +33,33 @@ def _is_test_env() -> bool:
     return False
 
 
+# errno values for "the client connection went away while we were writing the
+# response": ETIMEDOUT(110), ECONNRESET(104), EPIPE(32), ENOTCONN(107),
+# ECONNABORTED(103). gunicorn raises these from sock.sendall() under
+# slow/dead clients (a crawler that opens connections and abandons them is the
+# usual source). They're handled by gunicorn and are never app bugs.
+_CLIENT_DISCONNECT_ERRNOS = {110, 104, 32, 107, 103}
+
+
+def _before_send(event: dict, hint) -> dict | None:
+    """before_send hook. First drops benign client-disconnect noise (gunicorn
+    socket-write timeouts under crawler/slow-client load — handled by
+    gunicorn, not actionable), then scrubs PII from whatever remains."""
+    exc_info = hint.get("exc_info") if hint else None
+    if exc_info:
+        exc = exc_info[1]
+        if isinstance(exc, OSError) and exc.errno in _CLIENT_DISCONNECT_ERRNOS:
+            return None
+    if event.get("logger") == "gunicorn.error":
+        msg = ((event.get("logentry") or {}).get("message") or "")
+        if "Socket error processing request" in msg:
+            return None
+    return _scrub_pii(event, hint)
+
+
 def _scrub_pii(event: dict, hint) -> dict | None:
-    """before_send hook: strip auth headers, cookies, token-bearing query
-    params, and request bodies from outgoing Sentry events.
+    """Strip auth headers, cookies, token-bearing query params, and request
+    bodies from outgoing Sentry events.
 
     The function is defensive about event shape — non-HTTP events
     (scheduler errors, captured exceptions from ingestion) won't have a
@@ -117,7 +141,7 @@ def init_sentry(component: str) -> bool:
         ignore_errors=[SystemExit, KeyboardInterrupt],
         release=os.environ.get("FLY_RELEASE_VERSION", "dev"),
         environment=os.environ.get("FLY_APP_NAME", "local"),
-        before_send=_scrub_pii,
+        before_send=_before_send,
     )
     sentry_sdk.set_tag("component", component)
     _initialised = True
