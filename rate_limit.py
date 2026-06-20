@@ -10,10 +10,16 @@ Tiered limits:
                                so probes do not exhaust the operator's budget)
 
 Storage:
-    In-memory. This is correct for the current single-worker deployment.
-    Multi-worker deployments must switch to a shared backend (Redis or
-    Fly.io's redis add-on); each worker would otherwise track its own
+    In-memory. This is correct for the single-PROCESS deployment, including
+    the gthread (one worker, many threads) config: threads share the
+    process's memory, so the counters stay coherent. A multi-PROCESS
+    deployment (gunicorn --workers >1) would need a shared backend (Redis or
+    Fly.io's redis add-on); each process would otherwise track its own
     counts independently and the effective limits would multiply by N.
+
+    Note: in-memory counters reset whenever the worker process restarts. A
+    runaway worker-timeout/restart loop therefore defeats the limiter — the
+    gthread config exists in part to prevent that loop (see Dockerfile).
 """
 
 from __future__ import annotations

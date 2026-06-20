@@ -38,9 +38,22 @@ EXPOSE 8080
 # volumes are single-attach and the scheduler had no way to share /data
 # with the app machine. See docs/refactor-notes/13-scheduler-architecture-fix.md.
 #
+# ONE worker, MANY threads (gthread). A single sync worker serves one request
+# at a time, so a burst of traffic (e.g. an aggressive crawler walking
+# /article, /export, /citations, /explore) queues behind it and the 5s
+# readiness probe can't get a slot — Fly then marks the machine critical and
+# the proxy stops routing, taking the whole site down (incident 2026-06-20).
+# Worse, each 300s worker-timeout kill restarts the process and wipes the
+# in-memory rate-limiter counters, so the per-IP cap never accumulates.
+# gthread keeps a SINGLE process (so the in-memory limiter stays coherent and
+# SQLite keeps one writer) while letting the health check and quick 429s
+# interleave with slower requests, and stops the timeout/restart cycle so the
+# rate limiter actually bites. Multi-PROCESS (--workers >1) would break both
+# the limiter and the single-writer assumption; threads do not.
+#
 # --preload is intentionally omitted: it imports app.py (and runs init_db) in the
 # master process before forking, which conflicts with any background SQLite writer
 # (e.g. fetch_institutions.py) that may be holding a write lock at deploy time,
-# causing the single worker to deadlock on startup. Without --preload each worker
-# imports the app independently after forking, which is safe.
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "300", "--capture-output", "--log-level", "info", "app:app"]
+# causing the single worker to deadlock on startup. Without --preload the worker
+# imports the app after forking, which is safe.
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--worker-class", "gthread", "--timeout", "300", "--capture-output", "--log-level", "info", "app:app"]

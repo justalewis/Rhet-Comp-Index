@@ -4,6 +4,24 @@
 **/*.sqlite3
 articles.db
 
+# Database backups: the backup/restore tooling drops files named
+# articles.db.bak-<tag>-<timestamp> at the repo root. They do NOT end in
+# .db, so the rule above misses them, and each is 200MB+. Left unignored
+# they bloat a local `flyctl deploy` build context into the gigabytes
+# (incident 2026-06-20: a local deploy stalled 30+ min uploading ~1GB).
+**/*.bak
+**/*.db.bak*
+**/articles.db.bak*
+
+# Large local-only trees that never belong in the runtime image: Claude
+# Code worktrees (full repo copies), unrelated sibling projects, and Office
+# docs. CI checkouts don't contain these (they're untracked), but a local
+# deploy would tar them all in.
+.claude
+canvas-sandbox
+google-forms
+**/*.docx
+
 # Python
 **/__pycache__
 **/*.py[cod]

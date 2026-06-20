@@ -149,7 +149,8 @@ def test_route_count_matches_expected(client):
     #        POST /api/admin/redaction-request/<id>/approve + /deny
     #  +  2  redaction admin review page: GET /admin/redactions,
     #        GET /api/admin/redaction-request/<id>/audit
-    assert len(rules) == 89, (
-        f"Expected 89 routes, got {len(rules)}. "
+    #  +  1  /robots.txt (2026-06-20 incident: crawler guidance)
+    assert len(rules) == 90, (
+        f"Expected 90 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )

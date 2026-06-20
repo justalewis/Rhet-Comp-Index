@@ -25,6 +25,32 @@ bp = Blueprint("main", __name__)
 COVERAGE_SINCE_PRESETS = (None, 2000, 2010, 2020)
 
 
+# robots.txt — guidance for well-behaved crawlers. Article, author, journal,
+# and book pages stay crawlable (the index wants to be discoverable); the
+# expensive/derived endpoints and the effectively-infinite ?seed= deep-link
+# space are disallowed, with a crawl-delay to keep polite bots from
+# saturating the single app process. This does not stop a hostile crawler
+# that ignores robots.txt — the gthread worker config in the Dockerfile is
+# what keeps such a crawler from taking the site down (incident 2026-06-20).
+_ROBOTS_TXT = """\
+User-agent: *
+Crawl-delay: 10
+Disallow: /api/
+Disallow: /export
+Disallow: /fetch
+Disallow: /datastories
+Disallow: /citations
+Disallow: /*?seed=
+Disallow: /*&seed=
+"""
+
+
+@bp.route("/robots.txt")
+def robots_txt():
+    """Static crawler guidance; see _ROBOTS_TXT above."""
+    return Response(_ROBOTS_TXT, mimetype="text/plain")
+
+
 def _get_sidebar():
     """Lazy proxy to app._get_sidebar so its sidebar cache stays a single
     process-wide source of truth (and so conftest can invalidate it)."""
