@@ -163,3 +163,24 @@ def test_blocked_ip_range_returns_403(client):
     assert blocked.status_code == 403
     ok = client.get("/", headers={"Fly-Client-IP": "203.0.113.7"})
     assert ok.status_code == 200
+
+
+def test_cloudflare_only_off_by_default(client):
+    """Without PINAKES_CLOUDFLARE_ONLY, direct-to-origin access is unaffected."""
+    assert client.get("/", headers={"Fly-Client-IP": "203.0.113.7"}).status_code == 200
+
+
+def test_cloudflare_only_blocks_direct_origin(client, monkeypatch):
+    """With the flag set, a public client hitting the Fly origin directly is
+    403'd, but Cloudflare-fronted traffic, health probes, and internal
+    requests still pass."""
+    monkeypatch.setenv("PINAKES_CLOUDFLARE_ONLY", "1")
+    # Public client, non-Cloudflare peer → blocked (8.8.8.8 is genuinely
+    # global; note Py3.12 treats doc ranges like 203.0.113.0/24 as private)
+    assert client.get("/", headers={"Fly-Client-IP": "8.8.8.8"}).status_code == 403
+    # Via a Cloudflare edge IP → allowed
+    assert client.get("/", headers={"Fly-Client-IP": "162.158.0.1"}).status_code == 200
+    # Health probe always exempt (Fly's checker)
+    assert client.get("/health", headers={"Fly-Client-IP": "8.8.8.8"}).status_code == 200
+    # No Fly-Client-IP (internal Fly traffic) → allowed
+    assert client.get("/").status_code == 200

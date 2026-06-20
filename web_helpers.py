@@ -195,6 +195,38 @@ def block_denied_ips():
     return None
 
 
+def require_cloudflare_origin():
+    """When PINAKES_CLOUDFLARE_ONLY is truthy, 403 any PUBLIC client that
+    reaches the Fly origin directly instead of through Cloudflare — closing
+    the bypass where an attacker hits rhet-comp-index.fly.dev (or the origin
+    IP) to skip Cloudflare's bot/rate protection.
+
+    Always exempt, so this can never take the site down:
+      - the /health* probes (Fly's checker must always reach them);
+      - internal Fly traffic, which carries no Fly-Client-IP header;
+      - loopback / private peers (health checks, in-machine curl).
+
+    Read per-request so it can be toggled via `fly secrets set` without a
+    code change. Default off until explicitly enabled."""
+    if os.environ.get("PINAKES_CLOUDFLARE_ONLY", "").lower() not in ("1", "true", "yes"):
+        return None
+    if request.path.startswith("/health"):
+        return None
+    peer = (request.headers.get("Fly-Client-IP") or "").strip()
+    if not peer:
+        return None
+    try:
+        addr = ipaddress.ip_address(peer)
+    except ValueError:
+        return None
+    if addr.is_private or addr.is_loopback:
+        return None
+    from rate_limit import _is_cloudflare_peer
+    if _is_cloudflare_peer(peer):
+        return None
+    return make_response("Forbidden", 403)
+
+
 def redirect_www():
     """Redirect www.pinakes.xyz → pinakes.xyz (301 permanent)."""
     if request.host.startswith("www."):
