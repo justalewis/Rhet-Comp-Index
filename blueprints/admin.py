@@ -136,13 +136,27 @@ def _run_maintenance_in_background():
     enrichment, LiCS reference scrape, retag + FTS rebuild, OA backfill,
     OpenAlex citation counts. cite_fetcher resyncs the denormalized
     internal_cited_by_count / internal_cites_count columns at the end of
-    its run, so rankings stay consistent with the citations table."""
+    its run, so rankings stay consistent with the citations table.
+
+    Shares app._fetch_lock with the fetch/deep-refresh writers. The weekly
+    run (Sundays 04:00) used to overlap the daily fetch's multi-hour scraper
+    phase, and both are heavy SQLite writers — that contention surfaced as
+    "database is locked" in the scraper's upserts (incident 2026-06-21).
+    Maintenance now WAITS for any in-flight fetch to finish rather than
+    running a second concurrent writer; a generous timeout guards against a
+    wedged fetch holding the lock forever."""
+    import app as _app
+    if not _app._fetch_lock.acquire(timeout=6 * 3600):
+        log.error("Maintenance skipped — fetch lock held >6h (fetch stuck?).")
+        return
     try:
         from weekly_maintenance import run_pipeline
         rc = run_pipeline(steps=(4, 5, 6, 7, 8, 9))
         log.info("Maintenance pipeline finished (exit status %s).", rc)
     except Exception:  # noqa: BLE001
         log.exception("Maintenance pipeline raised unhandled exception")
+    finally:
+        _app._fetch_lock.release()
 
 
 @bp.route("/api/admin/run-maintenance", methods=["POST"])
