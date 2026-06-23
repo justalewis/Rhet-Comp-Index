@@ -96,13 +96,26 @@
   font-size: 0.8rem; padding: 0.32rem 0.55rem; border: 1px solid var(--wac-line);
   border-radius: 5px; font-family: inherit; color: var(--wac-ink); background: #fff; min-width: 12rem;
 }
+.wac-select { min-width: 0; }
+.wac-ctl {
+  display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.74rem;
+  color: var(--wac-muted); white-space: nowrap;
+}
+.wac-ctl input[type="range"] { width: 6.5rem; accent-color: var(--wac-warm); vertical-align: middle; cursor: pointer; }
+.wac-ctl select {
+  font-size: 0.76rem; padding: 0.2rem 0.35rem; border: 1px solid var(--wac-line);
+  border-radius: 4px; font-family: inherit; color: var(--wac-ink); background: #fff;
+}
+.wac-ctl-out { font-variant-numeric: tabular-nums; color: var(--wac-warm); font-weight: 600; min-width: 1.6rem; }
 
 /* ── Canvas areas ─────────────────────────────────────────── */
 .wac-canvas { width: 100%; min-height: 120px; position: relative; }
 .wac-chart-wrap { position: relative; width: 100%; height: 320px; }
 .wac-h360 { height: 360px; } .wac-h420 { height: 420px; } .wac-h480 { height: 480px; }
 .wac-canvas.wac-h360, .wac-canvas.wac-h420, .wac-canvas.wac-h480 { overflow: hidden; }
-.wac-scroll { overflow-y: auto; }
+/* Scroll containers must win over the overflow:hidden above (equal specificity,
+   so this rule is placed AFTER and overrides overflow-y). */
+.wac-scroll, .wac-canvas.wac-scroll { overflow-x: hidden; overflow-y: auto; }
 .wac-loading { padding: 1.5rem; color: var(--wac-muted); font-size: 0.85rem; font-style: italic; }
 .wac-status-ov { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(253,251,247,0.82); pointer-events: none; }
 .wac-empty { padding: 1.5rem; color: var(--wac-muted); font-size: 0.85rem; }

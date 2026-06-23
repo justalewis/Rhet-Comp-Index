@@ -95,6 +95,26 @@ export function hideTip() { if (_tip) _tip.style.display = "none"; }
 export const registry = {};
 export function register(name, fn) { registry[name] = fn; }
 
+// ── customizable controls ───────────────────────────────────
+// Read a control's value within a card, with a fallback.
+export function ctlVal(card, id, dflt) {
+  const el = card.querySelector("#" + id);
+  return el ? el.value : dflt;
+}
+// Wire a range/select/checkbox inside `card`: live-update its companion
+// [data-out] label (for ranges) and call onCommit() when the value commits
+// (slider release / select change / checkbox toggle). Idempotent.
+export function wireControl(card, id, onCommit) {
+  const el = card.querySelector("#" + id);
+  if (!el || el._wired) return;
+  el._wired = true;
+  const out = card.querySelector('[data-out="' + id + '"]');
+  const sync = () => { if (out) out.textContent = el.value; };
+  sync();
+  el.addEventListener("input", sync);
+  el.addEventListener("change", () => onCommit(el.value));
+}
+
 // ── a small CSS-bar list builder (used by several table-ish views) ──
 // rows: [{label, value, href?, segments?:[{w, color, title}], valueText?}]
 export function renderBars(containerId, rows, opts) {

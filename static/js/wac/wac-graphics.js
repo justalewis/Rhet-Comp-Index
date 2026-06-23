@@ -3,6 +3,7 @@ import { enableZoomPan, enableDrag } from "../shared/common.js";
 import {
   register, getJSON, loading, showError, $, escapeHtml,
   TYPE_COLORS, TYPE_LABEL, palette, showTip, moveTip, hideTip, fmt,
+  ctlVal, wireControl,
 } from "./wac-common.js";
 
 function dims(el, hFallback) {
@@ -98,11 +99,13 @@ register("journal-lifelines", async () => {
 });
 
 // ── 2d. Author career spans (lollipop) ──
-register("author-spans", async () => {
+register("author-spans", async (card) => {
   const el = $("wac-spans");
+  const draw = async () => {
+  const minWorks = ctlVal(card, "wac-ctl-spans-min", 5);
   loading("wac-spans", "Loading careers…");
   let data;
-  try { data = await getJSON("/api/wac/author-spans"); }
+  try { data = await getJSON("/api/wac/author-spans?min_works=" + minWorks); }
   catch (e) { return showError("wac-spans", e.message); }
   if (!data || !data.length) { el.innerHTML = '<div class="wac-empty">No data.</div>'; return; }
   data = data.slice(0, 40);
@@ -127,8 +130,9 @@ register("author-spans", async () => {
       .on("mousemove", (e, w) => showTip("<strong>" + escapeHtml(d.name) + "</strong><br>" + w.year + " · " + (TYPE_LABEL[w.type] || w.type), e))
       .on("mouseout", hideTip);
   });
-  // legend
-  const lg = svg.append("g").attr("transform", `translate(${labelW},${H - 2})`);
+  };
+  wireControl(card, "wac-ctl-spans-min", draw);
+  await draw();
 });
 
 // ── shared force-graph ──
@@ -171,10 +175,13 @@ function forceGraph(containerId, data, opts) {
 }
 
 // ── 3b. Editor → contributor network ──
-register("editor-network", async () => {
+register("editor-network", async (card) => {
+  const draw = async () => {
+  const topN = ctlVal(card, "wac-ctl-ednet-top", 220);
+  const minLinks = ctlVal(card, "wac-ctl-ednet-min", 1);
   loading("wac-editor-net", "Loading editor network…");
   let d;
-  try { d = await getJSON("/api/wac/editor-network"); }
+  try { d = await getJSON(`/api/wac/editor-network?top_n=${topN}&min_links=${minLinks}`); }
   catch (e) { return showError("wac-editor-net", e.message); }
   const size = (n) => n.role === "author" ? 3 + Math.sqrt(n.weight || 1) : 5 + Math.sqrt(n.weight || 1) * 1.4;
   forceGraph("wac-editor-net", d, {
@@ -188,13 +195,20 @@ register("editor-network", async () => {
         : (n.role === "both" ? "editor &amp; author" : "editor") + " · links " + n.weight + " contributors"),
     charge: -75, linkDist: 36,
   });
+  };
+  wireControl(card, "wac-ctl-ednet-top", draw);
+  wireControl(card, "wac-ctl-ednet-min", draw);
+  await draw();
 });
 
 // ── 7d. Co-presence network ──
-register("copresence", async () => {
+register("copresence", async (card) => {
+  const draw = async () => {
+  const topN = ctlVal(card, "wac-ctl-copres-top", 180);
+  const minShared = ctlVal(card, "wac-ctl-copres-min", 1);
   loading("wac-copresence", "Loading co-presence…");
   let d;
-  try { d = await getJSON("/api/wac/copresence"); }
+  try { d = await getJSON(`/api/wac/copresence?top_n=${topN}&min_shared=${minShared}`); }
   catch (e) { return showError("wac-copresence", e.message); }
   const size = (n) => 3 + Math.sqrt(n.count || 1) * 1.6;
   forceGraph("wac-copresence", d, {
@@ -203,14 +217,20 @@ register("copresence", async () => {
     tooltip: (n) => "<strong>" + escapeHtml(n.id) + "</strong><br>chapters in " + n.count + " collection(s)",
     charge: -70, linkDist: 34,
   });
+  };
+  wireControl(card, "wac-ctl-copres-top", draw);
+  wireControl(card, "wac-ctl-copres-min", draw);
+  await draw();
 });
 
 // ── 4b. Institution × journal heatmap ──
-register("institution-journal", async () => {
+register("institution-journal", async (card) => {
   const el = $("wac-inst-heatmap");
+  const draw = async () => {
+  const topInst = ctlVal(card, "wac-ctl-heat-top", 22);
   loading("wac-inst-heatmap", "Loading…");
   let d;
-  try { d = await getJSON("/api/wac/institution-journal"); }
+  try { d = await getJSON("/api/wac/institution-journal?top_inst=" + topInst); }
   catch (e) { return showError("wac-inst-heatmap", e.message); }
   el.innerHTML = "";
   const insts = d.institutions, jrnls = d.journals;
@@ -240,4 +260,7 @@ register("institution-journal", async () => {
       .on("mousemove", (e, j) => { const v = cell[inst + "||" + j] || 0; showTip("<strong>" + escapeHtml(inst) + "</strong><br>" + escapeHtml(j) + ": " + v + " articles", e); })
       .on("mouseout", hideTip);
   });
+  };
+  wireControl(card, "wac-ctl-heat-top", draw);
+  await draw();
 });

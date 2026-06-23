@@ -94,59 +94,84 @@ register("citation-lorenz", async () => {
     type: "line",
     data: {
       datasets: [
-        { label: "citations", data: d.points, borderColor: "#5a3e28", backgroundColor: "rgba(90,62,40,0.08)",
+        { label: "WAC works (actual)", data: d.points, borderColor: "#5a3e28", backgroundColor: "rgba(90,62,40,0.08)",
           fill: true, pointRadius: 0, borderWidth: 2, tension: 0 },
-        { label: "perfect equality", data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], borderColor: "#b9b2a6",
+        { label: "if citations were shared equally", data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], borderColor: "#b9b2a6",
           borderDash: [5, 4], pointRadius: 0, borderWidth: 1, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false, parsing: false,
-      plugins: { legend: LEGEND, tooltip: { enabled: false } },
+      plugins: {
+        legend: LEGEND,
+        tooltip: { callbacks: { title: () => "", label: c =>
+          "Least-cited " + Math.round(c.parsed.x * 100) + "% of works hold " + Math.round(c.parsed.y * 100) + "% of citations" } },
+      },
       scales: {
-        x: { type: "linear", min: 0, max: 1, ...AX, title: { display: true, text: "cumulative share of works", font: CHART_FONT },
+        x: { type: "linear", min: 0, max: 1, ...AX, title: { display: true, text: "works, least-cited → most-cited", font: CHART_FONT },
              ticks: { font: CHART_FONT, callback: v => Math.round(v * 100) + "%" } },
-        y: { min: 0, max: 1, ...AX, title: { display: true, text: "cumulative share of citations", font: CHART_FONT },
+        y: { min: 0, max: 1, ...AX, title: { display: true, text: "share of all citations", font: CHART_FONT },
              ticks: { font: CHART_FONT, callback: v => Math.round(v * 100) + "%" } },
       },
     },
   });
   const note = $("wac-gini-note");
-  if (note) note.innerHTML = "Gini = <strong>" + d.gini + "</strong> — " +
-    d.n_cited.toLocaleString() + " of " + d.n_works.toLocaleString() +
-    " works are cited at all. The further the curve bows from the dashed line, the more citations pool in a few works.";
+  if (note) note.innerHTML =
+    "Attention is highly concentrated: the <strong>most-cited 1%</strong> of works hold <strong>" + d.top1_share +
+    "%</strong> of all citations, the top 10% hold <strong>" + d.top10_share +
+    "%</strong>, and the bottom half hold just <strong>" + d.bottom50_share + "%</strong>. " +
+    "Read any point as “the least-cited X% of works account for Y% of citations” — the more the solid line sags below the dashed equality line, the more uneven the spread (Gini " +
+    d.gini + "; " + d.n_cited.toLocaleString() + " of " + d.n_works.toLocaleString() + " works cited at all).";
 });
 
 // ── 5c. Citations vs age (scatter + median line) ──
-register("citations-vs-age", async () => {
+register("citations-vs-age", async (card) => {
   loading("wac-age", "Loading…");
   let d;
   try { d = await getJSON("/api/wac/citations-vs-age"); }
   catch (e) { return showError("wac-age", e.message); }
-  const byType = {};
-  d.points.forEach(p => { (byType[p.type] = byType[p.type] || []).push({ x: p.year, y: p.cited_by, t: p.title }); });
-  const scatter = Object.keys(byType).map(t => ({
-    type: "scatter", label: TYPE_LABEL[t] || t, data: byType[t],
-    backgroundColor: TYPE_COLORS[t] + "99", pointRadius: 2.2, pointHoverRadius: 4,
-  }));
-  scatter.push({
-    type: "line", label: "yearly median", data: d.medians.map(m => ({ x: m.year, y: m.median })),
-    borderColor: "#a04545", borderWidth: 1.6, pointRadius: 0, tension: 0.2, fill: false,
-  });
-  chart("wac-age", {
-    data: { datasets: scatter },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: LEGEND,
-        tooltip: { callbacks: { label: c => c.raw.t ? (c.raw.t.slice(0, 60) + " — " + c.raw.y + " cites") : (c.dataset.label + ": " + c.raw.y) } },
+  const btn = card.querySelector("#wac-ctl-age-cited");
+  const draw = () => {
+    const onlyCited = btn && btn.dataset.on === "1";
+    const byType = {};
+    d.points.forEach(p => {
+      if (onlyCited && !p.cited_by) return;
+      (byType[p.type] = byType[p.type] || []).push({ x: p.year, y: p.cited_by, t: p.title });
+    });
+    const scatter = Object.keys(byType).map(t => ({
+      type: "scatter", label: TYPE_LABEL[t] || t, data: byType[t],
+      backgroundColor: TYPE_COLORS[t] + "99", pointRadius: 2.2, pointHoverRadius: 4,
+    }));
+    scatter.push({
+      type: "line", label: "yearly median", data: d.medians.map(m => ({ x: m.year, y: m.median })),
+      borderColor: "#a04545", borderWidth: 1.6, pointRadius: 0, tension: 0.2, fill: false,
+    });
+    chart("wac-age", {
+      data: { datasets: scatter },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: LEGEND,
+          tooltip: { callbacks: { label: c => c.raw.t ? (c.raw.t.slice(0, 60) + " — " + c.raw.y + " cites") : (c.dataset.label + ": " + c.raw.y) } },
+        },
+        scales: {
+          x: { type: "linear", ...AX, title: { display: true, text: "year", font: CHART_FONT }, ticks: { font: CHART_FONT, callback: v => v } },
+          y: { ...AX, title: { display: true, text: "inbound citations", font: CHART_FONT } },
+        },
       },
-      scales: {
-        x: { type: "linear", ...AX, title: { display: true, text: "year", font: CHART_FONT }, ticks: { font: CHART_FONT, callback: v => v } },
-        y: { ...AX, title: { display: true, text: "inbound citations", font: CHART_FONT } },
-      },
-    },
-  });
+    });
+  };
+  if (btn && !btn._wired) {
+    btn._wired = true;
+    btn.addEventListener("click", () => {
+      btn.dataset.on = btn.dataset.on === "1" ? "0" : "1";
+      const on = btn.dataset.on === "1";
+      btn.classList.toggle("is-on", on);
+      btn.textContent = on ? "show all" : "hide uncited";
+      draw();
+    });
+  }
+  draw();
 });
 
 // ── 6a. Collection anatomy (histogram) ──

@@ -94,6 +94,15 @@
       <div class="wac-card-head">
         <h3>Cross-format portfolios <span class="wac-flag">flagship</span></h3>
         <div class="wac-controls">
+          <label class="wac-ctl">authors
+            <input type="range" id="wac-ctl-port-limit" min="20" max="120" value="60" step="10">
+            <span class="wac-ctl-out" data-out="wac-ctl-port-limit">60</span>
+          </label>
+          <label class="wac-ctl">formats
+            <select id="wac-ctl-port-mintypes">
+              <option value="2">2+</option><option value="3">3+</option>
+            </select>
+          </label>
           <input type="search" id="wac-author-search" class="wac-search" placeholder="Find an author…">
         </div>
       </div>
@@ -108,6 +117,10 @@
         <div class="wac-card-head">
           <h3>Most-published contributors</h3>
           <div class="wac-controls">
+            <label class="wac-ctl">show
+              <input type="range" id="wac-ctl-prolific-limit" min="10" max="80" value="30" step="5">
+              <span class="wac-ctl-out" data-out="wac-ctl-prolific-limit">30</span>
+            </label>
             <button class="wac-btn is-on" data-sort="works">by works</button>
             <button class="wac-btn" data-sort="citations">by citations</button>
           </div>
@@ -124,7 +137,15 @@
     </div>
 
     <div class="wac-card wac-wide" data-viz="author-spans">
-      <div class="wac-card-head"><h3>Careers in the catalog</h3></div>
+      <div class="wac-card-head">
+        <h3>Careers in the catalog</h3>
+        <div class="wac-controls">
+          <label class="wac-ctl">min. works
+            <input type="range" id="wac-ctl-spans-min" min="3" max="20" value="5" step="1">
+            <span class="wac-ctl-out" data-out="wac-ctl-spans-min">5</span>
+          </label>
+        </div>
+      </div>
       <div id="wac-spans" class="wac-canvas"></div>
       <p class="wac-note">Each prolific author's first-to-last work, one dot per
         work colored by format. Gaps are real, not missing data.</p>
@@ -138,7 +159,15 @@
       the press's edited collections, and how many scholars they bring into print.</p>
 
     <div class="wac-card wac-wide" data-viz="editor-brokers">
-      <div class="wac-card-head"><h3>Who convenes the collections</h3></div>
+      <div class="wac-card-head">
+        <h3>Who convenes the collections</h3>
+        <div class="wac-controls">
+          <label class="wac-ctl">editors
+            <input type="range" id="wac-ctl-brokers-limit" min="10" max="80" value="40" step="5">
+            <span class="wac-ctl-out" data-out="wac-ctl-brokers-limit">40</span>
+          </label>
+        </div>
+      </div>
       <div id="wac-brokers" class="wac-canvas"></div>
       <p class="wac-note">Editors ranked by volumes edited and distinct chapter
         authors convened. Click a row to walk an editor's volumes.</p>
@@ -146,7 +175,19 @@
 
     <div class="wac-grid-2">
       <div class="wac-card" data-viz="editor-network">
-        <div class="wac-card-head"><h3>Editor → contributor network</h3></div>
+        <div class="wac-card-head">
+          <h3>Editor → contributor network</h3>
+          <div class="wac-controls">
+            <label class="wac-ctl">show
+              <input type="range" id="wac-ctl-ednet-top" min="60" max="500" value="220" step="20">
+              <span class="wac-ctl-out" data-out="wac-ctl-ednet-top">220</span>
+            </label>
+            <label class="wac-ctl">min&nbsp;ties
+              <input type="range" id="wac-ctl-ednet-min" min="1" max="6" value="1" step="1">
+              <span class="wac-ctl-out" data-out="wac-ctl-ednet-min">1</span>
+            </label>
+          </div>
+        </div>
         <div id="wac-editor-net" class="wac-canvas wac-h480"></div>
         <p class="wac-note">An edge links an editor to each author of a chapter in
           their collection. Squares are editors; circles, contributors.</p>
@@ -167,7 +208,15 @@
       coverage stated up front.</p>
 
     <div class="wac-card wac-wide" data-viz="institutions">
-      <div class="wac-card-head"><h3>Institutions feeding the whole catalog</h3></div>
+      <div class="wac-card-head">
+        <h3>Institutions feeding the whole catalog</h3>
+        <div class="wac-controls">
+          <label class="wac-ctl">show
+            <input type="range" id="wac-ctl-inst-limit" min="10" max="60" value="30" step="5">
+            <span class="wac-ctl-out" data-out="wac-ctl-inst-limit">30</span>
+          </label>
+        </div>
+      </div>
       <div id="wac-institutions" class="wac-canvas"></div>
       <p class="wac-note" id="wac-inst-note">Derived from CrossRef affiliation
         strings (no ROR, no geography). Editorial-office stamps — a journal's home
@@ -176,7 +225,15 @@
 
     <div class="wac-grid-2">
       <div class="wac-card" data-viz="institution-journal">
-        <div class="wac-card-head"><h3>Where institutions cluster</h3></div>
+        <div class="wac-card-head">
+          <h3>Where institutions cluster</h3>
+          <div class="wac-controls">
+            <label class="wac-ctl">institutions
+              <input type="range" id="wac-ctl-heat-top" min="8" max="40" value="22" step="2">
+              <span class="wac-ctl-out" data-out="wac-ctl-heat-top">22</span>
+            </label>
+          </div>
+        </div>
         <div id="wac-inst-heatmap" class="wac-canvas wac-h480"></div>
         <p class="wac-note">Top institutions × journals. Darker cells mark a school
           with a strong presence in one venue.</p>
@@ -201,6 +258,10 @@
       <div class="wac-card-head">
         <h3>The house canon</h3>
         <div class="wac-controls">
+          <label class="wac-ctl">show
+            <input type="range" id="wac-ctl-canon-limit" min="10" max="100" value="40" step="10">
+            <span class="wac-ctl-out" data-out="wac-ctl-canon-limit">40</span>
+          </label>
           <select id="wac-canon-type" class="wac-select">
             <option value="">All formats</option>
             <option value="journal-article">Journal articles</option>
@@ -225,7 +286,12 @@
           further it bows, the more attention pools in a few works.</p>
       </div>
       <div class="wac-card" data-viz="citations-vs-age">
-        <div class="wac-card-head"><h3>Citations vs. age</h3></div>
+        <div class="wac-card-head">
+          <h3>Citations vs. age</h3>
+          <div class="wac-controls">
+            <button class="wac-btn" id="wac-ctl-age-cited" data-on="0">hide uncited</button>
+          </div>
+        </div>
         <div class="wac-chart-wrap wac-h360"><canvas id="wac-age"></canvas></div>
         <p class="wac-note">Each work by year and inbound citations, with the
           per-year median. A descriptive accrual view — not a half-life claim.</p>
@@ -247,7 +313,18 @@
         <p class="wac-note" id="wac-anatomy-note">Chapters per edited volume.</p>
       </div>
       <div class="wac-card" data-viz="collections-list">
-        <div class="wac-card-head"><h3>The collections</h3></div>
+        <div class="wac-card-head">
+          <h3>The collections</h3>
+          <div class="wac-controls">
+            <label class="wac-ctl">sort
+              <select id="wac-ctl-coll-sort">
+                <option value="chapters">by size</option>
+                <option value="year">newest</option>
+                <option value="title">A–Z</option>
+              </select>
+            </label>
+          </div>
+        </div>
         <div id="wac-collections" class="wac-canvas wac-h360 wac-scroll"></div>
         <p class="wac-note">Every edited collection, by size. Pick one to open it.</p>
       </div>
@@ -298,7 +375,19 @@
 
     <div class="wac-grid-2">
       <div class="wac-card" data-viz="copresence">
-        <div class="wac-card-head"><h3>Who shares a binding</h3></div>
+        <div class="wac-card-head">
+          <h3>Who shares a binding</h3>
+          <div class="wac-controls">
+            <label class="wac-ctl">authors
+              <input type="range" id="wac-ctl-copres-top" min="60" max="400" value="180" step="20">
+              <span class="wac-ctl-out" data-out="wac-ctl-copres-top">180</span>
+            </label>
+            <label class="wac-ctl">min&nbsp;shared
+              <input type="range" id="wac-ctl-copres-min" min="1" max="5" value="1" step="1">
+              <span class="wac-ctl-out" data-out="wac-ctl-copres-min">1</span>
+            </label>
+          </div>
+        </div>
         <div id="wac-copresence" class="wac-canvas wac-h480"></div>
         <p class="wac-note">Authors linked when they have chapters in the same
           edited collection — a citation-free relational map the book program makes

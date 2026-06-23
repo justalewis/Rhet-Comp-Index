@@ -145,7 +145,9 @@ def api_lasting_partnerships():
 @limiter.limit(LIMITS["citations"])
 @cache_response(seconds=_API_CACHE)
 def api_editor_network():
-    return _j(wac.wac_editor_network())
+    top_n = _safe_int(request.args.get("top_n", 220), 220, lo=40, hi=500)
+    min_links = _safe_int(request.args.get("min_links", 1), 1, lo=1, hi=8)
+    return _j(wac.wac_editor_network(top_n=top_n, min_links=min_links))
 
 
 @bp.route("/api/wac/editor-brokers")
@@ -208,7 +210,8 @@ def api_institutions():
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=_API_CACHE)
 def api_institution_journal():
-    return _j(wac.wac_institution_journal())
+    top_inst = _safe_int(request.args.get("top_inst", 22), 22, lo=8, hi=40)
+    return _j(wac.wac_institution_journal(top_inst=top_inst))
 
 
 @bp.route("/api/wac/affiliation-coverage")

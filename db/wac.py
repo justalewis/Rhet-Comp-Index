@@ -354,11 +354,14 @@ def wac_lasting_partnerships(min_joint=3, limit=40):
 
 # ── editors & collections (book-native, no references needed) ────────────────
 
-def wac_editor_network(top_n=220):
+def wac_editor_network(top_n=220, min_links=1):
     """Bipartite editor → contributor network. An edge links an editor of an
     edited collection to each author of a chapter in that collection.
     Nodes carry role='editor'|'author' (an editor who also wrote chapters is
-    tagged 'both')."""
+    tagged 'both').
+
+    top_n caps how many contributors are shown (the most-connected); min_links
+    drops contributors connected to fewer than that many editors (declutters)."""
     with get_conn() as conn:
         # editors per edited-book
         ed_rows = conn.execute("""
@@ -392,8 +395,8 @@ def wac_editor_network(top_n=220):
                     continue
                 author_names[au] += 1
                 edges[(ed, au)] += 1
-    # rank authors by how many editor-links they have, cap
-    top_authors = {a for a, _ in author_names.most_common(top_n)}
+    # rank authors by how many editor-links they have; drop sparse ones, cap
+    top_authors = {a for a, c in author_names.most_common(top_n) if c >= min_links}
     nodes = []
     seen = set()
     for ed in editor_names:
@@ -972,8 +975,22 @@ def wac_citation_lorenz():
         tv = [r["c"] for r in rows if r["type"] == t]
         per_type[t] = round(_gini(tv), 3)
     cited = sum(1 for c in allc if c > 0)
-    return {"points": pts, "gini": round(gini, 3), "per_type_gini": per_type,
-            "n_works": len(allc), "n_cited": cited}
+
+    # Plain-language concentration stats (allc is ascending, so the most-cited
+    # works are at the tail). These are far more legible than a Gini number.
+    n = len(allc)
+    total = sum(allc) or 1
+    def top_share(frac):
+        k = max(1, int(round(n * frac)))
+        return round(sum(allc[-k:]) / total * 100)
+    bottom_half_share = round(sum(allc[:n // 2]) / total * 100) if n else 0
+    return {
+        "points": pts, "gini": round(gini, 3), "per_type_gini": per_type,
+        "n_works": n, "n_cited": cited,
+        "top1_share": top_share(0.01),
+        "top10_share": top_share(0.10),
+        "bottom50_share": bottom_half_share,
+    }
 
 
 def wac_citations_vs_age(cap=4400):

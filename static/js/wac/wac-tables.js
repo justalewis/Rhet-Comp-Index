@@ -1,7 +1,7 @@
 // wac-tables.js — ranked-bar and table panels for the WAC dashboard.
 import {
   register, getJSON, loading, showError, $, escapeHtml, fmt,
-  TYPE_COLORS, TYPE_LABEL, typeLegend,
+  TYPE_COLORS, TYPE_LABEL, typeLegend, ctlVal, wireControl,
 } from "./wac-common.js";
 
 const authorHref = (name) => "/author/" + encodeURIComponent(name);
@@ -27,45 +27,51 @@ function portfolioRow(d, max, valueField) {
 
 // ── 2a. Cross-format portfolios ──
 register("cross-format-authors", async (card) => {
-  loading("wac-portfolios", "Loading portfolios…");
-  let data;
-  try { data = await getJSON("/api/wac/cross-format-authors?limit=60"); }
-  catch (e) { return showError("wac-portfolios", e.message); }
-  const max = Math.max(...data.map(d => d.total), 1);
-  const html = typeLegend() + '<div class="wac-port-list">' + data.map(d => portfolioRow(d, max, "total")).join("") + "</div>";
-  $("wac-portfolios").innerHTML = html;
-  const search = card.querySelector("#wac-author-search");
-  if (search && !search._wired) {
-    search._wired = true;
-    search.addEventListener("input", () => {
-      const q = search.value.trim().toLowerCase();
-      $("wac-portfolios").querySelectorAll(".wac-port-row").forEach(r => {
-        r.style.display = (!q || r.dataset.name.includes(q)) ? "" : "none";
-      });
+  const applySearch = () => {
+    const search = card.querySelector("#wac-author-search");
+    const q = (search && search.value.trim().toLowerCase()) || "";
+    $("wac-portfolios").querySelectorAll(".wac-port-row").forEach(r => {
+      r.style.display = (!q || r.dataset.name.includes(q)) ? "" : "none";
     });
-  }
+  };
+  const draw = async () => {
+    const limit = ctlVal(card, "wac-ctl-port-limit", 60);
+    const minTypes = ctlVal(card, "wac-ctl-port-mintypes", 2);
+    loading("wac-portfolios", "Loading portfolios…");
+    let data;
+    try { data = await getJSON(`/api/wac/cross-format-authors?limit=${limit}&min_types=${minTypes}`); }
+    catch (e) { return showError("wac-portfolios", e.message); }
+    if (!data.length) { $("wac-portfolios").innerHTML = '<div class="wac-empty">No authors meet that format threshold.</div>'; return; }
+    const max = Math.max(...data.map(d => d.total), 1);
+    $("wac-portfolios").innerHTML = typeLegend() + '<div class="wac-port-list">' + data.map(d => portfolioRow(d, max, "total")).join("") + "</div>";
+    applySearch();
+  };
+  const search = card.querySelector("#wac-author-search");
+  if (search && !search._wired) { search._wired = true; search.addEventListener("input", applySearch); }
+  wireControl(card, "wac-ctl-port-limit", draw);
+  wireControl(card, "wac-ctl-port-mintypes", draw);
+  await draw();
 });
 
 // ── 2b. Prolific contributors (toggle works / citations) ──
 register("prolific-authors", async (card) => {
-  loading("wac-prolific", "Loading…");
-  let data;
-  try { data = await getJSON("/api/wac/house-authors?limit=30"); }
-  catch (e) { return showError("wac-prolific", e.message); }
-  // normalize field names to the portfolio segment keys
-  const norm = data.map(d => ({
-    name: d.name, articles: d.articles, chapters: d.chapters,
-    edited: d.edited_as_author, monographs: d.monographs,
-    total: d.total, citations: d.citations,
-  }));
   let mode = "works";
-  const draw = () => {
+  const draw = async () => {
+    const limit = ctlVal(card, "wac-ctl-prolific-limit", 30);
+    loading("wac-prolific", "Loading…");
+    let data;
+    try { data = await getJSON("/api/wac/house-authors?limit=" + limit); }
+    catch (e) { return showError("wac-prolific", e.message); }
+    const norm = data.map(d => ({
+      name: d.name, articles: d.articles, chapters: d.chapters,
+      edited: d.edited_as_author, monographs: d.monographs,
+      total: d.total, citations: d.citations,
+    }));
     const sorted = norm.slice().sort((a, b) => mode === "works" ? b.total - a.total : b.citations - a.citations);
     const max = Math.max(...sorted.map(d => mode === "works" ? d.total : d.citations), 1);
     $("wac-prolific").innerHTML = typeLegend() + '<div class="wac-port-list">' +
       sorted.map(d => portfolioRow(d, max, mode === "works" ? "total" : "citations")).join("") + "</div>";
   };
-  draw();
   card.querySelectorAll("[data-sort]").forEach(btn => {
     if (btn._wired) return; btn._wired = true;
     btn.addEventListener("click", () => {
@@ -74,6 +80,8 @@ register("prolific-authors", async (card) => {
       draw();
     });
   });
+  wireControl(card, "wac-ctl-prolific-limit", draw);
+  await draw();
 });
 
 // ── 2c. Book ⇄ journal crossover ──
@@ -100,10 +108,12 @@ register("book-journal-crossover", async () => {
 });
 
 // ── 3a. Editor brokers (expandable) ──
-register("editor-brokers", async () => {
+register("editor-brokers", async (card) => {
+  const draw = async () => {
+  const limit = ctlVal(card, "wac-ctl-brokers-limit", 40);
   loading("wac-brokers", "Loading editors…");
   let data;
-  try { data = await getJSON("/api/wac/editor-brokers?limit=36"); }
+  try { data = await getJSON("/api/wac/editor-brokers?limit=" + limit); }
   catch (e) { return showError("wac-brokers", e.message); }
   const max = Math.max(...data.map(d => d.volumes), 1);
   const el = $("wac-brokers");
@@ -126,6 +136,9 @@ register("editor-brokers", async () => {
       } else det.style.display = "none";
     });
   });
+  };
+  wireControl(card, "wac-ctl-brokers-limit", draw);
+  await draw();
 });
 
 // ── 3c. Editor / author role overlap ──
@@ -147,25 +160,32 @@ register("editor-author-overlap", async () => {
 });
 
 // ── 4a. Institution feeders ──
-register("institutions", async () => {
-  loading("wac-institutions", "Loading institutions…");
-  let data;
-  try { data = await getJSON("/api/wac/institutions?limit=30"); }
-  catch (e) { return showError("wac-institutions", e.message); }
-  const max = Math.max(...data.map(d => d.works), 1);
-  $("wac-institutions").innerHTML = '<div class="wac-bars">' + data.map(d =>
-    '<div class="wac-bar-row"><span class="lbl">' + escapeHtml(d.institution) + "</span>" +
-    '<span class="wac-bar-track"><div class="wac-bar-fill" style="width:' + (d.works / max * 100) +
-    '%"><span class="wac-bar-seg" style="width:100%;background:#456b40"></span></div></span>' +
-    '<span class="val" title="' + d.authors + ' distinct authors">' + d.works + "</span></div>").join("") + "</div>";
+register("institutions", async (card) => {
+  const draw = async () => {
+    const limit = ctlVal(card, "wac-ctl-inst-limit", 30);
+    loading("wac-institutions", "Loading institutions…");
+    let data;
+    try { data = await getJSON("/api/wac/institutions?limit=" + limit); }
+    catch (e) { return showError("wac-institutions", e.message); }
+    const max = Math.max(...data.map(d => d.works), 1);
+    $("wac-institutions").innerHTML = '<div class="wac-bars">' + data.map(d =>
+      '<div class="wac-bar-row"><span class="lbl">' + escapeHtml(d.institution) + "</span>" +
+      '<span class="wac-bar-track"><div class="wac-bar-fill" style="width:' + (d.works / max * 100) +
+      '%"><span class="wac-bar-seg" style="width:100%;background:#456b40"></span></div></span>' +
+      '<span class="val" title="' + d.authors + ' distinct authors">' + d.works + "</span></div>").join("") + "</div>";
+  };
+  wireControl(card, "wac-ctl-inst-limit", draw);
+  await draw();
 });
 
 // ── 5a. The house canon (most cited) ──
 register("most-cited", async (card) => {
-  const draw = async (type) => {
+  const draw = async () => {
+    const limit = ctlVal(card, "wac-ctl-canon-limit", 40);
+    const type = ctlVal(card, "wac-canon-type", "");
     loading("wac-canon", "Loading canon…");
     let data;
-    try { data = await getJSON("/api/wac/most-cited?limit=40" + (type ? "&type=" + type : "")); }
+    try { data = await getJSON("/api/wac/most-cited?limit=" + limit + (type ? "&type=" + type : "")); }
     catch (e) { return showError("wac-canon", e.message); }
     const max = Math.max(...data.map(d => d.cited_by), 1);
     $("wac-canon").innerHTML = '<table class="wac-table"><thead><tr><th>#</th><th>Work</th><th>Venue</th><th class="num">year</th><th class="num">cited by</th></tr></thead><tbody>' +
@@ -177,13 +197,14 @@ register("most-cited", async (card) => {
         "<td class='num'>" + (d.year || "") + "</td>" +
         "<td class='num'><strong>" + fmt(d.cited_by) + "</strong></td></tr>").join("") + "</tbody></table>";
   };
-  await draw("");
   const sel = card.querySelector("#wac-canon-type");
-  if (sel && !sel._wired) { sel._wired = true; sel.addEventListener("change", () => draw(sel.value)); }
+  if (sel && !sel._wired) { sel._wired = true; sel.addEventListener("change", draw); }
+  wireControl(card, "wac-ctl-canon-limit", draw);
+  await draw();
 });
 
 // ── 6. Collections list + explorer ──
-async function loadCollection(doi) {
+async function loadCollection(doi, scroll = true) {
   const el = $("wac-explorer");
   el.innerHTML = '<div class="wac-loading">Opening collection…</div>';
   let d;
@@ -199,22 +220,34 @@ async function loadCollection(doi) {
     escapeHtml(c.title) + "</a>" + (c.authors ? " <span style='color:#9a9189'>— " + escapeHtml(c.authors) + "</span>" : "") +
     (c.cited_by ? " <span style='color:#b6afa4;font-size:0.72rem'>(" + fmt(c.cited_by) + " cites)</span>" : "") + "</li>").join("") + "</ol>";
   el.innerHTML = html;
-  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  if (scroll) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-register("collections-list", async () => {
+register("collections-list", async (card) => {
   loading("wac-collections", "Loading collections…");
   let data;
   try { data = await getJSON("/api/wac/collections"); }
   catch (e) { return showError("wac-collections", e.message); }
-  $("wac-collections").innerHTML = data.map((c, i) =>
-    "<div class='wac-coll-item' data-doi='" + escapeHtml(c.doi) + "' style='padding:0.4rem 0.3rem;border-bottom:1px solid #f3efe8;cursor:pointer;font-size:0.82rem'>" +
-    "<strong>" + escapeHtml(c.title) + "</strong> " +
-    "<span style='color:#b6afa4'>(" + (c.year || "?") + ")</span><br>" +
-    "<span style='color:#9a9189;font-size:0.76rem'>" + c.n_chapters + " chapters" +
-    (c.editors ? " · ed. " + escapeHtml(c.editors) : "") + "</span></div>").join("");
-  $("wac-collections").querySelectorAll(".wac-coll-item").forEach(item =>
-    item.addEventListener("click", () => loadCollection(item.dataset.doi)));
+  if (!data.length) { $("wac-collections").innerHTML = '<div class="wac-empty">No collections.</div>'; return; }
+  const render = () => {
+    const sort = ctlVal(card, "wac-ctl-coll-sort", "chapters");
+    const sorted = data.slice().sort((a, b) =>
+      sort === "year" ? (b.year || 0) - (a.year || 0)
+      : sort === "title" ? (a.title || "").localeCompare(b.title || "")
+      : (b.n_chapters || 0) - (a.n_chapters || 0));
+    $("wac-collections").innerHTML = sorted.map(c =>
+      "<div class='wac-coll-item' data-doi='" + escapeHtml(c.doi) + "' style='padding:0.4rem 0.3rem;border-bottom:1px solid #f3efe8;cursor:pointer;font-size:0.82rem'>" +
+      "<strong>" + escapeHtml(c.title) + "</strong> " +
+      "<span style='color:#b6afa4'>(" + (c.year || "?") + ")</span><br>" +
+      "<span style='color:#9a9189;font-size:0.76rem'>" + c.n_chapters + " chapters" +
+      (c.editors ? " · ed. " + escapeHtml(c.editors) : "") + "</span></div>").join("");
+    $("wac-collections").querySelectorAll(".wac-coll-item").forEach(item =>
+      item.addEventListener("click", () => loadCollection(item.dataset.doi)));
+  };
+  render();
+  wireControl(card, "wac-ctl-coll-sort", render);
+  // Auto-open the largest collection so the explorer panel is never blank.
+  loadCollection(data[0].doi, false);
 });
 
 register("collection-explorer", () => { /* populated by clicking a collection above */ });
