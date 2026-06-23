@@ -150,8 +150,18 @@ def test_route_count_matches_expected(client):
     #  +  2  redaction admin review page: GET /admin/redactions,
     #        GET /api/admin/redaction-request/<id>/audit
     #  +  1  /robots.txt (2026-06-20 incident: crawler guidance)
-    assert len(rules) == 90, (
-        f"Expected 90 routes, got {len(rules)}. "
+    #  + 32  WAC Clearinghouse publisher dashboard (2026-06-23): GET /wac plus
+    #        31 /api/wac/* JSON endpoints (overview, timeline, format-composition,
+    #        journals, journal-lifelines, most-cited, house-authors,
+    #        cross-format-authors, book-journal-crossover, author-spans,
+    #        coauthorship, lasting-partnerships, editor-network, editor-brokers,
+    #        editor-author-overlap, copresence, collections, collection/<doi>,
+    #        collection-anatomy, institutions, institution-journal,
+    #        affiliation-coverage, citation-lorenz, citations-vs-age,
+    #        coauthorship-trend, team-size, title-terms, title-term-series,
+    #        topics, topic-trends, spanish-spotlight). Public but unlinked.
+    assert len(rules) == 122, (
+        f"Expected 122 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 
