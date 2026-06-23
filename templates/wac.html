@@ -1,0 +1,332 @@
+{% extends "base-core.html" %}
+
+{% block title %}The WAC Clearinghouse as a Press · Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="A data portrait of the WAC Clearinghouse as a publishing house: fifty years of journals and books, cross-format author portfolios, editor brokerage, institutional feeders, and the cited canon.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/static/style-wac.css?v={{ version }}">
+{% endblock %}
+
+{% block body %}
+<div class="wac-shell">
+
+  <!-- ── Masthead ─────────────────────────────────────────── -->
+  <header class="wac-masthead">
+    <a href="/" class="wac-back">&larr; Pinakes</a>
+    <p class="wac-kicker">A publishing-house portrait</p>
+    <h1>The WAC Clearinghouse, as a Press</h1>
+    <p class="wac-dek">
+      Most of Pinakes reads the field one journal at a time. This page does the
+      opposite: it gathers everything the WAC Clearinghouse has put a DOI on —
+      <strong>{{ "{:,}".format(overview.total_works) }}</strong> works across
+      {{ overview.year_min }}–{{ overview.year_max }}, journals and books
+      together — and asks what a <em>house</em> looks like when you see its whole
+      output at once. No citation graphs live here: the Clearinghouse deposits
+      almost no reference lists, so this is a portrait drawn from authors,
+      editors, affiliations, venues, and the count of who later cited each work.
+    </p>
+
+    <div class="wac-kpis">
+      <div class="wac-kpi"><span class="n">{{ "{:,}".format(overview.total_works) }}</span><span class="l">works</span></div>
+      <div class="wac-kpi"><span class="n">{{ "{:,}".format(overview.journal_articles) }}</span><span class="l">journal articles</span></div>
+      <div class="wac-kpi"><span class="n">{{ "{:,}".format(overview.chapters) }}</span><span class="l">book chapters</span></div>
+      <div class="wac-kpi"><span class="n">{{ overview.edited_books }}</span><span class="l">edited collections</span></div>
+      <div class="wac-kpi"><span class="n">{{ overview.monographs }}</span><span class="l">monographs</span></div>
+      <div class="wac-kpi"><span class="n">{{ overview.journals }}</span><span class="l">journals</span></div>
+      <div class="wac-kpi"><span class="n">{{ "{:,}".format(overview.authors) }}</span><span class="l">contributors</span></div>
+      <div class="wac-kpi"><span class="n">{{ "{:,}".format(overview.institutions) }}</span><span class="l">institutions</span></div>
+    </div>
+    <p class="wac-jump">Jump to:
+      <a href="#glance">At a glance</a> ·
+      <a href="#authors">Authors</a> ·
+      <a href="#editors">Editors</a> ·
+      <a href="#institutions">Institutions</a> ·
+      <a href="#canon">The cited canon</a> ·
+      <a href="#books">The book program</a> ·
+      <a href="#texture">Field texture</a>
+    </p>
+  </header>
+
+  <!-- ════════ 1. THE PRESS AT A GLANCE ════════ -->
+  <section class="wac-section" id="glance">
+    <h2>1 · The press at a glance</h2>
+    <p class="wac-lede">Fifty years of output across a journal program and a book
+      program, shown together as one publishing organism.</p>
+
+    <div class="wac-card wac-wide" data-viz="timeline">
+      <div class="wac-card-head">
+        <h3>Output over time, by work type</h3>
+        <div class="wac-controls">
+          <button class="wac-btn" data-toggle="normalize">Show as share (100%)</button>
+        </div>
+      </div>
+      <div class="wac-chart-wrap"><canvas id="wac-timeline"></canvas></div>
+      <p class="wac-note">Book bands legitimately begin later — the press launched
+        its book program decades after its first journals.</p>
+    </div>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="format-composition">
+        <div class="wac-card-head"><h3>The catalog, by format and venue</h3></div>
+        <div id="wac-treemap" class="wac-canvas wac-h420"></div>
+        <p class="wac-note">Two branches — journals and books. The
+          {{ "{:,}".format(overview.chapters) }} book chapters are the press's
+          largest single mass of content.</p>
+      </div>
+      <div class="wac-card" data-viz="journal-lifelines">
+        <div class="wac-card-head"><h3>Journal lifelines</h3></div>
+        <div id="wac-lifelines" class="wac-canvas wac-h420"></div>
+        <p class="wac-note">One lane per journal, first to last article year.
+          Faded lanes are dormant venues; ⟶ marks an editorial succession.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 2. AUTHORS ACROSS THE WHOLE CATALOG ════════ -->
+  <section class="wac-section" id="authors">
+    <h2>2 · Authors across the whole catalog</h2>
+    <p class="wac-lede">The publisher-only payoff: a scholar's entire footprint —
+      monograph, edited collection, chapter, and journal article — a shape no
+      single journal can assemble.</p>
+
+    <div class="wac-card wac-wide" data-viz="cross-format-authors">
+      <div class="wac-card-head">
+        <h3>Cross-format portfolios <span class="wac-flag">flagship</span></h3>
+        <div class="wac-controls">
+          <input type="search" id="wac-author-search" class="wac-search" placeholder="Find an author…">
+        </div>
+      </div>
+      <div id="wac-portfolios" class="wac-canvas"></div>
+      <p class="wac-note">Authors who appear in two or more formats, ranked by
+        total works. Identity is matched on name strings (no ORCID): close
+        namesakes may merge, and name variants may split.</p>
+    </div>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="prolific-authors">
+        <div class="wac-card-head">
+          <h3>Most-published contributors</h3>
+          <div class="wac-controls">
+            <button class="wac-btn is-on" data-sort="works">by works</button>
+            <button class="wac-btn" data-sort="citations">by citations</button>
+          </div>
+        </div>
+        <div id="wac-prolific" class="wac-canvas"></div>
+      </div>
+      <div class="wac-card" data-viz="book-journal-crossover">
+        <div class="wac-card-head"><h3>Book ⇄ journal crossover</h3></div>
+        <div id="wac-crossover" class="wac-canvas wac-h360"></div>
+        <p class="wac-note">How many of the press's authors work only in its
+          journals, only in its books, or in both. Set overlap of names, not
+          verified identity.</p>
+      </div>
+    </div>
+
+    <div class="wac-card wac-wide" data-viz="author-spans">
+      <div class="wac-card-head"><h3>Careers in the catalog</h3></div>
+      <div id="wac-spans" class="wac-canvas"></div>
+      <p class="wac-note">Each prolific author's first-to-last work, one dot per
+        work colored by format. Gaps are real, not missing data.</p>
+    </div>
+  </section>
+
+  <!-- ════════ 3. EDITORS AS FIELD-BROKERS ════════ -->
+  <section class="wac-section" id="editors">
+    <h2>3 · Editors as field-brokers</h2>
+    <p class="wac-lede">The curators a per-journal lens never names: who assembles
+      the press's edited collections, and how many scholars they bring into print.</p>
+
+    <div class="wac-card wac-wide" data-viz="editor-brokers">
+      <div class="wac-card-head"><h3>Who convenes the collections</h3></div>
+      <div id="wac-brokers" class="wac-canvas"></div>
+      <p class="wac-note">Editors ranked by volumes edited and distinct chapter
+        authors convened. Click a row to walk an editor's volumes.</p>
+    </div>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="editor-network">
+        <div class="wac-card-head"><h3>Editor → contributor network</h3></div>
+        <div id="wac-editor-net" class="wac-canvas wac-h480"></div>
+        <p class="wac-note">An edge links an editor to each author of a chapter in
+          their collection. Squares are editors; circles, contributors.</p>
+      </div>
+      <div class="wac-card" data-viz="editor-author-overlap">
+        <div class="wac-card-head"><h3>The broker/author duality</h3></div>
+        <div id="wac-overlap" class="wac-canvas wac-h480"></div>
+        <p class="wac-note">How many names edit, how many write, and who does both.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 4. WHO FEEDS THE CATALOG ════════ -->
+  <section class="wac-section" id="institutions">
+    <h2>4 · Who feeds the catalog</h2>
+    <p class="wac-lede">Which universities supply the press's authors across every
+      venue combined — read off raw, lightly-normalized affiliation strings, with
+      coverage stated up front.</p>
+
+    <div class="wac-card wac-wide" data-viz="institutions">
+      <div class="wac-card-head"><h3>Institutions feeding the whole catalog</h3></div>
+      <div id="wac-institutions" class="wac-canvas"></div>
+      <p class="wac-note" id="wac-inst-note">Derived from CrossRef affiliation
+        strings (no ROR, no geography). Editorial-office stamps — a journal's home
+        institution deposited on every article — have been filtered out.</p>
+    </div>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="institution-journal">
+        <div class="wac-card-head"><h3>Where institutions cluster</h3></div>
+        <div id="wac-inst-heatmap" class="wac-canvas wac-h480"></div>
+        <p class="wac-note">Top institutions × journals. Darker cells mark a school
+          with a strong presence in one venue.</p>
+      </div>
+      <div class="wac-card" data-viz="affiliation-coverage">
+        <div class="wac-card-head"><h3>How complete is this?</h3></div>
+        <div class="wac-chart-wrap wac-h360"><canvas id="wac-coverage"></canvas></div>
+        <p class="wac-note">Share of author records that carry any affiliation, by
+          decade and format. The institution charts above are only as good as this.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 5. THE CITED CANON ════════ -->
+  <section class="wac-section" id="canon">
+    <h2>5 · The cited canon</h2>
+    <p class="wac-lede">What the field actually built on — ranked by inbound
+      CrossRef citations, books and articles side by side, with attention's heavy
+      concentration made explicit.</p>
+
+    <div class="wac-card wac-wide" data-viz="most-cited">
+      <div class="wac-card-head">
+        <h3>The house canon</h3>
+        <div class="wac-controls">
+          <select id="wac-canon-type" class="wac-select">
+            <option value="">All formats</option>
+            <option value="journal-article">Journal articles</option>
+            <option value="book-chapter">Chapters</option>
+            <option value="monograph">Monographs</option>
+            <option value="edited-book">Edited collections</option>
+          </select>
+        </div>
+      </div>
+      <div id="wac-canon" class="wac-canvas"></div>
+      <p class="wac-note">Inbound CrossRef citation count — a partial signal
+        ({{ "{:,}".format(overview.cited_works) }} of
+        {{ "{:,}".format(overview.total_works) }} works are cited at all), not a
+        measure of total scholarly impact.</p>
+    </div>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="citation-lorenz">
+        <div class="wac-card-head"><h3>How concentrated is attention?</h3></div>
+        <div class="wac-chart-wrap wac-h360"><canvas id="wac-lorenz"></canvas></div>
+        <p class="wac-note" id="wac-gini-note">A Lorenz curve of citations; the
+          further it bows, the more attention pools in a few works.</p>
+      </div>
+      <div class="wac-card" data-viz="citations-vs-age">
+        <div class="wac-card-head"><h3>Citations vs. age</h3></div>
+        <div class="wac-chart-wrap wac-h360"><canvas id="wac-age"></canvas></div>
+        <p class="wac-note">Each work by year and inbound citations, with the
+          per-year median. A descriptive accrual view — not a half-life claim.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 6. ANATOMY OF THE BOOK PROGRAM ════════ -->
+  <section class="wac-section" id="books">
+    <h2>6 · Anatomy of the book program</h2>
+    <p class="wac-lede">The half of the house a journal view never sees: how edited
+      collections are built, and how to walk any one of them from cover to
+      contributors.</p>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="collection-anatomy">
+        <div class="wac-card-head"><h3>How big is a collection?</h3></div>
+        <div class="wac-chart-wrap wac-h360"><canvas id="wac-anatomy"></canvas></div>
+        <p class="wac-note" id="wac-anatomy-note">Chapters per edited volume.</p>
+      </div>
+      <div class="wac-card" data-viz="collections-list">
+        <div class="wac-card-head"><h3>The collections</h3></div>
+        <div id="wac-collections" class="wac-canvas wac-h360 wac-scroll"></div>
+        <p class="wac-note">Every edited collection, by size. Pick one to open it.</p>
+      </div>
+    </div>
+
+    <div class="wac-card wac-wide" data-viz="collection-explorer">
+      <div class="wac-card-head"><h3>Collection explorer</h3></div>
+      <div id="wac-explorer" class="wac-canvas">
+        <p class="wac-empty">Choose a collection from the list above to walk it
+          from cover to chapters to contributors.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ 7. FIELD TEXTURE ════════ -->
+  <section class="wac-section" id="texture">
+    <h2>7 · Field texture</h2>
+    <p class="wac-lede">Lighter-grain views — how collaboration grew, what the
+      titles talk about, the press's relational fabric, and its one cross-language
+      venue.</p>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="coauthorship-trend">
+        <div class="wac-card-head"><h3>From solo to collaborative</h3></div>
+        <div class="wac-chart-wrap wac-h360"><canvas id="wac-collab"></canvas></div>
+        <p class="wac-note">Share of multi-author works and mean authors per work,
+          by year.</p>
+      </div>
+      <div class="wac-card" data-viz="team-size">
+        <div class="wac-card-head"><h3>Team size over the decades</h3></div>
+        <div class="wac-chart-wrap wac-h360"><canvas id="wac-team"></canvas></div>
+        <p class="wac-note">Each decade's mix of solo, pair, trio, and larger teams.</p>
+      </div>
+    </div>
+
+    <div class="wac-card wac-wide" data-viz="title-terms">
+      <div class="wac-card-head">
+        <h3>What the titles talk about</h3>
+        <div class="wac-controls">
+          <input type="text" id="wac-term-input" class="wac-search" placeholder="terms, comma-separated (e.g. AI, antiracist)">
+          <button class="wac-btn" id="wac-term-go">Plot</button>
+        </div>
+      </div>
+      <div class="wac-chart-wrap wac-h420"><canvas id="wac-terms"></canvas></div>
+      <p class="wac-note">Titles are the only text the Clearinghouse deposits — no
+        abstracts — so this tracks title vocabulary, not topics.</p>
+    </div>
+
+    <div class="wac-grid-2">
+      <div class="wac-card" data-viz="copresence">
+        <div class="wac-card-head"><h3>Who shares a binding</h3></div>
+        <div id="wac-copresence" class="wac-canvas wac-h480"></div>
+        <p class="wac-note">Authors linked when they have chapters in the same
+          edited collection — a citation-free relational map the book program makes
+          possible.</p>
+      </div>
+      <div class="wac-card" data-viz="spanish-spotlight">
+        <div class="wac-card-head"><h3>The cross-language edge</h3></div>
+        <div id="wac-spanish" class="wac-canvas wac-h480 wac-scroll"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wac-footer">
+    <p>Built from a CrossRef harvest of DOI prefix <code>10.37514</code>
+      ({{ "{:,}".format(overview.total_works) }} works, {{ overview.year_min }}–{{ overview.year_max }}).
+      A descriptive portrait, not a ranking. Author identity is name-string based;
+      institutions are derived from raw affiliation strings; citation counts are
+      inbound CrossRef only. No outbound-reference / citation-network analysis is
+      possible from this catalog.</p>
+    <p class="wac-back-foot"><a href="/">&larr; Back to Pinakes</a></p>
+  </footer>
+
+</div>
+{% endblock %}
+
+{% block body_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12"></script>
+<script type="module" src="/static/js/wac/wac-loader.js?v={{ version }}"></script>
+{% endblock %}

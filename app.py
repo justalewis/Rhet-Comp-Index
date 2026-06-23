@@ -135,6 +135,32 @@ def _run_background_fetch(deep=False):
         _fetch_lock.release()
 
 
+# ── WAC dashboard data bootstrap ────────────────────────────────────────────
+
+def _ensure_wac_data():
+    """Populate wac_works/wac_authors from the committed slim CrossRef dump if
+    they are empty. Prod-only (Fly): the DB is on a persistent volume that the
+    deploy doesn't overwrite, so the first boot after this feature ships finds
+    empty tables. Local dev and tests run `python ingest_wac.py` instead, so
+    they are skipped here. Non-fatal: a failure just leaves /wac empty."""
+    if not os.environ.get("FLY_APP_NAME"):
+        return
+    try:
+        from db import get_conn
+        with get_conn() as conn:
+            if conn.execute("SELECT COUNT(*) FROM wac_works").fetchone()[0]:
+                return  # already populated on this volume
+        dump = os.path.join(os.path.dirname(__file__), "data", "wac_crossref_dump.jsonl")
+        if not os.path.exists(dump):
+            log.warning("WAC dump not found at %s; /wac will be empty.", dump)
+            return
+        from ingest_wac import ingest
+        works, people = ingest(dump)
+        log.info("WAC dashboard populated on startup: %d works, %d author-rows.", works, people)
+    except Exception as e:  # noqa: BLE001 — never block app startup on this
+        log.warning("WAC startup ingest skipped (non-fatal): %s", e)
+
+
 # ── Factory ─────────────────────────────────────────────────────────────────
 
 def create_app() -> Flask:
@@ -155,6 +181,13 @@ def create_app() -> Flask:
 
     # Initialise DB at app construction so gunicorn workers find the schema.
     init_db()
+
+    # Populate the WAC publisher-dashboard tables on first prod boot. The DB
+    # lives on a Fly volume that git never touches, so the v13 migration creates
+    # wac_works/wac_authors but not their rows. Ingest once from the committed
+    # slim CrossRef dump when empty. Gated to Fly so local dev and tests (which
+    # populate via `python ingest_wac.py`) are unaffected.
+    _ensure_wac_data()
 
     # SECRET_KEY: signs the Datastories session cookie (and any future signed
     # cookies). Must be stable across worker processes for a multi-worker
@@ -240,6 +273,7 @@ def create_app() -> Flask:
     from blueprints.institutions import bp as institutions_bp
     from blueprints.admin        import bp as admin_bp
     from blueprints.redaction    import bp as redaction_bp
+    from blueprints.wac          import bp as wac_bp
 
     flask_app.register_blueprint(main_bp)
     flask_app.register_blueprint(articles_bp)
@@ -250,6 +284,9 @@ def create_app() -> Flask:
     flask_app.register_blueprint(institutions_bp)
     flask_app.register_blueprint(admin_bp)
     flask_app.register_blueprint(redaction_bp)
+    # WAC Clearinghouse publisher dashboard — public but intentionally NOT in
+    # the nav (reachable only by URL at /wac).
+    flask_app.register_blueprint(wac_bp)
 
     # Datastories blueprint — always registered. The landing page at
     # /datastories is public; the tools at /datastories/tools and the

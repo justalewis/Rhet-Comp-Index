@@ -526,6 +526,70 @@ def _migrate_v11_to_v12(conn):
     log.info("v11→v12 migration complete (redaction request queue + audit ready).")
 
 
+def _migrate_v12_to_v13(conn):
+    """Add the WAC Clearinghouse publisher-dashboard tables (v12 → v13).
+
+    The /wac page profiles the WAC Clearinghouse AS A PRESS — the whole
+    catalog under DOI prefix 10.37514 (journal articles + book chapters +
+    edited collections + monographs), which otherwise lives split across the
+    `articles` and `books` tables. Rather than UNION those two differently-
+    shaped tables on every request, the dashboard reads a denormalized,
+    purpose-built pair of tables rebuilt idempotently from a CrossRef harvest
+    by ingest_wac.py:
+
+      wac_works    — one row per work (any type), with type, year, journal/
+                     container, parent-book linkage, inbound citation count,
+                     and auto-tags.
+      wac_authors  — one row per (work, person), author OR editor, carrying
+                     the raw CrossRef affiliation string plus a lightly
+                     normalized institution (OpenAlex-enriched where the DOI
+                     overlaps the articles table).
+
+    These tables are READ-ONLY to the web app; only ingest_wac.py writes them.
+    Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS wac_works (
+            doi         TEXT    PRIMARY KEY,
+            type        TEXT,
+            title       TEXT,
+            year        INTEGER,
+            pub_date    TEXT,
+            journal     TEXT,
+            container   TEXT,
+            parent_doi  TEXT,
+            isbn        TEXT,
+            pages       TEXT,
+            cited_by    INTEGER DEFAULT 0,
+            n_authors   INTEGER DEFAULT 0,
+            n_editors   INTEGER DEFAULT 0,
+            tags        TEXT,
+            url         TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_wac_works_type   ON wac_works(type);
+        CREATE INDEX IF NOT EXISTS idx_wac_works_year   ON wac_works(year);
+        CREATE INDEX IF NOT EXISTS idx_wac_works_journal ON wac_works(journal);
+        CREATE INDEX IF NOT EXISTS idx_wac_works_parent ON wac_works(parent_doi);
+
+        CREATE TABLE IF NOT EXISTS wac_authors (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            work_doi        TEXT    NOT NULL,
+            seq             INTEGER,
+            name            TEXT    NOT NULL,
+            family          TEXT,
+            role            TEXT,
+            affiliation_raw TEXT,
+            institution     TEXT,
+            country         TEXT,
+            is_person       INTEGER DEFAULT 1
+        );
+        CREATE INDEX IF NOT EXISTS idx_wac_authors_work ON wac_authors(work_doi);
+        CREATE INDEX IF NOT EXISTS idx_wac_authors_name ON wac_authors(name);
+        CREATE INDEX IF NOT EXISTS idx_wac_authors_inst ON wac_authors(institution);
+    """)
+    log.info("v12→v13 migration complete (WAC publisher tables ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -567,6 +631,9 @@ def init_db():
 
         # Always run v12 migration — idempotent via IF NOT EXISTS.
         _migrate_v11_to_v12(conn)
+
+        # Always run v13 migration — idempotent via IF NOT EXISTS.
+        _migrate_v12_to_v13(conn)
 
         conn.commit()
 
