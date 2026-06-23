@@ -204,7 +204,14 @@ register("most-cited", async (card) => {
 });
 
 // ── 6. Collections list + explorer ──
+let _collections = null, _currentDoi = null;
+async function getCollections() {
+  if (!_collections) _collections = await getJSON("/api/wac/collections");
+  return _collections;
+}
+
 async function loadCollection(doi, scroll = true) {
+  _currentDoi = doi;
   const el = $("wac-explorer");
   el.innerHTML = '<div class="wac-loading">Opening collection…</div>';
   let d;
@@ -220,13 +227,15 @@ async function loadCollection(doi, scroll = true) {
     escapeHtml(c.title) + "</a>" + (c.authors ? " <span style='color:#9a9189'>— " + escapeHtml(c.authors) + "</span>" : "") +
     (c.cited_by ? " <span style='color:#b6afa4;font-size:0.72rem'>(" + fmt(c.cited_by) + " cites)</span>" : "") + "</li>").join("") + "</ol>";
   el.innerHTML = html;
+  const sel = $("wac-explorer-select");
+  if (sel && sel.value !== doi) sel.value = doi;
   if (scroll) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 register("collections-list", async (card) => {
   loading("wac-collections", "Loading collections…");
   let data;
-  try { data = await getJSON("/api/wac/collections"); }
+  try { data = await getCollections(); }
   catch (e) { return showError("wac-collections", e.message); }
   if (!data.length) { $("wac-collections").innerHTML = '<div class="wac-empty">No collections.</div>'; return; }
   const render = () => {
@@ -246,11 +255,29 @@ register("collections-list", async (card) => {
   };
   render();
   wireControl(card, "wac-ctl-coll-sort", render);
-  // Auto-open the largest collection so the explorer panel is never blank.
-  loadCollection(data[0].doi, false);
 });
 
-register("collection-explorer", () => { /* populated by clicking a collection above */ });
+// The explorer is self-contained: its dropdown selects any of the 100+ edited
+// collections and expands it; clicking the browse list above drives the same
+// panel (and keeps the dropdown in sync).
+register("collection-explorer", async () => {
+  let data;
+  try { data = await getCollections(); }
+  catch (e) { return showError("wac-explorer", e.message); }
+  if (!data.length) { $("wac-explorer").innerHTML = '<div class="wac-empty">No collections.</div>'; return; }
+  const sel = $("wac-explorer-select");
+  if (sel && !sel._wired) {
+    sel._wired = true;
+    sel.innerHTML = data.map(c => {
+      const t = c.title.length > 70 ? c.title.slice(0, 69) + "…" : c.title;
+      return "<option value='" + escapeHtml(c.doi) + "'>" + escapeHtml(t) +
+        " (" + (c.year || "?") + ") — " + c.n_chapters + " ch.</option>";
+    }).join("");
+    sel.addEventListener("change", () => loadCollection(sel.value));
+  }
+  if (_currentDoi && sel) sel.value = _currentDoi;
+  if (!_currentDoi) loadCollection(data[0].doi, false);
+});
 
 // ── 7e. Spanish-language spotlight ──
 register("spanish-spotlight", async () => {

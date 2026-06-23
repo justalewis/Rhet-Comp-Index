@@ -331,11 +331,20 @@
     </div>
 
     <div class="wac-card wac-wide" data-viz="collection-explorer">
-      <div class="wac-card-head"><h3>Collection explorer</h3></div>
-      <div id="wac-explorer" class="wac-canvas">
-        <p class="wac-empty">Choose a collection from the list above to walk it
-          from cover to chapters to contributors.</p>
+      <div class="wac-card-head">
+        <h3>Collection explorer</h3>
+        <div class="wac-controls">
+          <label class="wac-ctl">collection
+            <select id="wac-explorer-select" class="wac-select" style="min-width:16rem;max-width:26rem"></select>
+          </label>
+        </div>
       </div>
+      <div id="wac-explorer" class="wac-canvas">
+        <p class="wac-empty">Loading…</p>
+      </div>
+      <p class="wac-note">Pick any of the {{ overview.edited_books }} edited
+        collections above — or click one in the list — to walk it from cover to
+        chapters to contributors.</p>
     </div>
   </section>
 
