@@ -22,7 +22,10 @@ name: Weekly maintenance
 
 on:
   schedule:
-    - cron: '0 4 * * 0'
+    # 04:23 UTC Sundays (off the hour to dodge GitHub's ':00' throttling),
+    # an hour after that day's 03:23 fetch. The maintenance pipeline waits on
+    # the shared _fetch_lock, so it's safe even if the fetch runs long.
+    - cron: '23 4 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -32,11 +35,26 @@ jobs:
     steps:
       - name: POST /api/admin/run-maintenance
         run: |
-          response=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -X POST https://pinakes.xyz/api/admin/run-maintenance \
-            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}")
-          echo "HTTP status: $response"
-          if [ "$response" != "200" ]; then
-            echo "::error::POST /api/admin/run-maintenance returned $response"
+          # Transient-tolerant retry (503 under load / worker recycle); 409
+          # means a maintenance run is already in progress — benign.
+          ok=""
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
+              -X POST https://pinakes.xyz/api/admin/run-maintenance \
+              -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" || echo "000")
+            echo "Attempt $attempt: HTTP $response"
+            case "$response" in
+              200|202) ok="started"; break ;;
+              409)     echo "Maintenance already in progress (409) — fine."
+                       ok="already-running"; break ;;
+              *)       if [ "$attempt" -lt 5 ]; then
+                         echo "Transient response $response; retrying in 60s..."
+                         sleep 60
+                       fi ;;
+            esac
+          done
+          if [ -z "$ok" ]; then
+            echo "::error::POST /api/admin/run-maintenance did not succeed after retries (last: $response)"
             exit 1
           fi
+          echo "Result: $ok"

@@ -11,9 +11,11 @@ name: Daily fetch + backup
 
 on:
   schedule:
-    # 03:00 UTC daily. Cron syntax: minute hour day month dow.
-    # Note: GitHub Actions cron is best-effort and may delay several minutes.
-    - cron: '0 3 * * *'
+    # 03:23 UTC daily. Cron syntax: minute hour day month dow.
+    # NOT on the hour: GitHub throttles ':00' crons hard — these runs were
+    # firing ~3.5h late (06:40) or being dropped entirely. An off-peak minute
+    # schedules far more reliably. Still best-effort; may delay a few minutes.
+    - cron: '23 3 * * *'
   # Manual trigger from the Actions tab for testing or emergency runs.
   workflow_dispatch:
 
@@ -24,14 +26,33 @@ jobs:
     steps:
       - name: POST /fetch (async; returns 200 immediately, fetch runs in background)
         run: |
-          response=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -X POST https://pinakes.xyz/fetch \
-            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}")
-          echo "HTTP status: $response"
-          if [ "$response" != "200" ]; then
-            echo "::error::POST /fetch returned $response"
+          # Retry transient failures. The single-machine origin can briefly
+          # return 503 under load or while the worker recycles; 409 means a
+          # fetch is already running (the _fetch_lock doing its job). Both are
+          # benign — not workflow failures. Only a persistent error after all
+          # retries reds the job. (incident 2026-06-26: a transient 503 here
+          # hard-failed the daily cron.)
+          ok=""
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
+              -X POST https://pinakes.xyz/fetch \
+              -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" || echo "000")
+            echo "Attempt $attempt: HTTP $response"
+            case "$response" in
+              200|202) ok="started"; break ;;
+              409)     echo "A fetch is already running (409) — nothing to do."
+                       ok="already-running"; break ;;
+              *)       if [ "$attempt" -lt 5 ]; then
+                         echo "Transient response $response; retrying in 60s..."
+                         sleep 60
+                       fi ;;
+            esac
+          done
+          if [ -z "$ok" ]; then
+            echo "::error::POST /fetch did not succeed after retries (last: $response)"
             exit 1
           fi
+          echo "Result: $ok"
 
   prewarm:
     name: Trigger /api/admin/prewarm
@@ -49,14 +70,30 @@ jobs:
 
       - name: POST /api/admin/prewarm
         run: |
-          response=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -X POST https://pinakes.xyz/api/admin/prewarm \
-            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}")
-          echo "HTTP status: $response"
-          if [ "$response" != "200" ]; then
-            echo "::error::POST /api/admin/prewarm returned $response"
+          # Same transient-tolerant retry as /fetch. Pre-warming is a
+          # nice-to-have (the cache rebuilds lazily on first visit anyway), so
+          # a transient blip must never red the workflow.
+          ok=""
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
+              -X POST https://pinakes.xyz/api/admin/prewarm \
+              -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" || echo "000")
+            echo "Attempt $attempt: HTTP $response"
+            case "$response" in
+              200|202) ok="warmed"; break ;;
+              409)     echo "Prewarm already in progress (409) — fine."
+                       ok="already-running"; break ;;
+              *)       if [ "$attempt" -lt 5 ]; then
+                         echo "Transient response $response; retrying in 60s..."
+                         sleep 60
+                       fi ;;
+            esac
+          done
+          if [ -z "$ok" ]; then
+            echo "::error::POST /api/admin/prewarm did not succeed after retries (last: $response)"
             exit 1
           fi
+          echo "Result: $ok"
 
   backup:
     name: Trigger /api/admin/run-backup
@@ -82,16 +119,28 @@ jobs:
           # actual backup surfaces in `fly logs` as "Backup succeeded:
           # {...}" / "Backup failed: {...}" lines, and the heartbeat
           # file at /data/scheduler.heartbeat is touched on success.
-          response=$(curl -sS -X POST https://pinakes.xyz/api/admin/run-backup \
-            -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" \
-            -w "\nHTTP_STATUS:%{http_code}")
-          status=$(echo "$response" | grep "^HTTP_STATUS:" | cut -d: -f2)
-          body=$(echo "$response" | sed '/^HTTP_STATUS:/d')
-          echo "HTTP status: $status"
-          echo "Response body:"
-          echo "$body" | head -50
+          # Retry a transient kick-off failure (503 under load / worker
+          # recycle) before reding the job; a genuine misconfiguration still
+          # surfaces in the response body and fails after retries.
+          status=""
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -sS --max-time 60 -X POST https://pinakes.xyz/api/admin/run-backup \
+              -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" \
+              -w "\nHTTP_STATUS:%{http_code}" || echo "HTTP_STATUS:000")
+            status=$(echo "$response" | grep "^HTTP_STATUS:" | cut -d: -f2)
+            body=$(echo "$response" | sed '/^HTTP_STATUS:/d')
+            echo "Attempt $attempt: HTTP $status"
+            if [ "$status" = "200" ]; then
+              echo "Response body:"; echo "$body" | head -50
+              break
+            fi
+            if [ "$attempt" -lt 5 ]; then
+              echo "Transient response $status; retrying in 60s..."
+              sleep 60
+            fi
+          done
           if [ "$status" != "200" ]; then
-            echo "::error::Backup kick-off failed with status $status"
+            echo "::error::Backup kick-off failed with status $status after retries"
             exit 1
           fi
           echo "Backup kicked off. Watch fly logs for completion summary."

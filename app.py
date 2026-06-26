@@ -315,6 +315,18 @@ def datastories_enabled():
 app = create_app()
 
 
+# Start the memory watchdog under gunicorn (production). It recycles this
+# worker if its footprint climbs past the threshold while no fetch is running,
+# so slow RSS growth self-heals instead of OOM-wedging the box (incident
+# 2026-06-26). No-op on non-Linux and in tests/dev (FLASK_ENV != production).
+if os.environ.get("FLASK_ENV") == "production":
+    try:
+        from mem_watchdog import start as _start_mem_watchdog
+        _start_mem_watchdog()
+    except Exception:
+        log.exception("Could not start memory watchdog")
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_ENV") != "production"

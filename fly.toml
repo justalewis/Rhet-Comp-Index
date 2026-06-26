@@ -58,6 +58,14 @@
 app = 'rhet-comp-index'
 primary_region = 'iad'
 
+# Swap cushion. The machine is a single point of failure with no redundancy;
+# a small swap turns a memory spike into transient slowness instead of a hard
+# OOM that wedges the box (incident 2026-06-26: RSS climbed to the 1GB ceiling
+# over ~3 days with no swap → load 8+, 0 MB available, multi-hour outage). The
+# memory watchdog (app.py) recycles the worker before it ever reaches swap; this
+# is the backstop if the watchdog is somehow outpaced.
+swap_size_mb = 512
+
 [build]
 
 [env]
@@ -78,9 +86,15 @@ primary_region = 'iad'
   min_machines_running = 1
 
   [http_service.concurrency]
+    # Keep these aligned with gunicorn's thread count (8, see Dockerfile).
+    # The old 25/20 let Fly's proxy push 25 concurrent connections at a worker
+    # that can only serve 8 at once, so 17 piled up on the one machine and
+    # deepened the queue when responses got slow (incident 2026-06-26). With
+    # the limit near the thread count, Fly load-sheds at the proxy instead of
+    # choking the box, and the health probe still gets a slot.
     type = 'connections'
-    hard_limit = 25
-    soft_limit = 20
+    hard_limit = 12
+    soft_limit = 8
 
   [[http_service.checks]]
     # Fly's check is a *readiness* concern — should this machine receive
@@ -94,6 +108,10 @@ primary_region = 'iad'
     path = "/health/ready"
 
 [[vm]]
-  memory = '1gb'
+  # Bumped 1gb → 2gb after the 2026-06-26 OOM outage. A 1GB box was undersized
+  # for the workload (NetworkX graph endpoints + per-thread SQLite page caches +
+  # 8 gthread threads + steady bot traffic); RSS ratcheted to the ceiling over
+  # days. 2GB gives headroom; the watchdog + swap handle any residual growth.
+  memory = '2gb'
   cpus = 1
-  memory_mb = 1024
+  memory_mb = 2048
