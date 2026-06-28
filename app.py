@@ -273,6 +273,7 @@ def create_app() -> Flask:
     from blueprints.institutions import bp as institutions_bp
     from blueprints.admin        import bp as admin_bp
     from blueprints.redaction    import bp as redaction_bp
+    from blueprints.tags         import bp as tags_bp
     from blueprints.wac          import bp as wac_bp
 
     flask_app.register_blueprint(main_bp)
@@ -284,6 +285,9 @@ def create_app() -> Flask:
     flask_app.register_blueprint(institutions_bp)
     flask_app.register_blueprint(admin_bp)
     flask_app.register_blueprint(redaction_bp)
+    # Community tags — public 👍/👎 + suggestion endpoints on the article page;
+    # the moderation queue at /admin/user-tags is token-gated client-side.
+    flask_app.register_blueprint(tags_bp)
     # WAC Clearinghouse publisher dashboard — public but intentionally NOT in
     # the nav (reachable only by URL at /wac).
     flask_app.register_blueprint(wac_bp)

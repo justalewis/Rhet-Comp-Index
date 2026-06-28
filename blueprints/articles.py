@@ -12,8 +12,10 @@ from db import (
     get_article_affiliations,
     get_coverage_stats,
     search_articles_autocomplete,
+    get_approved_user_tags,
 )
 from journals import UNAVAILABLE_JOURNALS
+from tagger import TAG_NAMES
 from rate_limit import limiter, LIMITS
 from web_helpers import _safe_int
 
@@ -71,6 +73,7 @@ def article_detail(article_id):
     all_refs            = get_article_all_references(article_id)
     in_index_count      = sum(1 for r in all_refs if r["in_index"])
     author_affiliations = get_article_affiliations(article_id)
+    approved_user_tags  = get_approved_user_tags(article_id)
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     coverage_stats = get_coverage_stats()
@@ -93,6 +96,8 @@ def article_detail(article_id):
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
         journal_coverage=journal_coverage,
+        approved_user_tags=approved_user_tags,
+        tag_vocab=TAG_NAMES,
     )
 
 

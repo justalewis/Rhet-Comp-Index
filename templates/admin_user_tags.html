@@ -1,0 +1,198 @@
+{% extends "base-core.html" %}
+
+{% block title %}Tag Suggestions — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/about">About</a>
+        <a href="/admin/redactions">Redactions</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="about-content" style="max-width:54rem;">
+    <h1 class="about-title">Tag Suggestions</h1>
+    <p style="color:#6a655c;">Reader-proposed topics awaiting review. Approving makes a tag public on its article and filterable across the index; rejecting hides it. Feedback votes on classifier tags aren&rsquo;t decided here — they&rsquo;re signal for tuning <code>tagger.py</code>. Nothing loads without your admin token.</p>
+
+    <!-- ── Token gate ─────────────────────────────────────────── -->
+    <div id="token-bar" style="margin:1.4rem 0;padding:1rem;border:1px solid var(--border,#e0dccf);border-radius:6px;background:#faf8f3;">
+      <label style="font-weight:600;font-size:0.9rem;">Admin token</label>
+      <div style="font-size:0.84rem;color:#6a655c;margin:0.2rem 0 0.5rem;">Your <code>PINAKES_ADMIN_TOKEN</code>. Held only in this tab (sessionStorage); cleared when you close it.</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <input type="password" id="token-input" autocomplete="off" placeholder="Bearer token"
+               style="flex:1;min-width:16rem;padding:0.5rem;font-family:var(--font-mono,monospace);">
+        <button id="connect-btn" class="fetch-btn" style="padding:0.5rem 1.2rem;">Connect</button>
+      </div>
+      <div id="token-error" style="color:#9a2a2a;font-size:0.85rem;margin-top:0.5rem;display:none;"></div>
+    </div>
+
+    <div id="toolbar" style="display:none;margin:0.6rem 0 1rem;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+      <button id="refresh-btn" class="fetch-btn" style="padding:0.4rem 1rem;">Refresh</button>
+      <button id="history-btn" class="fetch-btn" style="padding:0.4rem 1rem;">Load decided history</button>
+      <button id="lock-btn" class="fetch-btn" style="padding:0.4rem 1rem;background:#7a7268;">Forget token</button>
+      <span id="status-msg" style="color:#6a655c;font-size:0.85rem;"></span>
+    </div>
+
+    <div id="queue"></div>
+  </main>
+
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot; <a href="/about">About</a> &middot; <a href="/admin/redactions">Redactions</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
+  </footer>
+</div>
+
+<style>
+  .req-card { border:1px solid var(--border,#e0dccf); border-radius:6px; padding:0.9rem 1.1rem; margin-bottom:0.8rem; background:#fff; }
+  .req-name { font-size:1.05rem; font-weight:700; }
+  .req-meta { font-size:0.84rem; color:#6a655c; margin-top:0.25rem; line-height:1.6; }
+  .req-meta code { background:#f2efe8; padding:0.05rem 0.3rem; border-radius:3px; }
+  .req-meta a { color:#2a3a55; }
+  .badge { display:inline-block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:0.12rem 0.5rem; border-radius:10px; }
+  .badge-pending  { background:#f6efda; color:#8a6d1a; }
+  .badge-approved { background:#e3f0e3; color:#2c4a3a; }
+  .badge-rejected { background:#f0e3e3; color:#7a2a2a; }
+  .badge-vocab    { background:#e3e9f0; color:#2a3a55; }
+  .badge-novel    { background:#efe7f0; color:#553a55; }
+  .req-actions { margin-top:0.7rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .btn-approve { background:#2c4a3a; color:#fff; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .btn-deny    { background:none; color:#5a544c; border:1px solid var(--border,#cfc9bb); padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .section-head { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#8a8276; margin:1.2rem 0 0.6rem; }
+</style>
+
+<script>
+(function () {
+  const KEY = 'pinakes-admin-token';
+  const $ = (id) => document.getElementById(id);
+
+  const tok = () => sessionStorage.getItem(KEY) || '';
+  const headers = (extra) => Object.assign({ 'Authorization': 'Bearer ' + tok() }, extra || {});
+
+  async function api(path, method, body) {
+    const opts = { method: method || 'GET', headers: headers() };
+    if (body !== undefined) {
+      opts.headers = headers({ 'Content-Type': 'application/json' });
+      opts.body = JSON.stringify(body);
+    }
+    const resp = await fetch(path, opts);
+    if (resp.status === 401 || resp.status === 403) { gateError('Token rejected (' + resp.status + ').'); throw new Error('auth'); }
+    if (resp.status === 503) { gateError('Server has no admin token configured.'); throw new Error('503'); }
+    return resp;
+  }
+
+  function gateError(msg) {
+    sessionStorage.removeItem(KEY);
+    $('token-bar').style.display = 'block';
+    $('toolbar').style.display = 'none';
+    const e = $('token-error'); e.textContent = msg; e.style.display = 'block';
+  }
+
+  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function fmt(ts) { return ts ? esc(ts) + ' UTC' : '—'; }
+
+  function card(r) {
+    const st = r.status;
+    const actions = (st === 'pending')
+      ? `<div class="req-actions">
+           <button class="btn-approve" data-id="${r.id}" data-act="approve" data-tag="${esc(r.tag)}">Approve</button>
+           <button class="btn-deny" data-id="${r.id}" data-act="reject" data-tag="${esc(r.tag)}">Reject</button>
+         </div>`
+      : '';
+    const vocab = r.in_vocab
+      ? '<span class="badge badge-vocab">in vocabulary</span>'
+      : '<span class="badge badge-novel">novel term</span>';
+    const votes = (r.votes && r.votes > 1) ? ` · ${r.votes} suggestions` : '';
+    return `<div class="req-card" id="card-${r.id}">
+      <div><span class="req-name">${esc(r.tag)}</span>
+        <span class="badge badge-${st}">${esc(st)}</span> ${vocab}</div>
+      <div class="req-meta">
+        Suggestion #${r.id}${votes}<br>
+        on <a href="/article/${r.article_id}" target="_blank" rel="noopener">${esc(r.article_title)}</a>
+        <span style="color:#8a8276;">(${esc(r.article_journal)})</span><br>
+        suggested ${fmt(r.created_at)}${r.decided_at ? ' · decided ' + fmt(r.decided_at) + ' by ' + esc(r.decided_by) : ''}
+      </div>
+      ${actions}
+    </div>`;
+  }
+
+  function section(title, rows) {
+    if (!rows.length) return '';
+    return `<div class="section-head">${title} (${rows.length})</div>` + rows.map(card).join('');
+  }
+
+  async function load() {
+    setStatus('Loading…');
+    const resp = await api('/api/admin/user-tags?status=pending');
+    const data = await resp.json();
+    const rows = data.user_tags || [];
+    let html = rows.length ? section('Awaiting review', rows)
+                           : '<p style="color:#6a655c;">No pending suggestions.</p>';
+    $('queue').innerHTML = html;
+    $('token-bar').style.display = 'none';
+    $('toolbar').style.display = 'flex';
+    wireCards();
+    setStatus(rows.length + ' pending. ' + new Date().toLocaleTimeString());
+  }
+
+  async function loadHistory() {
+    setStatus('Loading history…');
+    const [a, d] = await Promise.all([
+      api('/api/admin/user-tags?status=approved').then(r => r.json()),
+      api('/api/admin/user-tags?status=rejected').then(r => r.json()),
+    ]);
+    const decided = [...(a.user_tags || []), ...(d.user_tags || [])]
+      .sort((x, y) => (y.decided_at || '').localeCompare(x.decided_at || ''));
+    let block = $('history-block');
+    if (!block) { block = document.createElement('div'); block.id = 'history-block'; $('queue').appendChild(block); }
+    block.innerHTML = decided.length ? section('Decided', decided) : '<div class="section-head">Decided (0)</div><p style="color:#6a655c;">None yet.</p>';
+    wireCards();
+    setStatus('History loaded.');
+  }
+
+  function wireCards() {
+    document.querySelectorAll('.btn-approve, .btn-deny').forEach(b => {
+      b.onclick = () => decide(b.getAttribute('data-id'), b.getAttribute('data-act'), b.getAttribute('data-tag'));
+    });
+  }
+
+  async function decide(id, act, tag) {
+    if (act === 'approve' && !confirm('Approve "' + tag + '"?\n\nIt becomes public on its article and filterable across the index.')) return;
+    setStatus((act === 'approve' ? 'Approving' : 'Rejecting') + ' #' + id + '…');
+    try {
+      const resp = await api('/api/admin/user-tags/' + id + '/decide', 'POST', { decision: act });
+      const data = await resp.json();
+      if (!resp.ok) { setStatus('Error: ' + (data.error || resp.status)); return; }
+      await load();
+    } catch (e) { /* gateError already shown */ }
+  }
+
+  function setStatus(m) { $('status-msg').textContent = m; }
+
+  function connect() {
+    const v = $('token-input').value.trim();
+    if (!v) return;
+    sessionStorage.setItem(KEY, v);
+    $('token-input').value = '';
+    $('token-error').style.display = 'none';
+    load().catch(() => {});
+  }
+
+  $('connect-btn').onclick = connect;
+  $('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+  $('refresh-btn').onclick = () => load().catch(() => {});
+  $('history-btn').onclick = () => loadHistory().catch(() => {});
+  $('lock-btn').onclick = () => { sessionStorage.removeItem(KEY); location.reload(); };
+
+  if (tok()) load().catch(() => {});
+})();
+</script>
+{% endblock %}

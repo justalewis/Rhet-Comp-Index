@@ -966,3 +966,18 @@ def auto_tag(title: str | None, abstract: str | None) -> str | None:
         return None
 
     return "|" + "|".join(matched) + "|"
+
+
+# ── Public vocabulary surface ───────────────────────────────────────────────────
+# The controlled vocabulary, exposed for the community-tag feature: the article
+# page renders TAG_NAMES into a <datalist> for suggestion autocomplete, and
+# is_vocab_tag() decides whether a visitor-proposed tag matches the taxonomy
+# (an in-vocab suggestion is a classifier miss worth fast-tracking; an
+# out-of-vocab one is a candidate new term). Tag names are already lowercase.
+TAG_NAMES = tuple(VOCAB.keys())
+_TAG_NAME_SET = frozenset(TAG_NAMES)
+
+
+def is_vocab_tag(tag: str | None) -> bool:
+    """True iff `tag` (case-insensitively) is one of the 61 classifier tags."""
+    return bool(tag) and tag.strip().lower() in _TAG_NAME_SET

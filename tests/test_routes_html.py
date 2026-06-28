@@ -160,8 +160,12 @@ def test_route_count_matches_expected(client):
     #        affiliation-coverage, citation-lorenz, citations-vs-age,
     #        coauthorship-trend, team-size, title-terms, title-term-series,
     #        topics, topic-trends, spanish-spotlight). Public but unlinked.
-    assert len(rules) == 122, (
-        f"Expected 122 routes, got {len(rules)}. "
+    #  +  5  community tags (2026-06-28): POST /api/articles/<id>/tag-feedback,
+    #        POST /api/articles/<id>/suggest-tag (public, rate-limited),
+    #        GET /api/admin/user-tags, POST /api/admin/user-tags/<id>/decide,
+    #        GET /admin/user-tags (moderation page; token-gated client-side).
+    assert len(rules) == 127, (
+        f"Expected 127 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

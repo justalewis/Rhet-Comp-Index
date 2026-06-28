@@ -590,6 +590,62 @@ def _migrate_v12_to_v13(conn):
     log.info("v12→v13 migration complete (WAC publisher tables ready).")
 
 
+def _migrate_v13_to_v14(conn):
+    """Add the community tag tables: user_tags + tag_feedback (v13 → v14).
+
+    These hold visitor contributions and are deliberately SEPARATE from
+    articles.tags. The classifier (tagger.py) owns articles.tags and retag.py
+    rewrites that column wholesale; anything user-submitted that lived there
+    would be clobbered on the next retag. So:
+
+      user_tags    — visitor-proposed topic tags, moderated. status is
+                     pending|approved|rejected; UNIQUE(article_id, tag) collapses
+                     duplicate suggestions (votes counts corroboration, an admin
+                     signal — moderation is the real gate). in_vocab flags
+                     whether the tag matches the 61-term classifier vocabulary.
+                     Approved rows are unioned into the tag filter at read time
+                     (see _build_where) and rendered alongside classifier tags.
+      tag_feedback — 👍/👎 on an EXISTING classifier tag. UNIQUE(article_id, tag,
+                     client_ip) gives one vote per IP per tag (a re-POST flips
+                     it). Never changes articles.tags; it's signal for tuning the
+                     classifier triggers by hand.
+
+    Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS user_tags (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            article_id  INTEGER NOT NULL REFERENCES articles(id),
+            tag         TEXT    NOT NULL,
+            in_vocab    INTEGER NOT NULL DEFAULT 0,
+            status      TEXT    NOT NULL DEFAULT 'pending',
+            votes       INTEGER NOT NULL DEFAULT 1,
+            client_ip   TEXT,
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+            decided_at  TEXT,
+            decided_by  TEXT,
+            UNIQUE(article_id, tag)
+        );
+        CREATE INDEX IF NOT EXISTS idx_user_tags_article
+            ON user_tags(article_id);
+        CREATE INDEX IF NOT EXISTS idx_user_tags_status
+            ON user_tags(status);
+
+        CREATE TABLE IF NOT EXISTS tag_feedback (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            article_id  INTEGER NOT NULL REFERENCES articles(id),
+            tag         TEXT    NOT NULL,
+            vote        INTEGER NOT NULL,
+            client_ip   TEXT,
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(article_id, tag, client_ip)
+        );
+        CREATE INDEX IF NOT EXISTS idx_tag_feedback_article
+            ON tag_feedback(article_id);
+    """)
+    log.info("v13→v14 migration complete (community tag tables ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -634,6 +690,9 @@ def init_db():
 
         # Always run v13 migration — idempotent via IF NOT EXISTS.
         _migrate_v12_to_v13(conn)
+
+        # Always run v14 migration — idempotent via IF NOT EXISTS.
+        _migrate_v13_to_v14(conn)
 
         conn.commit()
 
@@ -692,9 +751,25 @@ def _build_where(journal=None, source=None, q=None,
         params.append(f"{year_to}-12-31")
 
     if tag:
-        # Tags stored as "|tag1|tag2|" — match a complete tag entry
-        where.append("a.tags LIKE ?")
+        # Classifier tags are stored denormalized as "|tag1|tag2|" — match a
+        # complete entry. An article also matches if a visitor-proposed tag of
+        # the same name has been APPROVED (the crowdsourced layer is a
+        # first-class filter target); the subquery is only added when a tag
+        # filter is active, so untagged queries pay nothing.
+        #
+        # Approved user tags are stored lowercase (normalize_tag) and SQLite LIKE
+        # is case-insensitive for ASCII, so we lowercase the incoming tag to keep
+        # BOTH predicates case-insensitive — a hand-typed mixed-case ?tag= URL
+        # then matches community tags the same way it matches classifier tags.
+        # (Approved tags are filterable here but, by design for v1, are not
+        # surfaced in the global tag cloud / sidebar, which read articles.tags
+        # only; reaching one means clicking it on an article or typing the URL.)
+        where.append(
+            "(a.tags LIKE ? OR a.id IN "
+            "(SELECT article_id FROM user_tags WHERE tag = ? AND status = 'approved'))"
+        )
         params.append(f"%|{tag}|%")
+        params.append(tag.lower())
 
     clause = ("WHERE " + " AND ".join(where)) if where else ""
     return clause, params

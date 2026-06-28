@@ -453,6 +453,130 @@ a:hover { color: var(--link-hover); text-decoration: underline; }
   text-decoration: none;
 }
 
+/* ── Community tag feedback (article page) ─────────────────────── */
+.article-tags--feedback {
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0;
+}
+
+.topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+/* The ▲/▼ "does this fit?" control. Visible but understated so the tag row
+   stays scannable; it strengthens on hover/focus. */
+.tag-vote {
+  display: inline-flex;
+  gap: 0.05rem;
+  opacity: 0.35;
+  transition: opacity 0.12s;
+}
+.topic-chip:hover .tag-vote,
+.topic-chip:focus-within .tag-vote,
+.tag-vote.is-busy { opacity: 1; }
+
+.tag-vote-btn {
+  font-family: var(--font-ui);
+  font-size: 0.55rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 0.1em 0.2em;
+  cursor: pointer;
+}
+.tag-vote-btn:hover { color: var(--text); background: var(--active-bg); }
+.tag-vote-btn.is-active {
+  color: var(--accent, #2C4A3A);
+  border-color: var(--accent, #2C4A3A);
+}
+.tag-vote.is-busy .tag-vote-btn { cursor: default; }
+
+/* Reader-contributed (approved) tags — tinted to distinguish from classifier
+   tags, with a small leading mark. */
+.article-tag--community {
+  color: var(--accent, #2C4A3A);
+  background: color-mix(in srgb, var(--accent, #2C4A3A) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #2C4A3A) 30%, var(--border));
+}
+.article-tag--community::before {
+  content: "+ ";
+  opacity: 0.7;
+}
+.article-tag--community:hover {
+  background: color-mix(in srgb, var(--accent, #2C4A3A) 14%, transparent);
+  color: var(--accent-hover, #1F3A2C);
+}
+
+.topics-empty {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Suggest-a-topic disclosure */
+.tag-suggest { margin-top: 0.5rem; }
+.tag-suggest-toggle {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tag-suggest-toggle:hover { color: var(--accent, #2C4A3A); }
+
+.tag-suggest-form {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  max-width: 26rem;
+}
+.tag-suggest-input {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg, #fff);
+  color: var(--text);
+}
+.tag-suggest-input:focus {
+  outline: none;
+  border-color: var(--accent, #2C4A3A);
+}
+.tag-suggest-submit {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  padding: 0.3rem 0.8rem;
+  color: #fff;
+  background: var(--accent, #2C4A3A);
+  border: 1px solid var(--accent, #2C4A3A);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.tag-suggest-submit:hover { background: var(--accent-hover, #1F3A2C); }
+.tag-suggest-submit:disabled { opacity: 0.6; cursor: default; }
+
+.tag-suggest-msg {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  margin-top: 0.4rem;
+  min-height: 1em;
+  color: var(--text-muted);
+}
+.tag-suggest-msg.is-ok   { color: var(--accent, #2C4A3A); }
+.tag-suggest-msg.is-warn { color: #9a2a2a; }
+
 /* ── CrossRef subject keywords ─────────────────────────────────── */
 .article-keywords {
   margin-top: 0.3rem;

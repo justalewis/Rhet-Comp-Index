@@ -69,6 +69,11 @@ LIMITS: dict[str, str] = {
     # Public author-redaction request form. Low cap so a script can't flood the
     # admin review queue or trigger verification-email spam.
     "redaction_request": "5 per hour",
+    # Community tags. Votes are cheap and low-stakes (never change anything on
+    # their own), so a more generous cap; suggestions enter a human review queue,
+    # so a tighter cap that still lets a genuine reader tag a few articles.
+    "tag_feedback":   "40 per hour",
+    "tag_suggestion": "10 per hour",
 }
 
 

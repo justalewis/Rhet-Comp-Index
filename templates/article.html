@@ -180,18 +180,53 @@
         <dd>{{ article.keywords }}</dd>
         {% endif %}
 
-        {% if article.tags %}
         <dt>Topics</dt>
-        <dd>
-          <div class="article-tags" style="display:inline-flex;margin-top:0;">
+        <dd class="topics-dd" data-article-id="{{ article.id }}">
+          <div class="article-tags article-tags--feedback">
+            {% if article.tags %}
             {% for t in article.tags.strip('|').split('|') %}
-            {% if t.strip() %}
-            <a class="article-tag" href="/?tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
+            {% set tag = t.strip() %}
+            {% if tag %}
+            <span class="topic-chip" data-tag="{{ tag }}">
+              <a class="article-tag" href="/?tag={{ tag | urlencode }}">{{ tag }}</a>
+              <span class="tag-vote" role="group" aria-label="Does “{{ tag }}” fit this article?">
+                <button type="button" class="tag-vote-btn" data-vote="1"
+                        title="This topic fits" aria-label="This topic fits">&#9650;</button>
+                <button type="button" class="tag-vote-btn" data-vote="-1"
+                        title="This topic doesn’t fit" aria-label="This topic doesn’t fit">&#9660;</button>
+              </span>
+            </span>
             {% endif %}
             {% endfor %}
+            {% endif %}
+
+            {% for t in approved_user_tags %}
+            <a class="article-tag article-tag--community" href="/?tag={{ t | urlencode }}"
+               title="Topic contributed by a reader">{{ t }}</a>
+            {% endfor %}
+
+            {% if not article.tags and not approved_user_tags %}
+            <span class="topics-empty">No topics yet.</span>
+            {% endif %}
           </div>
+
+          <div class="tag-suggest">
+            <button type="button" class="tag-suggest-toggle" aria-expanded="false">
+              + Suggest a topic
+            </button>
+            <form class="tag-suggest-form" hidden>
+              <input type="text" class="tag-suggest-input" name="tag" list="tag-vocab-list"
+                     maxlength="60" autocomplete="off" spellcheck="false"
+                     aria-label="Suggest a topic for this article"
+                     placeholder="Start typing — pick a topic or add your own">
+              <button type="submit" class="tag-suggest-submit">Suggest</button>
+            </form>
+            <div class="tag-suggest-msg" role="status" aria-live="polite"></div>
+          </div>
+          <datalist id="tag-vocab-list">
+            {% for v in tag_vocab %}<option value="{{ v }}"></option>{% endfor %}
+          </datalist>
         </dd>
-        {% endif %}
 
         <dt>Export</dt>
         <dd class="export-links">
@@ -372,4 +407,8 @@
     </div>
     {% endif %}
 
+{% endblock %}
+
+{% block body_scripts %}
+<script src="/static/js/tag-feedback.js?v={{ version }}" defer></script>
 {% endblock %}
