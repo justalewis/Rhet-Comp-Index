@@ -60,6 +60,7 @@ from web_helpers import (  # noqa: F401
     not_found, server_error, rate_limit_exceeded,
     set_security_headers, redirect_www, block_denied_ips,
     require_cloudflare_origin,
+    shed_expensive_load, release_expensive_slot,
 )
 
 log = logging.getLogger(__name__)
@@ -255,10 +256,17 @@ def create_app() -> Flask:
     # before any routing, rate-limiting, or DB work (incident 2026-06-20).
     # require_cloudflare_origin (off unless PINAKES_CLOUDFLARE_ONLY is set)
     # then rejects public direct-to-origin traffic that bypasses Cloudflare.
+    # shed_expensive_load then caps concurrency on the expensive read endpoints
+    # so an IP-rotating scrape flood can't occupy every worker thread (incident
+    # 2026-07-05); redirect_www runs before it so www→apex redirects and denied
+    # traffic never consume a load-shed slot. release_expensive_slot frees the
+    # slot in teardown, on every request outcome.
     flask_app.before_request(block_denied_ips)
     flask_app.before_request(require_cloudflare_origin)
     flask_app.before_request(redirect_www)
+    flask_app.before_request(shed_expensive_load)
     flask_app.after_request(set_security_headers)
+    flask_app.teardown_request(release_expensive_slot)
 
     # Error handlers
     register_error_handlers(flask_app)

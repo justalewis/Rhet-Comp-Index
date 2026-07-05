@@ -12,8 +12,10 @@ import re
 import time
 from functools import wraps
 
+import threading
+
 from flask import (
-    jsonify, make_response, redirect, render_template, request,
+    g, jsonify, make_response, redirect, render_template, request,
 )
 
 from health import APP_VERSION
@@ -231,6 +233,80 @@ def redirect_www():
     """Redirect www.pinakes.xyz → pinakes.xyz (301 permanent)."""
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", "", 1), code=301)
+
+
+# ── Load-shedding for the expensive read endpoints ──────────────────────────
+# A distributed, IP-rotating botnet can't be caught by per-IP rate limiting or
+# the CIDR denylist (incident 2026-07-05): it walked the expensive read
+# endpoints — /explore?seed=N, /article/N, /author/, /citations, /export, each
+# 5–18 s of graph/DB work — from a fresh IP per request until every gthread
+# worker thread was stuck and Fly's proxy 503'd *everything*, health checks
+# included. Cloudflare "Under Attack Mode" is the edge fix, but it's a manual
+# toggle. This is the always-on backstop: cap how many expensive requests run
+# concurrently at fewer than the worker's thread count, so no flood — from any
+# source — can occupy every thread. Cheap pages, the JSON API, /health, static,
+# and the admin/cron routes are never shed; they always find a free thread.
+# When the cap is full, an expensive request is refused instantly with 503 +
+# Retry-After instead of queuing behind seconds of work.
+#
+# One process (gunicorn --workers 1), so this module-level semaphore governs
+# all threads. The cap is read once at import; change it via the
+# PINAKES_MAX_EXPENSIVE_INFLIGHT env var + a restart. Keep it below the gthread
+# thread count (currently 8) so cheap paths and health always have headroom.
+
+# Trailing slashes on /article/ and /author/ so the detail routes match but the
+# cheap list pages (/articles, /authors) do NOT. /citations and /explore and
+# /export have no cheaper sibling to worry about; the /api/citations/* graph
+# routes start with /api and so never match here.
+_EXPENSIVE_PREFIXES = ("/explore", "/export", "/citations", "/article/", "/author/")
+
+_MAX_EXPENSIVE_INFLIGHT = _safe_int(
+    os.environ.get("PINAKES_MAX_EXPENSIVE_INFLIGHT"), 6, lo=1, hi=1000
+)
+_EXPENSIVE_SEMAPHORE = threading.BoundedSemaphore(_MAX_EXPENSIVE_INFLIGHT)
+
+
+def _is_expensive_path(path):
+    return path.startswith(_EXPENSIVE_PREFIXES)
+
+
+def shed_expensive_load():
+    """before_request hook: bound concurrency on the expensive read endpoints.
+    Acquire a slot without blocking; if the cap is full, refuse instantly with
+    503 + Retry-After rather than queue behind long graph/DB work and starve
+    the worker. Non-expensive paths pass through untouched. The slot is freed
+    in release_expensive_slot (teardown), which runs on every outcome."""
+    if not _is_expensive_path(request.path):
+        return None
+    if _EXPENSIVE_SEMAPHORE.acquire(blocking=False):
+        g._loadshed_held = True
+        return None
+    log.warning(
+        "load-shed 503: path=%s ip=%s",
+        request.path,
+        request.headers.get("Fly-Client-IP") or request.remote_addr,
+    )
+    resp = make_response(
+        "<!doctype html><meta charset=utf-8><title>Busy</title>"
+        "<p>The server is briefly overloaded. Please retry in a few seconds.</p>",
+        503,
+    )
+    # Sensible default; Flask-Limiter (headers_enabled) may overwrite this with
+    # the current limit window in its after_request pass. Either value is fine.
+    resp.headers["Retry-After"] = "5"
+    return resp
+
+
+def release_expensive_slot(exc=None):
+    """teardown_request hook: release the slot acquired by shed_expensive_load,
+    if this request held one. teardown runs on success and on exception, so a
+    slot is never leaked. The g flag makes double-release impossible."""
+    if g.pop("_loadshed_held", False):
+        try:
+            _EXPENSIVE_SEMAPHORE.release()
+        except ValueError:
+            # Defensive: g flag already guarantees one release per acquire.
+            pass
 
 
 def format_period(period):
