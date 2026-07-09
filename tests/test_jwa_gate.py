@@ -21,7 +21,9 @@ def test_jwa_401_without_credentials(client, monkeypatch):
     monkeypatch.setenv("PINAKES_JWA_PASSWORD", "secret")
     resp = client.get("/jwa/")
     assert resp.status_code == 401
-    assert "Basic" in resp.headers.get("WWW-Authenticate", "")
+    wa = resp.headers.get("WWW-Authenticate", "")
+    assert "Basic" in wa
+    wa.encode("latin-1")  # header values must be Latin-1 encodable or gunicorn 500s the response
 
 
 def test_jwa_401_with_wrong_credentials(client, monkeypatch):

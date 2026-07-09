@@ -24,7 +24,9 @@ bp = Blueprint("jwa", __name__)
 
 # Repo-root/jwa-webtext — the committed static bundle.
 _JWA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "jwa-webtext")
-_REALM = 'Basic realm="Pinakes — JWA preview", charset="UTF-8"'
+# ASCII only — HTTP header values must be Latin-1 encodable, or gunicorn rejects
+# the response with InvalidHeader (an em-dash here 500'd the 401 auth prompt).
+_REALM = 'Basic realm="Pinakes JWA preview"'
 
 
 def _authorized() -> bool:
