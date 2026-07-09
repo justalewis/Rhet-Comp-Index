@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch a Claim Get Built — Pinakes flagship (prototype)</title>
+<style>
+  :root{--ink:#23271f;--muted:#6b7167;--bg:#f6f3ec;--paper:#fffdf8;--green:#2f6b4f;
+    --green-d:#204a37;--rule:#e3ddd0;--accent:#b5651d;--hi:#eaf1ea;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:19px/1.62 Georgia,'Iowan Old Style',Charter,serif;}
+  a{color:var(--green-d);}
+  /* cover */
+  .cover{max-width:760px;margin:0 auto;padding:72px 24px 8px;}
+  .kicker{font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--green);margin-bottom:16px;}
+  .cover h1{font-size:37px;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .35em;}
+  .cover .sub{color:var(--muted);font-size:16px;}
+  .cover .lede{font-size:20px;color:#33382e;margin:24px 0;}
+  .howto{background:var(--hi);border:1px solid #d6e2d6;border-left:4px solid var(--green);
+    border-radius:8px;padding:16px 18px;font-size:15px;line-height:1.55;color:#373d33;margin:22px 0;}
+  .howto b{color:var(--green-d);}
+  /* scrolly stage */
+  .stage{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;}
+  .narr{padding:14vh 0 24vh;}
+  .beat{min-height:82vh;display:flex;flex-direction:column;justify-content:center;}
+  .beat .n{font:600 12px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+  .beat h2{font-size:24px;line-height:1.2;margin:0 0 10px;}
+  .beat p{margin:12px 0;}
+  .beat p .q{color:var(--green-d);font-style:italic;}
+  /* sticky instrument */
+  .instr-wrap{position:relative;}
+  .instr{position:sticky;top:0;height:100vh;display:flex;align-items:center;}
+  .panel-card{width:100%;background:var(--paper);border:1px solid var(--rule);border-radius:10px;
+    box-shadow:0 2px 14px rgba(0,0,0,.06);padding:20px 22px;}
+  .panel{display:none;}
+  .panel.on{display:block;animation:fade .5s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .tool-tag{font:600 11px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.1em;
+    text-transform:uppercase;color:#fff;background:var(--green);padding:4px 9px;border-radius:4px;}
+  .tool-tag.live{background:var(--accent);}
+  .panel h3{font:600 15px -apple-system,Segoe UI,Roboto,sans-serif;margin:14px 0 4px;color:var(--green-d);}
+  .panel .src{font:12px -apple-system,Segoe UI,Roboto,sans-serif;color:var(--muted);margin-top:12px;}
+  /* ranked list */
+  ol.rank{list-style:none;margin:12px 0 0;padding:0;counter-reset:r;}
+  ol.rank li{counter-increment:r;display:grid;grid-template-columns:26px 1fr auto;gap:10px;
+    align-items:baseline;padding:11px 0;border-bottom:1px solid var(--rule);font-size:15px;}
+  ol.rank li:before{content:counter(r);font-weight:700;color:var(--accent);font:700 15px -apple-system,sans-serif;}
+  ol.rank .cite{font:700 15px -apple-system,sans-serif;color:var(--green-d);white-space:nowrap;}
+  ol.rank .meta{color:var(--muted);font-size:13px;}
+  /* co-citation pairs */
+  .pairs{margin:12px 0 0;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;}
+  .pairs .pr{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--rule);}
+  .pairs .pr.lead{font-size:16px;}
+  .pairs .w{color:var(--accent);font-weight:700;}
+  /* table 2 */
+  table.t2{width:100%;border-collapse:collapse;margin-top:10px;font:13px -apple-system,Segoe UI,Roboto,sans-serif;}
+  table.t2 th,table.t2 td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.t2 th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
+  table.t2 tr.hi td{background:var(--hi);}
+  table.t2 .lab{font-weight:600;color:var(--ink);}
+  table.t2 .anchor{color:var(--muted);font-size:11.5px;}
+  /* temporal chart */
+  #te-svg{width:100%;height:auto;display:block;font:12px -apple-system,Segoe UI,Roboto,sans-serif;}
+  .ctrls{margin:10px 0 2px;font:13px -apple-system,Segoe UI,Roboto,sans-serif;}
+  .ctrls label{display:inline-flex;align-items:center;gap:6px;margin-right:14px;cursor:pointer;}
+  .ctrls .sw{width:20px;height:3px;border-radius:2px;display:inline-block;}
+  .readout{min-height:18px;font:12.5px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:var(--muted);margin-top:4px;}
+  /* payoff + footer */
+  .payoff{max-width:760px;margin:0 auto;padding:6vh 24px 4vh;}
+  .payoff .claim{font-size:23px;line-height:1.4;color:var(--green-d);border-left:4px solid var(--green);
+    padding:6px 0 6px 20px;margin:16px 0;}
+  footer{border-top:1px solid var(--rule);background:var(--paper);margin-top:20px;}
+  footer .in{max-width:760px;margin:0 auto;padding:30px 24px 56px;color:var(--muted);font-size:14px;line-height:1.55;}
+  code{background:#eee9de;padding:1px 5px;border-radius:4px;font-size:13px;}
+  /* progress rail */
+  .rail{position:fixed;left:14px;top:50%;transform:translateY(-50%);z-index:5;display:flex;flex-direction:column;gap:9px;}
+  .rail a{width:9px;height:9px;border-radius:50%;background:#cdc7b8;border:0;padding:0;display:block;transition:.2s;}
+  .rail a.on{background:var(--green);transform:scale(1.35);}
+  @media (max-width:820px){
+    .stage{grid-template-columns:1fr;gap:0;}
+    .instr{position:sticky;top:0;height:56vh;background:var(--bg);z-index:2;padding-top:8px;}
+    .beat{min-height:auto;padding:26px 0;}
+    .rail{display:none;}
+  }
+</style></head>
+<body>
+
+<div class="cover">
+  <div class="kicker">Flagship prototype &middot; interactive companion</div>
+  <h1>Watch a claim get built</h1>
+  <div class="sub">from &ldquo;Discipline-Specific Bibliometrics from the Margins&rdquo; &middot; for <em>The Journal of Writing Analytics</em></div>
+  <p class="lede">The article&rsquo;s extended example makes a claim no single tool can: that social-justice
+  technical communication has become the structural center of the field&rsquo;s citation network &mdash;
+  and got there fast. Here you don&rsquo;t read that claim assembled; you <em>watch it</em>, one instrument at a time.</p>
+  <div class="howto"><b>How to read this:</b> scroll the text on the right. The instrument on the left
+  re-tools itself to match &mdash; the same four Pinakes tools the prose walks through, ending on a
+  <b>live</b> chart you can toggle and hover. Data is the June&nbsp;2026 snapshot, shipped inside this page.</div>
+</div>
+
+<nav class="rail" id="rail"></nav>
+
+<div class="stage">
+  <!-- INSTRUMENT (sticky, left) -->
+  <div class="instr-wrap"><div class="instr"><div class="panel-card">
+
+    <div class="panel on" data-beat="1">
+      <span class="tool-tag">Most Cited</span>
+      <h3>Which work does the field cite most?</h3>
+      <ol class="rank">
+        <li><span><b>The Technical Communicator as Advocate</b><br><span class="meta">Jones, 2016 &middot; J. Tech. Writing &amp; Comm.</span></span><span class="cite">159&times;</span></li>
+        <li><span><b>Disrupting the Past to Disrupt the Future</b><br><span class="meta">Jones, Moore &amp; Walton, 2016 &middot; TCQ</span></span><span class="cite">155&times;</span></li>
+        <li><span><b>Rethinking Genre in School and Society</b><br><span class="meta">Russell, 1997 &middot; Written Communication</span></span><span class="cite">146&times;</span></li>
+      </ol>
+      <div class="src">Internal citation count, as of June 2026. Russell had ~3 decades to accrue; the top two had ~8 years.</div>
+    </div>
+
+    <div class="panel" data-beat="2">
+      <span class="tool-tag">Co-citation</span>
+      <h3>Do they travel together?</h3>
+      <div class="pairs">
+        <div class="pr lead"><span>Jones &amp; Walton</span><span class="w">128</span></div>
+        <div class="pr"><span>Agboka &amp; Jones</span><span class="w">&bull;</span></div>
+        <div class="pr"><span>Agboka &amp; Walton</span><span class="w">&bull;</span></div>
+        <div class="pr"><span>Moore &amp; Jones</span><span class="w">&bull;</span></div>
+      </div>
+      <div class="src">Joint citations &mdash; two works cited by the same third work. The strongest pairs are all one research area.</div>
+    </div>
+
+    <div class="panel" data-beat="3">
+      <span class="tool-tag">Community Detection</span>
+      <h3>Table 2 &mdash; all-time vs. 2010&ndash;present</h3>
+      <table class="t2">
+        <tr><th>#</th><th>All-time</th><th>2010&ndash;present</th></tr>
+        <tr><td>1</td><td><span class="lab">Genre theory &amp; social construction</span> (82)<br><span class="anchor">Russell; Bruffee; Schryer</span></td>
+            <td><span class="lab">Composition &amp; writing studies</span> (85)<br><span class="anchor">Hayes; Reiff &amp; Bawarshi; McNamara</span></td></tr>
+        <tr class="hi"><td>2</td><td><span class="lab">Social justice technical comm.</span> (79)<br><span class="anchor">Jones; Jones, Moore &amp; Walton; Haas</span></td>
+            <td><span class="lab">Social justice technical comm.</span> (74)<br><span class="anchor">Jones; Jones, Moore &amp; Walton; Haas</span></td></tr>
+        <tr><td>3</td><td><span class="lab">Cognitive process</span> (55)<br><span class="anchor">Flower &amp; Hayes; Downs &amp; Wardle; Carter</span></td>
+            <td><span class="lab">Digital &amp; networked tech comm.</span> (58)<br><span class="anchor">Pigg; Swarts; Blythe et al.</span></td></tr>
+        <tr><td>Q</td><td>Modularity = 0.60</td><td>Modularity = 0.68</td></tr>
+      </table>
+      <div class="src">Louvain partition, min. 3 internal citations. The social-justice-TC community (highlighted) holds #2 in both; genre/social-construction drops out of the recent top tier.</div>
+    </div>
+
+    <div class="panel" data-beat="4">
+      <span class="tool-tag live">Temporal Evolution &middot; live</span>
+      <h3>The field consolidating (5-year windows)</h3>
+      <div class="ctrls" id="te-ctrls"></div>
+      <svg id="te-svg" viewBox="0 0 660 300" role="img" aria-label="Temporal network evolution"></svg>
+      <div class="readout" id="te-readout">Hover a window to read its values.</div>
+      <div class="src">Largest connected component across the last three complete windows: <b>~29% &rarr; 43% &rarr; 60%</b>. Snapshot shipped with this page.</div>
+    </div>
+
+  </div></div></div>
+
+  <!-- NARRATIVE (scrolls, right) -->
+  <div class="narr">
+    <section class="beat" data-beat="1" id="b1">
+      <div class="n">The question</div>
+      <h2>Start with a ranking</h2>
+      <p><span class="q">&ldquo;Counting only the citations in the index, which work does the field cite most?&rdquo;</span>
+      The Most Cited page answers directly: Natasha Jones&rsquo;s &ldquo;The Technical Communicator as Advocate&rdquo;
+      (2016) leads at 159 internal citations, then Jones, Moore &amp; Walton (2016) at 155, then David
+      Russell&rsquo;s &ldquo;Rethinking Genre in School and Society&rdquo; (1997) at 146.</p>
+      <p>But a ranking hides a puzzle. Russell&rsquo;s article had almost three decades to accrete citations;
+      the two works above it had only eight years, and Jones authored both. Is that two unusually fast
+      articles, or a larger shift reorganizing the field?</p>
+    </section>
+
+    <section class="beat" data-beat="2" id="b2">
+      <div class="n">Do they hold together?</div>
+      <h2>Ask what&rsquo;s cited alongside what</h2>
+      <p>Co-citation records which works the field cites <em>simultaneously</em>. The most co-cited author
+      pair in the entire index is Jones &amp; Walton, at 128 joint citations; beneath them, Agboka with Jones,
+      Agboka with Walton, Moore with Jones &mdash; all scholars working the same area.</p>
+      <p>So the two fast risers aren&rsquo;t isolated. They travel with a recognizable group. But co-citation
+      shows association, not structure &mdash; so the question has to move again.</p>
+    </section>
+
+    <section class="beat" data-beat="3" id="b3">
+      <div class="n">Is it a real community?</div>
+      <h2>Partition the whole network</h2>
+      <p>Community detection splits the citation network into groups whose members cite one another more
+      densely than they cite the rest. Read <em>all-time</em>, the field&rsquo;s center of gravity is still the
+      older genre-and-social-construction cluster that Russell, Bruffee, and Schryer anchor; the social-justice
+      technical-communication community sits second.</p>
+      <p>Now restrict the partition to <em>2010&ndash;present</em>. Genre-and-social-construction drops out of
+      the top tier entirely &mdash; while social-justice TC holds its place near the top. The recent field is
+      organized differently from the accumulated one.</p>
+    </section>
+
+    <section class="beat" data-beat="4" id="b4">
+      <div class="n">At what scale, and when?</div>
+      <h2>Watch the network consolidate</h2>
+      <p>Temporal network evolution shows the shift as change over time, not in total. Across the last three
+      five-year windows the largest connected component grows from <b>29%</b> of nodes to <b>43%</b> and then
+      <b>60%</b>, and internal citations per window roughly double. More and more indexed articles belong to one
+      interlinked web instead of sitting on disconnected islands.</p>
+      <p>This happens in precisely the years the Jones, Haas, and Agboka articles enter the graph and receive
+      citational uptake. Toggle modularity: it stays high even as the component fills &mdash; the field knits
+      together <em>without</em> dissolving its neighborhoods.</p>
+    </section>
+  </div>
+</div>
+
+<div class="payoff">
+  <div class="n" style="font:600 12px -apple-system,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);">The claim, assembled</div>
+  <p class="claim">Social-justice technical communication has become the structural center of the field&rsquo;s
+  citation network &mdash; and reached that position faster than the older canonical moments did.</p>
+  <p>No single tool makes that claim. Most Cited surfaced two fast risers; co-citation showed they travel as a
+  group; all-time community detection placed the group second; and the period-restricted partition plus the
+  temporal view showed it moving to the center as the recent network consolidates around it. The consolidation
+  of the field into one connected core and the rise of this particular cluster are the same event at two scales.</p>
+  <p style="color:var(--muted);font-size:15px;">If you already knew this as someone in the field, that&rsquo;s the
+  point: Pinakes lets us <em>quantify the knowing</em> and ground anecdotal disciplinary sense in data anyone can re-run.</p>
+</div>
+
+<footer><div class="in">
+  <b>Flagship prototype.</b> One movement of the webtext &mdash; the manuscript&rsquo;s &ldquo;extended example&rdquo;
+  (&para;&para;123&ndash;144) &mdash; rendered as a sticky instrument stage driven by scroll. Beat 4 (Temporal
+  Evolution) is <b>live</b>, redrawn in your browser from data embedded in this file; beats 1&ndash;3 show the
+  same numbers the prose reports and would embed the live tools in the co-hosted build. In production this pattern
+  repeats across the article&rsquo;s 22-tool survey, gated at <code>/jwa</code>. Static-image fallbacks exist for
+  print and preservation.
+</div></footer>
+
+<script>
+const WINDOWS = [{"label": "1939–1943", "year": 1939, "lcc": 0.0909, "mod": null, "trans": 0, "nodes": 11, "edges": 0}, {"label": "1944–1948", "year": 1944, "lcc": 0.0476, "mod": null, "trans": 0, "nodes": 21, "edges": 0}, {"label": "1949–1953", "year": 1949, "lcc": 0.027, "mod": null, "trans": 0, "nodes": 37, "edges": 0}, {"label": "1954–1958", "year": 1954, "lcc": 0.0385, "mod": null, "trans": 0, "nodes": 26, "edges": 0}, {"label": "1959–1963", "year": 1959, "lcc": 0.0294, "mod": null, "trans": 0, "nodes": 34, "edges": 0}, {"label": "1964–1968", "year": 1964, "lcc": 0.0345, "mod": null, "trans": 0, "nodes": 29, "edges": 0}, {"label": "1969–1973", "year": 1969, "lcc": 0.0417, "mod": null, "trans": 0, "nodes": 72, "edges": 2}, {"label": "1974–1978", "year": 1974, "lcc": 0.0365, "mod": 0.6183, "trans": 0.4286, "nodes": 192, "edges": 13}, {"label": "1979–1983", "year": 1979, "lcc": 0.0394, "mod": 0.7112, "trans": 0, "nodes": 355, "edges": 20}, {"label": "1984–1988", "year": 1984, "lcc": 0.1408, "mod": 0.8893, "trans": 0.1349, "nodes": 625, "edges": 159}, {"label": "1989–1993", "year": 1989, "lcc": 0.2306, "mod": 0.8455, "trans": 0.0844, "nodes": 889, "edges": 429}, {"label": "1994–1998", "year": 1994, "lcc": 0.2409, "mod": 0.8894, "trans": 0.0789, "nodes": 1075, "edges": 445}, {"label": "1999–2003", "year": 1999, "lcc": 0.1949, "mod": 0.9046, "trans": 0.1206, "nodes": 1170, "edges": 447}, {"label": "2004–2008", "year": 2004, "lcc": 0.2424, "mod": 0.9099, "trans": 0.0566, "nodes": 1349, "edges": 611}, {"label": "2009–2013", "year": 2009, "lcc": 0.2577, "mod": 0.922, "trans": 0.0967, "nodes": 1517, "edges": 733}, {"label": "2014–2018", "year": 2014, "lcc": 0.4026, "mod": 0.8566, "trans": 0.0938, "nodes": 1910, "edges": 1372}, {"label": "2019–2023", "year": 2019, "lcc": 0.5789, "mod": 0.8395, "trans": 0.1395, "nodes": 1736, "edges": 1723}, {"label": "2024–2028", "year": 2024, "lcc": 0.28, "mod": 0.6585, "trans": 0.1242, "nodes": 400, "edges": 268}];
+const SERIES=[{key:'lcc',name:'Largest connected component',color:'#2f6b4f',on:true},
+  {key:'mod',name:'Modularity',color:'#b5651d',on:false},
+  {key:'trans',name:'Transitivity',color:'#5b6cc0',on:false}];
+const SVGNS='http://www.w3.org/2000/svg',W=660,H=300,M={t:14,r:14,b:36,l:38};
+const iw=W-M.l-M.r,ih=H-M.t-M.b;
+const pts=WINDOWS.filter(d=>d.lcc!==null);
+const xr=[pts[0].year,pts[pts.length-1].year];
+const x=y=>M.l+iw*(y-xr[0])/(xr[1]-xr[0]);
+const yy=v=>M.t+ih*(1-v);
+const svg=document.getElementById('te-svg');
+function el(t,a){const e=document.createElementNS(SVGNS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function drawTE(){
+  svg.innerHTML='';
+  for(let g=0;g<=1.0001;g+=0.25){svg.appendChild(el('line',{x1:M.l,y1:yy(g),x2:M.l+iw,y2:yy(g),stroke:'#ece7db','stroke-width':1}));
+    const t=el('text',{x:M.l-7,y:yy(g)+4,'text-anchor':'end',fill:'#9a9a8f'});t.textContent=(g*100)+'%';svg.appendChild(t);}
+  pts.forEach((d,i)=>{if(i%2)return;const t=el('text',{x:x(d.year),y:H-14,'text-anchor':'middle',fill:'#9a9a8f'});t.textContent=String(d.year);svg.appendChild(t);});
+  const l3=pts.slice(-4,-1);
+  if(l3.length)svg.appendChild(el('rect',{x:x(l3[0].year),y:M.t,width:x(l3[l3.length-1].year)-x(l3[0].year),height:ih,fill:'#2f6b4f','fill-opacity':.07}));
+  SERIES.filter(s=>s.on).forEach(s=>{const seg=pts.filter(d=>d[s.key]!==null);
+    svg.appendChild(el('path',{d:seg.map((d,i)=>(i?'L':'M')+x(d.year)+' '+yy(d[s.key])).join(' '),fill:'none',stroke:s.color,'stroke-width':2.4}));
+    seg.forEach(d=>svg.appendChild(el('circle',{cx:x(d.year),cy:yy(d[s.key]),r:3,fill:s.color})));});
+  const hv=el('line',{x1:0,y1:M.t,x2:0,y2:M.t+ih,stroke:'#888','stroke-width':1,opacity:0});svg.appendChild(hv);
+  const hit=el('rect',{x:M.l,y:M.t,width:iw,height:ih,fill:'transparent'});svg.appendChild(hit);
+  const ro=document.getElementById('te-readout');
+  hit.addEventListener('mousemove',ev=>{const r=svg.getBoundingClientRect();const px=(ev.clientX-r.left)*(W/r.width);
+    let best=pts[0],bd=1e9;pts.forEach(d=>{const dx=Math.abs(x(d.year)-px);if(dx<bd){bd=dx;best=d;}});
+    hv.setAttribute('x1',x(best.year));hv.setAttribute('x2',x(best.year));hv.setAttribute('opacity',1);
+    ro.innerHTML='<b>'+best.label+'</b> — '+SERIES.filter(s=>s.on&&best[s.key]!=null).map(s=>'<span style="color:'+s.color+'">'+s.name+' '+(best[s.key]*100).toFixed(1)+'%</span>').join(' · ')+' · '+best.nodes.toLocaleString()+' articles';});
+  hit.addEventListener('mouseleave',()=>{hv.setAttribute('opacity',0);ro.textContent='Hover a window to read its values.';});
+}
+const cb=document.getElementById('te-ctrls');
+SERIES.forEach((s,i)=>{const l=document.createElement('label');
+  l.innerHTML='<input type="checkbox" '+(s.on?'checked':'')+'><span class="sw" style="background:'+s.color+'"></span>'+s.name;
+  l.querySelector('input').addEventListener('change',e=>{SERIES[i].on=e.target.checked;drawTE();});cb.appendChild(l);});
+drawTE();
+
+// scrollytelling: swap instrument panel to the most-visible beat
+const panels=[...document.querySelectorAll('.panel')];
+const rail=document.getElementById('rail');
+const beats=[...document.querySelectorAll('.beat')];
+beats.forEach(b=>{const a=document.createElement('a');a.href='#'+b.id;a.dataset.beat=b.dataset.beat;rail.appendChild(a);});
+const rails=[...rail.children];
+function activate(n){panels.forEach(p=>p.classList.toggle('on',p.dataset.beat===n));
+  rails.forEach(r=>r.classList.toggle('on',r.dataset.beat===n));}
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)activate(e.target.dataset.beat);});},
+  {rootMargin:'-45% 0px -45% 0px',threshold:0});
+beats.forEach(b=>io.observe(b));
+</script>
+</body></html>

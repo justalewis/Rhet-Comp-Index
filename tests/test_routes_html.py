@@ -164,8 +164,10 @@ def test_route_count_matches_expected(client):
     #        POST /api/articles/<id>/suggest-tag (public, rate-limited),
     #        GET /api/admin/user-tags, POST /api/admin/user-tags/<id>/decide,
     #        GET /admin/user-tags (moderation page; token-gated client-side).
-    assert len(rules) == 127, (
-        f"Expected 127 routes, got {len(rules)}. "
+    #  +  3  gated JWA webtext (2026-07): GET /jwa (redirect), GET /jwa/ and
+    #        GET /jwa/<path> (static bundle behind Basic Auth).
+    assert len(rules) == 130, (
+        f"Expected 130 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

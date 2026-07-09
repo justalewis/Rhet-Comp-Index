@@ -283,6 +283,7 @@ def create_app() -> Flask:
     from blueprints.redaction    import bp as redaction_bp
     from blueprints.tags         import bp as tags_bp
     from blueprints.wac          import bp as wac_bp
+    from blueprints.jwa          import bp as jwa_bp
 
     flask_app.register_blueprint(main_bp)
     flask_app.register_blueprint(articles_bp)
@@ -299,6 +300,9 @@ def create_app() -> Flask:
     # WAC Clearinghouse publisher dashboard — public but intentionally NOT in
     # the nav (reachable only by URL at /wac).
     flask_app.register_blueprint(wac_bp)
+    # Gated JWA webtext companion at /jwa — Basic Auth (PINAKES_JWA_USER/PASSWORD),
+    # serves the static bundle in jwa-webtext/ for the journal editors' review.
+    flask_app.register_blueprint(jwa_bp)
 
     # Datastories blueprint — always registered. The landing page at
     # /datastories is public; the tools at /datastories/tools and the
