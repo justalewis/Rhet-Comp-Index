@@ -1,16 +1,19 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Discipline-Specific Bibliometrics in Rhetoric and Composition: Pinakes and the Infrastructure of Scholarly Visibility — interactive webtext</title>
+<link rel="stylesheet" href="tokens.css">
 <style>
- :root{--ink:#23271f;--muted:#6b7167;--bg:#f6f3ec;--paper:#fffdf8;--green:#2f6b4f;--green-d:#204a37;--rule:#e3ddd0;--accent:#b5651d;--hi:#eaf1ea;}
+ /* Lewis Design System (tokens.css) supplies --bg/--paper/--ink/--muted/--rule/--accent + fonts.
+    Alias the page's older token names onto the system so components adopt it without a full rename. */
+ :root{--green:var(--accent);--green-d:var(--accent-hover);--hi:var(--surface-sage-soft);}
  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
- body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.62 Georgia,Charter,'Times New Roman',serif;}
+ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:18px;line-height:1.62;}
  a{color:var(--green-d);}
  .col{max-width:720px;margin:0 auto;padding:0 24px;}
  header.cov{background:var(--paper);border-bottom:1px solid var(--rule);}
  header.cov .col{padding:64px 24px 34px;}
  .kick{font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:16px;}
- h1.title{font-size:35px;line-height:1.18;letter-spacing:-.01em;margin:.1em 0 .35em;}
+ h1.title{font-family:var(--font-display);font-weight:600;font-size:41px;line-height:1.1;letter-spacing:-.01em;margin:.1em 0 .3em;}
  .byline{color:var(--muted);font-size:16px;}
  .reflx{font-size:19px;color:#33382e;margin:22px 0 6px;font-style:italic;}
  .abstract{margin:22px 0 4px;border-top:1px solid var(--rule);padding-top:16px;}
@@ -30,7 +33,7 @@
  main .col{padding-top:8px;padding-bottom:40px;}
  section.jwa{padding-top:26px;}
  h1.jwa-h{font:600 14px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--green-d);margin:44px 0 4px;padding-top:14px;border-top:2px solid var(--green);}
- h2.sub{font-size:24px;line-height:1.25;margin:36px 0 8px;}
+ h2.sub{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.2;margin:36px 0 8px;}
  p{margin:15px 0;} p.src{font-size:13.5px;color:var(--muted);}
  /* tool figure */
  figure.tool-fig{margin:26px 0;background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.05);}

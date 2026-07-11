@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Watch a Claim Get Built — Pinakes flagship (prototype)</title>
+<title>Watch a Claim Get Built — Pinakes</title>
+<link rel="stylesheet" href="tokens.css">
 <style>
-  :root{--ink:#23271f;--muted:#6b7167;--bg:#f6f3ec;--paper:#fffdf8;--green:#2f6b4f;
-    --green-d:#204a37;--rule:#e3ddd0;--accent:#b5651d;--hi:#eaf1ea;}
+  :root{--green:var(--accent);--green-d:var(--accent-hover);--hi:var(--surface-sage-soft);}
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font:19px/1.62 Georgia,'Iowan Old Style',Charter,serif;}
+    font-family:var(--font-body);font-size:18px;line-height:1.62;}
   a{color:var(--green-d);}
   /* cover */
   .cover{max-width:760px;margin:0 auto;padding:72px 24px 8px;}
   .kicker{font:600 13px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.14em;
     text-transform:uppercase;color:var(--green);margin-bottom:16px;}
-  .cover h1{font-size:37px;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .35em;}
+  .cover h1{font-family:var(--font-display);font-weight:600;font-size:44px;line-height:1.08;letter-spacing:-.01em;margin:.1em 0 .3em;}
   .cover .sub{color:var(--muted);font-size:16px;}
   .cover .lede{font-size:20px;color:#33382e;margin:24px 0;}
   .howto{background:var(--hi);border:1px solid #d6e2d6;border-left:4px solid var(--green);
@@ -26,7 +26,7 @@
   .beat{min-height:82vh;display:flex;flex-direction:column;justify-content:center;}
   .beat .n{font:600 12px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.12em;
     text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
-  .beat h2{font-size:24px;line-height:1.2;margin:0 0 10px;}
+  .beat h2{font-family:var(--font-display);font-weight:600;font-size:27px;line-height:1.18;margin:0 0 10px;}
   .beat p{margin:12px 0;}
   .beat p .q{color:var(--green-d);font-style:italic;}
   /* sticky instrument */
@@ -69,7 +69,7 @@
   .readout{min-height:18px;font:12.5px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:var(--muted);margin-top:4px;}
   /* payoff + footer */
   .payoff{max-width:760px;margin:0 auto;padding:6vh 24px 4vh;}
-  .payoff .claim{font-size:23px;line-height:1.4;color:var(--green-d);border-left:4px solid var(--green);
+  .payoff .claim{font-family:var(--font-display);font-size:27px;line-height:1.35;color:var(--green-d);border-left:4px solid var(--green);
     padding:6px 0 6px 20px;margin:16px 0;}
   footer{border-top:1px solid var(--rule);background:var(--paper);margin-top:20px;}
   footer .in{max-width:760px;margin:0 auto;padding:30px 24px 56px;color:var(--muted);font-size:14px;line-height:1.55;}
@@ -88,9 +88,9 @@
 <body>
 
 <div class="cover">
-  <div class="kicker">Flagship prototype &middot; interactive companion</div>
+  <div class="kicker">The extended example &middot; interactive companion</div>
   <h1>Watch a claim get built</h1>
-  <div class="sub">from &ldquo;Discipline-Specific Bibliometrics from the Margins&rdquo; &middot; for <em>The Journal of Writing Analytics</em></div>
+  <div class="sub">from the Pinakes article &middot; for <em>The Journal of Writing Analytics</em></div>
   <p class="lede">The article&rsquo;s extended example makes a claim no single tool can: that social-justice
   technical communication has become the structural center of the field&rsquo;s citation network &mdash;
   and got there fast. Here you don&rsquo;t read that claim assembled; you <em>watch it</em>, one instrument at a time.</p>
@@ -218,12 +218,9 @@
 </div>
 
 <footer><div class="in">
-  <b>Flagship prototype.</b> One movement of the webtext &mdash; the manuscript&rsquo;s &ldquo;extended example&rdquo;
-  (&para;&para;123&ndash;144) &mdash; rendered as a sticky instrument stage driven by scroll. Beat 4 (Temporal
-  Evolution) is <b>live</b>, redrawn in your browser from data embedded in this file; beats 1&ndash;3 show the
-  same numbers the prose reports and would embed the live tools in the co-hosted build. In production this pattern
-  repeats across the article&rsquo;s 22-tool survey, gated at <code>/jwa</code>. Static-image fallbacks exist for
-  print and preservation.
+  One movement of the webtext &mdash; the article&rsquo;s &ldquo;extended example&rdquo; (&para;&para;123&ndash;144)
+  &mdash; rendered as a sticky instrument stage driven by scroll. Beat 4 (Temporal Evolution) is <b>live</b>,
+  redrawn in your browser from the July&nbsp;2026 snapshot embedded in this file.
 </div></footer>
 
 <script>
