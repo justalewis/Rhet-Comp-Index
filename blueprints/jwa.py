@@ -71,4 +71,8 @@ def jwa_file(filename):
     if not target.is_file():
         return Response("Not found.", 404)
     mime = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
-    return Response(target.read_bytes(), mimetype=mime)
+    resp = Response(target.read_bytes(), mimetype=mime)
+    # This preview is iterated in place (same URLs, changing content), so never let
+    # a browser or proxy serve a stale copy — the editor must always see the latest.
+    resp.headers["Cache-Control"] = "no-store, must-revalidate"
+    return resp
