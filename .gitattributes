@@ -1,0 +1,18 @@
+# Line endings.
+#
+# Pinakes is authored from Windows, from Linux (Fly.io), and from cloud agent
+# sessions. Without a normalization rule the same file committed from two of
+# those places can differ on every line and read as a full-file rewrite.
+#
+# `text=auto` lets Git decide which files are text; `eol=lf` pins both the
+# committed blob and the working-copy checkout to LF on every platform.
+* text=auto eol=lf
+
+# Binary assets — exempt from line-ending and textual conversion.
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.docx binary
