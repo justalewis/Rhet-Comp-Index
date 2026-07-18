@@ -137,6 +137,66 @@ def test_fetch_journal_empty_items_terminates():
     assert n == 0
 
 
+# ── Last-fetch watermark ─────────────────────────────────────────────────────
+
+
+@responses.activate
+def test_fetch_journal_failure_leaves_watermark_untouched():
+    """A failed request must NOT stamp the last-fetch date.
+
+    update_fetch_log drives the `from-pub-date` filter on the next run, so
+    advancing it after a failure slides the window past articles that were
+    never fetched — the incremental path can then never reach them.
+    """
+    responses.add(responses.GET, fetcher.CROSSREF_BASE, status=429)
+    with patch.object(fetcher, "update_fetch_log") as log_mock:
+        n = fetcher.fetch_journal(issn="0010-0994", since_date=None)
+    assert n == 0
+    log_mock.assert_not_called()
+
+
+@responses.activate
+def test_fetch_journal_success_advances_watermark():
+    """Pagination reaching a natural end does stamp the last-fetch date."""
+    responses.add(
+        responses.GET, fetcher.CROSSREF_BASE,
+        json={"message": {"items": [], "next-cursor": None}},
+        status=200,
+    )
+    with patch.object(fetcher, "update_fetch_log") as log_mock:
+        fetcher.fetch_journal(issn="0010-0994", since_date=None)
+    log_mock.assert_called_once()
+
+
+@responses.activate
+def test_fetch_journal_partial_failure_keeps_articles_but_not_watermark():
+    """Page 1 succeeds, page 2 429s: rows are kept, the watermark is not set.
+
+    This is the shape of the production incident — the first page landed, the
+    next was rate-limited, and the old code stamped the date regardless.
+    """
+    full_page = {
+        "message": {
+            "items": [
+                {"DOI": f"10.1234/partial.{i:03d}", "title": [f"Article {i}"]}
+                for i in range(fetcher.ROWS_PER_PAGE)
+            ],
+            "next-cursor": "cursor-page-2",
+        }
+    }
+    responses.add(responses.GET, fetcher.CROSSREF_BASE, json=full_page, status=200)
+    responses.add(responses.GET, fetcher.CROSSREF_BASE, status=429)
+
+    with patch.object(fetcher, "update_fetch_log") as log_mock, \
+         patch.object(fetcher, "upsert_article") as upsert_mock:
+        upsert_mock.return_value = 1
+        n = fetcher.fetch_journal(issn="0010-0994", since_date=None)
+
+    assert upsert_mock.call_count == fetcher.ROWS_PER_PAGE   # page 1 retained
+    assert n == fetcher.ROWS_PER_PAGE
+    log_mock.assert_not_called()                             # watermark untouched
+
+
 # ── Malformed input ──────────────────────────────────────────────────────────
 
 

@@ -35,10 +35,12 @@ log = logging.getLogger(__name__)
 CROSSREF_BASE = "https://api.crossref.org/works"
 ROWS_PER_PAGE = 100
 
-# Identify yourself to CrossRef — replace with your actual email.
-# Polite pool gets better rate limits: https://github.com/CrossRef/rest-api-doc#etiquette
+# Identify ourselves to CrossRef. A real mailto puts requests in the polite
+# pool, which has materially better rate limits than the anonymous pool — the
+# placeholder that used to sit here left us anonymous and getting 429s.
+# https://github.com/CrossRef/rest-api-doc#etiquette
 HEADERS = {
-    "User-Agent": "RhetCompIndex/1.0 (mailto:your-email@example.com)"
+    "User-Agent": "RhetCompIndex/1.0 (mailto:rhetcompindex@gmail.com)"
 }
 
 
@@ -145,6 +147,12 @@ def fetch_journal(issn, since_date=None):
 
     total_added = 0
     page = 0
+    # Only stamp the last-fetch date when pagination reached a natural end. A
+    # request failure part-way through must leave it alone: update_fetch_log
+    # drives the `from-pub-date` filter on the next run, so advancing it after a
+    # failed page moves the window past articles we never saw and the
+    # incremental path can never reach them again (incident: 429s on 2392-3113).
+    completed = False
 
     while True:
         try:
@@ -158,6 +166,7 @@ def fetch_journal(issn, since_date=None):
         data = resp.json().get("message", {})
         items = data.get("items", [])
         if not items:
+            completed = True
             break
 
         for item in items:
@@ -196,13 +205,26 @@ def fetch_journal(issn, since_date=None):
 
         next_cursor = data.get("next-cursor")
         if not next_cursor or len(items) < ROWS_PER_PAGE:
+            completed = True
             break
 
         params["cursor"] = next_cursor
         time.sleep(0.5)
 
-    update_fetch_log(journal_name)
-    log.info("Done: %s — %d new articles", journal_name, total_added)
+    if completed:
+        update_fetch_log(journal_name)
+        log.info("Done: %s — %d new articles", journal_name, total_added)
+    else:
+        # Articles inserted before the failure are kept — upsert_article is
+        # insert-or-ignore, so re-querying the same window next run is cheap
+        # and idempotent. The window widens until a run succeeds, which is the
+        # correct trade: re-reading pages costs a little, missing them is
+        # permanent.
+        log.warning(
+            "Incomplete fetch for %s — last-fetch date left unchanged so the "
+            "next run retries this window (%d new articles kept).",
+            journal_name, total_added,
+        )
     return total_added
 
 

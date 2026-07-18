@@ -30,8 +30,8 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-# Replace with your email for polite API usage (CrossRef / Unpaywall etiquette)
-CONTACT_EMAIL = "your-email@example.com"
+# Real contact address for polite API usage (CrossRef / Unpaywall etiquette).
+CONTACT_EMAIL = "rhetcompindex@gmail.com"
 
 UNPAYWALL_BASE = "https://api.unpaywall.org/v2"
 SEMANTIC_BASE  = "https://api.semanticscholar.org/graph/v1/paper"

@@ -32,7 +32,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-USER_AGENT = "RhetCompIndex/1.0 (mailto:your-email@example.com)"
+USER_AGENT = "RhetCompIndex/1.0 (mailto:rhetcompindex@gmail.com)"
 
 ABSTRACT_MAX = 2000   # truncate feed summaries that are actually full article HTML
 

@@ -40,7 +40,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-HEADERS = {"User-Agent": "RhetCompIndex/1.0 (mailto:your-email@example.com)"}
+HEADERS = {"User-Agent": "RhetCompIndex/1.0 (mailto:rhetcompindex@gmail.com)"}
 TIMEOUT = 20
 
 # Anchor-only URLs, mailto links, static assets, etc.
