@@ -132,6 +132,19 @@ def step_10_redaction_resweep():
     return totals
 
 
+def step_11_article_suppression_resweep():
+    """Re-purge any blocklisted article the fetch re-ingested.
+
+    The upsert_article choke-point already skips suppressed DOIs/URLs, but this
+    self-healing sweep catches anything a non-upsert ingest path let slip — the
+    article-level analog of step 10. No-op (and cheap) when the blocklist is
+    empty. Runs after all ingestion."""
+    from db import resweep_suppressed_articles
+    n = resweep_suppressed_articles()
+    log.info("Article-suppression resweep: purged %d row(s)", n)
+    return {"purged": n}
+
+
 STEPS = [
     (1, "CrossRef incremental fetch",     step_1_crossref),
     (2, "RSS feed fetch",                 step_2_rss),
@@ -143,6 +156,7 @@ STEPS = [
     (8, "OA status backfill",             step_8_oa_backfill),
     (9, "OpenAlex citation counts",       step_9_openalex_citations),
     (10, "Author-redaction resweep",      step_10_redaction_resweep),
+    (11, "Article-suppression resweep",   step_11_article_suppression_resweep),
 ]
 
 

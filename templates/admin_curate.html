@@ -1,0 +1,277 @@
+{% extends "base-core.html" %}
+
+{% block title %}Article Curation — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block body %}
+<div class="about-page-wrap">
+
+  <header class="about-nav">
+    <div class="about-nav-inner">
+      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
+      <nav class="about-nav-links">
+        <a href="/about">About</a>
+        <a href="/admin/redactions">Redactions</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="about-content" style="max-width:56rem;">
+    <h1 class="about-title">Article Curation</h1>
+    <p style="color:#6a655c;">Fix artifacts in a record (HTML/encoding noise in a title, wrong authors) or durably remove junk (test deposits, spam). Suppressing blocklists the DOI so the next fetch can't resurrect it. Nothing here loads without your admin token.</p>
+
+    <!-- ── Token gate ─────────────────────────────────────────── -->
+    <div id="token-bar" style="margin:1.4rem 0;padding:1rem;border:1px solid var(--border,#e0dccf);border-radius:6px;background:#faf8f3;">
+      <label style="font-weight:600;font-size:0.9rem;">Admin token</label>
+      <div style="font-size:0.84rem;color:#6a655c;margin:0.2rem 0 0.5rem;">Your <code>PINAKES_ADMIN_TOKEN</code>. Held only in this tab (sessionStorage); cleared when you close it.</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <input type="password" id="token-input" autocomplete="off" placeholder="Bearer token"
+               style="flex:1;min-width:16rem;padding:0.5rem;font-family:var(--font-mono,monospace);">
+        <button id="connect-btn" class="fetch-btn" style="padding:0.5rem 1.2rem;">Connect</button>
+      </div>
+      <div id="token-error" style="color:#9a2a2a;font-size:0.85rem;margin-top:0.5rem;display:none;"></div>
+    </div>
+
+    <div id="toolbar" style="display:none;margin:0.6rem 0 1rem;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <input type="text" id="search-input" placeholder="Search by id, DOI, or title / author"
+             style="flex:1;min-width:18rem;padding:0.45rem;">
+      <button id="search-btn" class="fetch-btn" style="padding:0.4rem 1rem;">Search</button>
+      <button id="blocklist-btn" class="fetch-btn" style="padding:0.4rem 1rem;background:#7a7268;">Blocklist</button>
+      <button id="lock-btn" class="fetch-btn" style="padding:0.4rem 1rem;background:#7a7268;">Forget token</button>
+      <span id="status-msg" style="color:#6a655c;font-size:0.85rem;"></span>
+    </div>
+
+    <div id="results"></div>
+    <div id="editor"></div>
+    <div id="blocklist"></div>
+  </main>
+
+  <footer class="about-page-footer">
+    <a href="/">Index</a> &middot; <a href="/about">About</a> &middot; <a href="/admin/redactions">Redactions</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
+  </footer>
+</div>
+
+<style>
+  .res-row { border:1px solid var(--border,#e0dccf); border-radius:5px; padding:0.5rem 0.8rem; margin-bottom:0.4rem; background:#fff; cursor:pointer; }
+  .res-row:hover { background:#faf8f3; }
+  .res-title { font-weight:600; }
+  .res-meta { font-size:0.82rem; color:#6a655c; margin-top:0.15rem; }
+  .edit-card { border:1px solid var(--border,#e0dccf); border-radius:6px; padding:1.1rem 1.2rem; margin:1rem 0; background:#fff; }
+  .edit-card h2 { margin:0 0 0.2rem; font-size:1.05rem; }
+  .field { margin:0.7rem 0; }
+  .field label { display:block; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#8a8276; margin-bottom:0.25rem; }
+  .field input, .field textarea { width:100%; padding:0.45rem; font-family:inherit; font-size:0.92rem; box-sizing:border-box; }
+  .field textarea { min-height:4.5rem; resize:vertical; }
+  .field .hint { font-size:0.78rem; color:#b03030; margin-top:0.2rem; display:none; }
+  .field.dirty input, .field.dirty textarea { border-color:#8a6d1a; background:#fffdf5; }
+  .edit-actions { margin-top:1rem; display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; }
+  .btn-save { background:#2c4a3a; color:#fff; border:none; padding:0.45rem 1.1rem; border-radius:4px; cursor:pointer; }
+  .btn-suppress { background:#7a2a2a; color:#fff; border:none; padding:0.45rem 1.1rem; border-radius:4px; cursor:pointer; }
+  .btn-plain { background:none; color:#5a544c; border:1px solid var(--border,#cfc9bb); padding:0.45rem 1.1rem; border-radius:4px; cursor:pointer; }
+  .section-head { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#8a8276; margin:1.2rem 0 0.6rem; }
+  .warn { color:#8a6d1a; font-size:0.82rem; }
+  .bl-row { border:1px solid var(--border,#e0dccf); border-radius:5px; padding:0.5rem 0.8rem; margin-bottom:0.4rem; background:#fff; font-size:0.85rem; display:flex; justify-content:space-between; gap:0.6rem; align-items:center; }
+</style>
+
+<script>
+(function () {
+  const KEY = 'pinakes-admin-token';
+  const $ = (id) => document.getElementById(id);
+  const tok = () => sessionStorage.getItem(KEY) || '';
+  const headers = (extra) => Object.assign({ 'Authorization': 'Bearer ' + tok() }, extra || {});
+
+  // Fields to render in the editor, in order. `ta` = textarea (multi-line).
+  const FIELDS = [
+    ['title', 'Title', 'ta'],
+    ['authors', 'Authors (semicolon-separated)', 'ta'],
+    ['abstract', 'Abstract', 'ta'],
+    ['journal', 'Journal', ''],
+    ['pub_date', 'Publication date', ''],
+    ['doi', 'DOI', ''],
+    ['oa_url', 'Open-access URL', ''],
+    ['oa_status', 'OA status', ''],
+    ['keywords', 'Keywords', ''],
+    ['tags', 'Tags', ''],
+  ];
+
+  let current = null;   // the loaded article
+  let original = {};    // pristine field values, for dirty-tracking
+
+  async function api(path, method, body) {
+    const opts = { method: method || 'GET', headers: headers(body ? { 'Content-Type': 'application/json' } : null) };
+    if (body) opts.body = JSON.stringify(body);
+    const resp = await fetch(path, opts);
+    if (resp.status === 401 || resp.status === 403) { gateError('Token rejected (' + resp.status + ').'); throw new Error('auth'); }
+    if (resp.status === 503) { gateError('Server has no admin token configured.'); throw new Error('503'); }
+    return resp;
+  }
+
+  function gateError(msg) {
+    sessionStorage.removeItem(KEY);
+    $('token-bar').style.display = 'block';
+    $('toolbar').style.display = 'none';
+    const e = $('token-error'); e.textContent = msg; e.style.display = 'block';
+  }
+
+  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function setStatus(m) { $('status-msg').textContent = m; }
+
+  // Flag values that still carry raw HTML entities or tags, so the curator
+  // sees at a glance what needs cleaning.
+  function artifactHint(v) {
+    if (v == null) return '';
+    if (/&[a-zA-Z]+;|&#\d+;/.test(v)) return 'contains an HTML entity (e.g. &amp;amp;)';
+    if (/<[a-zA-Z/][^>]*>/.test(v)) return 'contains an HTML tag';
+    return '';
+  }
+
+  async function search() {
+    const q = $('search-input').value.trim();
+    if (!q) return;
+    setStatus('Searching…');
+    $('editor').innerHTML = ''; $('blocklist').innerHTML = '';
+    const resp = await api('/api/admin/article-search?q=' + encodeURIComponent(q));
+    const data = await resp.json();
+    const rows = data.results || [];
+    $('token-bar').style.display = 'none';
+    $('toolbar').style.display = 'flex';
+    $('results').innerHTML = rows.length
+      ? '<div class="section-head">Results (' + rows.length + ')</div>' + rows.map(r =>
+          `<div class="res-row" data-id="${r.id}">
+             <div class="res-title">${esc(r.title) || '(untitled)'}</div>
+             <div class="res-meta">#${r.id} · ${esc(r.journal) || '—'} · ${esc(r.pub_date) || '—'} · ${esc(r.doi) || 'no DOI'}<br>${esc(r.authors) || ''}</div>
+           </div>`).join('')
+      : '<p style="color:#6a655c;">No matches.</p>';
+    document.querySelectorAll('.res-row').forEach(el => el.onclick = () => loadArticle(el.getAttribute('data-id')));
+    setStatus(rows.length + ' result' + (rows.length === 1 ? '' : 's') + '.');
+  }
+
+  async function loadArticle(id) {
+    setStatus('Loading #' + id + '…');
+    const resp = await api('/api/admin/article/' + id);
+    const data = await resp.json();
+    current = data.article; original = {};
+    renderEditor();
+    setStatus('Loaded #' + id + '.');
+    $('editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderEditor() {
+    const a = current;
+    let html = `<div class="edit-card"><h2>Editing article #${a.id}</h2>
+      <div class="res-meta">source: ${esc(a.source) || '—'} · fetched ${esc(a.fetched_at) || '—'}
+      · <a href="/article/${a.id}" target="_blank">view public page ↗</a></div>`;
+    for (const [key, label, kind] of FIELDS) {
+      const val = a[key] == null ? '' : a[key];
+      original[key] = val;
+      const hint = artifactHint(val);
+      const control = kind === 'ta'
+        ? `<textarea data-field="${key}">${esc(val)}</textarea>`
+        : `<input type="text" data-field="${key}" value="${esc(val)}">`;
+      html += `<div class="field" id="field-${key}">
+        <label>${label}</label>${control}
+        <div class="hint" ${hint ? 'style="display:block;"' : ''}>${hint}</div>
+      </div>`;
+    }
+    html += `<div class="edit-actions">
+        <button class="btn-save" id="save-btn">Save changes</button>
+        <button class="btn-plain" id="revert-btn">Revert</button>
+        <span style="flex:1;"></span>
+        <button class="btn-suppress" id="suppress-btn">Suppress &amp; remove…</button>
+      </div>
+      <div class="warn" style="margin-top:0.5rem;">Suppress blocklists this DOI/URL and deletes the record. The scholarship is removed from the index and won't be re-fetched. Reversible from the Blocklist view.</div>
+    </div>`;
+    $('editor').innerHTML = html;
+    // Dirty tracking.
+    document.querySelectorAll('[data-field]').forEach(el => {
+      el.addEventListener('input', () => {
+        const k = el.getAttribute('data-field');
+        $('field-' + k).classList.toggle('dirty', el.value !== (original[k] == null ? '' : String(original[k])));
+      });
+    });
+    $('save-btn').onclick = save;
+    $('revert-btn').onclick = renderEditor;
+    $('suppress-btn').onclick = suppress;
+  }
+
+  function dirtyFields() {
+    const out = {};
+    document.querySelectorAll('[data-field]').forEach(el => {
+      const k = el.getAttribute('data-field');
+      if (el.value !== (original[k] == null ? '' : String(original[k]))) out[k] = el.value;
+    });
+    return out;
+  }
+
+  async function save() {
+    const changes = dirtyFields();
+    if (!Object.keys(changes).length) { setStatus('No changes.'); return; }
+    setStatus('Saving…');
+    const resp = await api('/api/admin/article/' + current.id, 'PUT', changes);
+    const data = await resp.json();
+    if (!resp.ok) { setStatus('Error: ' + (data.error || resp.status)); return; }
+    current = data.article; renderEditor();
+    setStatus('Saved ' + Object.keys(changes).length + ' field(s) on #' + current.id + '.');
+  }
+
+  async function suppress() {
+    const reason = prompt('Suppress & remove article #' + current.id + '.\n\nThis blocklists its DOI so the next fetch can\'t re-add it, then deletes the record. Reversible from the Blocklist view.\n\nOptional reason (e.g. "test deposit"):', 'test deposit');
+    if (reason === null) return;
+    setStatus('Suppressing #' + current.id + '…');
+    const resp = await api('/api/admin/article/' + current.id + '/suppress', 'POST', { reason: reason });
+    const data = await resp.json();
+    if (!resp.ok && resp.status !== 404) { setStatus('Error: ' + (data.error || resp.status)); return; }
+    $('editor').innerHTML = '<div class="edit-card"><h2>Removed</h2><p>Article #' + current.id + ' suppressed. DOI <code>' + esc(data.doi || '—') + '</code> is blocklisted.</p></div>';
+    current = null;
+    setStatus('Suppressed. ' + (data.deleted_ids ? data.deleted_ids.length : 0) + ' row(s) deleted.');
+  }
+
+  async function showBlocklist() {
+    setStatus('Loading blocklist…');
+    $('results').innerHTML = ''; $('editor').innerHTML = '';
+    const resp = await api('/api/admin/suppressed');
+    const data = await resp.json();
+    const rows = data.suppressed || [];
+    $('blocklist').innerHTML = '<div class="section-head">Blocklist (' + rows.length + ')</div>' + (rows.length
+      ? rows.map(r => `<div class="bl-row">
+          <span><code>${esc(r.doi) || esc(r.url) || '—'}</code> · ${esc(r.reason) || 'no reason'} <span style="color:#8a8276;">· ${esc(r.created_at)}${r.created_by ? ' · ' + esc(r.created_by) : ''}</span></span>
+          <button class="btn-plain" data-doi="${esc(r.doi) || ''}" data-url="${esc(r.url) || ''}" style="padding:0.25rem 0.7rem;">Un-suppress</button>
+        </div>`).join('')
+      : '<p style="color:#6a655c;">Nothing blocklisted.</p>');
+    document.querySelectorAll('#blocklist .btn-plain').forEach(b => b.onclick = () => unsuppress(b.getAttribute('data-doi'), b.getAttribute('data-url')));
+    setStatus(rows.length + ' blocklisted.');
+  }
+
+  async function unsuppress(doi, url) {
+    if (!confirm('Remove from blocklist? The record can then be re-ingested on the next fetch.')) return;
+    const resp = await api('/api/admin/unsuppress', 'POST', { doi: doi || null, url: url || null });
+    await resp.json();
+    showBlocklist();
+  }
+
+  function connect() {
+    const v = $('token-input').value.trim();
+    if (!v) return;
+    sessionStorage.setItem(KEY, v);
+    $('token-input').value = '';
+    $('token-error').style.display = 'none';
+    $('token-bar').style.display = 'none';
+    $('toolbar').style.display = 'flex';
+    setStatus('Connected. Search for an article to begin.');
+  }
+
+  $('connect-btn').onclick = connect;
+  $('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+  $('search-btn').onclick = () => search().catch(() => {});
+  $('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') search().catch(() => {}); });
+  $('blocklist-btn').onclick = () => showBlocklist().catch(() => {});
+  $('lock-btn').onclick = () => { sessionStorage.removeItem(KEY); location.reload(); };
+
+  if (tok()) { $('token-bar').style.display = 'none'; $('toolbar').style.display = 'flex'; setStatus('Token loaded. Search for an article.'); }
+})();
+</script>
+{% endblock %}

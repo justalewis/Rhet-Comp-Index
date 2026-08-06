@@ -73,6 +73,26 @@ def _create_tables(conn):
             last_fetched    TEXT,
             last_pub_date   TEXT
         );
+
+        -- Article suppression blocklist. The article-level analog of the
+        -- author redaction ledger: a durable record of DOIs/URLs that must
+        -- never live in the index (test deposits like the WAC "ebizonTest"
+        -- rows, spam, retracted junk). upsert_article consults it on every
+        -- write so a suppressed record cannot be resurrected by the next
+        -- CrossRef fetch, and resweep_suppressed_articles() re-purges after
+        -- each refresh. Reversible: remove the row to allow re-ingestion.
+        CREATE TABLE IF NOT EXISTS suppressed_articles (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            doi         TEXT,
+            url         TEXT,
+            reason      TEXT,
+            created_at  TEXT DEFAULT (datetime('now')),
+            created_by  TEXT
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_suppressed_doi
+            ON suppressed_articles(doi) WHERE doi IS NOT NULL AND doi != '';
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_suppressed_url
+            ON suppressed_articles(url) WHERE url IS NOT NULL AND url != '';
     """)
     _create_fts(conn)
 

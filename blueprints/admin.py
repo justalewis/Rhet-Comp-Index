@@ -5,9 +5,9 @@ import logging
 import os
 import threading
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 
-from auth import require_admin_token
+from auth import require_admin_token, _client_ip
 from rate_limit import limiter, LIMITS, fetch_auth_failing
 import health as _health
 
@@ -299,4 +299,135 @@ def add_disciplinary_event():
         pass
 
     return jsonify({"status": "added", "event": new_event, "events": existing}), 201
+
+
+# ── Article curation (edit / suppress) ────────────────────────────────────────
+#
+# A sysadmin surface for cleaning up individual records: fix HTML/encoding
+# artifacts in a title, correct authors, or durably remove junk (test deposits,
+# spam) via the suppression blocklist. Same gated pattern as /admin/redactions:
+# the page shell is public HTML; it does nothing until the admin pastes their
+# PINAKES_ADMIN_TOKEN, which is sent as a Bearer header to these endpoints.
+
+# Fields the curation UI may edit. Kept in one place so the API and the page
+# agree on what is editable.
+_EDITABLE_FIELDS = (
+    "title", "authors", "abstract", "pub_date", "journal",
+    "doi", "oa_url", "oa_status", "keywords", "tags",
+)
+
+
+@bp.route("/api/admin/article/<int:article_id>", methods=["GET"])
+@require_admin_token
+def admin_get_article(article_id):
+    """Full record for the editor to load."""
+    import db
+    art = db.get_article_by_id(article_id)
+    if not art:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({"article": art, "editable_fields": list(_EDITABLE_FIELDS)})
+
+
+@bp.route("/api/admin/article-search", methods=["GET"])
+@require_admin_token
+def admin_search_articles():
+    """Look up candidates for curation by id, DOI, or title/author text.
+
+    Numeric q is treated as an id first; otherwise a DOI exact match, then a
+    title/author LIKE. Small result cap — this is a lookup, not a browse."""
+    import db
+    from db.core import get_conn
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"results": []})
+    results = []
+    with get_conn() as conn:
+        if q.isdigit():
+            row = conn.execute(
+                "SELECT id, title, authors, journal, pub_date, doi "
+                "FROM articles WHERE id = ?", (int(q),)
+            ).fetchone()
+            if row:
+                results.append(dict(row))
+        if not results:
+            like = f"%{q}%"
+            rows = conn.execute(
+                "SELECT id, title, authors, journal, pub_date, doi FROM articles "
+                "WHERE doi = ? OR title LIKE ? OR authors LIKE ? "
+                "ORDER BY pub_date DESC LIMIT 25",
+                (q, like, like),
+            ).fetchall()
+            results = [dict(r) for r in rows]
+    return jsonify({"results": results})
+
+
+@bp.route("/api/admin/article/<int:article_id>", methods=["PUT"])
+@require_admin_token
+def admin_update_article(article_id):
+    """Edit whitelisted fields on one article. JSON body of {field: value}."""
+    import db
+    body = request.get_json(silent=True) or {}
+    fields = {k: v for k, v in body.items() if k in _EDITABLE_FIELDS}
+    if not fields:
+        return jsonify({"error": "no editable fields supplied",
+                        "editable_fields": list(_EDITABLE_FIELDS)}), 400
+    if not db.update_article(article_id, fields):
+        return jsonify({"error": "not found"}), 404
+    log.info("Article #%s edited by admin@%s: fields=%s",
+             article_id, _client_ip(), sorted(fields))
+    return jsonify({"status": "updated", "article": db.get_article_by_id(article_id)})
+
+
+@bp.route("/api/admin/article/<int:article_id>/suppress", methods=["POST"])
+@require_admin_token
+def admin_suppress_article(article_id):
+    """Durably remove an article: blocklist its DOI/URL, then delete it, so the
+    next fetch cannot resurrect it. JSON body may carry {"reason": "..."}."""
+    import db
+    body = request.get_json(silent=True) or {}
+    reason = (body.get("reason") or "").strip() or None
+    result = db.suppress_article(
+        article_id, reason=reason, actor=f"admin@{_client_ip()}")
+    if not result.get("ok"):
+        return jsonify(result), 400
+    if not result.get("deleted_ids"):
+        return jsonify({**result, "warning": "article id not found; "
+                        "DOI/URL still blocklisted if supplied"}), 404
+    log.info("Article #%s SUPPRESSED by admin@%s (doi=%s reason=%r)",
+             article_id, _client_ip(), result.get("doi"), reason)
+    return jsonify({"status": "suppressed", **result})
+
+
+@bp.route("/api/admin/suppressed", methods=["GET"])
+@require_admin_token
+def admin_list_suppressed():
+    """The current blocklist, for review and un-suppression."""
+    import db
+    return jsonify({"suppressed": db.list_suppressed()})
+
+
+@bp.route("/api/admin/unsuppress", methods=["POST"])
+@require_admin_token
+def admin_unsuppress():
+    """Remove a DOI/URL from the blocklist so it can be re-ingested. JSON body
+    {"doi": "..."} and/or {"url": "..."}. Does not re-fetch."""
+    import db
+    body = request.get_json(silent=True) or {}
+    doi = (body.get("doi") or "").strip() or None
+    url = (body.get("url") or "").strip() or None
+    if not doi and not url:
+        return jsonify({"error": "supply doi and/or url"}), 400
+    removed = db.unsuppress(doi=doi, url=url)
+    log.info("Unsuppress by admin@%s (doi=%s url=%s) -> %s",
+             _client_ip(), doi, url, removed)
+    return jsonify({"status": "unsuppressed" if removed else "not-on-blocklist",
+                    "removed": removed})
+
+
+@bp.route("/admin/curate", methods=["GET"])
+def admin_curate_page():
+    """The curation console shell. Public HTML; loads nothing until the admin
+    pastes their token (held in sessionStorage, sent as Bearer on every API
+    call). No article data is embedded server-side."""
+    return render_template("admin_curate.html")
 

@@ -26,6 +26,12 @@ def upsert_article(url, doi, title, authors, abstract, pub_date, journal, source
     oa_url    — direct URL to open-access version, or None
     """
     with get_conn() as conn:
+        # Article-suppression choke-point: a blocklisted DOI/URL (test deposit,
+        # spam, junk) must never be (re-)inserted, or the next CrossRef fetch
+        # resurrects it. Mirrors the author-redaction guard below. Cheap: the
+        # blocklist is tiny and cached by version.
+        if _is_suppressed(conn, doi, url):
+            return 0
         # Author-redaction choke-point: a redacted author's newly-published
         # work must come in already suppressed, or the next fetch resurrects
         # the name. apply_suppression is exact-match and exception-safe.
@@ -40,6 +46,228 @@ def upsert_article(url, doi, title, authors, abstract, pub_date, journal, source
               journal, source, keywords, tags, oa_status, oa_url))
         conn.commit()
         return conn.execute("SELECT changes()").fetchone()[0]
+
+
+# ── Article suppression (durable removal) ─────────────────────────────────────
+#
+# The article-level analog of redaction.py's author suppression spine. A row in
+# `suppressed_articles` blocklists a DOI/URL so upsert_article skips it forever;
+# `resweep_suppressed_articles` re-purges after each fetch as a self-healing
+# backstop. See db/core.py for the table and docs/author-redaction.md for the
+# design philosophy this mirrors.
+
+# Tables carrying a per-article foreign key. A delete must clear these too, or
+# they orphan (SQLite does not enforce the REFERENCES clauses without
+# PRAGMA foreign_keys=ON, so we clean up explicitly rather than rely on cascade).
+_DEPENDENT_TABLES = (
+    ("citations", "source_article_id"),
+    ("citations", "target_article_id"),
+    ("author_article_affiliations", "article_id"),
+    ("article_author_institutions", "article_id"),
+    ("openalex_fetch_log", "article_id"),
+    ("user_tags", "article_id"),
+    ("tag_feedback", "article_id"),
+)
+
+# Cached blocklist, keyed by (db path, row count, max id) so it refreshes the
+# instant a suppression lands and never bleeds across per-test DBs — the same
+# invalidation trick redaction.py uses for its suppression map.
+_SUPPRESS_CACHE: tuple | None = None
+_SUPPRESS_VERSION: tuple | None = None
+
+
+def _suppress_version(conn) -> tuple:
+    import db as _dbpkg
+    try:
+        n, mx = conn.execute(
+            "SELECT COUNT(*), COALESCE(MAX(id), 0) FROM suppressed_articles"
+        ).fetchone()
+    except sqlite3.Error:
+        n, mx = 0, 0
+    return (_dbpkg.DB_PATH, n, mx)
+
+
+def _suppression_sets(conn) -> tuple[set, set]:
+    """(suppressed DOIs, suppressed URLs), cached and version-invalidated."""
+    global _SUPPRESS_CACHE, _SUPPRESS_VERSION
+    ver = _suppress_version(conn)
+    if _SUPPRESS_CACHE is not None and _SUPPRESS_VERSION == ver:
+        return _SUPPRESS_CACHE
+    dois: set[str] = set()
+    urls: set[str] = set()
+    try:
+        for r in conn.execute("SELECT doi, url FROM suppressed_articles"):
+            if r["doi"]:
+                dois.add(r["doi"].strip().lower())
+            if r["url"]:
+                urls.add(r["url"].strip())
+    except sqlite3.Error:
+        pass  # table missing pre-migration: nothing suppressed
+    _SUPPRESS_CACHE = (dois, urls)
+    _SUPPRESS_VERSION = ver
+    return _SUPPRESS_CACHE
+
+
+def _is_suppressed(conn, doi, url) -> bool:
+    dois, urls = _suppression_sets(conn)
+    if doi and doi.strip().lower() in dois:
+        return True
+    if url and url.strip() in urls:
+        return True
+    return False
+
+
+def _delete_article_rows(conn, article_id):
+    """Delete one article and its dependent rows. FTS self-syncs via trigger."""
+    for table, col in _DEPENDENT_TABLES:
+        try:
+            conn.execute(f"DELETE FROM {table} WHERE {col} = ?", (article_id,))
+        except sqlite3.Error:
+            pass  # table may not exist in an older/partial schema
+    conn.execute("DELETE FROM articles WHERE id = ?", (article_id,))
+
+
+def delete_article(article_id) -> bool:
+    """Hard-delete an article and its dependents. Returns True if a row went.
+
+    This alone is NOT durable against re-fetch — use suppress_article for
+    blocklisted junk. Exposed for callers that genuinely want a one-off delete.
+    """
+    with get_conn() as conn:
+        existed = conn.execute(
+            "SELECT 1 FROM articles WHERE id = ?", (article_id,)
+        ).fetchone() is not None
+        if existed:
+            _delete_article_rows(conn, article_id)
+            conn.commit()
+        return existed
+
+
+def suppress_article(article_id=None, *, doi=None, url=None,
+                     reason=None, actor=None) -> dict:
+    """Durably remove an article: blocklist its DOI/URL, then delete the row.
+
+    Identify by article_id (preferred — captures its DOI+URL) or by doi/url
+    directly (to pre-empt one that isn't ingested yet). Idempotent: re-suppressing
+    an already-blocklisted record just ensures the row is gone.
+    """
+    with get_conn() as conn:
+        row = None
+        if article_id is not None:
+            row = conn.execute(
+                "SELECT id, doi, url FROM articles WHERE id = ?", (article_id,)
+            ).fetchone()
+        if row is not None:
+            doi = doi or row["doi"]
+            url = url or row["url"]
+        doi = (doi or None)
+        url = (url or None)
+        if not doi and not url:
+            return {"ok": False, "error": "need an article_id, doi, or url"}
+
+        conn.execute(
+            "INSERT OR IGNORE INTO suppressed_articles (doi, url, reason, created_by) "
+            "VALUES (?, ?, ?, ?)",
+            (doi, url, reason, actor),
+        )
+        # Delete every matching row (there is normally one, but a DOI and a URL
+        # could resolve to two rows in pathological cases).
+        deleted_ids = []
+        clauses, params = [], []
+        if doi:
+            clauses.append("doi = ?")
+            params.append(doi)
+        if url:
+            clauses.append("url = ?")
+            params.append(url)
+        for r in conn.execute(
+            f"SELECT id FROM articles WHERE {' OR '.join(clauses)}", params
+        ).fetchall():
+            _delete_article_rows(conn, r["id"])
+            deleted_ids.append(r["id"])
+        conn.commit()
+        return {"ok": True, "doi": doi, "url": url,
+                "deleted_ids": deleted_ids, "reason": reason}
+
+
+def unsuppress(doi=None, url=None) -> bool:
+    """Remove a DOI/URL from the blocklist so it can be re-ingested. Returns
+    True if a blocklist row was removed. Does not re-fetch the article."""
+    with get_conn() as conn:
+        clauses, params = [], []
+        if doi:
+            clauses.append("doi = ?")
+            params.append(doi)
+        if url:
+            clauses.append("url = ?")
+            params.append(url)
+        if not clauses:
+            return False
+        cur = conn.execute(
+            f"DELETE FROM suppressed_articles WHERE {' OR '.join(clauses)}", params
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+
+def list_suppressed() -> list[dict]:
+    """All blocklist entries, newest first, for the admin surface."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM suppressed_articles ORDER BY created_at DESC, id DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def resweep_suppressed_articles() -> int:
+    """Delete any live article whose DOI/URL is blocklisted. Idempotent
+    backstop wired into the post-fetch maintenance path (mirrors
+    redaction.resweep_all), catching anything an ingest path slipped past the
+    upsert_article choke-point. Returns the number of rows purged."""
+    with get_conn() as conn:
+        ids = [r["id"] for r in conn.execute("""
+            SELECT a.id FROM articles a
+            WHERE (a.doi IS NOT NULL AND a.doi != '' AND a.doi IN (
+                       SELECT doi FROM suppressed_articles
+                       WHERE doi IS NOT NULL AND doi != ''))
+               OR (a.url IN (
+                       SELECT url FROM suppressed_articles
+                       WHERE url IS NOT NULL AND url != ''))
+        """).fetchall()]
+        for aid in ids:
+            _delete_article_rows(conn, aid)
+        if ids:
+            conn.commit()
+        return len(ids)
+
+
+def update_article(article_id, fields: dict) -> bool:
+    """Update whitelisted columns on one article. Returns True if it existed.
+
+    Only curation-safe columns may be set; the FTS index self-syncs for
+    title/authors/abstract via the update trigger. Unknown keys are ignored.
+    """
+    allowed = ("title", "authors", "abstract", "pub_date", "journal",
+               "doi", "oa_url", "oa_status", "keywords", "tags", "url")
+    sets, params = [], []
+    for k in allowed:
+        if k in fields:
+            sets.append(f"{k} = ?")
+            v = fields[k]
+            params.append(v.strip() if isinstance(v, str) else v)
+    if not sets:
+        return False
+    with get_conn() as conn:
+        existed = conn.execute(
+            "SELECT 1 FROM articles WHERE id = ?", (article_id,)
+        ).fetchone() is not None
+        if existed:
+            conn.execute(
+                f"UPDATE articles SET {', '.join(sets)} WHERE id = ?",
+                params + [article_id],
+            )
+            conn.commit()
+        return existed
 
 
 def update_oa_url(article_id, oa_url):
