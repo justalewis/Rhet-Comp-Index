@@ -73,26 +73,6 @@ def _create_tables(conn):
             last_fetched    TEXT,
             last_pub_date   TEXT
         );
-
-        -- Article suppression blocklist. The article-level analog of the
-        -- author redaction ledger: a durable record of DOIs/URLs that must
-        -- never live in the index (test deposits like the WAC "ebizonTest"
-        -- rows, spam, retracted junk). upsert_article consults it on every
-        -- write so a suppressed record cannot be resurrected by the next
-        -- CrossRef fetch, and resweep_suppressed_articles() re-purges after
-        -- each refresh. Reversible: remove the row to allow re-ingestion.
-        CREATE TABLE IF NOT EXISTS suppressed_articles (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            doi         TEXT,
-            url         TEXT,
-            reason      TEXT,
-            created_at  TEXT DEFAULT (datetime('now')),
-            created_by  TEXT
-        );
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_suppressed_doi
-            ON suppressed_articles(doi) WHERE doi IS NOT NULL AND doi != '';
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_suppressed_url
-            ON suppressed_articles(url) WHERE url IS NOT NULL AND url != '';
     """)
     _create_fts(conn)
 
@@ -666,6 +646,35 @@ def _migrate_v13_to_v14(conn):
     log.info("v13→v14 migration complete (community tag tables ready).")
 
 
+def _migrate_v14_to_v15(conn):
+    """Add the article suppression blocklist (v14 → v15).
+
+    The article-level analog of the author redaction ledger: a durable record
+    of DOIs/URLs that must never live in the index (test deposits like the WAC
+    "ebizonTest" rows, spam, retracted junk). upsert_article consults it on
+    every write so a suppressed record cannot be resurrected by the next
+    CrossRef fetch, and db.resweep_suppressed_articles() re-purges after each
+    refresh. Reversible: remove the row to allow re-ingestion.
+
+    Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS suppressed_articles (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            doi         TEXT,
+            url         TEXT,
+            reason      TEXT,
+            created_at  TEXT DEFAULT (datetime('now')),
+            created_by  TEXT
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_suppressed_doi
+            ON suppressed_articles(doi) WHERE doi IS NOT NULL AND doi != '';
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_suppressed_url
+            ON suppressed_articles(url) WHERE url IS NOT NULL AND url != '';
+    """)
+    log.info("v14→v15 migration complete (article suppression blocklist ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -713,6 +722,9 @@ def init_db():
 
         # Always run v14 migration — idempotent via IF NOT EXISTS.
         _migrate_v13_to_v14(conn)
+
+        # Always run v15 migration — idempotent via IF NOT EXISTS.
+        _migrate_v14_to_v15(conn)
 
         conn.commit()
 

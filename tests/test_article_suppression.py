@@ -17,6 +17,21 @@ def _insert(url, doi, title, authors="Ada Lovelace", journal="The WAC Journal"):
         return conn.execute("SELECT id FROM articles WHERE url = ?", (url,)).fetchone()[0]
 
 
+# ── migration ─────────────────────────────────────────────────────────────────
+
+def test_suppression_table_exists_after_init(fixture_db):
+    """The blocklist table must be created by the always-run v15 migration, not
+    only by _create_tables — an existing (already-migrated) production DB never
+    re-runs _create_tables, so the table has to come from a migration."""
+    with get_conn() as conn:
+        assert conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name='suppressed_articles'"
+        ).fetchone() is not None
+    # Re-running init_db is a no-op (idempotent), not an error.
+    db.init_db()
+
+
 # ── upsert choke-point ────────────────────────────────────────────────────────
 
 def test_upsert_skips_blocklisted_doi(fixture_db):
