@@ -10,6 +10,7 @@ Usage:
     python fetcher.py 0010-096X    # fetch one journal by ISSN
 """
 
+import os
 import sys
 import time
 import re
@@ -35,11 +36,51 @@ log = logging.getLogger(__name__)
 CROSSREF_BASE = "https://api.crossref.org/works"
 ROWS_PER_PAGE = 100
 
-# Identify yourself to CrossRef — replace with your actual email.
-# Polite pool gets better rate limits: https://github.com/CrossRef/rest-api-doc#etiquette
+# Identify ourselves to CrossRef so requests land in the "polite pool", which
+# has far more generous rate limits than the anonymous pool (the anonymous pool
+# is what was returning 429s for the daily fetch). CrossRef keys the polite pool
+# off a contact mailto in the User-Agent. Read it from CROSSREF_MAILTO (a Fly
+# secret in prod / .env locally) so the personal email stays out of this public
+# repo. https://api.crossref.org/swagger-ui/index.html#/ (Etiquette)
+_MAILTO = os.environ.get("CROSSREF_MAILTO", "").strip()
 HEADERS = {
-    "User-Agent": "RhetCompIndex/1.0 (mailto:your-email@example.com)"
+    "User-Agent": (
+        f"Pinakes/1.0 (+https://pinakes.xyz; mailto:{_MAILTO})"
+        if _MAILTO else "Pinakes/1.0 (+https://pinakes.xyz)"
+    )
 }
+
+# Retry budget for transient CrossRef responses (429 + 5xx).
+_MAX_RETRIES = 4
+_RETRYABLE = {429, 500, 502, 503, 504}
+
+
+def _crossref_get(params):
+    """GET from CrossRef with polite-pool headers and backoff on 429/5xx.
+
+    Honors the server's Retry-After header when present; otherwise backs off
+    exponentially (2, 4, 8 s, capped at 60). Raises the underlying HTTPError
+    only after the retry budget is exhausted, so a brief rate-limit no longer
+    aborts a journal's fetch (or spams Sentry)."""
+    delay = 2
+    resp = None
+    for attempt in range(1, _MAX_RETRIES + 1):
+        resp = requests.get(CROSSREF_BASE, params=params, headers=HEADERS, timeout=30)
+        if resp.status_code in _RETRYABLE and attempt < _MAX_RETRIES:
+            retry_after = resp.headers.get("Retry-After")
+            try:
+                wait = int(retry_after) if retry_after else delay
+            except ValueError:
+                wait = delay
+            wait = min(wait, 60)
+            log.warning("CrossRef %s (attempt %d/%d) — backing off %ds",
+                        resp.status_code, attempt, _MAX_RETRIES, wait)
+            time.sleep(wait)
+            delay = min(delay * 2, 60)
+            continue
+        break
+    resp.raise_for_status()
+    return resp
 
 
 # ── Parsers ───────────────────────────────────────────────────────────────────
@@ -148,8 +189,7 @@ def fetch_journal(issn, since_date=None):
 
     while True:
         try:
-            resp = requests.get(CROSSREF_BASE, params=params, headers=HEADERS, timeout=30)
-            resp.raise_for_status()
+            resp = _crossref_get(params)
         except requests.RequestException as e:
             log.error("Request failed for %s: %s", issn, e)
             capture_fetcher_error(SOURCE_NAME, journal_name, e)

@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import requests
 import responses
 
 import fetcher
@@ -150,3 +151,28 @@ def test_parse_authors_with_no_name_fields():
     """An author entry with neither given nor family is dropped."""
     item = {"author": [{"given": "", "family": ""}]}
     assert fetcher._parse_authors(item) is None
+
+
+# ── CrossRef 429/5xx backoff (the daily-fetch rate-limit fix) ─────────────────
+
+
+@responses.activate
+def test_crossref_get_retries_on_429_then_succeeds(monkeypatch):
+    monkeypatch.setattr(fetcher.time, "sleep", lambda *a, **k: None)
+    responses.add(responses.GET, fetcher.CROSSREF_BASE, status=429,
+                  headers={"Retry-After": "1"})
+    responses.add(responses.GET, fetcher.CROSSREF_BASE,
+                  json={"message": {"items": []}}, status=200)
+    resp = fetcher._crossref_get({"filter": "issn:0000-0000"})
+    assert resp.status_code == 200
+    assert len(responses.calls) == 2  # retried once after the 429
+
+
+@responses.activate
+def test_crossref_get_raises_after_exhausting_retries(monkeypatch):
+    monkeypatch.setattr(fetcher.time, "sleep", lambda *a, **k: None)
+    for _ in range(fetcher._MAX_RETRIES):
+        responses.add(responses.GET, fetcher.CROSSREF_BASE, status=429)
+    with pytest.raises(requests.HTTPError):
+        fetcher._crossref_get({"filter": "issn:0000-0000"})
+    assert len(responses.calls) == fetcher._MAX_RETRIES
