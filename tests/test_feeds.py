@@ -77,6 +77,34 @@ def test_render_produces_parseable_atom():
     assert len(root.findall(f"{ATOM}entry")) == 2
 
 
+def test_feed_declares_the_browser_stylesheet():
+    """Without the PI a browser shows raw XML, which tells a person who
+    clicked a feed link nothing about what to do with it."""
+    xml = _render([_article()])
+    assert 'xml-stylesheet' in xml
+    assert feeds_mod.STYLESHEET_HREF in xml
+    # The PI must precede the root element or the browser ignores it.
+    assert xml.index("xml-stylesheet") < xml.index("<feed")
+
+
+def test_stylesheet_pi_does_not_break_parsing():
+    """Feed readers must still see plain Atom underneath the PI."""
+    root = ET.fromstring(_render([_article(), _article(id=2)]))
+    assert root.tag == f"{ATOM}feed"
+    assert len(root.findall(f"{ATOM}entry")) == 2
+
+
+def test_stylesheet_is_served(client):
+    resp = client.get(feeds_mod.STYLESHEET_HREF)
+    try:
+        assert resp.status_code == 200
+        ET.fromstring(resp.data)  # must be well-formed XSLT
+    finally:
+        # Flask's static handler streams from an open file; the test client
+        # does not close it for us and pytest escalates the ResourceWarning.
+        resp.close()
+
+
 def test_entry_ids_are_stable_and_unique():
     root = ET.fromstring(_render([_article(id=7), _article(id=8)]))
     ids = [e.findtext(f"{ATOM}id") for e in root.findall(f"{ATOM}entry")]
@@ -222,6 +250,60 @@ def test_feeds_directory_page_lists_every_journal(client):
     body = resp.get_data(as_text=True)
     for name in ALL_JOURNAL_NAMES:
         assert f"/feed/{JOURNAL_TO_SLUG[name]}.xml" in body
+
+
+def test_feeds_page_offers_a_copyable_absolute_address(client):
+    """A relative path pasted into a feed reader is useless; the copy button
+    has to carry the full URL."""
+    slug = JOURNAL_TO_SLUG["College English"]
+    body = client.get("/feeds").get_data(as_text=True)
+    assert f'data-feed="https://pinakes.xyz/feed/{slug}.xml"' in body
+    assert 'data-feed="https://pinakes.xyz/feed.xml"' in body
+
+
+def test_landing_page_serves_html_not_xml(client):
+    """A person clicking a journal name gets a page, not raw markup."""
+    slug = JOURNAL_TO_SLUG["College English"]
+    resp = client.get(f"/feed/{slug}")
+    assert resp.status_code == 200
+    assert resp.mimetype == "text/html"
+    body = resp.get_data(as_text=True)
+    assert f"https://pinakes.xyz/feed/{slug}.xml" in body
+    assert "feed reader" in body.lower()
+
+
+def test_landing_and_raw_urls_do_not_collide(client):
+    """/feed/<slug> and /feed/<slug>.xml differ by a suffix; Werkzeug must not
+    route the .xml request to the landing page."""
+    slug = JOURNAL_TO_SLUG["College English"]
+    assert client.get(f"/feed/{slug}").mimetype == "text/html"
+    assert client.get(f"/feed/{slug}.xml").mimetype == "application/atom+xml"
+
+
+def test_landing_page_unknown_slug_404s(client):
+    assert client.get("/feed/not-a-journal").status_code == 404
+
+
+def test_landing_page_handles_a_journal_with_no_articles(client, empty_client):
+    """Writing on the Edge has nothing indexed; the page must still explain the
+    feed rather than look broken."""
+    slug = JOURNAL_TO_SLUG["Writing on the Edge"]
+    resp = empty_client.get(f"/feed/{slug}")
+    assert resp.status_code == 200
+    assert "has not indexed anything" in resp.get_data(as_text=True)
+
+
+def test_feeds_page_links_journals_to_landing_pages(client):
+    """Journal names must not point at the .xml — that is the whole fix."""
+    slug = JOURNAL_TO_SLUG["College English"]
+    body = client.get("/feeds").get_data(as_text=True)
+    assert f'href="/feed/{slug}"' in body
+
+
+def test_feeds_page_explains_what_to_do_with_an_address(client):
+    body = client.get("/feeds").get_data(as_text=True)
+    assert "feed reader" in body.lower()
+    assert "Paste the address" in body
 
 
 def test_robots_disallows_feeds(client):

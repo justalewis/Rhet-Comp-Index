@@ -3,18 +3,48 @@
 {% block title %}Feeds — Pinakes{% endblock %}
 
 {% block head_extra %}
-  <meta name="description" content="Atom feeds for every journal indexed by Pinakes. Subscribe in any feed reader to see new rhetoric and composition scholarship as it is indexed.">
+  <meta name="description" content="Atom feeds for every journal indexed by Pinakes. Subscribe in a feed reader to see new rhetoric and composition scholarship as it is indexed.">
   <link rel="alternate" type="application/atom+xml" title="Pinakes — new in rhetoric and composition" href="/feed.xml">
   <style>
     .feeds-lede { max-width: 46rem; }
     .feeds-lede p { margin: 0 0 0.9rem 0; }
-    .feeds-all {
-      margin: 1.6rem 0 2.2rem 0;
+
+    .feeds-how {
+      max-width: 46rem;
+      margin: 1.6rem 0 2rem 0;
       padding: 1rem 1.2rem;
       border: 1px solid var(--border);
       border-radius: 4px;
     }
-    .feeds-all p { margin: 0 0 0.4rem 0; }
+    .feeds-how h3 {
+      margin: 0 0 0.6rem 0;
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted, #777);
+    }
+    .feeds-how ol { margin: 0 0 0.8rem 0; padding-left: 1.2rem; }
+    .feeds-how li { margin-bottom: 0.3rem; }
+    .feeds-how p { margin: 0; font-size: 0.92rem; }
+
+    .feeds-all {
+      max-width: 46rem;
+      margin: 0 0 2.2rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .feeds-all-label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted, #777);
+      margin-bottom: 0.35rem;
+    }
+
     .feeds-section { margin-bottom: 2rem; }
     .feeds-section-heading {
       margin: 0 0 0.6rem 0;
@@ -29,20 +59,42 @@
     .feeds-list li {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.2rem 0.8rem;
+      gap: 0.3rem 0.8rem;
       align-items: baseline;
-      padding: 0.32rem 0;
+      padding: 0.34rem 0;
       border-bottom: 1px solid var(--border-light, var(--border));
     }
-    .feeds-journal { flex: 1 1 22rem; }
-    .feeds-url {
-      font-family: var(--font-mono, monospace);
-      font-size: 0.82rem;
+    .feeds-journal { flex: 1 1 20rem; }
+    .feeds-journal a { color: var(--link); text-decoration: none; }
+    .feeds-journal a:hover { text-decoration: underline; }
+
+    .feeds-actions {
+      display: flex;
+      gap: 0.4rem;
+      align-items: baseline;
+      flex-shrink: 0;
+    }
+    .feeds-copy {
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      padding: 0.15rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .feeds-copy:hover { border-color: var(--accent, #7a2e2e); }
+    .feeds-copy[data-copied="1"] { border-color: var(--accent, #7a2e2e); }
+    .feeds-view {
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
       color: var(--link);
       text-decoration: none;
-      word-break: break-all;
+      white-space: nowrap;
     }
-    .feeds-url:hover { text-decoration: underline; }
+    .feeds-view:hover { text-decoration: underline; }
   </style>
 {% endblock %}
 
@@ -50,28 +102,50 @@
 
     <div class="content-header">
       <h2>Feeds</h2>
-      <span class="result-count">One Atom feed per journal, plus one for the whole index.</span>
+      <span class="result-count">One feed per journal, plus one for the whole index.</span>
     </div>
 
     <div class="feeds-lede">
       <p>
-        Every journal Pinakes tracks has its own Atom feed of new arrivals, and
-        there is one feed covering the whole index. Subscribe in any reader —
-        Feedly, Inoreader, NetNewsWire, Thunderbird — and new scholarship shows
-        up there as Pinakes indexes it.
+        A feed reader watches these addresses and tells you when something new
+        shows up, so you don't have to keep checking the site. Pinakes publishes
+        one for each journal it indexes and one that covers everything.
       </p>
       <p>
-        Each feed carries the {{ feed_limit }} most recent arrivals in the order
-        Pinakes found them, not in publication order. Much of what this index
-        surfaces is backfilled or scraped late, so an article published in 2019
-        that turns up in this week's fetch is new to you even though its
-        publication date is not.
+        Feeds list articles in the order Pinakes found them. A good deal of what
+        lands here was published years earlier: a 2006 article from Open Words
+        turned up in this June's fetch. Ordering by publication date would drop
+        items like that far down the list, below things you read weeks ago. Each
+        feed holds the {{ feed_limit }} most recent arrivals.
+      </p>
+    </div>
+
+    <div class="feeds-how">
+      <h3>Using one of these</h3>
+      <ol>
+        <li>Copy a feed address below.</li>
+        <li>In your feed reader, find <em>Add</em>, <em>Subscribe</em>, or <em>+</em>.</li>
+        <li>Paste the address.</li>
+      </ol>
+      <p>
+        No reader yet? <a href="https://feedly.com">Feedly</a> and
+        <a href="https://www.inoreader.com">Inoreader</a> run in a browser and
+        are free to start. <a href="https://netnewswire.com">NetNewsWire</a> is
+        a free Mac and iPhone app. Thunderbird handles feeds alongside email.
       </p>
     </div>
 
     <div class="feeds-all">
-      <p><strong>Everything Pinakes indexes</strong></p>
-      <a class="feeds-url" href="/feed.xml">https://pinakes.xyz/feed.xml</a>
+      <span class="feeds-all-label">Everything Pinakes indexes</span>
+      <ul class="feeds-list">
+        <li style="border:none; padding:0;">
+          <span class="feeds-journal"><code>https://pinakes.xyz/feed.xml</code></span>
+          <span class="feeds-actions">
+            <button type="button" class="feeds-copy feed-copy" data-feed="https://pinakes.xyz/feed.xml">Copy address</button>
+            <a class="feeds-view" href="/feed.xml">View raw</a>
+          </span>
+        </li>
+      </ul>
     </div>
 
     {% for label, journals in groups %}
@@ -81,8 +155,11 @@
         <ul class="feeds-list">
           {% for name, slug in journals %}
           <li>
-            <span class="feeds-journal">{{ name }}</span>
-            <a class="feeds-url" href="/feed/{{ slug }}.xml">/feed/{{ slug }}.xml</a>
+            <span class="feeds-journal"><a href="/feed/{{ slug }}">{{ name }}</a></span>
+            <span class="feeds-actions">
+              <button type="button" class="feeds-copy feed-copy"
+                      data-feed="https://pinakes.xyz/feed/{{ slug }}.xml">Copy address</button>
+            </span>
           </li>
           {% endfor %}
         </ul>
@@ -96,12 +173,17 @@
       <ul class="feeds-list">
         {% for name, slug in ungrouped %}
         <li>
-          <span class="feeds-journal">{{ name }}</span>
-          <a class="feeds-url" href="/feed/{{ slug }}.xml">/feed/{{ slug }}.xml</a>
+          <span class="feeds-journal"><a href="/feed/{{ slug }}">{{ name }}</a></span>
+          <span class="feeds-actions">
+            <button type="button" class="feeds-copy feed-copy"
+                    data-feed="https://pinakes.xyz/feed/{{ slug }}.xml">Copy address</button>
+          </span>
         </li>
         {% endfor %}
       </ul>
     </div>
     {% endif %}
+
+    <script src="/static/feed-copy.js" defer></script>
 
 {% endblock %}

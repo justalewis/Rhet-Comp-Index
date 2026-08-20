@@ -181,8 +181,12 @@ def test_route_count_matches_expected(client):
     #        GET /alerts/manage/<token>, POST /alerts/manage/<token>/delete,
     #        POST /api/admin/send-digests (weekly cron). Signup 404s unless
     #        PINAKES_ALERTS_ENABLED=1; unsubscribe/delete work regardless.
-    assert len(rules) == 148, (
-        f"Expected 148 routes, got {len(rules)}. "
+    #  +  1  GET /feed/<slug> (2026-08-20): human-facing landing page for one
+    #        journal's feed. Chrome 148 dropped declarative XSLT, so a browser
+    #        shows raw XML for the .xml URL; nothing in the UI links straight
+    #        there any more.
+    assert len(rules) == 149, (
+        f"Expected 149 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

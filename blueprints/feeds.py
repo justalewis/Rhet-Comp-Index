@@ -132,6 +132,43 @@ def feed_journal(slug):
     )
 
 
+@bp.route("/feed/<slug>")
+def feed_landing(slug):
+    """Human-facing page for one journal's feed.
+
+    This exists because a feed URL is not a page. Clicking one in Chrome shows
+    a wall of raw XML: Chrome 148 no longer applies an xml-stylesheet
+    processing instruction to render XML documents (the scripted XSLTProcessor
+    API survives, the declarative path does not), so static/feed.xsl only helps
+    in Firefox and Safari.
+
+    Rather than depend on a browser feature that is being removed, nothing in
+    the interface links straight to the .xml any more. The journal name goes
+    here, this page hands over the address, and the raw feed stays exactly as
+    it was for the software that actually consumes it.
+    """
+    journal = SLUG_TO_JOURNAL.get(slug)
+    if not journal:
+        abort(404)
+    articles = get_feed_articles(journal=journal, limit=10)
+    print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
+    return render_template(
+        "feed_landing.html",
+        journal=journal,
+        slug=slug,
+        feed_url=f"{SITE_URL}/feed/{slug}.xml",
+        articles=articles,
+        feed_limit=FEED_LIMIT,
+        print_journals=print_journals,
+        web_journals=web_journals,
+        all_journals=all_journals,
+        journal_groups=journal_groups,
+        unavailable=UNAVAILABLE_JOURNALS,
+        new_count=get_new_article_count(days=7),
+        active_nav="feeds",
+    )
+
+
 @bp.route("/feeds")
 def feeds_index():
     """Human-facing directory of every feed, grouped like the sidebar."""

@@ -38,6 +38,9 @@ TAG_AUTHORITY = "pinakes.xyz,2026"
 
 FEED_MIMETYPE = "application/atom+xml"
 
+# Browser-facing stylesheet for the feed (see the PI in render_atom).
+STYLESHEET_HREF = "/static/feed.xsl"
+
 # XML 1.0 forbids most C0 control characters outright; there is no escape for
 # them. Upstream abstracts occasionally carry them (stray \x0b, \x1a from bad
 # PDF extraction), and ElementTree will emit them verbatim, producing a feed
@@ -163,4 +166,12 @@ def render_atom(articles, *, title, self_url, site_url, subtitle=None, feed_id=N
             _sub(entry, "link", href=f"https://doi.org/{a['doi']}", rel="related",
                  title="DOI")
 
-    return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode")
+    # The xml-stylesheet PI is what a browser uses to render this as a readable
+    # page instead of a wall of tags; feed readers ignore it and parse the Atom
+    # underneath. People do click feed links, and raw XML tells them nothing
+    # about what to do next. See static/feed.xsl.
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        f'<?xml-stylesheet type="text/xsl" href="{STYLESHEET_HREF}"?>\n'
+        + ET.tostring(root, encoding="unicode")
+    )

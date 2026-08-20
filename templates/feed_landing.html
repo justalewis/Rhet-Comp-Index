@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}{{ journal }} feed — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="description" content="Atom feed for {{ journal }}. Subscribe in a feed reader to see new articles as Pinakes indexes them.">
+  <link rel="alternate" type="application/atom+xml" title="Pinakes — {{ journal }}" href="/feed/{{ slug }}.xml">
+  <style>
+    .fl-wrap { max-width: 44rem; }
+    .fl-wrap p { margin: 0 0 0.9rem 0; }
+    .fl-url {
+      margin: 1.3rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .fl-url-label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.76rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted, #777);
+      margin-bottom: 0.4rem;
+    }
+    .fl-url code {
+      font-size: 0.94rem;
+      word-break: break-all;
+      user-select: all;
+    }
+    .fl-url-actions {
+      margin-top: 0.7rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .fl-copy {
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      padding: 0.28rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+    .fl-copy:hover { border-color: var(--accent, #7a2e2e); }
+    .fl-raw {
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      color: var(--muted, #777);
+      text-decoration: none;
+    }
+    .fl-raw:hover { text-decoration: underline; }
+    .fl-steps { padding-left: 1.2rem; margin: 0 0 1.4rem; }
+    .fl-steps li { margin-bottom: 0.3rem; }
+    .fl-recent { margin-top: 2.2rem; }
+    .fl-recent h3 {
+      margin: 0 0 0.8rem 0;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted, #777);
+    }
+    .fl-item { margin-bottom: 1rem; }
+    .fl-item-title { margin: 0 0 0.15rem 0; font-weight: 600; }
+    .fl-item-title a { text-decoration: none; color: var(--link); }
+    .fl-item-title a:hover { text-decoration: underline; }
+    .fl-item-meta {
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      color: var(--muted, #777);
+    }
+    .fl-fine {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--muted, #666);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="content-header">
+      <h2>{{ journal }}</h2>
+      <span class="result-count">Feed of new arrivals.</span>
+    </div>
+
+    <div class="fl-wrap">
+
+      <p>
+        A feed reader watches this address and shows you new articles from
+        {{ journal }} as Pinakes indexes them. The feed holds the
+        {{ feed_limit }} most recent arrivals, ordered by when they were found.
+      </p>
+
+      <div class="fl-url">
+        <span class="fl-url-label">Feed address</span>
+        <code>{{ feed_url }}</code>
+        <div class="fl-url-actions">
+          <button type="button" class="fl-copy feed-copy" data-feed="{{ feed_url }}">Copy address</button>
+          <a class="fl-raw" href="/feed/{{ slug }}.xml">View the raw feed</a>
+        </div>
+      </div>
+
+      <ol class="fl-steps">
+        <li>Copy the address.</li>
+        <li>In your feed reader, find <em>Add</em>, <em>Subscribe</em>, or <em>+</em>.</li>
+        <li>Paste it in.</li>
+      </ol>
+
+      <p>
+        No reader yet? <a href="https://feedly.com">Feedly</a> and
+        <a href="https://www.inoreader.com">Inoreader</a> run in a browser.
+        <a href="https://netnewswire.com">NetNewsWire</a> is a free Mac and
+        iPhone app. Thunderbird handles feeds alongside email.
+      </p>
+
+      {% if articles %}
+      <div class="fl-recent">
+        <h3>Most recent</h3>
+        {% for a in articles %}
+        <div class="fl-item">
+          <p class="fl-item-title">
+            <a href="/article/{{ a.id }}">{{ a.title or 'Untitled' }}</a>
+          </p>
+          <p class="fl-item-meta">
+            {{ a.authors or '' }}{% if a.authors and a.pub_date %} · {% endif %}{{ a.pub_date or '' }}
+          </p>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="fl-fine">
+        Pinakes has not indexed anything from {{ journal }} yet. The feed works,
+        and articles will appear in it as they are found.
+      </p>
+      {% endif %}
+
+      <p class="fl-fine">
+        <a href="/feeds">All feeds</a> ·
+        <a href="/?journal={{ journal | urlencode }}">Browse {{ journal }} on Pinakes</a>
+      </p>
+
+    </div>
+
+    <script src="/static/feed-copy.js" defer></script>
+
+{% endblock %}
