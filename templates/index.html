@@ -4,6 +4,11 @@
 
 {% block head_extra %}
 <meta name="description" content="Pinakes is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication. Browse 40,000+ articles and 3,200+ books from major journals and university presses.">
+{% if feed_slug %}
+<link rel="alternate" type="application/atom+xml" title="Pinakes — {{ feed_journal }}" href="/feed/{{ feed_slug }}.xml">
+{% else %}
+<link rel="alternate" type="application/atom+xml" title="Pinakes — new in rhetoric and composition" href="/feed.xml">
+{% endif %}
 {% endblock %}
 
 {% block sidebar_content %}
@@ -193,6 +198,14 @@
           <span class="filter-label">Export:</span>
           <button type="submit" formaction="/export" name="format" value="bibtex" class="export-btn">BibTeX</button>
           <button type="submit" formaction="/export" name="format" value="ris" class="export-btn">RIS</button>
+          {% if feed_slug %}
+          <a href="/feed/{{ feed_slug }}.xml" class="export-btn">Subscribe (Atom)</a>
+          {% endif %}
+          {% if alerts_enabled %}
+          {# GET, so every active filter rides along on the query string and the
+             signup page can show the visitor the search they are subscribing to. #}
+          <button type="submit" formaction="/alerts/new" formmethod="get" class="export-btn">Email me these</button>
+          {% endif %}
         </div>
 
       </form>

@@ -173,6 +173,53 @@ def run_maintenance_now():
     return jsonify({"status": "maintenance started"}), 200
 
 
+# ── Saved-search email digests ─────────────────────────────────────────────
+
+def _run_digests_in_background(dry_run=False):
+    """Background-thread target for /api/admin/send-digests.
+
+    Shares app._fetch_lock with the fetch/deep-refresh/maintenance writers.
+    Two reasons, both learned the hard way:
+
+    1. The digest advances watermarks, so it is a writer. Running it beside the
+       daily fetch's multi-hour scraper phase is the contention that surfaced
+       as "database is locked" in 2026-06-21.
+    2. The memory watchdog is job-aware — it holds this same lock across its
+       SIGTERM. Sending outside the lock means a recycle can land between
+       send_email() and record_send(), which delivers a digest and then
+       re-sends it next week because the watermark never advanced.
+    """
+    import app as _app
+    if not _app._fetch_lock.acquire(timeout=6 * 3600):
+        log.error("Digest run skipped — fetch lock held >6h (fetch stuck?).")
+        return
+    try:
+        from digest import run as run_digests
+        summary = run_digests(dry_run=dry_run)
+        log.info("Digest run finished: %s", summary)
+    except Exception:  # noqa: BLE001
+        log.exception("Digest run raised unhandled exception")
+    finally:
+        _app._fetch_lock.release()
+
+
+@bp.route("/api/admin/send-digests", methods=["POST"])
+@require_admin_token
+def send_digests_now():
+    """Kick off the saved-search digest run asynchronously and return 200
+    immediately. Called weekly by .github/workflows/alerts.yml.
+
+    POST {"dry_run": true} reports what would be sent and changes nothing —
+    the safe way to inspect a live subscriber list before the first real run.
+    """
+    payload = request.get_json(silent=True) or {}
+    dry_run = bool(payload.get("dry_run"))
+    t = threading.Thread(target=_run_digests_in_background,
+                         args=(dry_run,), daemon=True)
+    t.start()
+    return jsonify({"status": "digest run started", "dry_run": dry_run}), 200
+
+
 # ── Datastories cache pre-warm ─────────────────────────────────────────────
 
 def _run_prewarm_in_background():

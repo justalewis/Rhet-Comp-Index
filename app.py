@@ -284,6 +284,8 @@ def create_app() -> Flask:
     from blueprints.tags         import bp as tags_bp
     from blueprints.wac          import bp as wac_bp
     from blueprints.jwa          import bp as jwa_bp
+    from blueprints.feeds        import bp as feeds_bp
+    from blueprints.alerts       import bp as alerts_bp
 
     flask_app.register_blueprint(main_bp)
     flask_app.register_blueprint(articles_bp)
@@ -292,6 +294,14 @@ def create_app() -> Flask:
     flask_app.register_blueprint(stats_bp)
     flask_app.register_blueprint(books_bp)
     flask_app.register_blueprint(institutions_bp)
+    # Atom feeds — /feed.xml, /feed/<slug>.xml, /feeds. Public and cacheable;
+    # the URL set is deliberately bounded (see blueprints/feeds.py).
+    flask_app.register_blueprint(feeds_bp)
+    # Saved-search email alerts. Routes are registered unconditionally but the
+    # signup path 404s unless PINAKES_ALERTS_ENABLED=1, so the feature can ship
+    # dark and be switched on once the sending domain is verified. Unsubscribe
+    # and delete stay reachable either way.
+    flask_app.register_blueprint(alerts_bp)
     flask_app.register_blueprint(admin_bp)
     flask_app.register_blueprint(redaction_bp)
     # Community tags — public 👍/👎 + suggestion endpoints on the article page;

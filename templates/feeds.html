@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Feeds — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="description" content="Atom feeds for every journal indexed by Pinakes. Subscribe in any feed reader to see new rhetoric and composition scholarship as it is indexed.">
+  <link rel="alternate" type="application/atom+xml" title="Pinakes — new in rhetoric and composition" href="/feed.xml">
+  <style>
+    .feeds-lede { max-width: 46rem; }
+    .feeds-lede p { margin: 0 0 0.9rem 0; }
+    .feeds-all {
+      margin: 1.6rem 0 2.2rem 0;
+      padding: 1rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .feeds-all p { margin: 0 0 0.4rem 0; }
+    .feeds-section { margin-bottom: 2rem; }
+    .feeds-section-heading {
+      margin: 0 0 0.6rem 0;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-ui);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .feeds-list { list-style: none; margin: 0; padding: 0; }
+    .feeds-list li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem 0.8rem;
+      align-items: baseline;
+      padding: 0.32rem 0;
+      border-bottom: 1px solid var(--border-light, var(--border));
+    }
+    .feeds-journal { flex: 1 1 22rem; }
+    .feeds-url {
+      font-family: var(--font-mono, monospace);
+      font-size: 0.82rem;
+      color: var(--link);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .feeds-url:hover { text-decoration: underline; }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="content-header">
+      <h2>Feeds</h2>
+      <span class="result-count">One Atom feed per journal, plus one for the whole index.</span>
+    </div>
+
+    <div class="feeds-lede">
+      <p>
+        Every journal Pinakes tracks has its own Atom feed of new arrivals, and
+        there is one feed covering the whole index. Subscribe in any reader —
+        Feedly, Inoreader, NetNewsWire, Thunderbird — and new scholarship shows
+        up there as Pinakes indexes it.
+      </p>
+      <p>
+        Each feed carries the {{ feed_limit }} most recent arrivals in the order
+        Pinakes found them, not in publication order. Much of what this index
+        surfaces is backfilled or scraped late, so an article published in 2019
+        that turns up in this week's fetch is new to you even though its
+        publication date is not.
+      </p>
+    </div>
+
+    <div class="feeds-all">
+      <p><strong>Everything Pinakes indexes</strong></p>
+      <a class="feeds-url" href="/feed.xml">https://pinakes.xyz/feed.xml</a>
+    </div>
+
+    {% for label, journals in groups %}
+      {% if journals %}
+      <div class="feeds-section">
+        <h3 class="feeds-section-heading">{{ label }}</h3>
+        <ul class="feeds-list">
+          {% for name, slug in journals %}
+          <li>
+            <span class="feeds-journal">{{ name }}</span>
+            <a class="feeds-url" href="/feed/{{ slug }}.xml">/feed/{{ slug }}.xml</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% endfor %}
+
+    {% if ungrouped %}
+    <div class="feeds-section">
+      <h3 class="feeds-section-heading">Other Journals</h3>
+      <ul class="feeds-list">
+        {% for name, slug in ungrouped %}
+        <li>
+          <span class="feeds-journal">{{ name }}</span>
+          <a class="feeds-url" href="/feed/{{ slug }}.xml">/feed/{{ slug }}.xml</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+{% endblock %}

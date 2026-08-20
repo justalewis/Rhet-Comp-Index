@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ heading }} — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex">
+  <style>
+    .alerts-wrap { max-width: 42rem; }
+    .alerts-wrap p { margin: 0 0 0.9rem 0; }
+    .alerts-fine {
+      margin-top: 1.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--muted, #666);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="content-header">
+      <h2>{{ heading }}</h2>
+    </div>
+
+    <div class="alerts-wrap">
+      <p>{{ message }}</p>
+      <p class="alerts-fine">
+        <a href="/">Back to the index</a> &middot;
+        <a href="/feeds">Feeds</a>
+      </p>
+    </div>
+
+{% endblock %}

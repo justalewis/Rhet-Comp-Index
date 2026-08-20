@@ -43,4 +43,5 @@ HTML_ROUTE_HEADINGS: dict[str, str] = {
     "/books":         "Books",
     "/glossary":      "Citation concepts",
     "/atlas":         "Atlas of the Field",
+    "/feeds":         "Feeds",
 }

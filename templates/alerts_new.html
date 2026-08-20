@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Email alerts — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex">
+  <style>
+    .alerts-wrap { max-width: 42rem; }
+    .alerts-wrap p { margin: 0 0 0.9rem 0; }
+    .alerts-search {
+      margin: 1.2rem 0 1.6rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .alerts-search-label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted, #777);
+      margin-bottom: 0.3rem;
+    }
+    .alerts-search-value { font-size: 1.02rem; }
+    .alerts-field { margin-bottom: 1rem; }
+    .alerts-field label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+    .alerts-field input[type=email],
+    .alerts-field select {
+      width: 100%;
+      max-width: 24rem;
+      padding: 0.45rem 0.55rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--bg, #fff);
+      color: inherit;
+    }
+    .alerts-hp {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+    .alerts-error {
+      margin: 0 0 1rem 0;
+      padding: 0.6rem 0.8rem;
+      border-left: 3px solid #a33;
+      background: rgba(170, 51, 51, 0.06);
+    }
+    .alerts-fine {
+      margin-top: 1.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--muted, #666);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="content-header">
+      <h2>Email alerts</h2>
+      <span class="result-count">Get new scholarship matching a saved search.</span>
+    </div>
+
+    <div class="alerts-wrap">
+
+      {% if error %}
+      <p class="alerts-error">{{ error }}</p>
+      {% endif %}
+
+      <p>
+        Pinakes will email you when newly indexed work matches the search below.
+        Weeks with nothing new are silent — no email goes out unless there is
+        something in it.
+      </p>
+
+      <div class="alerts-search">
+        <span class="alerts-search-label">Your saved search</span>
+        <span class="alerts-search-value">{{ label }}</span>
+      </div>
+
+      <form method="post" action="/alerts/subscribe" autocomplete="off">
+        {# Carry the filters through so the subscription matches what the
+           visitor was looking at when they clicked. #}
+        {% for j in filters.get('journal', []) %}
+        <input type="hidden" name="journal" value="{{ j }}">
+        {% endfor %}
+        {% for key in ['source', 'q', 'year_from', 'year_to', 'tag'] %}
+          {% if filters.get(key) %}
+        <input type="hidden" name="{{ key }}" value="{{ filters[key] }}">
+          {% endif %}
+        {% endfor %}
+
+        <div class="alerts-field">
+          <label for="alert-email">Email address</label>
+          <input type="email" id="alert-email" name="email" required
+                 value="{{ email or '' }}" placeholder="you@university.edu">
+        </div>
+
+        <div class="alerts-field">
+          <label for="alert-cadence">How often</label>
+          <select id="alert-cadence" name="cadence">
+            {% for c in cadences %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {# Honeypot: hidden from people, filled by form bots. #}
+        <div class="alerts-hp" aria-hidden="true">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <button type="submit" class="fetch-btn">Send me the confirmation link &rarr;</button>
+      </form>
+
+      <p class="alerts-fine">
+        Confirm by email before anything is sent. Every digest carries a
+        one-click unsubscribe link, and you can delete your address and its
+        delivery record at any time. Pinakes uses your address for this alert
+        and nothing else.
+      </p>
+
+      <p class="alerts-fine">
+        Prefer a feed reader? Every journal has an <a href="/feeds">Atom feed</a>
+        — no address required.
+      </p>
+
+    </div>
+
+{% endblock %}

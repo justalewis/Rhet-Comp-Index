@@ -34,10 +34,18 @@ def email_configured() -> bool:
     return bool(os.environ.get("SMTP_HOST") and os.environ.get("SMTP_FROM"))
 
 
-def send_email(to: str, subject: str, body: str) -> bool:
-    """Send a plain-text email. Returns True if handed to the SMTP server,
-    False if email isn't configured (message is logged instead) or sending
-    failed. Never raises — callers treat email as best-effort."""
+def send_email(to: str, subject: str, body: str,
+               html: str | None = None, headers: dict | None = None) -> bool:
+    """Send an email. Returns True if handed to the SMTP server, False if email
+    isn't configured (message is logged instead) or sending failed. Never
+    raises — callers treat email as best-effort.
+
+    `html`, when given, is attached as a multipart/alternative part; `body`
+    stays the plain-text fallback and is not optional. `headers` adds extra
+    headers — the alert digest uses it for List-Unsubscribe and
+    List-Unsubscribe-Post, which Gmail and Yahoo require on bulk mail and
+    without which digests are filtered as spam regardless of content.
+    """
     sender = os.environ.get("SMTP_FROM", "")
     if not email_configured():
         log.warning(
@@ -54,7 +62,12 @@ def send_email(to: str, subject: str, body: str) -> bool:
     reply_to = os.environ.get("SMTP_REPLY_TO")
     if reply_to:
         msg["Reply-To"] = reply_to
+    for key, value in (headers or {}).items():
+        if value:
+            msg[key] = value
     msg.set_content(body)
+    if html:
+        msg.add_alternative(html, subtype="html")
 
     host = os.environ["SMTP_HOST"]
     port = int(os.environ.get("SMTP_PORT", "587"))

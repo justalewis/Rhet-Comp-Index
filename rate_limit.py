@@ -74,6 +74,11 @@ LIMITS: dict[str, str] = {
     # so a tighter cap that still lets a genuine reader tag a few articles.
     "tag_feedback":   "40 per hour",
     "tag_suggestion": "10 per hour",
+    # Saved-search alert signup. Each accepted POST sends a verification email
+    # to an address the submitter typed, so an uncapped form is a way to make
+    # Pinakes mail strangers on someone else's behalf. Low cap, and the digest
+    # purges never-confirmed rows after a week.
+    "alert_signup": "5 per hour",
 }
 
 

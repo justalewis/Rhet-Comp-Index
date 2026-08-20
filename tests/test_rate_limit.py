@@ -237,7 +237,8 @@ def test_fetch_authenticated_burst_eventually_429s(client, monkeypatch):
 
 def test_limits_dict_has_all_tiers():
     assert set(LIMITS) == {"default", "citations", "stats", "search", "fetch",
-                           "redaction_request", "tag_feedback", "tag_suggestion"}
+                           "redaction_request", "tag_feedback", "tag_suggestion",
+                           "alert_signup"}
 
 
 def test_limits_values_are_strings():

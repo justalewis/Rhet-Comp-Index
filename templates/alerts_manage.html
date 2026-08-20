@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Your alert — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex">
+  <style>
+    .alerts-wrap { max-width: 42rem; }
+    .alerts-wrap p { margin: 0 0 0.9rem 0; }
+    .alerts-dl { margin: 1.2rem 0 1.8rem 0; }
+    .alerts-dl dt {
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted, #777);
+      margin-top: 0.9rem;
+    }
+    .alerts-dl dd { margin: 0.15rem 0 0 0; }
+    .alerts-danger {
+      margin-top: 1.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .alerts-fine { font-size: 0.9rem; color: var(--muted, #666); }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="content-header">
+      <h2>Your alert</h2>
+      <span class="result-count">{{ sub.email }}</span>
+    </div>
+
+    <div class="alerts-wrap">
+
+      <dl class="alerts-dl">
+        <dt>Saved search</dt>
+        <dd>{{ sub.label }}</dd>
+        <dt>Frequency</dt>
+        <dd>{{ sub.cadence }}</dd>
+        <dt>Status</dt>
+        <dd>{{ sub.status }}</dd>
+        <dt>Digests sent</dt>
+        <dd>{{ sub.send_count }}{% if sub.last_sent_at %} — last on {{ sub.last_sent_at[:10] }}{% endif %}</dd>
+      </dl>
+
+      {% if sub.status == 'active' %}
+      <p>
+        To stop the email but keep the record,
+        <a href="/alerts/unsubscribe/{{ token }}">unsubscribe</a>.
+      </p>
+      {% endif %}
+
+      <div class="alerts-danger">
+        <p>
+          Deleting removes your address, this saved search, and the record of
+          what was sent to you. It cannot be undone.
+        </p>
+        <form method="post" action="/alerts/manage/{{ token }}/delete">
+          <button type="submit" class="fetch-btn">Delete my address and this alert</button>
+        </form>
+      </div>
+
+      <p class="alerts-fine" style="margin-top:1.4rem;">
+        <a href="/">Back to the index</a>
+      </p>
+
+    </div>
+
+{% endblock %}

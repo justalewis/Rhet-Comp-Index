@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Check your email — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex">
+  <style>
+    .alerts-wrap { max-width: 42rem; }
+    .alerts-wrap p { margin: 0 0 0.9rem 0; }
+    .alerts-fine {
+      margin-top: 1.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--muted, #666);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="content-header">
+      <h2>Check your email</h2>
+      <span class="result-count">One more step before anything is sent.</span>
+    </div>
+
+    <div class="alerts-wrap">
+      <p>
+        If <strong>{{ email }}</strong> can receive mail, a confirmation link is
+        on its way. Open it and the alert starts; ignore it and nothing happens.
+      </p>
+      <p>
+        Unconfirmed requests are deleted after a week.
+      </p>
+      <p class="alerts-fine">
+        Nothing yet after a few minutes? Check the spam folder. If it is not
+        there either, the address may have a typo &mdash;
+        <a href="/alerts/new">try again</a>.
+      </p>
+    </div>
+
+{% endblock %}

@@ -170,8 +170,19 @@ def test_route_count_matches_expected(client):
     #        PUT /api/admin/article/<id>, GET /api/admin/article-search,
     #        POST /api/admin/article/<id>/suppress, GET /api/admin/suppressed,
     #        POST /api/admin/unsuppress, GET /admin/curate.
-    assert len(rules) == 137, (
-        f"Expected 137 routes, got {len(rules)}. "
+    #  +  3  Atom feeds (2026-08-19): GET /feed.xml (all journals),
+    #        GET /feed/<slug>.xml (one journal), GET /feeds (HTML directory).
+    #        The parameterized feed is one route over a bounded slug set, not
+    #        an open filter space — see blueprints/feeds.py.
+    #  +  8  saved-search email alerts (2026-08-19): GET /alerts/new,
+    #        POST /alerts/subscribe, GET /alerts/verify/<token>,
+    #        GET + POST /alerts/unsubscribe/<token> (the POST is the RFC 8058
+    #        one-click endpoint mail providers hit directly),
+    #        GET /alerts/manage/<token>, POST /alerts/manage/<token>/delete,
+    #        POST /api/admin/send-digests (weekly cron). Signup 404s unless
+    #        PINAKES_ALERTS_ENABLED=1; unsubscribe/delete work regardless.
+    assert len(rules) == 148, (
+        f"Expected 148 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

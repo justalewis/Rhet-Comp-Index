@@ -1,0 +1,76 @@
+# Weekly saved-search email digests.
+#
+# Runs digest.py against production: for every active subscription whose
+# cadence window has elapsed, send the articles indexed since that
+# subscriber's watermark, then advance it. Subscriptions with nothing new
+# send nothing.
+#
+# Timing. Friday 14:17 UTC deliberately sits clear of both other writers:
+# the daily fetch at 03:23 (which can run for hours through its scraper
+# phase) and Sunday maintenance at 04:23. The digest takes the same
+# app._fetch_lock as those jobs, so an overlap would only block rather than
+# corrupt — but blocking for hours behind a scraper run would delay the mail
+# past the day people expect it. Off the hour, because GitHub throttles ':00'
+# schedules hard (observed 3.5h late or dropped entirely).
+#
+# The endpoint returns 200 immediately and sends in a background thread;
+# the per-run summary surfaces in fly logs.
+#
+# Digests do not send at all unless PINAKES_ALERTS_ENABLED=1 is set as a Fly
+# secret, so this workflow is safe to schedule before the sending domain is
+# verified — it will log "skipped: disabled" and exit clean.
+#
+# Required repository secret: PINAKES_ADMIN_TOKEN (same as cron.yml).
+#
+# Must target pinakes.xyz, not rhet-comp-index.fly.dev: the origin lock
+# (PINAKES_CLOUDFLARE_ONLY) 403s any public peer that isn't a Cloudflare edge.
+
+name: Weekly alert digests
+
+on:
+  schedule:
+    - cron: '17 14 * * 5'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Report what would send without sending or advancing watermarks'
+        type: boolean
+        default: false
+
+jobs:
+  digests:
+    name: Trigger /api/admin/send-digests
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/admin/send-digests
+        run: |
+          # Scheduled runs always send; manual runs honour the dry_run input.
+          DRY='${{ github.event.inputs.dry_run }}'
+          if [ "$DRY" = "true" ]; then BODY='{"dry_run": true}'; else BODY='{}'; fi
+          echo "Payload: $BODY"
+
+          # Transient-tolerant retry (503 under load / worker recycle); 409
+          # means a digest run is already in progress — benign.
+          ok=""
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
+              -X POST https://pinakes.xyz/api/admin/send-digests \
+              -H "Authorization: Bearer ${{ secrets.PINAKES_ADMIN_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "$BODY" || echo "000")
+            echo "Attempt $attempt: HTTP $response"
+            case "$response" in
+              200|202) ok="started"; break ;;
+              409)     echo "Digest run already in progress (409) — fine."
+                       ok="already-running"; break ;;
+              *)       if [ "$attempt" -lt 5 ]; then
+                         echo "Transient response $response; retrying in 60s..."
+                         sleep 60
+                       fi ;;
+            esac
+          done
+          if [ -z "$ok" ]; then
+            echo "::error::POST /api/admin/send-digests did not succeed after retries (last: $response)"
+            exit 1
+          fi
+          echo "Result: $ok"

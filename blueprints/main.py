@@ -14,7 +14,7 @@ from db import (
     get_new_articles, get_new_article_count,
     get_detailed_coverage, get_coverage_stats,
 )
-from journals import UNAVAILABLE_JOURNALS
+from journals import UNAVAILABLE_JOURNALS, JOURNAL_TO_SLUG
 from web_helpers import _safe_int, _to_bibtex, _to_ris
 
 log = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ Disallow: /export
 Disallow: /fetch
 Disallow: /datastories
 Disallow: /citations
+Disallow: /feed
 Disallow: /*?seed=
 Disallow: /*&seed=
 """
@@ -123,8 +124,20 @@ def index():
     min_year, max_year = get_year_range()
     new_count = get_new_article_count(days=7)
 
+    # Offer the journal's own feed only when the view is exactly one journal.
+    # There is no feed for an arbitrary filter combination (see
+    # blueprints/feeds.py on why the feed URL space stays bounded), so
+    # advertising one here for a multi-journal or tag-filtered view would
+    # promise a subscription the index cannot keep.
+    feed_slug = JOURNAL_TO_SLUG.get(journals[0]) if len(journals) == 1 else None
+
+    from digest import alerts_enabled
+
     return render_template(
         "index.html",
+        feed_slug=feed_slug,
+        feed_journal=journals[0] if feed_slug else None,
+        alerts_enabled=alerts_enabled(),
         grouped=grouped,
         print_journals=print_journals,
         web_journals=web_journals,

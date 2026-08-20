@@ -34,6 +34,32 @@
 #                          falls back to an auto-generated DB salt. Set it before
 #                          the first production redaction so tokens stay stable.
 #
+# Saved-search email alerts (alerts.py / digest.py / blueprints/alerts.py):
+#   PINAKES_ALERTS_ENABLED — "1" turns the feature on. Anything else (the
+#                          default) 404s the signup form and makes the weekly
+#                          digest run a no-op, so the code can ship before the
+#                          sending domain is ready. Unsubscribe and delete stay
+#                          reachable either way — turning alerts off must never
+#                          strand someone already on the list.
+#   PINAKES_SITE_URL     — base URL used in digest links (default
+#                          https://pinakes.xyz). Only worth setting for a
+#                          staging host.
+#   PINAKES_DIGEST_DELAY — seconds between sends (default 0.4). One worker, one
+#                          SMTP connection; this is a courtesy pause, not a
+#                          throughput knob.
+#
+#   Reuses the SMTP_* secrets above, but BULK mail is not transactional mail.
+#   Before setting PINAKES_ALERTS_ENABLED=1:
+#     * verify a sending subdomain (e.g. mail.pinakes.xyz) in Resend and add its
+#       SPF + DKIM records to Cloudflare as DNS-only (grey cloud), plus a DMARC
+#       record starting at p=none;
+#     * point SMTP_FROM at that subdomain (e.g. alerts@mail.pinakes.xyz);
+#     * if Bot Fight Mode is on, add a Cloudflare WAF Skip rule for
+#       /api/admin/* or the weekly digest cron gets challenged and fails.
+#   The digest already sends List-Unsubscribe + List-Unsubscribe-Post headers,
+#   which Gmail and Yahoo require on bulk mail; without the DNS records above
+#   they are not enough on their own.
+#
 # Backup secrets (all six required for /api/admin/run-backup to succeed;
 # missing any one causes the endpoint to return a failure dict and write
 # no heartbeat. Reads at runtime, not at startup):

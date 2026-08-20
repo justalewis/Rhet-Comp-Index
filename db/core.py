@@ -675,6 +675,87 @@ def _migrate_v14_to_v15(conn):
     log.info("v14→v15 migration complete (article suppression blocklist ready).")
 
 
+def _migrate_v15_to_v16(conn):
+    """Add saved-search email alerts (v15 → v16).
+
+    A subscription is an email address plus a frozen copy of the index's own
+    filter grammar (journal/source/q/year/tag) — the same dict `_build_where`
+    already understands, so the digest runs the subscriber's saved search
+    through the identical code path the website uses. Nothing here is a new
+    query engine.
+
+    Three columns carry the design:
+
+    `filters_hash` is sha256 over the canonicalized filter dict. Paired with
+    email in a UNIQUE index, it is what makes "subscribe" idempotent — a
+    double-submitted form or a second click on the same saved search cannot
+    produce two subscriptions that both mail the reader.
+
+    `watermark_id` is the highest article id already sent. It is seeded to the
+    current MAX(articles.id) at verification, not to 0, so a new subscriber's
+    first digest contains only what arrives after they signed up rather than
+    the entire back catalogue.
+
+    `verify_token_hash` stores only a hash, following the redaction request
+    queue (v12): the raw token lives just long enough to be put in one email,
+    and a database read cannot forge a confirmation.
+
+    `unsub_token` is stored in the clear, and that asymmetry is deliberate.
+    Every digest has to regenerate the unsubscribe link, so it cannot be a
+    write-once secret; deriving it from PINAKES_SECRET_KEY instead would break
+    every link already sitting in somebody's mail archive the day that key is
+    rotated. Hashing buys nothing here anyway — an attacker who can read this
+    table already has the subscriber list, and the worst a leaked unsubscribe
+    token permits is unsubscribing someone. The verify token is different: a
+    leaked one would let an attacker activate a subscription for an address
+    that never consented, so that one stays hashed.
+
+    alert_sends is the append-only record of what actually went out — the only
+    way to answer "why did I get two of these" after the fact.
+
+    Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS alert_subscriptions (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            email             TEXT    NOT NULL,
+            filters_json      TEXT    NOT NULL,
+            filters_hash      TEXT    NOT NULL,
+            label             TEXT,
+            cadence           TEXT    NOT NULL DEFAULT 'weekly',
+            status            TEXT    NOT NULL DEFAULT 'pending',
+            watermark_id      INTEGER NOT NULL DEFAULT 0,
+            created_at        TEXT    DEFAULT (datetime('now')),
+            verified_at       TEXT,
+            last_sent_at      TEXT,
+            send_count        INTEGER NOT NULL DEFAULT 0,
+            verify_token_hash TEXT,
+            unsub_token       TEXT    NOT NULL,
+            created_ip        TEXT
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_sub_unique
+            ON alert_subscriptions(email, filters_hash);
+        CREATE INDEX IF NOT EXISTS idx_alert_sub_due
+            ON alert_subscriptions(status, cadence);
+        CREATE INDEX IF NOT EXISTS idx_alert_sub_verify_token
+            ON alert_subscriptions(verify_token_hash);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_sub_unsub_token
+            ON alert_subscriptions(unsub_token);
+
+        CREATE TABLE IF NOT EXISTS alert_sends (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            sub_id        INTEGER NOT NULL,
+            sent_at       TEXT DEFAULT (datetime('now')),
+            article_count INTEGER,
+            max_id        INTEGER,
+            ok            INTEGER
+        );
+        CREATE INDEX IF NOT EXISTS idx_alert_sends_sub
+            ON alert_sends(sub_id, sent_at DESC);
+    """)
+    log.info("v15→v16 migration complete (saved-search email alerts ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -726,6 +807,9 @@ def init_db():
         # Always run v15 migration — idempotent via IF NOT EXISTS.
         _migrate_v14_to_v15(conn)
 
+        # Always run v16 migration — idempotent via IF NOT EXISTS.
+        _migrate_v15_to_v16(conn)
+
         conn.commit()
 
 
@@ -750,9 +834,22 @@ def _sanitize_fts(q: str) -> str:
 
 
 def _build_where(journal=None, source=None, q=None,
-                 year_from=None, year_to=None, tag=None):
-    """Build (WHERE clause string, params list) for article queries."""
+                 year_from=None, year_to=None, tag=None, min_id=None):
+    """Build (WHERE clause string, params list) for article queries.
+
+    `min_id` restricts to rows inserted after a given article id. It exists for
+    the email-alert digest, which needs "what has arrived since I last wrote to
+    this subscriber" and cannot ask that question with dates: articles are
+    routinely ingested with pub_dates years in the past, so a pub_date window
+    would miss them and a fetched_at window would re-send everything the first
+    time any backfill rewrote a timestamp. The article id is monotonic on
+    insert and nothing updates it, which makes it the one durable watermark.
+    """
     where, params = [], []
+
+    if min_id:
+        where.append("a.id > ?")
+        params.append(min_id)
 
     if q:
         safe = _sanitize_fts(q)

@@ -393,3 +393,43 @@ ALL_JOURNAL_NAMES = (
     # belong in /books (which reads from the books table), not the journal nav.
     + [j["name"] for j in MANUAL_JOURNALS]
 )
+
+
+# ── Journal slugs (per-journal Atom feed URLs) ────────────────────────────────
+# A slug is the public, permanent identifier for a journal's feed at
+# /feed/<slug>.xml. Once a reader subscribes, that URL has to keep meaning the
+# same journal forever — so slugs are derived deterministically from the name
+# and their uniqueness is asserted at import time (below). Adding a journal
+# whose slug collides with an existing one fails loudly at startup rather than
+# silently repointing somebody's feed at the wrong publication.
+
+import re as _re
+
+
+def slugify(name):
+    """Journal name → URL slug. Lowercase, non-alphanumerics collapsed to a
+    single hyphen, ends trimmed.
+
+    Deliberately lossy and deliberately stable: 'Philosophy & Rhetoric' and
+    'Pre/Text' become 'philosophy-rhetoric' and 'pre-text'. Do not "improve"
+    this function — published feed URLs depend on its output not changing.
+    """
+    return _re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+
+SLUG_TO_JOURNAL = {slugify(n): n for n in ALL_JOURNAL_NAMES}
+JOURNAL_TO_SLUG = {n: slugify(n) for n in ALL_JOURNAL_NAMES}
+
+# Fail at import, not at request time: a dict comprehension silently keeps the
+# last writer on a collision, which would hand two journals the same feed.
+if len(SLUG_TO_JOURNAL) != len(set(ALL_JOURNAL_NAMES)):
+    _seen, _dupes = {}, []
+    for _n in ALL_JOURNAL_NAMES:
+        _s = slugify(_n)
+        if _s in _seen and _seen[_s] != _n:
+            _dupes.append((_seen[_s], _n, _s))
+        _seen[_s] = _n
+    raise RuntimeError(
+        "Journal slug collision — two journals would share one feed URL: "
+        + "; ".join(f"{a!r} and {b!r} both slugify to {s!r}" for a, b, s in _dupes)
+    )

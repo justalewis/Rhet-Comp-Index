@@ -292,10 +292,10 @@ def update_semantic_data(article_id, ss_id, citation_count):
 
 def get_articles(journal=None, source=None, q=None,
                  year_from=None, year_to=None, tag=None,
-                 limit=50, offset=0):
+                 limit=50, offset=0, min_id=None):
     clause, params = _build_where(
         journal=journal, source=source, q=q,
-        year_from=year_from, year_to=year_to, tag=tag,
+        year_from=year_from, year_to=year_to, tag=tag, min_id=min_id,
     )
     with get_conn() as conn:
         rows = conn.execute(
@@ -308,10 +308,10 @@ def get_articles(journal=None, source=None, q=None,
 
 
 def get_total_count(journal=None, source=None, q=None,
-                    year_from=None, year_to=None, tag=None):
+                    year_from=None, year_to=None, tag=None, min_id=None):
     clause, params = _build_where(
         journal=journal, source=source, q=q,
-        year_from=year_from, year_to=year_to, tag=tag,
+        year_from=year_from, year_to=year_to, tag=tag, min_id=min_id,
     )
     with get_conn() as conn:
         return conn.execute(
@@ -530,6 +530,30 @@ def get_new_articles(days=7):
             ORDER BY pub_date DESC, fetched_at DESC
         """, (f"-{days} days",)).fetchall()
         return [dict(r) for r in rows]
+
+
+def get_feed_articles(journal=None, limit=50):
+    """Newest arrivals for an Atom feed, ordered by *arrival* (fetched_at DESC,
+    id DESC), optionally narrowed to one journal.
+
+    Arrival order, not pub_date order, is the right sort for a feed: much of
+    what this index surfaces is backfilled or scraped late, so an article with
+    a 2019 pub_date that lands today is genuinely new to a subscriber. Sorting
+    by pub_date would bury it below items the reader saw weeks ago — or, worse,
+    slot it into the middle of the feed where a reader never sees it at all.
+
+    id DESC is the tiebreaker because fetched_at has one-second resolution and
+    a single fetch inserts hundreds of rows inside the same second.
+    """
+    sql = "SELECT * FROM articles"
+    params = []
+    if journal:
+        sql += " WHERE journal = ?"
+        params.append(journal)
+    sql += " ORDER BY fetched_at DESC, id DESC LIMIT ?"
+    params.append(limit)
+    with get_conn() as conn:
+        return [dict(r) for r in conn.execute(sql, params).fetchall()]
 
 
 def get_new_article_count(days=7):
