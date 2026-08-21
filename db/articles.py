@@ -534,7 +534,8 @@ def get_new_articles(days=7):
 
 def get_feed_articles(journal=None, limit=50):
     """Newest arrivals for an Atom feed, ordered by *arrival* (fetched_at DESC,
-    id DESC), optionally narrowed to one journal.
+    id DESC), optionally narrowed to one journal or a list of them (a section
+    feed or a reader's own selection).
 
     Arrival order, not pub_date order, is the right sort for a feed: much of
     what this index surfaces is backfilled or scraped late, so an article with
@@ -548,8 +549,15 @@ def get_feed_articles(journal=None, limit=50):
     sql = "SELECT * FROM articles"
     params = []
     if journal:
-        sql += " WHERE journal = ?"
-        params.append(journal)
+        if isinstance(journal, (list, tuple, set)):
+            names = sorted(journal)
+            if not names:
+                return []
+            sql += f" WHERE journal IN ({','.join('?' * len(names))})"
+            params.extend(names)
+        else:
+            sql += " WHERE journal = ?"
+            params.append(journal)
     sql += " ORDER BY fetched_at DESC, id DESC LIMIT ?"
     params.append(limit)
     with get_conn() as conn:

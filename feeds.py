@@ -107,6 +107,33 @@ def feed_updated(articles):
     return max(stamps) if stamps else datetime.now(timezone.utc)
 
 
+def render_opml(entries, *, title):
+    """OPML subscription list — the format every feed reader imports.
+
+    A merged feed collapses several journals into one stream. OPML does the
+    opposite: it hands the reader each journal as its own subscription, so they
+    stay separately foldered and separately markable-as-read. Both are wanted,
+    for different habits, and OPML is the one that answers "give me everything
+    in Technical Communication" without flattening the distinction between the
+    journals in it.
+
+    `entries` is a sequence of (title, feed_url, site_url) tuples.
+    """
+    root = ET.Element("opml", {"version": "2.0"})
+    head = ET.SubElement(root, "head")
+    _sub(head, "title", plain_text(title))
+    body = ET.SubElement(root, "body")
+    for entry_title, feed_url, site_url in entries:
+        ET.SubElement(body, "outline", {
+            "type": "rss",
+            "text": plain_text(entry_title),
+            "title": plain_text(entry_title),
+            "xmlUrl": feed_url,
+            "htmlUrl": site_url,
+        })
+    return '<?xml version="1.0" encoding="utf-8"?>\n' + ET.tostring(root, encoding="unicode")
+
+
 def _sub(parent, tag, text=None, **attrs):
     el = ET.SubElement(parent, tag, {k: v for k, v in attrs.items() if v})
     if text is not None:

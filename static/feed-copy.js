@@ -18,6 +18,26 @@
 
   var RESET_MS = 1600;
 
+  /* Changing a button's own text is invisible to a screen reader — the label
+   * of a control the user just activated is not re-announced. Without this,
+   * "Copied" is feedback only sighted users get. */
+  var announcer = null;
+
+  function announce(message) {
+    if (!announcer) {
+      announcer = document.createElement('p');
+      announcer.setAttribute('role', 'status');
+      announcer.className = 'visually-hidden';
+      announcer.style.cssText =
+        'position:absolute;width:1px;height:1px;margin:-1px;padding:0;' +
+        'overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;';
+      document.body.appendChild(announcer);
+    }
+    // Clearing first forces a re-announcement when the same text repeats.
+    announcer.textContent = '';
+    window.setTimeout(function () { announcer.textContent = message; }, 50);
+  }
+
   function flash(btn, message) {
     if (!btn.hasAttribute('data-label')) {
       btn.setAttribute('data-label', btn.textContent);
@@ -56,7 +76,7 @@
   /* Last resort: put the address on screen under the user's cursor as a
    * selection, so Ctrl+C finishes the job manually. */
   function selectPrintedAddress(btn) {
-    var container = btn.closest('.fl-url, li, .feeds-all');
+    var container = btn.closest('.fl-url, .fb-summary, .feeds-panel, li');
     var code = container && container.querySelector('code');
     if (!code || !window.getSelection || !document.createRange) return false;
     var range = document.createRange();
@@ -70,10 +90,13 @@
   function fallback(btn, url) {
     if (legacyCopy(url)) {
       flash(btn, 'Copied');
+      announce('Feed address copied.');
     } else if (selectPrintedAddress(btn)) {
       flash(btn, 'Press Ctrl+C');
+      announce('The feed address is selected. Press Control C to copy it.');
     } else {
       flash(btn, 'Copy manually');
+      announce('Copying failed. The feed address is shown on the page.');
     }
   }
 
@@ -87,7 +110,7 @@
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(
-        function () { flash(btn, 'Copied'); },
+        function () { flash(btn, 'Copied'); announce('Feed address copied.'); },
         function () { fallback(btn, url); }
       );
     } else {

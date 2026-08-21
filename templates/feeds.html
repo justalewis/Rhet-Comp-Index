@@ -3,51 +3,149 @@
 {% block title %}Feeds — Pinakes{% endblock %}
 
 {% block head_extra %}
-  <meta name="description" content="Atom feeds for every journal indexed by Pinakes. Subscribe in a feed reader to see new rhetoric and composition scholarship as it is indexed.">
+  <meta name="description" content="Atom feeds for every journal Pinakes indexes, one for each section of the field, and a builder for feeds covering the journals you choose.">
   <link rel="alternate" type="application/atom+xml" title="Pinakes — new in rhetoric and composition" href="/feed.xml">
   <style>
     .feeds-lede { max-width: 46rem; }
     .feeds-lede p { margin: 0 0 0.9rem 0; }
 
-    .feeds-how {
+    .feeds-panel {
       max-width: 46rem;
       margin: 1.6rem 0 2rem 0;
       padding: 1rem 1.2rem;
       border: 1px solid var(--border);
       border-radius: 4px;
     }
-    .feeds-how h3 {
+    .feeds-panel h3 {
       margin: 0 0 0.6rem 0;
       font-family: var(--font-ui);
       font-size: 0.82rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: var(--muted, #777);
+      color: var(--text-muted);
+      font-weight: 600;
     }
-    .feeds-how ol { margin: 0 0 0.8rem 0; padding-left: 1.2rem; }
-    .feeds-how li { margin-bottom: 0.3rem; }
-    .feeds-how p { margin: 0; font-size: 0.92rem; }
+    .feeds-panel ol { margin: 0 0 0.8rem 0; padding-left: 1.2rem; }
+    .feeds-panel li { margin-bottom: 0.3rem; }
+    .feeds-panel p { margin: 0 0 0.6rem 0; font-size: 0.92rem; }
+    .feeds-panel p:last-child { margin-bottom: 0; }
 
-    .feeds-all {
-      max-width: 46rem;
-      margin: 0 0 2.2rem 0;
+    .feeds-addr {
+      display: block;
+      margin: 0.5rem 0;
+      padding: 0.5rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-size: 0.9rem;
+      word-break: break-all;
+      user-select: all;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 0.6rem;
+    }
+    .feeds-btn {
+      font-family: var(--font-ui);
+      font-size: 0.84rem;
+      padding: 0.28rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .feeds-btn:hover:not(:disabled) { border-color: var(--accent, #7a2e2e); }
+    .feeds-btn:focus-visible {
+      outline: 2px solid var(--accent, #7a2e2e);
+      outline-offset: 2px;
+    }
+    .feeds-btn:disabled { opacity: 0.45; cursor: default; }
+
+    /* Selection builder */
+    #feed-builder { max-width: 46rem; margin: 0 0 2.4rem 0; }
+    .fb-summary {
       padding: 0.9rem 1.1rem;
       border: 1px solid var(--border);
       border-radius: 4px;
+      margin-bottom: 1.2rem;
     }
-    .feeds-all-label {
-      display: block;
+    .fb-count {
       font-family: var(--font-ui);
-      font-size: 0.78rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--muted, #777);
-      margin-bottom: 0.35rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .fb-group {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 0 1.1rem 0;
+      padding: 0.7rem 0 0 0;
+      min-width: 0;
+    }
+    .fb-group legend {
+      padding: 0 0.5rem 0 0;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .fb-group-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 1rem;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+    .fb-check {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      padding: 0.16rem 0;
+      break-inside: avoid;
+    }
+    .fb-check input { margin: 0; flex-shrink: 0; }
+    .fb-check label { cursor: pointer; }
+    .fb-grid { column-width: 21rem; column-gap: 2rem; }
+    .fb-row-link {
+      font-family: var(--font-ui);
+      font-size: 0.76rem;
+      color: var(--link);
+      text-decoration: none;
+      opacity: 0.75;
+      white-space: nowrap;
+    }
+    .fb-row-link:hover, .fb-row-link:focus-visible {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .fb-all-label {
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      cursor: pointer;
+    }
+    .fb-section-link {
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      color: var(--link);
     }
 
-    .feeds-section { margin-bottom: 2rem; }
+    /* Directory */
+    .feeds-section { max-width: 46rem; margin-bottom: 1.8rem; }
     .feeds-section-heading {
-      margin: 0 0 0.6rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 1rem;
+      align-items: baseline;
+      margin: 0 0 0.5rem 0;
       padding-bottom: 0.3rem;
       border-bottom: 1px solid var(--border);
       font-family: var(--font-ui);
@@ -55,46 +153,33 @@
       letter-spacing: 0.02em;
       text-transform: uppercase;
     }
-    .feeds-list { list-style: none; margin: 0; padding: 0; }
-    .feeds-list li {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem 0.8rem;
-      align-items: baseline;
-      padding: 0.34rem 0;
-      border-bottom: 1px solid var(--border-light, var(--border));
+    .feeds-section-heading h4 {
+      margin: 0;
+      font-size: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
     }
-    .feeds-journal { flex: 1 1 20rem; }
-    .feeds-journal a { color: var(--link); text-decoration: none; }
-    .feeds-journal a:hover { text-decoration: underline; }
+    .feeds-section-heading .feeds-section-actions {
+      margin: 0;
+      font-size: 0.76rem;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+    .feeds-list { list-style: none; margin: 0; padding: 0; column-width: 19rem; column-gap: 2rem; }
+    .feeds-list li { padding: 0.2rem 0; break-inside: avoid; }
+    .feeds-list a { color: var(--link); text-decoration: none; }
+    .feeds-list a:hover { text-decoration: underline; }
 
-    .feeds-actions {
-      display: flex;
-      gap: 0.4rem;
-      align-items: baseline;
-      flex-shrink: 0;
+    .visually-hidden {
+      position: absolute;
+      width: 1px; height: 1px;
+      margin: -1px; padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap; border: 0;
     }
-    .feeds-copy {
-      font-family: var(--font-ui);
-      font-size: 0.78rem;
-      padding: 0.15rem 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .feeds-copy:hover { border-color: var(--accent, #7a2e2e); }
-    .feeds-copy[data-copied="1"] { border-color: var(--accent, #7a2e2e); }
-    .feeds-view {
-      font-family: var(--font-ui);
-      font-size: 0.78rem;
-      color: var(--link);
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .feeds-view:hover { text-decoration: underline; }
   </style>
 {% endblock %}
 
@@ -102,14 +187,15 @@
 
     <div class="content-header">
       <h2>Feeds</h2>
-      <span class="result-count">One feed per journal, plus one for the whole index.</span>
+      <span class="result-count">One feed per journal, one per section, or one built from the journals you choose.</span>
     </div>
 
     <div class="feeds-lede">
       <p>
-        A feed reader watches these addresses and tells you when something new
-        shows up, so you don't have to keep checking the site. Pinakes publishes
-        one for each journal it indexes and one that covers everything.
+        A feed reader watches an address and tells you when something new shows
+        up, so you don't have to keep checking the site. Pinakes publishes one
+        address for each journal it indexes, one for each section of the field,
+        and one covering everything.
       </p>
       <p>
         Feeds list articles in the order Pinakes found them. A good deal of what
@@ -120,10 +206,10 @@
       </p>
     </div>
 
-    <div class="feeds-how">
+    <div class="feeds-panel">
       <h3>Using one of these</h3>
       <ol>
-        <li>Copy a feed address below.</li>
+        <li>Copy a feed address.</li>
         <li>In your feed reader, find <em>Add</em>, <em>Subscribe</em>, or <em>+</em>.</li>
         <li>Paste the address.</li>
       </ol>
@@ -135,55 +221,105 @@
       </p>
     </div>
 
-    <div class="feeds-all">
-      <span class="feeds-all-label">Everything Pinakes indexes</span>
-      <ul class="feeds-list">
-        <li style="border:none; padding:0;">
-          <span class="feeds-journal"><code>https://pinakes.xyz/feed.xml</code></span>
-          <span class="feeds-actions">
-            <button type="button" class="feeds-copy feed-copy" data-feed="https://pinakes.xyz/feed.xml">Copy address</button>
-            <a class="feeds-view" href="/feed.xml">View raw</a>
-          </span>
-        </li>
-      </ul>
-    </div>
-
-    {% for label, journals in groups %}
-      {% if journals %}
-      <div class="feeds-section">
-        <h3 class="feeds-section-heading">{{ label }}</h3>
-        <ul class="feeds-list">
-          {% for name, slug in journals %}
-          <li>
-            <span class="feeds-journal"><a href="/feed/{{ slug }}">{{ name }}</a></span>
-            <span class="feeds-actions">
-              <button type="button" class="feeds-copy feed-copy"
-                      data-feed="https://pinakes.xyz/feed/{{ slug }}.xml">Copy address</button>
-            </span>
-          </li>
-          {% endfor %}
-        </ul>
+    <div class="feeds-panel">
+      <h3>Everything Pinakes indexes</h3>
+      <code class="feeds-addr">{{ site_url }}/feed.xml</code>
+      <div class="btn-row">
+        <button type="button" class="feeds-btn feed-copy"
+                data-feed="{{ site_url }}/feed.xml">Copy address</button>
+        <a class="feeds-btn" href="/feed.opml">Download all as OPML</a>
       </div>
-      {% endif %}
-    {% endfor %}
-
-    {% if ungrouped %}
-    <div class="feeds-section">
-      <h3 class="feeds-section-heading">Other Journals</h3>
-      <ul class="feeds-list">
-        {% for name, slug in ungrouped %}
-        <li>
-          <span class="feeds-journal"><a href="/feed/{{ slug }}">{{ name }}</a></span>
-          <span class="feeds-actions">
-            <button type="button" class="feeds-copy feed-copy"
-                    data-feed="https://pinakes.xyz/feed/{{ slug }}.xml">Copy address</button>
-          </span>
-        </li>
-        {% endfor %}
-      </ul>
+      <p style="margin-top:0.7rem;">
+        An OPML file carries the journals as separate subscriptions. Import
+        one and each journal arrives on its own in your reader, with its own
+        unread count. Most readers take it under <em>Import</em>.
+      </p>
     </div>
-    {% endif %}
+
+    <!-- ── Build your own ──────────────────────────────────────────── -->
+
+    <h3 id="build-heading" style="margin:2.4rem 0 0.3rem 0;">Journals and sections</h3>
+    <p class="feeds-lede" style="margin-bottom:1rem;">
+      Every section has a ready-made feed covering all its journals, and every
+      journal name leads to a page with that journal's own address. To cover a
+      set that doesn't match a section, tick the journals you want: Pinakes
+      builds one address carrying new articles from all of them. The address
+      depends only on which journals you pick, so the same selection always
+      produces the same feed.
+    </p>
+
+    <form id="feed-builder" method="get" action="/feeds/select"
+          data-site="{{ site_url }}" aria-labelledby="build-heading">
+
+      <div class="fb-summary">
+        <p class="fb-count" id="fb-count" role="status">
+          No journals selected yet.
+        </p>
+        <code class="feeds-addr" id="fb-address" hidden></code>
+        <div class="btn-row" id="fb-actions" hidden>
+          <button type="button" class="feeds-btn feed-copy" id="fb-copy"
+                  data-feed="">Copy address</button>
+          <a class="feeds-btn" id="fb-open" href="/feeds">Open the feed page</a>
+          <a class="feeds-btn" id="fb-opml" href="/feeds">Download as OPML</a>
+          <button type="button" class="feeds-btn" id="fb-clear" hidden>Clear selection</button>
+        </div>
+        <noscript>
+          <p style="margin-top:0.6rem;">
+            Tick the journals you want, then choose <em>Build the feed</em> at
+            the bottom of the list.
+          </p>
+        </noscript>
+      </div>
+
+      {% for group in groups %}
+      <fieldset class="fb-group">
+        <legend>{{ group.label }}</legend>
+        <div class="fb-group-head">
+          <span class="fb-all-label">
+            <input type="checkbox" class="fb-all" id="fb-all-{{ group.slug }}"
+                   data-group="{{ group.slug }}">
+            <label for="fb-all-{{ group.slug }}">Select all {{ group.journals | length }}</label>
+          </span>
+          <span class="fb-section-link">
+            <a href="/feed/group/{{ group.slug }}">Whole-section feed</a> &middot;
+            <a href="/feed/group/{{ group.slug }}.opml">OPML</a>
+          </span>
+        </div>
+        <div class="fb-grid">
+          {% for name, slug, code in group.journals %}
+          <div class="fb-check">
+            <input type="checkbox" name="j" value="{{ code }}"
+                   id="fb-{{ code }}" data-group="{{ group.slug }}">
+            <label for="fb-{{ code }}">{{ name }}</label>
+            <a class="fb-row-link" href="/feed/{{ slug }}"
+               aria-label="Feed page for {{ name }}">feed</a>
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+
+      {% if ungrouped %}
+      <fieldset class="fb-group">
+        <legend>Other journals</legend>
+        <div class="fb-grid">
+          {% for name, slug, code in ungrouped %}
+          <div class="fb-check">
+            <input type="checkbox" name="j" value="{{ code }}"
+                   id="fb-{{ code }}" data-group="ungrouped">
+            <label for="fb-{{ code }}">{{ name }}</label>
+            <a class="fb-row-link" href="/feed/{{ slug }}"
+               aria-label="Feed page for {{ name }}">feed</a>
+          </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endif %}
+
+      <button type="submit" class="feeds-btn" id="fb-submit" disabled>Build the feed</button>
+    </form>
 
     <script src="/static/feed-copy.js" defer></script>
+    <script src="/static/feed-select.js" defer></script>
 
 {% endblock %}

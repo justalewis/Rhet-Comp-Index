@@ -249,15 +249,13 @@ def test_feeds_directory_page_lists_every_journal(client):
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
     for name in ALL_JOURNAL_NAMES:
-        assert f"/feed/{JOURNAL_TO_SLUG[name]}.xml" in body
+        assert f'href="/feed/{JOURNAL_TO_SLUG[name]}"' in body
 
 
 def test_feeds_page_offers_a_copyable_absolute_address(client):
     """A relative path pasted into a feed reader is useless; the copy button
     has to carry the full URL."""
-    slug = JOURNAL_TO_SLUG["College English"]
     body = client.get("/feeds").get_data(as_text=True)
-    assert f'data-feed="https://pinakes.xyz/feed/{slug}.xml"' in body
     assert 'data-feed="https://pinakes.xyz/feed.xml"' in body
 
 
@@ -339,3 +337,193 @@ def test_tag_filtered_single_journal_view_still_offers_only_the_journal_feed(cli
     slug = JOURNAL_TO_SLUG["College English"]
     body = client.get("/?journal=College+English&tag=pedagogy").get_data(as_text=True)
     assert f'href="/feed/{slug}.xml"' in body
+
+
+# ── Section feeds ────────────────────────────────────────────────────────────
+
+def test_every_section_has_a_unique_slug():
+    from journals import GROUP_SLUG_TO_LABEL, JOURNAL_GROUPS
+    assert len(GROUP_SLUG_TO_LABEL) == len(JOURNAL_GROUPS)
+
+
+def test_section_feed_merges_its_journals(client):
+    """A section feed must contain every journal in the section and nothing
+    from outside it."""
+    from journals import GROUP_SLUG_TO_JOURNALS
+    root = ET.fromstring(client.get("/feed/group/rhetoric.xml").data)
+    allowed = set(GROUP_SLUG_TO_JOURNALS["rhetoric"])
+    terms = {e.find(f"{ATOM}category").get("term")
+             for e in root.findall(f"{ATOM}entry")}
+    assert terms, "seeded DB should place articles in this section"
+    assert terms <= allowed
+
+
+def test_section_feed_excludes_other_sections(client):
+    """Technical Communication must not carry Rhetoric articles."""
+    root = ET.fromstring(client.get("/feed/group/technical-communication.xml").data)
+    terms = {e.find(f"{ATOM}category").get("term")
+             for e in root.findall(f"{ATOM}entry")}
+    assert "Pre/Text" not in terms
+
+
+def test_section_feed_landing_lists_its_journals(client):
+    from journals import GROUP_SLUG_TO_JOURNALS
+    body = client.get("/feed/group/technical-communication").get_data(as_text=True)
+    assert "Technical Communication" in body
+    for name in GROUP_SLUG_TO_JOURNALS["technical-communication"]:
+        assert name in body
+
+
+def test_unknown_section_404s(client):
+    assert client.get("/feed/group/not-a-section.xml").status_code == 404
+    assert client.get("/feed/group/not-a-section").status_code == 404
+    assert client.get("/feed/group/not-a-section.opml").status_code == 404
+
+
+# ── Selection encoding ───────────────────────────────────────────────────────
+
+def test_selection_code_is_order_independent():
+    """The address must depend on which journals were picked, not the order the
+    boxes happened to be ticked — otherwise two identical selections produce
+    two cache entries and two 'different' feeds."""
+    from blueprints.feeds import encode_selection
+    a = encode_selection(["College English", "Pre/Text"])
+    b = encode_selection(["Pre/Text", "College English"])
+    assert a == b
+
+
+def test_selection_round_trips():
+    from blueprints.feeds import encode_selection, decode_selection
+    names = ["College English", "Pre/Text", "Kairos: A Journal of Rhetoric, Technology, and Pedagogy"]
+    assert decode_selection(encode_selection(names)) == sorted(names)
+
+
+def test_every_journal_has_a_unique_code():
+    from journals import CODE_TO_JOURNAL
+    assert len(CODE_TO_JOURNAL) == len(ALL_JOURNAL_NAMES)
+
+
+@pytest.mark.parametrize("bad", [
+    "", "zz", "abcde", "abcdefg", "gggggg", "16c97e16c97e",
+])
+def test_malformed_selection_codes_are_rejected(bad):
+    """A code that silently dropped an unknown chunk would hand somebody a feed
+    missing the journal they subscribed for, with nothing to show it."""
+    from blueprints.feeds import decode_selection
+    assert decode_selection(bad) is None
+
+
+def test_duplicate_codes_in_a_selection_are_rejected():
+    from blueprints.feeds import decode_selection
+    from journals import JOURNAL_TO_CODE
+    code = JOURNAL_TO_CODE["College English"]
+    assert decode_selection(code + code) is None
+
+
+def test_selection_feed_contains_only_the_chosen_journals(client):
+    from blueprints.feeds import encode_selection
+    code = encode_selection(["College English", "Pre/Text"])
+    root = ET.fromstring(client.get(f"/feed/select/{code}.xml").data)
+    terms = {e.find(f"{ATOM}category").get("term")
+             for e in root.findall(f"{ATOM}entry")}
+    assert terms == {"College English", "Pre/Text"}
+
+
+def test_selection_landing_page_and_404(client):
+    from blueprints.feeds import encode_selection
+    code = encode_selection(["College English"])
+    resp = client.get(f"/feed/select/{code}")
+    assert resp.status_code == 200
+    assert "College English" in resp.get_data(as_text=True)
+    assert client.get("/feed/select/zzzzzz").status_code == 404
+
+
+def test_selection_form_works_without_javascript(client):
+    """The tickbox form is a real GET form; the script only saves a round trip."""
+    from journals import JOURNAL_TO_CODE
+    resp = client.get("/feeds/select", query_string=[
+        ("j", JOURNAL_TO_CODE["College English"]),
+        ("j", JOURNAL_TO_CODE["Pre/Text"]),
+    ])
+    assert resp.status_code == 302
+    assert resp.headers["Location"].startswith("/feed/select/")
+
+
+def test_selection_form_with_nothing_ticked_returns_to_the_directory(client):
+    resp = client.get("/feeds/select")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/feeds")
+
+
+def test_selection_form_ignores_unknown_codes(client):
+    from journals import JOURNAL_TO_CODE
+    resp = client.get("/feeds/select", query_string=[
+        ("j", JOURNAL_TO_CODE["College English"]), ("j", "zzzzzz"),
+    ])
+    assert resp.status_code == 302
+    assert resp.headers["Location"] == \
+        f"/feed/select/{JOURNAL_TO_CODE['College English']}"
+
+
+# ── OPML ─────────────────────────────────────────────────────────────────────
+
+def test_opml_lists_each_journal_separately(client):
+    resp = client.get("/feed/group/technical-communication.opml")
+    assert resp.status_code == 200
+    root = ET.fromstring(resp.data)
+    outlines = root.findall(".//outline")
+    from journals import GROUP_SLUG_TO_JOURNALS
+    assert len(outlines) == len(GROUP_SLUG_TO_JOURNALS["technical-communication"])
+    for o in outlines:
+        assert o.get("xmlUrl", "").startswith("https://pinakes.xyz/feed/")
+        assert o.get("xmlUrl", "").endswith(".xml")
+
+
+def test_opml_is_offered_as_a_download(client):
+    resp = client.get("/feed.opml")
+    assert resp.status_code == 200
+    assert "attachment" in resp.headers.get("Content-Disposition", "")
+    root = ET.fromstring(resp.data)
+    assert len(root.findall(".//outline")) == len(ALL_JOURNAL_NAMES)
+
+
+def test_opml_escapes_journal_names(client):
+    """'Philosophy & Rhetoric' must not break the document."""
+    resp = client.get("/feed.opml")
+    root = ET.fromstring(resp.data)  # raises if malformed
+    titles = {o.get("title") for o in root.findall(".//outline")}
+    assert "Philosophy & Rhetoric" in titles
+
+
+# ── Builder UI ───────────────────────────────────────────────────────────────
+
+def test_builder_form_has_a_checkbox_for_every_journal(client):
+    from journals import JOURNAL_TO_CODE
+    body = client.get("/feeds").get_data(as_text=True)
+    for name in ALL_JOURNAL_NAMES:
+        assert f'value="{JOURNAL_TO_CODE[name]}"' in body
+
+
+def test_builder_checkboxes_have_labels(client):
+    """Each input needs a label bound by id, or the form is unusable with a
+    screen reader."""
+    import re
+    from journals import JOURNAL_TO_CODE
+    body = client.get("/feeds").get_data(as_text=True)
+    for name in ALL_JOURNAL_NAMES:
+        code = JOURNAL_TO_CODE[name]
+        assert f'id="fb-{code}"' in body
+        assert re.search(rf'<label for="fb-{code}">', body)
+
+
+def test_builder_posts_to_a_real_endpoint(client):
+    body = client.get("/feeds").get_data(as_text=True)
+    assert 'action="/feeds/select"' in body
+    assert 'method="get"' in body
+
+
+def test_feeds_page_offers_section_feeds(client):
+    from journals import GROUP_SLUG_TO_LABEL
+    body = client.get("/feeds").get_data(as_text=True)
+    for gslug in GROUP_SLUG_TO_LABEL:
+        assert f'href="/feed/group/{gslug}"' in body

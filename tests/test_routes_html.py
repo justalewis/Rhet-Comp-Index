@@ -185,8 +185,13 @@ def test_route_count_matches_expected(client):
     #        journal's feed. Chrome 148 dropped declarative XSLT, so a browser
     #        shows raw XML for the .xml URL; nothing in the UI links straight
     #        there any more.
-    assert len(rules) == 149, (
-        f"Expected 149 routes, got {len(rules)}. "
+    #  +  8  section + custom feeds (2026-08-21): GET /feed.opml,
+    #        GET /feed/group/<gslug>{,.xml,.opml} (7 sections merged),
+    #        GET /feed/select/<code>{,.xml,.opml} (a reader's own selection,
+    #        encoded deterministically so the same picks give the same URL),
+    #        GET /feeds/select (no-JS target of the tickbox form).
+    assert len(rules) == 157, (
+        f"Expected 157 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

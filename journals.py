@@ -403,6 +403,7 @@ ALL_JOURNAL_NAMES = (
 # whose slug collides with an existing one fails loudly at startup rather than
 # silently repointing somebody's feed at the wrong publication.
 
+import hashlib as _hashlib
 import re as _re
 
 
@@ -422,6 +423,50 @@ JOURNAL_TO_SLUG = {n: slugify(n) for n in ALL_JOURNAL_NAMES}
 
 # Fail at import, not at request time: a dict comprehension silently keeps the
 # last writer on a collision, which would hand two journals the same feed.
+GROUP_SLUG_TO_LABEL = {slugify(label): label for label, _ in JOURNAL_GROUPS}
+GROUP_SLUG_TO_JOURNALS = {
+    slugify(label): [n for n in names if n in ALL_JOURNAL_NAMES]
+    for label, names in JOURNAL_GROUPS
+}
+LABEL_TO_GROUP_SLUG = {label: slugify(label) for label, _ in JOURNAL_GROUPS}
+
+# Per-journal code for custom multi-journal feeds. A selection is encoded as
+# its journals' codes in sorted order, which makes the resulting feed URL
+# deterministic: two people who tick the same boxes get the same URL, so the
+# edge cache sees one resource rather than two, and nothing has to be stored
+# server-side to remember what a selection meant.
+#
+# Derived from the slug rather than from a position in any list. Position would
+# be the obvious encoding (a 55-bit mask is shorter) but every list here is
+# grouped by fetch strategy, so adding one CrossRef journal shifts every index
+# after it and silently repoints every custom feed already in someone's reader.
+# A hash of the slug never moves.
+#
+# Six hex characters: 16.7M values against 55 journals, so a collision is
+# vanishingly unlikely — and asserted against below rather than assumed.
+JOURNAL_CODE_LEN = 6
+
+
+def journal_code(name):
+    """Stable short code for one journal, used in custom feed URLs."""
+    return _hashlib.sha256(slugify(name).encode("utf-8")).hexdigest()[:JOURNAL_CODE_LEN]
+
+
+JOURNAL_TO_CODE = {n: journal_code(n) for n in ALL_JOURNAL_NAMES}
+CODE_TO_JOURNAL = {c: n for n, c in JOURNAL_TO_CODE.items()}
+
+if len(CODE_TO_JOURNAL) != len(set(ALL_JOURNAL_NAMES)):
+    _seen, _dupes = {}, []
+    for _n in ALL_JOURNAL_NAMES:
+        _c = journal_code(_n)
+        if _c in _seen and _seen[_c] != _n:
+            _dupes.append((_seen[_c], _n, _c))
+        _seen[_c] = _n
+    raise RuntimeError(
+        "Journal code collision — custom feeds could not distinguish: "
+        + "; ".join(f"{a!r} and {b!r} both encode to {c!r}" for a, b, c in _dupes)
+    )
+
 if len(SLUG_TO_JOURNAL) != len(set(ALL_JOURNAL_NAMES)):
     _seen, _dupes = {}, []
     for _n in ALL_JOURNAL_NAMES:
