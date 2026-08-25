@@ -171,10 +171,11 @@ def _fetch_member_works(member_id, work_type, rows=100, cursor="*", since_date=N
     params = {
         "filter": f"type:{work_type}",
         "rows":   rows,
+        # NB: CrossRef rejects sort-by-date combined with cursor paging
+        # ("sort-criteria-incompatible-with-cursor"), so results arrive
+        # unordered; from-pub-date filtering bounds incremental fetches.
         "cursor": cursor,
         "mailto": MAILTO,
-        "sort":   "published",
-        "order":  "desc",
     }
     if since_date:
         params["filter"] += f",from-pub-date:{since_date}"

@@ -143,9 +143,10 @@ def deep_fetch_journal(issn, name):
         "filter": f"issn:{issn},type:journal-article",
         "select": "DOI,title,subtitle,author,abstract,published-print,"
                   "published-online,issued,container-title,subject",
+        # NB: CrossRef rejects sort-by-date combined with cursor paging
+        # ("sort-criteria-incompatible-with-cursor"), so results arrive
+        # unordered; from-pub-date filtering bounds incremental fetches.
         "rows": ROWS_PER_PAGE,
-        "sort": "published",
-        "order": "desc",
         "cursor": "*",
     }
     inserted = updated = 0
