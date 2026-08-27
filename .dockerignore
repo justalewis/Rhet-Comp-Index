@@ -68,3 +68,6 @@ google-forms
 # Misc
 headers.txt
 fly.toml
+
+# Windows Server deployment tooling — irrelevant to the Linux container.
+deploy/
