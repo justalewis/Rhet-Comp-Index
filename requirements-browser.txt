@@ -1,0 +1,9 @@
+# Browser-driven panel checks (tools/panel_check.py).
+#
+# Deliberately separate from requirements-dev.txt: this pulls a ~130 MB
+# Chromium build, which CI's unit-test job has no use for. Install it only on
+# a machine that will run the panel checks.
+#
+#   pip install -r requirements-browser.txt
+#   python -m playwright install chromium
+playwright>=1.44

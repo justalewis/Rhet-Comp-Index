@@ -1,0 +1,129 @@
+# Live site checks — run against a deployed host, not a fixture database.
+#
+# Separate from test.yml on purpose. test.yml gates the deploy and must stay
+# fast and hermetic; this one talks to a real server over the network, so it
+# is scheduled and manual rather than blocking. A red run here means the
+# deployment is wrong, not the code.
+#
+# The crawl paces itself under the app's rate limits (see rate_limit.LIMITS),
+# so a full pass takes ~5 minutes of mostly waiting. That is deliberate: the
+# alternative is tripping the limiter and reporting our own 429s as faults.
+#
+# Targets whichever host the PINAKES_SITE_URL repo variable names, defaulting
+# to the test deployment. Set it under Settings -> Secrets and variables ->
+# Actions -> Variables.
+
+name: Site check
+
+on:
+  schedule:
+    # 07:40 UTC daily — after the 03:23 fetch and the 04:15 prewarm have had
+    # time to finish, so an empty index is a real finding rather than a race.
+    - cron: '40 7 * * *'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Host to check (blank uses the PINAKES_SITE_URL variable)'
+        required: false
+        type: string
+      panels:
+        description: 'Also run the browser panel checks (slower)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: site-check
+  cancel-in-progress: false
+
+jobs:
+  smoke-crawl:
+    name: HTTP smoke crawl
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Resolve target
+        id: target
+        run: |
+          url="${{ inputs.base_url }}"
+          if [ -z "$url" ]; then url="${{ vars.PINAKES_SITE_URL }}"; fi
+          if [ -z "$url" ]; then url="https://testpinakes.wacclearinghouse.org"; fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Checking $url"
+
+      - name: Crawl
+        env:
+          PINAKES_ADMIN_TOKEN: ${{ secrets.PINAKES_ADMIN_TOKEN }}
+        run: |
+          python -m tools.smoke_crawl \
+            --base-url "${{ steps.target.outputs.url }}" \
+            --include-admin \
+            --json-report smoke-crawl.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-crawl-report
+          path: smoke-crawl.json
+          retention-days: 30
+
+  panel-check:
+    name: Browser panel check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Opt-in: pulls a Chromium build, and the HTTP crawl already catches
+    # anything that is broken at the API level.
+    if: ${{ inputs.panels }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-browser.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Resolve target
+        id: target
+        run: |
+          url="${{ inputs.base_url }}"
+          if [ -z "$url" ]; then url="${{ vars.PINAKES_SITE_URL }}"; fi
+          if [ -z "$url" ]; then url="https://testpinakes.wacclearinghouse.org"; fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Check panels
+        env:
+          PINAKES_ADMIN_TOKEN: ${{ secrets.PINAKES_ADMIN_TOKEN }}
+        run: |
+          python -m tools.panel_check \
+            --base-url "${{ steps.target.outputs.url }}" \
+            --screenshot-dir panel-shots \
+            --json-report panel-check.json
+
+      - name: Upload report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: panel-check-report
+          path: |
+            panel-check.json
+            panel-shots/
+          retention-days: 30
