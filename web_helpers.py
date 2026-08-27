@@ -138,12 +138,26 @@ def set_security_headers(response):
 
 
 def cache_response(seconds=300):
-    """Add Cache-Control: public, max-age=N to a route's response."""
+    """Add Cache-Control: private, max-age=N to a route's response.
+
+    `private` is deliberate: this is a *browser* cache directive, not a
+    shared-cache one. These payloads change the moment a fetch lands, and a
+    shared cache sitting in front of the origin has no way to be told. The
+    testpinakes Windows deployment proved the point — IIS/ARR honoured the
+    old `public` and served hour-stale copies of every stats and citations
+    endpoint from its own disk cache, so requests never reached Flask at
+    all. During the initial seed that meant empty JSON was pinned in front
+    of a database that had since filled up, and the site looked broken.
+
+    Feeds are the deliberate exception and set their own header with
+    `s-maxage` (see blueprints/feeds.py): a feed is meant to be shared-cached
+    and half an hour of staleness there is fine.
+    """
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
             resp = make_response(f(*args, **kwargs))
-            resp.headers["Cache-Control"] = f"public, max-age={seconds}"
+            resp.headers["Cache-Control"] = f"private, max-age={seconds}"
             return resp
         return wrapped
     return decorator

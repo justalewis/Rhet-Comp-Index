@@ -73,9 +73,15 @@ def test_api_stats_most_cited(client):
 
 
 def test_api_routes_have_cache_control(client):
-    """Routes decorated with @cache_response set Cache-Control: public, max-age=...
+    """Routes decorated with @cache_response set Cache-Control: private, max-age=...
     Sample one of them."""
     resp = client.get("/api/stats/timeline")
     assert resp.status_code == 200
     cc = resp.headers.get("Cache-Control", "")
     assert "max-age=" in cc
+    # `private`, not `public` — a shared cache in front of the origin (IIS/ARR
+    # on the Windows deployment, or a future CDN) would otherwise pin stale
+    # payloads that no fetch can invalidate. Regression guard: see
+    # web_helpers.cache_response.
+    assert "private" in cc, f"expected a private cache directive, got {cc!r}"
+    assert "public" not in cc, f"shared-cacheable API response: {cc!r}"
