@@ -28,6 +28,16 @@ def test_export_bibtex_filename_in_disposition(client):
     assert "attachment" in cd
 
 
+def test_export_single_article_nonnumeric_id_is_safe(client):
+    """A non-numeric article_id (a SQL-injection scanner payload) must not 500;
+    it yields an empty export and never reaches SQL (the lookup is
+    parameterized). Regression for the ValueError from a bare int()."""
+    resp = client.get("/export", query_string={
+        "article_id": "-159181' UNION ALL SELECT NULL,'x'-- -"})
+    assert resp.status_code == 200
+    assert "@article{" not in resp.get_data(as_text=True)
+
+
 def test_export_bibtex_grammar(client):
     """Each @article block must close with } on its own line."""
     resp = client.get("/export?format=bibtex&journal=College%20English")

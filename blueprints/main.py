@@ -174,9 +174,13 @@ def export():
     tag       = request.args.get("tag",       "").strip()
     fmt       = request.args.get("format", "bibtex").strip().lower()
 
-    # Single-article export
+    # Single-article export. Validate article_id with _safe_int so a non-numeric
+    # value (e.g. a SQL-injection scanner's payload) yields an empty export rather
+    # than a 500 — the bare int() here used to raise ValueError. The DB lookup is
+    # parameterized, so such a payload never reached SQL regardless.
     if article_id:
-        article = get_article_by_id(int(article_id))
+        aid = _safe_int(article_id, None)
+        article = get_article_by_id(aid) if aid is not None else None
         articles = [article] if article else []
     else:
         articles = get_articles(
