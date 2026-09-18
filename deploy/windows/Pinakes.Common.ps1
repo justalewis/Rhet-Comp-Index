@@ -261,8 +261,15 @@ function Backup-PinakesDatabase {
     $helper = Join-Path $PSScriptRoot 'sqlite_backup.py'
 
     Write-PinakesLog "Backing up database to $target ..."
-    & $PinakesPython $helper $PinakesDbPath $target
+    # Capture the helper's stdout rather than letting it fall through. A
+    # PowerShell function returns everything it does not consume, so bare
+    # output here was returned alongside $target: callers that use the return
+    # value got an array whose first element is sqlite_backup.py's
+    # "Backing up C:\... -> ..." line, and Get-Item on that fails with
+    # "A drive with the name 'Backing up C' does not exist".
+    $helperOutput = & $PinakesPython $helper $PinakesDbPath $target
     if ($LASTEXITCODE -ne 0) { throw "Database backup failed (exit $LASTEXITCODE). Refusing to continue." }
+    foreach ($line in $helperOutput) { Write-PinakesLog "  $line" }
 
     $sizeMb = [Math]::Round((Get-Item $target).Length / 1MB, 1)
     Write-PinakesLog "Backup complete ($sizeMb MB)." 'Success'
