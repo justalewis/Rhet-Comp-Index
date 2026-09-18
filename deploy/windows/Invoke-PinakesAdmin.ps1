@@ -127,8 +127,14 @@ try {
     exit 0
 
 } catch {
+    # Capture the error record up front. Inside a switch scriptblock $_ is the
+    # switch's current item - here $status - not the ErrorRecord, so reaching
+    # for $_.Exception.Message down in `default` silently expanded to nothing
+    # and every unnamed failure logged "Request failed:" with no reason.
+    $err = $_
+
     $status = $null
-    if ($_.Exception.Response) { $status = [int]$_.Exception.Response.StatusCode }
+    if ($err.Exception.Response) { $status = [int]$err.Exception.Response.StatusCode }
 
     # 409 from /fetch means a fetch is already running (app._fetch_lock). That
     # is the intended guard against two writers on one SQLite file, not a
@@ -142,7 +148,7 @@ try {
         401     { Write-TaskLog "401: the Authorization header was missing or malformed." 'Error' }
         403     { Write-TaskLog "403: PINAKES_ADMIN_TOKEN on this machine does not match the one the service is running with. If you changed it, restart '$PinakesService' so the app picks up the new value." 'Error' }
         503     { Write-TaskLog "503: the service reports admin auth is not configured. PINAKES_ADMIN_TOKEN is not set in the service's environment." 'Error' }
-        default { Write-TaskLog "Request failed: $($_.Exception.Message)" 'Error' }
+        default { Write-TaskLog "Request failed: $($err.Exception.Message)" 'Error' }
     }
     exit 1
 }
