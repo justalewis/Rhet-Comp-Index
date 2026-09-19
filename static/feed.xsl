@@ -118,7 +118,7 @@
         </p>
 
         <p>
-          <a href="https://pinakes.xyz/feeds">All Pinakes feeds</a> — one for
+          <a href="https://pinakes.wacclearinghouse.org/feeds">All Pinakes feeds</a> — one for
           each journal in the index, plus one for everything.
         </p>
 
@@ -146,7 +146,7 @@
         </xsl:for-each>
 
         <footer>
-          <a href="https://pinakes.xyz">Pinakes</a> — an index of rhetoric,
+          <a href="https://pinakes.wacclearinghouse.org">Pinakes</a> — an index of rhetoric,
           composition, and writing studies scholarship.
         </footer>
 

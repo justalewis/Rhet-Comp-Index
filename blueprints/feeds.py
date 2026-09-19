@@ -32,6 +32,7 @@ that hands over the address instead.
 
 import hashlib
 import logging
+import os
 from urllib.parse import quote
 from email.utils import format_datetime, parsedate_to_datetime
 
@@ -59,7 +60,7 @@ FEED_LIMIT = 50
 # essentially all reader polling at Cloudflare.
 FEED_MAX_AGE = 1800
 
-SITE_URL = "https://pinakes.xyz"
+SITE_URL = os.environ.get("PINAKES_SITE_URL", "https://pinakes.wacclearinghouse.org")
 
 OPML_MIMETYPE = "text/x-opml"
 

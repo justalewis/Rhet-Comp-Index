@@ -34,6 +34,15 @@ ATOM_NS = "http://www.w3.org/2005/Atom"
 
 # Tag URI authority + date, per RFC 4151. The date is the year the scheme was
 # minted and never changes — it is part of the identifier, not a timestamp.
+#
+# Neither does the authority, and it does NOT follow the site's canonical
+# hostname. The site moved to pinakes.wacclearinghouse.org in 2026-09; this
+# stayed. A tag URI never resolves, so an authority naming a host we no longer
+# serve from is correct rather than stale — and repointing it re-mints every
+# entry id in every feed, which makes every subscriber's reader re-show the
+# whole backlog as unread, silently, with no way to reach them and no way back.
+# SITE_URL in blueprints/feeds.py is the one that tracks the canonical host.
+# test_tag_authority_does_not_follow_the_site_domain guards this.
 TAG_AUTHORITY = "pinakes.xyz,2026"
 
 FEED_MIMETYPE = "application/atom+xml"
@@ -157,7 +166,7 @@ def render_atom(articles, *, title, self_url, site_url, subtitle=None, feed_id=N
     _sub(root, "link", href=self_url, rel="self", type=FEED_MIMETYPE)
     _sub(root, "link", href=site_url, rel="alternate", type="text/html")
     generator = _sub(root, "generator", "Pinakes")
-    generator.set("uri", "https://pinakes.xyz")
+    generator.set("uri", site_url)
 
     for a in articles:
         entry = ET.SubElement(root, "entry")

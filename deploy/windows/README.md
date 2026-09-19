@@ -1,7 +1,7 @@
 # Windows Server deployment scripts
 
 Operational tooling for the Windows/IIS deployment of Pinakes — the one behind
-`testpinakes.wacclearinghouse.org`. The Fly.io deployment (`pinakes.xyz`) does
+`pinakes.wacclearinghouse.org`. The Fly.io deployment (`pinakes.xyz`) does
 not use any of this; it deploys through `.github/workflows/fly-deploy.yml`.
 
 **Start here:** [`docs/WINDOWS-SERVER-RUNBOOK.md`](../../docs/WINDOWS-SERVER-RUNBOOK.md)

@@ -1,6 +1,6 @@
 # Journal coverage
 
-Every venue indexed by Pinakes, listed in the order it appears in journals.py. Counts are not included here; the live counts at https://pinakes.xyz/coverage are authoritative and update with every fetch cycle.
+Every venue indexed by Pinakes, listed in the order it appears in journals.py. Counts are not included here; the live counts at https://pinakes.wacclearinghouse.org/coverage are authoritative and update with every fetch cycle.
 
 A journal's **path** is the ingestion strategy used to populate it: CrossRef (by ISSN, the bulk of the corpus), RSS / OAI / WordPress feeds (open-access journals without CrossRef coverage), custom HTML scrapers (open-access journals without machine-readable feeds), or manually-curated entries (analog-only journals whose record was hand-compiled and ingested once).
 
@@ -81,4 +81,4 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 
 **46 venues** in total — 29 via CrossRef, 4 via RSS/OAI/WP, 11 via custom scraper, 1 via book-publisher scraper, 1 manually indexed. 26 are gold OA.
 
-Live article counts per journal: see https://pinakes.xyz/coverage. For the SQL behind those numbers, see [`coverage_report.py`](../coverage_report.py).
+Live article counts per journal: see https://pinakes.wacclearinghouse.org/coverage. For the SQL behind those numbers, see [`coverage_report.py`](../coverage_report.py).

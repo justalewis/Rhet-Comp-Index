@@ -72,7 +72,7 @@ def _notify_admin_of_verified(rid):
     try:
         review_url = url_for("redaction.admin_redactions_page", _external=True)
     except Exception:  # noqa: BLE001 — url building shouldn't block the notice
-        review_url = "https://pinakes.xyz/admin/redactions"
+        review_url = "https://pinakes.wacclearinghouse.org/admin/redactions"
     send_email(
         notify,
         "Pinakes: a name-removal request is awaiting your review",

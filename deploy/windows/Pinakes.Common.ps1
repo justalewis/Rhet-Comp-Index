@@ -57,7 +57,7 @@ $PinakesGitRemote = Get-PinakesSetting 'PINAKES_GIT_REMOTE'   'origin'
 # direct means the check cannot be answered out of the ARR proxy cache, and it
 # separates "is the app up?" from "is the reverse proxy configured?".
 $PinakesLocalUrl  = "http://127.0.0.1:$PinakesPort"
-$PinakesPublicUrl = Get-PinakesSetting 'PINAKES_SITE_URL' 'https://testpinakes.wacclearinghouse.org'
+$PinakesPublicUrl = Get-PinakesSetting 'PINAKES_SITE_URL' 'https://pinakes.wacclearinghouse.org'
 
 # How many database backups to keep before the oldest are pruned.
 $PinakesBackupKeep = [int](Get-PinakesSetting 'PINAKES_BACKUP_KEEP' '10')

@@ -120,7 +120,7 @@ def _kairos_get(url):
     time.sleep(KAIROS_DELAY)
     headers = {
         **HEADERS,
-        "User-Agent": "Pinakes/1.0 (scholarly metadata index; +https://pinakes.xyz; metadata only, no full text)",
+        "User-Agent": "Pinakes/1.0 (scholarly metadata index; +https://pinakes.wacclearinghouse.org; metadata only, no full text)",
         "X-Bot-Purpose": "Pinakes scholarly index - ToC metadata only",
     }
     try:

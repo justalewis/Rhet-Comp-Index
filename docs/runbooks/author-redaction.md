@@ -2,6 +2,16 @@
 
 How to run the author opt-out ("Name Redacted by Author Request") feature: configure it, review requests, redact by hand, and handle the durability edge cases (restore, backups). For how it works under the hood — the token model, the suppression spine, the data model — see the design doc, [author-redaction.md](../author-redaction.md).
 
+> **The public request form ships off.** `PINAKES_REDACTION_FORM_ENABLED`
+> defaults to `0`, and `/redaction-request` redirects to `/about#author-privacy`
+> until it is set to `1`. The form's value is an email round-trip proving the
+> requester controls the address they typed, and without working SMTP it
+> accepted requests, told the author "submitted", and dropped them —
+> `send_email` logs and returns `False` rather than raising. A deployment
+> without SMTP takes requests by email and applies them with the CLI below;
+> `/about` says so. Everything else in this runbook — the review queue, the
+> admin page, the ledger, the durability rules — applies either way.
+
 ## What it does, in one paragraph
 
 A redacted author's name is replaced everywhere it is used as identity — `articles.authors`, the normalized author/affiliation/institution tables, books, and (best-effort) the free-text reference blobs — with a stable per-author token like `Redacted Author 7f3a2c`. Templates render that token as "Name Redacted by Author Request." The scholarship stays in the index and keeps counting in every metric, because the token becomes the new identity key. The `redaction_ledger` table retains the real name (locked: no render/API/export path reads it) so the suppression can be re-applied after a fetch and reversed on request.
@@ -14,11 +24,11 @@ A redacted author's name is replaced everywhere it is used as identity — `arti
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Send the email-verification link. If unset, the link is logged instead of sent (fine for dev; not for prod). | For the email path |
 | `SMTP_REPLY_TO` | Reply-To on outgoing mail; also the fallback recipient for the "request awaiting review" notification. | Recommended |
 | `REDACTION_NOTIFY_EMAIL` | Where to email you when a request is verified and waiting. Falls back to `SMTP_REPLY_TO`; no notice if neither is set. | Optional |
-| `ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET` | ORCID OAuth verification (the "Verify with ORCID" button appears only when both are set). `ORCID_ENV=sandbox` to test against sandbox.orcid.org. Register the redirect URI `https://pinakes.xyz/redaction-request/orcid/callback` in the ORCID developer app. | For the ORCID path |
+| `ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET` | ORCID OAuth verification (the "Verify with ORCID" button appears only when both are set). `ORCID_ENV=sandbox` to test against sandbox.orcid.org. Register the redirect URI `https://pinakes.wacclearinghouse.org/redaction-request/orcid/callback` in the ORCID developer app. | For the ORCID path |
 
 `PINAKES_ADMIN_TOKEN` (already set for the cron endpoints) gates the review queue and the admin page. `PINAKES_SECRET_KEY` (required in prod regardless) signs the ORCID `state`.
 
-**SMTP host:** any SMTP provider works. A transactional provider sending from a verified `pinakes.xyz` subdomain (e.g. Resend) gives the best deliverability; a Gmail account with an App Password (`smtp.gmail.com:587`, `SMTP_FROM` = the Gmail address) is the zero-DNS fallback.
+**SMTP host:** any SMTP provider works. A transactional provider sending from a verified `pinakes.wacclearinghouse.org` subdomain (e.g. Resend) gives the best deliverability; a Gmail account with an App Password (`smtp.gmail.com:587`, `SMTP_FROM` = the Gmail address) is the zero-DNS fallback.
 
 ## The request flow
 
@@ -28,7 +38,7 @@ A redacted author's name is replaced everywhere it is used as identity — `arti
 
 ### Review and decide — the admin page (primary)
 
-Go to **`https://pinakes.xyz/admin/redactions`**, paste your `PINAKES_ADMIN_TOKEN`, and click **Connect**. Verified requests appear under "Awaiting your review" with **Approve & redact** (confirms first) / **Deny** / an **audit trail** toggle; "Load decided history" shows past decisions. The token is held only in that browser tab (`sessionStorage`) and never embedded in the page — all data loads through the token-gated API below.
+Go to **`https://pinakes.wacclearinghouse.org/admin/redactions`**, paste your `PINAKES_ADMIN_TOKEN`, and click **Connect**. Verified requests appear under "Awaiting your review" with **Approve & redact** (confirms first) / **Deny** / an **audit trail** toggle; "Load decided history" shows past decisions. The token is held only in that browser tab (`sessionStorage`) and never embedded in the page — all data loads through the token-gated API below.
 
 ### Review and decide — the API (equivalent)
 
@@ -37,19 +47,19 @@ TOKEN=...   # PINAKES_ADMIN_TOKEN
 
 # List pending + verified requests (includes requester email/ORCID — admin only)
 curl -s -H "Authorization: Bearer $TOKEN" \
-  https://pinakes.xyz/api/admin/redaction-requests | jq
+  https://pinakes.wacclearinghouse.org/api/admin/redaction-requests | jq
 
 # Audit trail for one request (created / verified / approved / denied)
 curl -s -H "Authorization: Bearer $TOKEN" \
-  https://pinakes.xyz/api/admin/redaction-request/42/audit | jq
+  https://pinakes.wacclearinghouse.org/api/admin/redaction-request/42/audit | jq
 
 # Approve request #42 → writes the audit row, then redacts the author
 curl -s -X POST -H "Authorization: Bearer $TOKEN" \
-  https://pinakes.xyz/api/admin/redaction-request/42/approve
+  https://pinakes.wacclearinghouse.org/api/admin/redaction-request/42/approve
 
 # Or deny (audited; no change)
 curl -s -X POST -H "Authorization: Bearer $TOKEN" \
-  https://pinakes.xyz/api/admin/redaction-request/42/deny
+  https://pinakes.wacclearinghouse.org/api/admin/redaction-request/42/deny
 ```
 
 Only `verified` requests can be approved. The audit row is written *before* the redaction fires, so there's proof-of-review even if the request is later purged.
@@ -68,7 +78,7 @@ python redaction.py unredact "Redacted Author 7f3a2c"   # reverse a redaction
 `redact` and `resweep` each rebuild the FTS index and bust the Datastories cache. After redacting in production, also re-run the cache pre-warm so the first visitor isn't slow:
 
 ```bash
-curl -s -X POST -H "Authorization: Bearer $TOKEN" https://pinakes.xyz/api/admin/prewarm
+curl -s -X POST -H "Authorization: Bearer $TOKEN" https://pinakes.wacclearinghouse.org/api/admin/prewarm
 ```
 
 ## Keep the ledger off-box
