@@ -409,6 +409,57 @@ again.
 
 ---
 
+## Author name-removal requests
+
+The public request form ships **off** (`PINAKES_REDACTION_FORM_ENABLED`). Its
+value is an email round-trip proving the requester controls the address they
+typed, and that needs working SMTP. With SMTP unconfigured the route still
+rendered, still wrote a row, and still told the author "submitted" while
+`send_email` logged a warning and returned `False` — a name-removal request
+accepted and dropped. `/about` therefore asks authors to email instead, and
+`/redaction-request` redirects there.
+
+So requests arrive in your inbox. Satisfy yourself the sender is plausibly the
+author — writing from an institutional address is the usual signal — then apply
+it on the server:
+
+```powershell
+cd C:\Pinakes\app
+C:\Pinakes\venv\Scripts\python.exe redaction.py redact "Jane Q. Author" `
+    --variant "J. Q. Author" --variant "Jane Author" --by jlewis
+```
+
+Repeat `--variant` for every spelling the name appears under. `--by` is
+recorded in the audit trail.
+
+Check it took:
+
+```powershell
+C:\Pinakes\venv\Scripts\python.exe redaction.py export C:\Pinakes\logs\ledger.json
+```
+
+To reverse one, `redaction.py unredact <token>` — the token is in that export.
+
+**The ledger is the durable part, not the redacted rows.** Every refresh
+re-applies it, so a later fetch cannot quietly restore a name, and
+`restore_local.py` re-applies it to any database promoted from a backup. A
+redaction applied by hand directly to the `articles` table would be undone by
+the next fetch; always go through `redaction.py`.
+
+Turning the form back on, once a deployment has SMTP, is one machine variable
+plus a service restart:
+
+```powershell
+[Environment]::SetEnvironmentVariable('PINAKES_REDACTION_FORM_ENABLED','1','Machine')
+Restart-Service Pinakes
+```
+
+That also needs `X-Forwarded-Host` reaching the app, or the verification link
+it emails will read `http://127.0.0.1:8080/...`. See the ARR notes in the
+install guide.
+
+---
+
 ## Reference
 
 ### The scripts
