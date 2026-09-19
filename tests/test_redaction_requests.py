@@ -28,6 +28,18 @@ def captured_emails(monkeypatch):
     return sent
 
 
+@pytest.fixture(autouse=True)
+def _form_on(monkeypatch):
+    """Every test in this module runs with the public form switched on.
+
+    It ships off (blueprints.redaction.form_enabled) because the flow depends
+    on an email round-trip. These cover the behaviour for a deployment that
+    has SMTP and turns it back on; the off-by-default behaviour has its own
+    tests below.
+    """
+    monkeypatch.setenv("PINAKES_REDACTION_FORM_ENABLED", "1")
+
+
 # ── module-level flow ─────────────────────────────────────────────────────────
 
 def test_request_lifecycle_module(seeded_db):
@@ -142,12 +154,45 @@ def test_request_form_rate_limited(client, captured_emails):
     assert last.status_code == 429  # "5 per hour" cap tripped
 
 
-def test_about_page_links_to_request_form(client):
+def test_about_page_explains_how_to_request_removal(client):
+    """The page must carry a route that works whether or not SMTP is set up,
+    and the anchor the nav and footer link into."""
     resp = client.get("/about")
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
     assert "Author Privacy" in body
-    assert "/redaction-request" in body
+    assert 'id="author-privacy"' in body
+    assert "mailto:jlewis2@olympic.edu" in body
+
+
+# ── the form ships off ────────────────────────────────────────────────────────
+
+
+def test_public_form_is_off_by_default(client, monkeypatch):
+    """Without SMTP the form wrote a row, told the author "submitted", and
+    dropped the request: send_email only logs a warning when unconfigured."""
+    monkeypatch.setenv("PINAKES_REDACTION_FORM_ENABLED", "0")
+    resp = client.post("/redaction-request",
+                       data={"author_name": JANE, "email": "a@b.edu"})
+    assert resp.status_code == 404
+
+
+def test_disabled_form_redirects_to_the_instructions(client, monkeypatch):
+    """A bookmarked or cited link should land on how to ask, not an error."""
+    monkeypatch.setenv("PINAKES_REDACTION_FORM_ENABLED", "0")
+    resp = client.get("/redaction-request")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/about#author-privacy")
+
+
+def test_verify_still_works_when_form_disabled(client, captured_emails, seeded_db,
+                                               monkeypatch):
+    """Turning intake off must not strand a request already in flight."""
+    client.post("/redaction-request", data={"author_name": JANE, "email": "a@b.edu"})
+    token = re.search(r"/redaction-request/verify/(\S+)",
+                      captured_emails[0][2]).group(1)
+    monkeypatch.setenv("PINAKES_REDACTION_FORM_ENABLED", "0")
+    assert client.get("/redaction-request/verify/" + token).status_code == 200
 
 
 def test_request_form_renders(client):

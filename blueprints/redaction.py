@@ -34,6 +34,20 @@ log = logging.getLogger(__name__)
 bp = Blueprint("redaction", __name__)
 
 
+def form_enabled() -> bool:
+    """Whether the public request form is live.
+
+    Off by default. The form's whole value is the email round-trip that proves
+    the requester controls the address they typed, and that needs working SMTP.
+    With SMTP unconfigured the route still rendered, still wrote a row, and
+    still told the author "submitted" while send_email logged a warning and
+    returned False — a name-removal request accepted and dropped on the floor.
+    Deployments without SMTP take requests by email instead (see /about).
+    """
+    import os
+    return os.environ.get("PINAKES_REDACTION_FORM_ENABLED", "0") == "1"
+
+
 def _state_serializer():
     """Sign the ORCID `state` (the request id) with the app secret so a
     callback can't be forged to verify an arbitrary request."""
@@ -74,7 +88,16 @@ def _notify_admin_of_verified(rid):
 
 @bp.route("/redaction-request", methods=["GET"])
 def request_form():
-    """Render the opt-out request form."""
+    """Render the opt-out request form, or point at the instructions.
+
+    A redirect rather than a 404 while the form is off: this URL is linked from
+    /about and may be bookmarked or cited elsewhere, and someone asking to have
+    their name taken down should land on how to do that, not on an error. 302
+    rather than 301 so enabling the form later isn't fought by cached
+    redirects in every browser that ever saw it.
+    """
+    if not form_enabled():
+        return flask_redirect("/about#author-privacy", code=302)
     return render_template("redaction_request.html", stage="form",
                            orcid_available=orcid_oauth.is_configured())
 
@@ -94,6 +117,9 @@ def submit_request():
     (one-time link) or ORCID OAuth (the stronger proof). We always render the
     same neutral confirmation for the email path regardless of whether the
     address matches anything, so the form can't probe who is in the index."""
+    if not form_enabled():
+        abort(404)
+
     author_name = (request.form.get("author_name") or "").strip()
     email = (request.form.get("email") or "").strip()
     orcid = (request.form.get("orcid") or "").strip()

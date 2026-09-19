@@ -12,6 +12,13 @@ import blueprints.redaction as bp_redaction
 JANE = "Jane Smith"
 
 
+@pytest.fixture(autouse=True)
+def _form_on(monkeypatch):
+    """The ORCID path is only reachable through the public form, which ships
+    off (blueprints.redaction.form_enabled). Switch it on for this module."""
+    monkeypatch.setenv("PINAKES_REDACTION_FORM_ENABLED", "1")
+
+
 @pytest.fixture
 def orcid_configured(monkeypatch):
     monkeypatch.setenv("ORCID_CLIENT_ID", "APP-TEST")
