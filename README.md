@@ -4,7 +4,7 @@
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Tests](https://github.com/justalewis/Rhet-Comp-Index/actions/workflows/test.yml/badge.svg)](https://github.com/justalewis/Rhet-Comp-Index/actions/workflows/test.yml)
 
-A discipline-specific bibliometric index for Rhetoric & Composition. Live at [pinakes.xyz](https://pinakes.xyz).
+A discipline-specific bibliometric index for Rhetoric & Composition. Live at [pinakes.wacclearinghouse.org](https://pinakes.wacclearinghouse.org).
 
 The index covers 44+ journals and 50,000+ articles, drawn from CrossRef, OpenAlex, RSS feeds, and a handful of custom scrapers (each scraper is rate-limited and respects each site's `robots.txt`; [`scraper.py`](scraper.py) carries inline ethics annotations per source). Records are stored in SQLite, served by Flask, and visualised with D3.js.
 
@@ -109,7 +109,7 @@ You can verify backups by triggering one manually and inspecting the resulting B
 
 ```bash
 curl -X POST -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" \
-  https://pinakes.xyz/api/admin/run-backup | jq
+  https://pinakes.wacclearinghouse.org/api/admin/run-backup | jq
 ```
 
 To restore manually:
@@ -128,7 +128,7 @@ python restore.py --latest --out ./restored.db --age-key ~/.pinakes/age.key
 | `GET /health/deep` | admin token | Full diagnostic — counts, last-fetch, disk, scheduler heartbeat, integrity check. |
 
 ```bash
-curl -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.xyz/health/deep | jq
+curl -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.wacclearinghouse.org/health/deep | jq
 ```
 
 ### Triggering a fetch manually
@@ -136,7 +136,7 @@ curl -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.xyz/health/
 The cron workflow runs daily. To force a fetch early:
 
 ```bash
-curl -X POST -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.xyz/fetch
+curl -X POST -H "Authorization: Bearer $PINAKES_ADMIN_TOKEN" https://pinakes.wacclearinghouse.org/fetch
 ```
 
 ## Project structure

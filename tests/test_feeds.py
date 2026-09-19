@@ -10,6 +10,7 @@ from xml.etree import ElementTree as ET
 import pytest
 
 import feeds as feeds_mod
+from blueprints.feeds import SITE_URL
 from journals import ALL_JOURNAL_NAMES, SLUG_TO_JOURNAL, JOURNAL_TO_SLUG, slugify
 
 ATOM = "{http://www.w3.org/2005/Atom}"
@@ -110,6 +111,24 @@ def test_entry_ids_are_stable_and_unique():
     ids = [e.findtext(f"{ATOM}id") for e in root.findall(f"{ATOM}entry")]
     assert ids == ["tag:pinakes.xyz,2026:article/7",
                    "tag:pinakes.xyz,2026:article/8"]
+
+
+def test_tag_authority_does_not_follow_the_site_domain():
+    """TAG_AUTHORITY is an identifier, not an address, and must never be
+    updated to match a new canonical hostname.
+
+    Entry ids are how a reader knows it has seen an entry before. Repointing
+    the authority re-mints every id in every feed, so every subscriber's
+    reader re-shows the entire backlog as unread — silently, with no way to
+    reach them and no way back. RFC 4151 tag URIs are deliberately opaque and
+    never resolve, so an authority naming a host the project no longer serves
+    from is correct, not stale.
+
+    If a domain migration brought you here: leave this alone. SITE_URL in
+    blueprints.feeds is the one that follows the canonical host.
+    """
+    assert feeds_mod.TAG_AUTHORITY == "pinakes.xyz,2026"
+    assert SITE_URL.rstrip("/") not in f"tag:{feeds_mod.TAG_AUTHORITY}"
 
 
 def test_ampersands_and_markup_do_not_break_the_document():
@@ -256,7 +275,7 @@ def test_feeds_page_offers_a_copyable_absolute_address(client):
     """A relative path pasted into a feed reader is useless; the copy button
     has to carry the full URL."""
     body = client.get("/feeds").get_data(as_text=True)
-    assert 'data-feed="https://pinakes.xyz/feed.xml"' in body
+    assert f'data-feed="{SITE_URL}/feed.xml"' in body
 
 
 def test_landing_page_serves_html_not_xml(client):
@@ -266,7 +285,7 @@ def test_landing_page_serves_html_not_xml(client):
     assert resp.status_code == 200
     assert resp.mimetype == "text/html"
     body = resp.get_data(as_text=True)
-    assert f"https://pinakes.xyz/feed/{slug}.xml" in body
+    assert f"{SITE_URL}/feed/{slug}.xml" in body
     assert "feed reader" in body.lower()
 
 
@@ -475,7 +494,7 @@ def test_opml_lists_each_journal_separately(client):
     from journals import GROUP_SLUG_TO_JOURNALS
     assert len(outlines) == len(GROUP_SLUG_TO_JOURNALS["technical-communication"])
     for o in outlines:
-        assert o.get("xmlUrl", "").startswith("https://pinakes.xyz/feed/")
+        assert o.get("xmlUrl", "").startswith(f"{SITE_URL}/feed/")
         assert o.get("xmlUrl", "").endswith(".xml")
 
 

@@ -41,7 +41,7 @@ from notifications import send_email, email_configured
 
 log = logging.getLogger(__name__)
 
-SITE_URL = os.environ.get("PINAKES_SITE_URL", "https://pinakes.xyz")
+SITE_URL = os.environ.get("PINAKES_SITE_URL", "https://pinakes.wacclearinghouse.org")
 
 # Items shown in the email. Beyond this the digest links back to the filtered
 # index rather than becoming a catalogue nobody scrolls.

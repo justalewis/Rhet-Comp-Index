@@ -43,10 +43,14 @@ ROWS_PER_PAGE = 100
 # secret in prod / .env locally) so the personal email stays out of this public
 # repo. https://api.crossref.org/swagger-ui/index.html#/ (Etiquette)
 _MAILTO = os.environ.get("CROSSREF_MAILTO", "").strip()
+# The site this crawler belongs to, for anyone reading their own access logs.
+# Follows PINAKES_SITE_URL so a deployment identifies itself as the host it
+# actually serves from.
+_UA_URL = os.environ.get("PINAKES_SITE_URL", "https://pinakes.wacclearinghouse.org")
 HEADERS = {
     "User-Agent": (
-        f"Pinakes/1.0 (+https://pinakes.xyz; mailto:{_MAILTO})"
-        if _MAILTO else "Pinakes/1.0 (+https://pinakes.xyz)"
+        f"Pinakes/1.0 (+{_UA_URL}; mailto:{_MAILTO})"
+        if _MAILTO else f"Pinakes/1.0 (+{_UA_URL})"
     )
 }
 

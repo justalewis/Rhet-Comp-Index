@@ -252,4 +252,4 @@ The forty-five venues in the Pinakes corpus arrive through ingestion paths of un
 
 A future direction is to populate the missing reference lists for tier-2 articles via OpenAlex (which holds reference data for many open-access articles even when CrossRef does not). The pipeline for that work is sketched in [`enrich_openalex.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/enrich_openalex.py); it has not yet been turned on for reference resolution, only for abstract and affiliation enrichment.
 
-For the live counts of which articles fall into which tier, see [`/coverage`](https://pinakes.xyz/coverage), which builds the breakdown freshly on each request.
+For the live counts of which articles fall into which tier, see [`/coverage`](https://pinakes.wacclearinghouse.org/coverage), which builds the breakdown freshly on each request.

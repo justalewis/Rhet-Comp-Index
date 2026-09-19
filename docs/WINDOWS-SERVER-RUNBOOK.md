@@ -1,7 +1,7 @@
 # Pinakes on Windows Server — Operations Runbook
 
 **Who this is for:** whoever has administrator access to the Windows Server that
-runs `testpinakes.wacclearinghouse.org`. No prior knowledge of the application
+runs `pinakes.wacclearinghouse.org`. No prior knowledge of the application
 is assumed.
 
 **What this covers:** the two things you do after the install is finished.
@@ -169,7 +169,7 @@ Expect roughly two minutes. The last lines should read:
 [...] OK    Version:    138f4cd
 [...]       Admin auth: configured
 [...]       Database:   reachable
-[...] OK    Public URL: https://testpinakes.wacclearinghouse.org returned HTTP 200
+[...] OK    Public URL: https://pinakes.wacclearinghouse.org returned HTTP 200
 ```
 
 If it fails, it rolls back on its own and tells you where the transcript is.
@@ -257,7 +257,7 @@ Everything should now be PASS. In particular:
   If this still says `public`, the deploy did not land.
 - `Public and local versions agree` — the proxy is not serving a stale copy.
 
-Then look at the site: <https://testpinakes.wacclearinghouse.org/explore> — pick
+Then look at the site: <https://pinakes.wacclearinghouse.org/explore> — pick
 any tool from the accordion and confirm a chart draws.
 
 > **If pages look stale or empty right after the deploy,** IIS/ARR may still be
@@ -522,14 +522,14 @@ Given the admin token, from any machine:
 
 ```powershell
 # Health and version, from outside
-Invoke-RestMethod https://testpinakes.wacclearinghouse.org/health
+Invoke-RestMethod https://pinakes.wacclearinghouse.org/health
 
 # Full external health check (clone the repo, then)
 & .\deploy\windows\Test-PinakesHealth.ps1 -Remote
 
 # Trigger a fetch remotely
 $h = @{ Authorization = "Bearer <token>" }
-Invoke-RestMethod -Uri https://testpinakes.wacclearinghouse.org/fetch -Method POST -Headers $h
+Invoke-RestMethod -Uri https://pinakes.wacclearinghouse.org/fetch -Method POST -Headers $h
 ```
 
 A `409` from that last one means a fetch is already running — that is the guard

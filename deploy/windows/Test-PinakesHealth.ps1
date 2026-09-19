@@ -38,7 +38,7 @@
 
 .PARAMETER BaseUrl
     Override the URL being tested. In remote mode this defaults to
-    PINAKES_SITE_URL, otherwise https://testpinakes.wacclearinghouse.org.
+    PINAKES_SITE_URL, otherwise https://pinakes.wacclearinghouse.org.
 
 .EXAMPLE
     .\Test-PinakesHealth.ps1
@@ -69,7 +69,7 @@ if (Test-Path $commonPath) {
 }
 if (-not $haveCommon) {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $PinakesPublicUrl = 'https://testpinakes.wacclearinghouse.org'
+    $PinakesPublicUrl = 'https://pinakes.wacclearinghouse.org'
 }
 
 if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
