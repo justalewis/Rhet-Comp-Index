@@ -1,13 +1,8 @@
 {# ============================================================
-   The Alexandrian Suite head. A rebuilt template pulls this in by
-   overriding base-core.html's `stylesheets` block:
-
-     {% block stylesheets %}{% include "_alexandrian_head.html" %}{% endblock %}
-     {% block legacy_theme %}{% endblock %}
-
-   Clearing `legacy_theme` at the same time is not optional: it
-   carries the Scandi and Terminal toggles, and those sheets are not
-   loaded here, so the buttons would flip a class nothing answers to.
+   The Alexandrian Suite head, included by base-core.html as the
+   stylesheet set for every page. A page that needs to add a sheet
+   overrides `stylesheets` and calls {{ super() }} first; /wac is the
+   only one that does.
 
    Order matters. tokens.css declares the palette and the element
    baseline, fonts.css maps the faces it names, pinakes.css builds

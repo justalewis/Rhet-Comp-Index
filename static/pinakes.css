@@ -1942,61 +1942,12 @@ main:focus { outline: none; }
 
 
 /* ============================================================
-   Legacy token names, mapped.
+   Pieces some templates still name in the older vocabulary.
 
-   TEMPORARY. Delete this block when the last template is across.
-
-   Several pages carry their own <style> block -- the alerts forms and
-   the two feeds pages account for about 375 lines between them -- and
-   those were written against the names style.css declared: --border,
-   --accent, --text-muted and the rest. A page that moves to this
-   sheet stops loading style.css, so without these its own CSS would
-   resolve to nothing and the page would render unstyled.
-
-   Mapping them is cheaper and far less risky than rewriting six
-   hundred declarations across thirteen files, and it means that
-   page-local CSS inverts for black-figure like everything else. The
-   aliases are one-directional: new work uses the Alexandrian names.
-   ============================================================ */
-
-:root {
-  --bg:            var(--papyrus);
-  --bg-alt:        var(--papyrus-deep);
-  --bg-subtle:     var(--papyrus-deep);
-  --bg-sidebar:    var(--papyrus-deep);
-  --sidebar-bg:    var(--papyrus-deep);
-  --surface:       var(--paper);
-  --hover-bg:      var(--papyrus-deep);
-  --sidebar-hover: var(--papyrus-deep);
-  --active-bg:     var(--terracotta-wash);
-  --tag-bg:        var(--papyrus-deep);
-
-  --text:          var(--gloss);
-  --text-primary:  var(--gloss);
-  --text-secondary:var(--gloss-soft);
-  --text-muted:    var(--dilute);
-  --text-light:    var(--dilute-light);
-  --ink:           var(--gloss);
-  --muted:         var(--dilute);
-  --muted-2:       var(--dilute-light);
-
-  --border:        var(--rule);
-  --border-color:  var(--rule);
-
-  --link:          var(--terracotta);
-  --link-hover:    var(--terracotta-lift);
-  --accent:        var(--terracotta);
-  --accent-hover:  var(--terracotta-lift);
-
-  --font-ui:       var(--f-ui);
-  --font-body:     var(--f-body);
-  --font-display:  var(--f-display);
-  --font-mono:     var(--f-mono);
-}
-
-
-/* ============================================================
-   Shared pieces the older templates still name differently.
+   The class names stayed when those pages moved, because JavaScript
+   addresses a good deal of this markup by class and renaming it would
+   have meant editing scripts in order to change a colour. The values
+   behind them are tokens like everything else.
    ============================================================ */
 
 .content-title { font-size: var(--text-3xl); margin: 0 0 var(--space-3); }

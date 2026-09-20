@@ -1,112 +1,150 @@
-# `static/` — assets, and a stylesheet migration in progress
+# `static/` — the Alexandrian Suite
 
-Two systems live here at once. The **Alexandrian Suite** is the one being built
-toward; the three legacy sheets are what most pages still run on. A template
-picks between them by overriding `base-core.html`'s `stylesheets` block, so the
-rebuild lands one page at a time rather than as a single cutover.
-
-## The Alexandrian Suite
-
-| File | Role |
-|---|---|
-| `tokens.css` | The palette, type scale and spacing. Copied verbatim from `eunomiaslabors.xyz/static/tokens.css`. |
-| `fonts.css` | 23 `@font-face` rules over `fonts/`, subset by `unicode-range`. Also copied verbatim from upstream. |
-| `fonts/*.woff2` | GFS Didot, Literata, EB Garamond, Atkinson Hyperlegible — all SIL OFL 1.1. See `fonts/README.txt`. |
-| `pinakes.css` | Components on top of the tokens. Currently the icon system only; the rest arrives with the `/tools` pilot. |
-
-**`tokens.css` and `fonts.css` are copies, not sources.** Three sites share
-them — Pinakes, Eunomia's Labors, and the `pinakes.xyz` redirect page. Edit them
-upstream on Eunomia's Labors, which generates the faces with its
-`tools/fetch_fonts.py`, then copy both the CSS and the `fonts/` files here.
-Editing them in place will be silently reverted by the next sync.
-
-Pinakes carries all 23 faces where the redirect page carries 12: the index holds
-Greek and polytonic characters in titles and author names, and a 50,000-row
-catalogue needs Literata 600 for table headers and result emphasis.
-
-Nothing loads from a third party, which is the point — it lets the CSP in
-[`web_helpers.py`](../web_helpers.py) reach `style-src 'self'; font-src 'self'`
-once the legacy sheets are gone. Two Google Fonts origins are still allowed
-there purely because `style-terminal.css:9` `@import`s Share Tech Mono.
-
-### The shell
-
-`templates/base-alexandrian.html` is the rebuilt page shell — the capsa (the
-box a library stood its rolls in, which is what the left column does) plus the
-content column. It sits *alongside* `base.html` rather than replacing it, so
-the templates still on the legacy sheets are untouched while pages move across
-one at a time. Its partials are `_capsa_nav.html` and `_capsa_tags.html`,
-which mirror `_feature_nav.html` and `_journal_list.html` link for link.
-
-A page joins the new system by extending `base-alexandrian.html`; a page that
-needs the old sidebar keeps extending `base.html`. When the last one has moved,
-`base.html`, `_feature_nav.html` and `_journal_list.html` go, and
-`base-alexandrian.html` takes the name. `templates/tools.html` is the first
-one across and is the reference for the rest.
-
-### Icons
-
-57 SVG symbols across three sprite partials in `templates/`:
-`_icons_core.html` (12 — the wordmark mark and the sidebar destinations, carried
-on every page), `_icons_tools.html` (19 analytical tools), and
-`_icons_datastories.html` (26 chapter panels, loaded only where they are used).
-Drawing rules and the accent mechanism are documented at the top of each file
-and in the icon section of `pinakes.css`. `/design/icons` renders all of them
-with the type specimen; it is unlinked and `noindex`.
-
-## The legacy sheets
-
-Everything not yet rebuilt loads all three of these, and switches between them by
-adding a class to `<html>` rather than swapping stylesheets, so all three are
-effective at once on every request. All three are slated for deletion once the
-rebuild reaches the last template.
+Every page loads three stylesheets, in this order, via
+[`templates/_alexandrian_head.html`](../templates/_alexandrian_head.html):
 
 | File | Lines | Role |
 |---|---:|---|
-| `style.css` | 3768 | Default theme. All legacy component styles live here. |
-| `style-scandi.css` | 1689 | Scandi theme. Pure override layer (`html.scandi .x`). |
-| `style-terminal.css` | 720 | Terminal theme. Pure override layer (`html.terminal .x`). |
-| `style-wac.css` | 182 | Loaded only by `templates/wac.html`. |
-| `explore.js` | — | D3-based visualisations on `/explore`. |
+| `tokens.css` | 229 | The palette, type scale and spacing, plus the element baseline. |
+| `fonts.css` | 226 | 23 `@font-face` rules over `fonts/`, subset by `unicode-range`. |
+| `pinakes.css` | 2493 | Every component on the site. |
+| `style-wac.css` | 193 | Loaded only by `/wac`, on top of the three above. |
 
-Until 2026-09-19 these sheets read their tokens from a CDN
-(`justalewis.github.io/lewis-design-system`) that the CSP never allowed, so the
-whole site ran on the six-line literal fallback in `base-core.html`. That
-`<link>` has been removed; the fallback block is now the honest, declared source
-of those values until each page moves to the Suite.
+Order matters: `tokens.css` declares the palette, `fonts.css` maps the faces it
+names, `pinakes.css` builds components on top.
 
-## Theme switching (legacy)
+## `tokens.css` and `fonts.css` are copies, not sources
 
-A small inline `<script>` in `base-core.html` does the work:
+Three sites share them — Pinakes, [Eunomia's Labors](https://eunomiaslabors.xyz),
+and the `pinakes.xyz` redirect page. **Edit them upstream on Eunomia's Labors**,
+which generates the faces with its `tools/fetch_fonts.py`, then copy both the CSS
+and the matching files in `fonts/` here. Editing them in place will be silently
+reverted by the next sync.
 
-```js
-var t = localStorage.getItem('rc-theme');
-if (t === 'terminal') document.documentElement.classList.add('terminal');
-else if (t === 'scandi') document.documentElement.classList.add('scandi');
-```
+Pinakes carries all 23 faces where the redirect page carries 12: the index holds
+Greek and polytonic characters in titles and author names, and a 50,000-row
+catalogue needs Literata 600 for table headers and result emphasis. All four
+families are SIL OFL 1.1 — see `fonts/README.txt`.
 
-Two toggle buttons (created by another inline script in `base-core.html`) flip the value in `localStorage` and add/remove the corresponding class on `<html>`. There is no server-side theme state; reload preserves the choice via `localStorage`.
+Nothing loads from a third party. That is what lets the CSP in
+[`web_helpers.py`](../web_helpers.py) read `style-src 'self'; font-src 'self'`.
 
-Theme override stylesheets target `html.terminal .selector` / `html.scandi .selector`, so the default theme is whatever `style.css` declares for `.selector` without a theme prefix. To add a new component:
+## Red-figure and black-figure
 
-1. Style it in `style.css` first.
-2. If the Terminal or Scandi themes need a different presentation, add `html.terminal .new-class { ... }` to `style-terminal.css` (or the Scandi equivalent). Otherwise the default cascades through.
+The palette is sampled from Attic red-figure pottery, and dark mode is not a
+theme hack: a red-figure vase is already a dark-ground design, so inverting
+gloss and clay gives you black-figure. Both states live in `tokens.css`.
 
-## Dead rule audit
+A page follows the reader's system setting unless they pick otherwise with the
+toggle at the foot of the capsa. The choice is stored as `pinakes-figure` in
+`localStorage` and applied before first paint by the inline script in
+`_alexandrian_head.html`, so a reader who chose the other figure never watches
+the page repaint into it.
 
-A one-time audit in [`docs/refactor-notes/05-css-audit.md`](../docs/refactor-notes/05-css-audit.md) lists 12 selectors in `style.css` that no longer match any template or JS class. They are not deleted — left as a follow-up so a maintainer can confirm none are dynamically injected (e.g., by D3 in the viz modules) before removing them.
+`.figure-switching` suppresses component transitions for the frame the switch
+happens in — without it, the hover transitions turn a theme change into a fade
+through the wrong palette.
 
-## JavaScript module layout (after F2)
+## Icons
 
-The `/explore` page is the only page with substantial client-side JS. As of prompt F2 it loads from a small ES module loader rather than the monolithic `explore.js`:
+57 SVG symbols across three sprite partials in `templates/`:
+
+| Partial | Symbols | Loaded |
+|---|---:|---|
+| `_icons_core.html` | 12 | Every page, by `base-core.html`. |
+| `_icons_tools.html` | 19 | `/tools` and `/explore`. |
+| `_icons_datastories.html` | 26 | The Datastories pages only. |
+
+Drawing rules are at the top of each partial and in the icon section of
+`pinakes.css`. The short version: a 24×24 grid, `currentColor` at 1.6, and
+exactly one accented element per icon — the one carrying the meaning.
+
+Accents travel as **inherited custom properties**, not classes. A `<use>` clone
+lives in a shadow tree that document CSS selectors do not reach, but inherited
+properties cross that boundary, so `--ic-accent` set on `.ic` lands on the paths
+inside the symbol.
+
+`/design/icons` renders the whole set with the type specimen. Unlinked,
+`noindex`, and `Disallow: /design/` in robots.txt.
+
+## Charts
+
+`utils/theme.js` is the bridge. Chart colour is read from CSS custom properties
+**at draw time**, so charts follow the figure; a literal cannot invert, and
+black-figure would otherwise have drawn every chart in red-figure ink.
+
+The eight categorical steps live in `pinakes.css` (`--cat-1` … `--cat-8`), not in
+`tokens.css`, because that file is a verbatim copy. They are pigments from the
+same world as the Suite — terracotta, verdigris, ochre, indigo, olive,
+manganese, Egyptian blue, madder — pushed to the chroma a categorical encoding
+needs.
+
+Both figures were checked with the `dataviz` validator rather than by eye:
+
+- red-figure on `#F5EFE1` — all five checks pass
+- black-figure on `#171512` — pass, with `--cat-7` against `--cat-6` at deutan
+  ΔE 6.8
+
+That last pair sits in the 6–8 band, which is legal **only** with a secondary
+encoding. So on any chart that can show both at once, a legend is not optional.
+**Do not reorder these**: adjacency is what was validated, and madder next to
+verdigris in particular is invisible to a deutan reader.
+
+The order is fixed and never cycled. Past eight series the tail folds into
+`--cat-other` rather than reusing a hue — see `CATEGORICAL_LIMIT` in
+`js/utils/colors.js`. Repeating a hue does not say "ninth series", it says "the
+same series".
+
+### Redrawing when the figure changes
+
+Two different mechanisms, because the two chart libraries differ:
+
+- **Chart.js** charts are recoloured in place by `utils/chartjs-theme.js`, which
+  also supplies the library's defaults. Chart.js keeps dataset colours as the
+  literal strings they were built from, so `update()` alone re-renders the same
+  hues.
+- **D3** scenes cannot be recoloured from outside, because each module owns its
+  own mapping from datum to mark. `explore-loader.js` and
+  `datastories-loader.js` ask the *visible* tool to draw itself again. Only the
+  visible one — the rest are drawn fresh when next shown.
+
+A page that builds charts outside those loaders has to do both itself;
+`templates/author.html` is the one that does, and says so.
+
+## JavaScript layout
 
 ```
 js/
-├── explore-loader.js     entry point loaded by templates/explore.html
-├── utils/                shared helpers (colors, tooltips, highlight)
-└── viz/                  one file per visualization (18 modules)
+├── explore-loader.js      entry point for /explore
+├── datastories-loader.js  entry point for the Datastories tools
+├── utils/
+│   ├── theme.js           the token bridge; categorical(), chrome(), onFigureChange()
+│   ├── chartjs-theme.js   Chart.js defaults and recolouring
+│   ├── colors.js          journal colour, by identity, folding past eight
+│   ├── tooltips.js, highlight.js
+├── viz/                   one file per visualisation (18 + 26 Datastories)
+├── wac/                   the /wac dashboard
+└── shared/                common, filters, export
 ```
 
-`explore-loader.js` eagerly imports every viz module at page load — see [`../docs/refactor-notes/11-explore-js-split-inventory.md`](../docs/refactor-notes/11-explore-js-split-inventory.md) for the rationale (race-condition avoidance with inline `onclick=` handlers).
+`explore-loader.js` eagerly imports every viz module at page load — see
+[`../docs/refactor-notes/11-explore-js-split-inventory.md`](../docs/refactor-notes/11-explore-js-split-inventory.md)
+for why (race conditions with inline `onclick=` handlers).
 
-The original `static/explore.js` is kept in place as a one-line revert path: if anything regresses, swap the `<script>` tag in `templates/explore.html` back and the old monolithic file takes over.
+## Adding a component
+
+Style it in `pinakes.css`, against tokens. Never a literal colour: a literal
+does not invert, and black-figure is not a variant you can skip.
+
+Some class names in `pinakes.css` are in an older vocabulary — `.article-*`
+beside `.entry-*`, `.citnet-*`, `.net-*`. Those markup names stayed when their
+pages moved, because JavaScript addresses a good deal of that markup by class
+and renaming it would have meant editing scripts in order to change a colour.
+The values behind them are tokens like everything else.
+
+## History
+
+The rebuild is written up in
+[`../docs/refactor-notes/17-alexandrian-rebuild.md`](../docs/refactor-notes/17-alexandrian-rebuild.md),
+including what the site looked like before and why the token layer was not
+loading at all.

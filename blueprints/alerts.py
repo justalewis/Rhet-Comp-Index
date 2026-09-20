@@ -45,8 +45,12 @@ def _get_sidebar():
 
 
 def _page(template, **ctx):
-    """Render an alerts page with the sidebar context every base.html page
-    needs."""
+    """Render an alerts page with the context the capsa needs.
+
+    base-alexandrian.html renders the journal tags from journal_groups,
+    and _capsa_tags gates on it, so a page that skips this simply shows no
+    tag field rather than failing. These pages want it.
+    """
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     from db import get_new_article_count
     return render_template(

@@ -13,16 +13,16 @@
       max-width: 46rem;
       margin: 1.6rem 0 2rem 0;
       padding: 1rem 1.2rem;
-      border: 1px solid var(--border);
+      border: 1px solid var(--rule);
       border-radius: 4px;
     }
     .feeds-panel h3 {
       margin: 0 0 0.6rem 0;
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.82rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--dilute);
       font-weight: 600;
     }
     .feeds-panel ol { margin: 0 0 0.8rem 0; padding-left: 1.2rem; }
@@ -34,7 +34,7 @@
       display: block;
       margin: 0.5rem 0;
       padding: 0.5rem 0.7rem;
-      border: 1px solid var(--border);
+      border: 1px solid var(--rule);
       border-radius: 3px;
       font-size: 0.9rem;
       word-break: break-all;
@@ -49,10 +49,10 @@
       margin-top: 0.6rem;
     }
     .feeds-btn {
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.84rem;
       padding: 0.28rem 0.7rem;
-      border: 1px solid var(--border);
+      border: 1px solid var(--rule);
       border-radius: 3px;
       background: transparent;
       color: inherit;
@@ -60,9 +60,9 @@
       text-decoration: none;
       display: inline-block;
     }
-    .feeds-btn:hover:not(:disabled) { border-color: var(--accent, #7a2e2e); }
+    .feeds-btn:hover:not(:disabled) { border-color: var(--terracotta, #7a2e2e); }
     .feeds-btn:focus-visible {
-      outline: 2px solid var(--accent, #7a2e2e);
+      outline: 2px solid var(--terracotta, #7a2e2e);
       outline-offset: 2px;
     }
     .feeds-btn:disabled { opacity: 0.45; cursor: default; }
@@ -71,25 +71,25 @@
     #feed-builder { max-width: 46rem; margin: 0 0 2.4rem 0; }
     .fb-summary {
       padding: 0.9rem 1.1rem;
-      border: 1px solid var(--border);
+      border: 1px solid var(--rule);
       border-radius: 4px;
       margin-bottom: 1.2rem;
     }
     .fb-count {
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.88rem;
-      color: var(--text-muted);
+      color: var(--dilute);
     }
     .fb-group {
       border: none;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--rule);
       margin: 0 0 1.1rem 0;
       padding: 0.7rem 0 0 0;
       min-width: 0;
     }
     .fb-group legend {
       padding: 0 0.5rem 0 0;
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.9rem;
       font-weight: 600;
       letter-spacing: 0.02em;
@@ -112,9 +112,9 @@
     .fb-check label { cursor: pointer; }
     .fb-grid { column-width: 21rem; column-gap: 2rem; }
     .fb-row-link {
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.76rem;
-      color: var(--link);
+      color: var(--terracotta);
       text-decoration: none;
       opacity: 0.75;
       white-space: nowrap;
@@ -124,18 +124,18 @@
       text-decoration: underline;
     }
     .fb-all-label {
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.82rem;
-      color: var(--text-muted);
+      color: var(--dilute);
       display: flex;
       align-items: baseline;
       gap: 0.4rem;
       cursor: pointer;
     }
     .fb-section-link {
-      font-family: var(--font-ui);
+      font-family: var(--f-ui);
       font-size: 0.82rem;
-      color: var(--link);
+      color: var(--terracotta);
     }
 
     /* Directory */
@@ -147,8 +147,8 @@
       align-items: baseline;
       margin: 0 0 0.5rem 0;
       padding-bottom: 0.3rem;
-      border-bottom: 1px solid var(--border);
-      font-family: var(--font-ui);
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--f-ui);
       font-size: 0.95rem;
       letter-spacing: 0.02em;
       text-transform: uppercase;
@@ -169,7 +169,7 @@
     }
     .feeds-list { list-style: none; margin: 0; padding: 0; column-width: 19rem; column-gap: 2rem; }
     .feeds-list li { padding: 0.2rem 0; break-inside: avoid; }
-    .feeds-list a { color: var(--link); text-decoration: none; }
+    .feeds-list a { color: var(--terracotta); text-decoration: none; }
     .feeds-list a:hover { text-decoration: underline; }
 
     .visually-hidden {

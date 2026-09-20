@@ -5,69 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Pinakes{% endblock %}</title>
 
-  {# The stylesheet set is a block so the Alexandrian Suite rebuild can land
-     one template at a time. A rebuilt page overrides `stylesheets` with
-     {% include "_alexandrian_head.html" %} and drops the legacy sheets
-     entirely; everything not yet rebuilt keeps the default below. The same
-     goes for `legacy_theme`, which carries the Scandi/Terminal toggles the
-     new system replaces with red-figure/black-figure. #}
-  {% block stylesheets %}
-  <style>
-    /* Interim values for the pages not yet rebuilt on the Alexandrian Suite.
-       These were written as a fallback for an unreachable design-system CDN,
-       but they have been the *only* values in play since the move to the
-       Clearinghouse: the CSP never listed justalewis.github.io, so the token
-       stylesheet was blocked on every request. The dead <link> is gone rather
-       than left to fail in the console. */
-    :root {
-      --bg: #F7F5F1;
-      --accent: #2C4A3A;
-      --accent-hover: #1F3A2C;
-      --font-display: Georgia, 'Times New Roman', serif;
-      --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
-      --font-mono: ui-monospace, Consolas, 'Courier New', monospace;
-    }
-  </style>
-  <link rel="stylesheet" href="/static/style.css?v={{ version }}">
-  <link rel="stylesheet" href="/static/style-scandi.css?v={{ version }}">
-  <link rel="stylesheet" href="/static/style-terminal.css?v={{ version }}">
-  {% endblock %}
-
-  {% block legacy_theme %}
-  <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.documentElement.classList.add('terminal');}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
-  <script>
-    document.addEventListener('DOMContentLoaded',function(){
-      var termBtn=document.createElement('button');
-      termBtn.className='theme-toggle-btn';
-      var scandiBtn=document.createElement('button');
-      scandiBtn.className='scandi-toggle-btn';
-      function updateBtns(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        termBtn.textContent=cur==='terminal'?'\u25d1 Default':'\u25d0 Terminal';
-        scandiBtn.textContent=cur==='scandi'?'\u25c7 Default':'\u25c7 Scandi';
-      }
-      updateBtns();
-      termBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='terminal'?'normal':'terminal';
-        localStorage.setItem('rc-theme',next);
-        document.documentElement.classList.remove('terminal','scandi');
-        if(next==='terminal') document.documentElement.classList.add('terminal');
-        updateBtns();
-      });
-      scandiBtn.addEventListener('click',function(){
-        var cur=localStorage.getItem('rc-theme')||'normal';
-        var next=cur==='scandi'?'normal':'scandi';
-        localStorage.setItem('rc-theme',next);
-        document.documentElement.classList.remove('terminal','scandi');
-        if(next==='scandi') document.documentElement.classList.add('scandi');
-        updateBtns();
-      });
-      document.body.appendChild(termBtn);
-      document.body.appendChild(scandiBtn);
-    });
-  </script>
-  {% endblock %}
+  {# The Alexandrian Suite is the stylesheet set. It was a block during the
+     migration so pages could cross one at a time; every template is across
+     now, so this is simply what a Pinakes page loads. It stays a block for
+     the one page that adds to it -- /wac layers its dashboard sheet on top. #}
+  {% block stylesheets %}{% include "_alexandrian_head.html" %}{% endblock %}
 
   {% block head_extra %}{% endblock %}
 </head>

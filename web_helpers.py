@@ -135,17 +135,18 @@ def set_security_headers(response):
     # could not have loaded. And `connect-src 'self'` blocked the GoatCounter
     # beacon, which posts to pinakes.goatcounter.com.
     #
-    # The two Google Fonts origins are on borrowed time. Nothing in the
-    # Alexandrian Suite touches them; they are here only because
-    # style-terminal.css:9 @imports Share Tech Mono, and that sheet is served
-    # to every page that has not been rebuilt yet. Drop both when the Terminal
-    # and Scandi themes are retired, and the policy names no third party for
-    # styles or fonts at all.
+    # No third party for styles or fonts at all: the Alexandrian Suite and
+    # its four faces are served from this origin. The Google Fonts origins
+    # that used to be listed went with the Terminal theme, which was the
+    # only thing importing from them.
+    #
+    # script-src still names cdn.jsdelivr.net for D3 and Chart.js, and
+    # gc.zgo.at for the analytics tag whose beacon connect-src allows.
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net gc.zgo.at; "
-        "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
-        "font-src 'self' fonts.gstatic.com; "
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self'; "
         "img-src 'self' data:; "
         "connect-src 'self' pinakes.goatcounter.com"
     )
