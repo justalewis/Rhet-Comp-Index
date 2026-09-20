@@ -447,7 +447,7 @@ function renderCoauthors(data) {
     .force('collision', d3.forceCollide().radius(d => (d.is_center ? 14 : rScale(Math.max(1, d.count))) + 4));
 
   const link = g.append('g').selectAll('line').data(links).enter().append('line')
-    .style('stroke', 'var(--border)').style('stroke-width', d => lwScale(d.value)).style('stroke-opacity', 0.7);
+    .style('stroke', 'var(--rule)').style('stroke-width', d => lwScale(d.value)).style('stroke-opacity', 0.7);
 
   const nodeG = g.append('g').selectAll('g').data(nodes).enter().append('g')
     .style('cursor', d => d.is_center ? 'default' : 'pointer')
@@ -460,9 +460,9 @@ function renderCoauthors(data) {
 
   nodeG.append('circle')
     .attr('r', d => d.is_center ? 13 : rScale(Math.max(1, d.count)))
-    .style('fill', d => d.is_center ? 'var(--accent)' : PALETTE[(d.id.charCodeAt(Math.max(0,d.id.lastIndexOf(' ')+1))||0) % PALETTE.length])
+    .style('fill', d => d.is_center ? 'var(--terracotta)' : PALETTE[(d.id.charCodeAt(Math.max(0,d.id.lastIndexOf(' ')+1))||0) % PALETTE.length])
     .style('fill-opacity', d => d.is_center ? 1 : 0.82)
-    .style('stroke', d => d.is_center ? 'var(--accent-hover)' : '#fff')
+    .style('stroke', d => d.is_center ? 'var(--terracotta-lift)' : '#fff')
     .style('stroke-width', d => d.is_center ? 2.5 : 1.5);
 
   nodeG.append('text')
@@ -471,7 +471,7 @@ function renderCoauthors(data) {
     .attr('text-anchor', 'middle')
     .style('font-family','system-ui,sans-serif')
     .style('font-size', d => d.is_center ? '10px' : '8px')
-    .style('fill','var(--text-muted)')
+    .style('fill','var(--dilute)')
     .style('pointer-events','none');
 
   const tip = d3.select('body').append('div')

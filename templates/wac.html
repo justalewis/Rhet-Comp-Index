@@ -2,9 +2,8 @@
 
 {% block title %}The WAC Clearinghouse as a Press · Pinakes{% endblock %}
 
-{% block stylesheets %}{% include "_alexandrian_head.html" %}
+{% block stylesheets %}{{ super() }}
 <link rel="stylesheet" href="/static/style-wac.css?v={{ version }}">{% endblock %}
-{% block legacy_theme %}{% endblock %}
 
 {% block head_extra %}
 <meta name="description" content="A data portrait of the WAC Clearinghouse as a publishing house: fifty years of journals and books, cross-format author portfolios, editor brokerage, institutional feeders, and the cited canon.">
