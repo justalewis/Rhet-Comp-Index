@@ -1,0 +1,6 @@
+node_modules/
+.wrangler/
+.dev.vars
+# Holds CLOUDFLARE_API_TOKEN for deploys; never commit it.
+.env
+.env.*

@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["app.py"],
       "port": 5000
+    },
+    {
+      "name": "xyz-redirect",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["deploy/xyz-redirect/scripts/dev.mjs"],
+      "port": 8787
     }
   ]
 }

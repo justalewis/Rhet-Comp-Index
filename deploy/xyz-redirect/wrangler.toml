@@ -1,0 +1,30 @@
+# pinakes.xyz → pinakes.wacclearinghouse.org
+#
+# Routes on the pinakes.xyz zone run this Worker before any request reaches
+# the old Fly origin. Removing the routes (or `wrangler delete`) hands the
+# domain straight back to Fly, which is the rollback while Fly still runs.
+
+name = "pinakes-xyz-redirect"
+main = "src/worker.js"
+compatibility_date = "2026-08-01"
+send_metrics = false
+workers_dev = false
+preview_urls = false
+
+routes = [
+  { pattern = "pinakes.xyz/*", zone_name = "pinakes.xyz" },
+  { pattern = "www.pinakes.xyz/*", zone_name = "pinakes.xyz" },
+]
+
+# Fonts, styles, script, and favicon live under /_moved/ so they can't collide
+# with any path the old site used. The Worker runs first and hands those paths
+# to ASSETS; everything else is routed in src/render.js.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true

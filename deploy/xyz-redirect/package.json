@@ -1,0 +1,16 @@
+{
+  "name": "pinakes-xyz-redirect",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker for pinakes.xyz: the 'Pinakes has moved' page, plus redirects to pinakes.wacclearinghouse.org",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test",
+    "journals": "python scripts/export_journals.py",
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.135.0"
+  }
+}
