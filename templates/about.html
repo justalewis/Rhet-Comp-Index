@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}About — Pinakes{% endblock %}
 
@@ -6,28 +6,13 @@
 <meta name="description" content="About Pinakes: a free, open-source disciplinary index for rhetoric, composition, and writing studies. Built by Justin Lewis at Olympic College.">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block content %}
 
   <!-- ── Top nav ───────────────────────────────────────────── -->
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/new">What's New</a>
-        <a href="/explore">Explore</a>
-        <a href="/authors">Authors</a>
-        <a href="/most-cited">Most Cited</a>
-        <a href="/books">Books</a>
-        <a href="/coverage">Coverage</a>
-      </nav>
-    </div>
-  </header>
 
   <!-- ── Main content ─────────────────────────────────────── -->
-  <main class="about-content">
 
-    <h1 class="about-title">About Pinakes</h1>
+    <h1 class="page-title">About Pinakes</h1>
 
     <p>Around 245 BCE, the scholar-poet Callimachus undertook what may have been the first serious attempt to make a field of knowledge visible to itself. Working in the Library of Alexandria, he compiled the <em>Pinakes</em>: a 120-volume catalog that organized the library's holdings by author, genre, and subject, with biographical notes and lists of works for each entry.</p>
 <br>
@@ -107,10 +92,8 @@
     <h2>Feature Requests and Contact</h2>
     <p>This is a one-person project; however, I welcome suggestions and collaboration. If there is a journal that should be included, a feature that would be useful for your work, or a bug you have encountered, please email me at <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a>.</p>
 
-  </main>
-
   <!-- ── Footer ───────────────────────────────────────────── -->
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot;
     <a href="/new">What's New</a> &middot;
     <a href="/explore">Explore</a> &middot;
@@ -124,5 +107,4 @@
     &copy; 2026 Justin Lewis
   </footer>
 
-</div><!-- /about-page-wrap -->
 {% endblock %}

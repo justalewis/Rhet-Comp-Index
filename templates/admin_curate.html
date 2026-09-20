@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Article Curation — Pinakes{% endblock %}
 
@@ -6,21 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block column_class %}column-inner--read{% endblock %}
 
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/about">About</a>
-        <a href="/admin/redactions">Redactions</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="about-content" style="max-width:56rem;">
-    <h1 class="about-title">Article Curation</h1>
+{% block content %}
+    <h1 class="page-title">Article Curation</h1>
     <p style="color:#6a655c;">Fix artifacts in a record (HTML/encoding noise in a title, wrong authors) or durably remove junk (test deposits, spam). Suppressing blocklists the DOI so the next fetch can't resurrect it. Nothing here loads without your admin token.</p>
 
     <!-- ── Token gate ─────────────────────────────────────────── -->
@@ -47,9 +36,8 @@
     <div id="results"></div>
     <div id="editor"></div>
     <div id="blocklist"></div>
-  </main>
 
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot; <a href="/about">About</a> &middot; <a href="/admin/redactions">Redactions</a>
     &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
   </footer>

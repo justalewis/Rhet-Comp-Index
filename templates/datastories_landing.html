@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Datastories — Pinakes{% endblock %}
 
@@ -7,29 +7,13 @@
 <meta name="robots" content="noindex, nofollow">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block content %}
 
   <!-- ── Top nav ───────────────────────────────────────────── -->
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/new">What's New</a>
-        <a href="/explore">Explore</a>
-        <a href="/authors">Authors</a>
-        <a href="/most-cited">Most Cited</a>
-        <a href="/books">Books</a>
-        <a href="/coverage">Coverage</a>
-        <a href="/about">About</a>
-      </nav>
-    </div>
-  </header>
 
   <!-- ── Main content ─────────────────────────────────────── -->
-  <main class="about-content">
 
-    <h1 class="about-title">Datastories</h1>
+    <h1 class="page-title">Datastories</h1>
     <p style="font-size:1.1rem;color:#7a7268;font-style:italic;margin-top:-0.4rem;margin-bottom:2rem;">
       A Disciplinography of Technical and Professional Communication
     </p>
@@ -90,12 +74,9 @@
       {% endif %}
     </section>
 
-  </main>
-
   <!-- ── Footer ───────────────────────────────────────────── -->
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <p>Pinakes is built and maintained by <a href="mailto:justalewis1@gmail.com">Justin Lewis</a> at <a href="https://www.olympic.edu/" target="_blank" rel="noopener">Olympic College</a>.</p>
   </footer>
 
-</div>
 {% endblock %}

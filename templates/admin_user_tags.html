@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Tag Suggestions — Pinakes{% endblock %}
 
@@ -6,21 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block column_class %}column-inner--read{% endblock %}
 
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/about">About</a>
-        <a href="/admin/redactions">Redactions</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="about-content" style="max-width:54rem;">
-    <h1 class="about-title">Tag Suggestions</h1>
+{% block content %}
+    <h1 class="page-title">Tag Suggestions</h1>
     <p style="color:#6a655c;">Reader-proposed topics awaiting review. Approving makes a tag public on its article and filterable across the index; rejecting hides it. Feedback votes on classifier tags aren&rsquo;t decided here — they&rsquo;re signal for tuning <code>tagger.py</code>. Nothing loads without your admin token.</p>
 
     <!-- ── Token gate ─────────────────────────────────────────── -->
@@ -43,9 +32,8 @@
     </div>
 
     <div id="queue"></div>
-  </main>
 
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot; <a href="/about">About</a> &middot; <a href="/admin/redactions">Redactions</a>
     &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
   </footer>
