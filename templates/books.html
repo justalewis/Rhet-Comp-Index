@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Books — Pinakes{% endblock %}
 
@@ -6,7 +6,7 @@
 <meta name="description" content="Browse 3,200+ scholarly monographs and edited collections in rhetoric, composition, and writing studies from seven university presses.">
 {% endblock %}
 
-{% block sidebar_content %}
+{% block capsa_tags %}
       <!-- ── Journal list (collapsed on books page) ────── -->
       <div class="journal-filter-wrapper">
         <details class="journal-filter" id="journal-filter">
@@ -26,7 +26,7 @@
       </div>
 {% endblock %}
 
-{% block sidebar_footer %}
+{% block capsa_foot %}
     <div class="sidebar-footer">
       <p class="fetch-note">CrossRef &middot; RSS feeds &middot; Web scraping</p>
     </div>
@@ -34,7 +34,7 @@
 
 {% block content %}
 
-    <div class="content-header">
+    <div class="column-head">
       <h2 class="content-title">Books</h2>
       <p class="page-intro">
         Scholarly monographs and edited collections in rhetoric, composition, and technical communication,

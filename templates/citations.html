@@ -1,14 +1,13 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Citation Network — {{ article.title | truncate(60, true, '…') }} — Pinakes{% endblock %}
 
-{% block sidebar_footer %}
+{% block capsa_foot %}
     <div class="sidebar-footer">
-      <a href="/article/{{ article.id }}" class="fetch-btn sidebar-back-link">&larr; Back to article</a>
+      <a href="/article/{{ article.id }}" class="capsa-back">&larr; Back to article</a>
     </div>
 {% endblock %}
 
-{% block main_class %}ego-page{% endblock %}
 
 {% block content %}
 

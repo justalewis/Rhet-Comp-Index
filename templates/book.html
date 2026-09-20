@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}{{ book.title|truncate(80, true, '…') }} — Pinakes{% endblock %}
 
-{% block sidebar_content %}
+{% block capsa_tags %}
       <!-- ── Journal list (collapsed on book page) ────── -->
       <div class="journal-filter-wrapper">
         <details class="journal-filter" id="journal-filter">
@@ -22,7 +22,7 @@
       </div>
 {% endblock %}
 
-{% block sidebar_footer %}
+{% block capsa_foot %}
     <div class="sidebar-footer">
       <p class="fetch-note">CrossRef &middot; RSS feeds &middot; Web scraping</p>
     </div>

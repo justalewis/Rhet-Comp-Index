@@ -1,16 +1,16 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}{{ institution.display_name }} — Pinakes{% endblock %}
 
-{% block sidebar_footer %}
+{% block capsa_foot %}
     <div class="sidebar-footer">
-      <a href="/explore#institutions" class="fetch-btn sidebar-back-link">&larr; All Institutions</a>
+      <a href="/explore#institutions" class="capsa-back">&larr; All Institutions</a>
     </div>
 {% endblock %}
 
 {% block content %}
 
-    <div class="content-header">
+    <div class="column-head">
       <h2>{{ institution.display_name }}</h2>
       <span class="result-count">{{ article_count }} article{% if article_count != 1 %}s{% endif %}</span>
     </div>
