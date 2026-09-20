@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsSoloToSquad = false;
 
@@ -43,7 +44,7 @@ function renderTrends(data) {
 
   // Single-author share area (right axis)
   const area = d3.area().x(d => x(d.year)).y0(yR(0)).y1(d => yR(d.single_author_pct));
-  svg.append('path').datum(ys).attr('d', area).attr('fill', '#d4cec5').attr('opacity', 0.5);
+  svg.append('path').datum(ys).attr('d', area).attr('fill', chrome().grid).attr('opacity', 0.5);
 
   // Mean / median lines (left axis)
   const lineMean = d3.line().x(d => x(d.year)).y(d => yL(d.mean_authors)).curve(d3.curveMonotoneX);
@@ -64,7 +65,7 @@ function renderTrends(data) {
   svg.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(yL)).selectAll('text').style('font-size','10px');
   svg.append('g').attr('transform', `translate(${w - m.right},0)`).call(d3.axisRight(yR).tickFormat(d3.format('.0%'))).selectAll('text').style('font-size','10px');
 
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
     .text('Mean (solid) and median (dashed) authors per article — single-author share (grey area)');
 }
 
@@ -78,10 +79,10 @@ function renderTable(data) {
   html += '</tr></thead><tbody>';
   rows.forEach(r => {
     html += '<tr>';
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">${r.n_authors}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.year}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a></td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${escapeHtml(r.journal || '—')}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-weight:600;">${r.n_authors}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.year}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a></td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${escapeHtml(r.journal || '—')}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table>';

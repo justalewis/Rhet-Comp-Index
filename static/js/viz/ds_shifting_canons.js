@@ -2,13 +2,14 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const CAT_COLOR = {
   enduring:          "#3a5a28",
   rising:            "#5a3e28",
   fading:            "#a04525",
   intermittent:      "#b38a6a",
-  generational_only: "#9c9890",
+  generational_only: chrome().muted,
 };
 
 let _filtersWired_loadDsShiftingCanons = false;
@@ -40,9 +41,9 @@ function renderSummary(data) {
   const cats = (data.summary && data.summary.categories) || {};
   const html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.6rem;">
     ${Object.entries(cats).map(([k, n]) => `
-      <div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid ${CAT_COLOR[k] || '#9c9890'};font-size:0.84rem;">
-        <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(k.replace(/_/g, ' '))}</div>
-        <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${n}</div>
+      <div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid ${CAT_COLOR[k] || chrome().muted};font-size:0.84rem;">
+        <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(k.replace(/_/g, ' '))}</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">${n}</div>
       </div>`).join('')}
   </div>`;
   document.getElementById('ds-canon-summary').innerHTML = html;
@@ -67,7 +68,7 @@ function renderHeatmap(data) {
     const cx = leftLabelW + i * cellW + cellW / 2;
     svg.append('text')
       .attr('x', cx).attr('y', 18)
-      .attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', '#7a7268')
+      .attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', chrome().muted)
       .text(SHORT[g.label] || g.label);
   });
 
@@ -77,16 +78,16 @@ function renderHeatmap(data) {
     const a = svg.append('a').attr('href', '/article/' + it.id);
     const lbl = ((it.title || '#'+it.id)).slice(0, 60) + ((it.title||'').length > 60 ? '…' : '');
     a.append('text').attr('x', leftLabelW - 6).attr('y', y0 + 12).attr('text-anchor','end')
-      .attr('font-size', 10).attr('fill','#3a3026').text(lbl);
+      .attr('font-size', 10).attr('fill',chrome().ink).text(lbl);
 
     it.ranks.forEach((rk, gi) => {
       const x0 = leftLabelW + gi * cellW;
       svg.append('rect').attr('x', x0 + 1).attr('y', y0 + 2).attr('width', cellW - 2).attr('height', cellH - 4)
-        .attr('fill', rk == null ? '#f1ede6' : (rk <= 5 ? '#5a3e28' : rk <= 10 ? '#8b6045' : '#c9a882'))
+        .attr('fill', rk == null ? chrome().grid : (rk <= 5 ? '#5a3e28' : rk <= 10 ? '#8b6045' : '#c9a882'))
         .attr('opacity', rk == null ? 0.3 : 0.9);
       if (rk != null) {
         svg.append('text').attr('x', x0 + cellW/2).attr('y', y0 + 13).attr('text-anchor','middle')
-          .attr('font-size', 9).attr('fill', rk <= 5 ? '#fdfbf7' : '#3a3026').text('#' + rk);
+          .attr('font-size', 9).attr('fill', rk <= 5 ? chrome().halo : chrome().ink).text('#' + rk);
       }
     });
   });
@@ -100,12 +101,12 @@ function renderTable(data) {
 
   function table(label, rows) {
     if (!rows.length) return '';
-    let html = '<h5 style="margin-top:1rem;color:#3a3026;">' + escapeHtml(label) + '</h5>';
+    let html = '<h5 style="margin-top:1rem;color:var(--chart-ink);">' + escapeHtml(label) + '</h5>';
     html += '<ul style="font-size:0.84rem;list-style:none;padding-left:0;">';
     rows.forEach(r => {
-      html += `<li style="padding:0.3rem 0;border-bottom:1px solid #f1ede6;">
+      html += `<li style="padding:0.3rem 0;border-bottom:1px solid var(--chart-grid);">
         <a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a>
-        <span style="color:#9c9890;"> · ${escapeHtml(r.journal || '')} · ${r.year || '—'}</span>
+        <span style="color:var(--chart-muted);"> · ${escapeHtml(r.journal || '')} · ${r.year || '—'}</span>
       </li>`;
     });
     html += '</ul>';

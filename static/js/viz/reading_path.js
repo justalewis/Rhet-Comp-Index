@@ -161,19 +161,19 @@ function rpRenderRecentChips() {
     if (!anchor) return;
     host = document.createElement('div');
     host.id = 'rp-recent-chips';
-    host.style.cssText = 'margin:0.5rem 0;font-size:0.8rem;color:#7a7268;';
+    host.style.cssText = 'margin:0.5rem 0;font-size:0.8rem;color:var(--chart-muted);';
     anchor.appendChild(host);
   }
   if (!list.length) { host.style.display = 'none'; host.innerHTML = ''; return; }
   host.style.display = 'block';
-  host.innerHTML = '<span style="margin-right:0.4rem;text-transform:uppercase;letter-spacing:0.04em;font-size:0.72rem;color:#9c9890;">Recent</span>' +
+  host.innerHTML = '<span style="margin-right:0.4rem;text-transform:uppercase;letter-spacing:0.04em;font-size:0.72rem;color:var(--chart-muted);">Recent</span>' +
     list.map(s => {
       const label = (s.title || '#' + s.id).slice(0, 36);
       const tip = (s.title || '#' + s.id) + (s.journal ? ' — ' + s.journal : '');
       return '<button type="button" class="rp-recent-chip" data-id="' + s.id +
         '" title="' + escHtml(tip).replace(/"/g, '&quot;') + '" ' +
         'style="margin:0.15rem 0.25rem 0.15rem 0;padding:0.2rem 0.5rem;' +
-        'background:#fdfbf7;border:1px solid #c8c4bc;border-radius:11px;' +
+        'background:var(--chart-halo);border:1px solid var(--chart-grid);border-radius:11px;' +
         'cursor:pointer;font-size:0.78rem;color:#5a3e28;">' +
         escHtml(label) + '</button>';
     }).join('');
@@ -528,7 +528,7 @@ function rpRenderList(list, filter) {
             ${escHtml(a.journal || '')}${a.pub_date ? ' · ' + a.pub_date.slice(0, 4) : ''}
             ${a.internal_cited_by_count ? ' · cited ' + a.internal_cited_by_count + '×' : ''}
           </div>
-          <div style="font-size:0.74rem;color:#9c9890;margin-top:0.2rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escHtml(breakdown)}</div>
+          <div style="font-size:0.74rem;color:var(--chart-muted);margin-top:0.2rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escHtml(breakdown)}</div>
           ${a.reason ? `<div style="font-size:0.78rem;color:#8b6045;margin-top:0.1rem;font-style:italic;">${escHtml(a.reason)}</div>` : ''}
         </div>
       </div>

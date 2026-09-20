@@ -3,6 +3,8 @@
 // applyHighlight / clearHighlight: shared neighbour-highlight pattern used
 // by the force-layout visualisations.
 
+import { chrome } from "./theme.js";
+
 function applyHighlight(id, neighbors, nodeGroup, linkSel) {
   const nb = neighbors[id] || new Set();
   nodeGroup.style('opacity', d => (d.id === id || nb.has(d.id)) ? 1 : 0.12);
@@ -13,13 +15,13 @@ function applyHighlight(id, neighbors, nodeGroup, linkSel) {
   }).style('stroke', l => {
     const s = typeof l.source === 'object' ? l.source.id : l.source;
     const t = typeof l.target === 'object' ? l.target.id : l.target;
-    return (s === id || t === id) ? '#8b6340' : '#ccc7bb';
+    return (s === id || t === id) ? '#8b6340' : chrome().grid;
   });
 }
 
 function clearHighlight(nodeGroup, linkSel) {
   nodeGroup.style('opacity', 1);
-  linkSel.style('opacity', 0.55).style('stroke', '#ccc7bb');
+  linkSel.style('opacity', 0.55).style('stroke', chrome().grid);
 }
 
 export { applyHighlight, clearHighlight };

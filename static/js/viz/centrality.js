@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -127,11 +127,11 @@ function renderCentrality(container, data) {
     const label = colorMode === 'eigenvector' ? 'Eigenvector centrality' : 'Betweenness centrality';
     legendEl.innerHTML =
       `<span class="citnet-legend-item" style="display:flex;align-items:center;gap:0.3rem;">` +
-      `<span style="font-size:0.78rem;color:#9c9890;">Low</span>` +
+      `<span style="font-size:0.78rem;color:var(--chart-muted);">Low</span>` +
       `<span style="display:inline-block;width:120px;height:12px;border-radius:3px;` +
       `background:linear-gradient(to right,${centHeatScale(0)},${centHeatScale(0.25)},${centHeatScale(0.5)},${centHeatScale(0.75)},${centHeatScale(1)});"></span>` +
-      `<span style="font-size:0.78rem;color:#9c9890;">High</span>` +
-      `<span style="font-size:0.78rem;color:#9c9890;margin-left:0.5rem;">${label}</span>` +
+      `<span style="font-size:0.78rem;color:var(--chart-muted);">High</span>` +
+      `<span style="font-size:0.78rem;color:var(--chart-muted);margin-left:0.5rem;">${label}</span>` +
       `</span>`;
   }
 
@@ -168,7 +168,7 @@ function renderCentrality(container, data) {
     .selectAll('line')
     .data(centLinks)
     .enter().append('line')
-    .style('stroke',         '#ccc7bb')
+    .style('stroke',         chrome().grid)
     .style('stroke-opacity', 0.25)
     .style('stroke-width',   0.6);
 
@@ -239,7 +239,7 @@ function renderCentrality(container, data) {
   nodeGroup
     .on('mouseenter.link', function(_, d) {
       document.querySelectorAll('#cent-tables li[data-id="' + d.id + '"]').forEach(li => {
-        li.style.background = '#fdfbf7';
+        li.style.background = chrome().halo;
         li.style.outline = '2px solid #b38a6a';
       });
     })
@@ -322,7 +322,7 @@ function renderCentralityTables(data) {
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;">
           <div style="min-width:0;">
             <a href="/article/${d.id}" class="article-title" style="font-size:0.84rem;">${escapeHtml(d.title)}</a>
-            <div style="font-size:0.76rem;color:#9c9890;margin-top:0.1rem;">
+            <div style="font-size:0.76rem;color:var(--chart-muted);margin-top:0.1rem;">
               ${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 <em>${escapeHtml(d.journal)}</em>
               \u2002\u00b7\u2002Cited ${d.internal_cited_by_count}\u00d7
             </div>

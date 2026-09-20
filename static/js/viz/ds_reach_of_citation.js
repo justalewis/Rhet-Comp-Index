@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const PATTERN_COLOR = {
   steady_classic: "#3a5a28",
@@ -9,7 +10,7 @@ const PATTERN_COLOR = {
   one_wave:       "#a04525",
   front_loaded:   "#8b6045",
   too_recent:     "#b38a6a",
-  too_few:        "#d4cec5",
+  too_few:        chrome().grid,
 };
 
 let _filtersWired_loadDsReachOfCitation = false;
@@ -78,7 +79,7 @@ function renderGrid(data) {
 
     // Background card
     svg.append('rect').attr('x', cx).attr('y', cy).attr('width', cellW - 16).attr('height', cellH - 12)
-      .attr('fill', '#fdfbf7').attr('stroke', '#e8e4de').attr('stroke-width', 0.5);
+      .attr('fill', chrome().halo).attr('stroke', '#e8e4de').attr('stroke-width', 0.5);
 
     // Sparkline (area + line). Area opacity encodes total citations within
     // the cohort, so heavy hitters read at a glance even before label text.
@@ -88,7 +89,7 @@ function renderGrid(data) {
       const ymax = d3.max(series, p => p.cumulative) || 1;
       const yRange = [cy + cellH - 24, cy + 28];
       const y = d3.scaleLinear().domain([0, ymax]).range(yRange);
-      const color = PATTERN_COLOR[art.pattern] || '#9c9890';
+      const color = PATTERN_COLOR[art.pattern] || chrome().muted;
       const area = d3.area().x((p, k) => x(k)).y0(yRange[0]).y1(p => y(p.cumulative));
       const line = d3.line().x((p, k) => x(k)).y(p => y(p.cumulative));
       svg.append('path').datum(series).attr('d', area)
@@ -100,8 +101,8 @@ function renderGrid(data) {
     // Label (clickable)
     const a = svg.append('a').attr('href', '/article/' + art.id);
     const t = ((art.title || '#'+art.id) + '').slice(0, 38);
-    a.append('text').attr('x', cx + 6).attr('y', cy + 14).attr('font-size', 9).attr('fill', '#3a3026').text(t);
-    svg.append('text').attr('x', cx + 6).attr('y', cy + cellH - 14).attr('font-size', 8).attr('fill', '#7a7268')
+    a.append('text').attr('x', cx + 6).attr('y', cy + 14).attr('font-size', 9).attr('fill', chrome().ink).text(t);
+    svg.append('text').attr('x', cx + 6).attr('y', cy + cellH - 14).attr('font-size', 8).attr('fill', chrome().muted)
       .text(art.year + ' · ' + art.total_citations + ' cites · ' + (art.pattern || '').replace(/_/g,' '));
   });
 }
@@ -123,13 +124,13 @@ function renderBars(data) {
   svg.append('g').selectAll('rect').data(entries).join('rect')
     .attr('x', m.left).attr('y', d => y(d[0]))
     .attr('width', d => x(d[1]) - m.left).attr('height', y.bandwidth())
-    .attr('fill', d => PATTERN_COLOR[d[0]] || '#9c9890');
+    .attr('fill', d => PATTERN_COLOR[d[0]] || chrome().muted);
   svg.append('g').selectAll('text.lbl').data(entries).join('text')
     .attr('x', m.left - 6).attr('y', d => y(d[0]) + y.bandwidth() / 2 + 3)
-    .attr('text-anchor','end').attr('font-size', 11).attr('fill','#3a3026').text(d => d[0].replace(/_/g, ' '));
+    .attr('text-anchor','end').attr('font-size', 11).attr('fill',chrome().ink).text(d => d[0].replace(/_/g, ' '));
   svg.append('g').selectAll('text.cnt').data(entries).join('text')
     .attr('x', d => x(d[1]) + 6).attr('y', d => y(d[0]) + y.bandwidth() / 2 + 3)
-    .attr('font-size', 10).attr('fill','#7a7268').text(d => d[1]);
+    .attr('font-size', 10).attr('fill',chrome().muted).text(d => d[1]);
 }
 
 window.loadDsReachOfCitation = loadDsReachOfCitation;

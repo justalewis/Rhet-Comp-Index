@@ -7,7 +7,7 @@
 
 import { renderExportToolbar } from "../shared/export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -132,11 +132,11 @@ function renderCitTrends(years, avgCites, artCounts) {
             display: true,
             text: 'Articles with citation data',
             font: { family: 'system-ui, sans-serif', size: 11 },
-            color: '#9c9890',
+            color: chrome().muted,
           },
           ticks: {
             font: { family: 'system-ui, sans-serif', size: 11 },
-            color: '#9c9890',
+            color: chrome().muted,
           },
         },
       },

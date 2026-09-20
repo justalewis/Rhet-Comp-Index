@@ -62,10 +62,10 @@ async function loadCitations() {
   if (breakdown.length > 1) {
     const palette = ['#5a3e28','#3a5a28','#a04525','#8b6045','#4a6a8a','#6a5a8a','#5a7a4a','#7a6a2a','#3a6a6a','#7a4a3a'];
     breakdownHtml = '<div class="most-cited-breakdown" style="margin:0 0 0.8rem;">' +
-      '<div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.25rem;">' +
+      '<div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.25rem;">' +
         'Top ' + total + ' by journal' +
       '</div>' +
-      '<div style="display:flex;height:18px;border:1px solid #e8e4de;cursor:pointer;font-size:0.72rem;color:#fdfbf7;">' +
+      '<div style="display:flex;height:18px;border:1px solid #e8e4de;cursor:pointer;font-size:0.72rem;color:var(--chart-halo);">' +
         breakdown.map(([j, n], i) => {
           const pct = (n / total) * 100;
           const c = palette[i % palette.length];
@@ -76,7 +76,7 @@ async function loadCitations() {
           '</div>';
         }).join('') +
       '</div>' +
-      '<div style="font-size:0.72rem;color:#7a7268;margin-top:0.2rem;">Click a segment to filter to that journal</div>' +
+      '<div style="font-size:0.72rem;color:var(--chart-muted);margin-top:0.2rem;">Click a segment to filter to that journal</div>' +
     '</div>';
   }
 

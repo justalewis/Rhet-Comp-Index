@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { PALETTE, journalColor, citnetJournalColor } from "../utils/colors.js";
+import { PALETTE, journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -115,7 +115,7 @@ async function loadNetwork(minPapers, topN) {
     .selectAll('line')
     .data(links)
     .enter().append('line')
-      .style('stroke', '#ccc7bb')
+      .style('stroke', chrome().grid)
       .style('stroke-opacity', 0.55)
       .style('stroke-width', d => lwScale(d.value));
 

@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan, enableDrag } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsAcademicLineages = false;
 
@@ -37,13 +38,13 @@ function renderNetwork(data) {
   container.selectAll('*').remove();
   const w = container.node().clientWidth || 720, h = 560;
   const svg = container.append('svg').attr('width', w).attr('height', h)
-    .style('background', '#fdfbf7').style('border', '1px solid #e8e4de');
+    .style('background', chrome().halo).style('border', '1px solid #e8e4de');
 
   const graph = data.graph || { nodes: [], links: [] };
   const nodes = graph.nodes.map(n => ({...n}));
   const links = graph.links.map(l => ({...l}));
   if (!nodes.length) {
-    svg.append('text').attr('x', 20).attr('y', 30).attr('fill','#9c9890').text('No mentor pairs at this gap threshold.');
+    svg.append('text').attr('x', 20).attr('y', 30).attr('fill',chrome().muted).text('No mentor pairs at this gap threshold.');
     return;
   }
 
@@ -64,8 +65,8 @@ function renderNetwork(data) {
 
   const node = root.append('g').selectAll('circle').data(nodes).join('circle')
     .attr('r', d => 3 + Math.sqrt(nodeOutDeg[d.id] || 0))
-    .attr('fill', d => (nodeOutDeg[d.id] || 0) > 0 ? '#5a3e28' : '#9c9890')
-    .attr('stroke', '#3a3026').attr('stroke-width', 0.4)
+    .attr('fill', d => (nodeOutDeg[d.id] || 0) > 0 ? '#5a3e28' : chrome().muted)
+    .attr('stroke', chrome().ink).attr('stroke-width', 0.4)
     .style('cursor', 'pointer')
     .call(enableDrag(sim))
     .on('click', (e, d) => { if (e.defaultPrevented) return; window.location.href = '/author/' + encodeURIComponent(d.id); });
@@ -75,9 +76,9 @@ function renderNetwork(data) {
   // Labels for prolific mentors
   const labelNodes = nodes.filter(n => (nodeOutDeg[n.id] || 0) >= 3);
   const label = root.append('g').selectAll('text').data(labelNodes).join('text')
-    .attr('font-size', 10).attr('fill', '#3a3026').attr('text-anchor', 'middle')
+    .attr('font-size', 10).attr('fill', chrome().ink).attr('text-anchor', 'middle')
     .attr('pointer-events', 'none')
-    .attr('paint-order', 'stroke').attr('stroke', '#fdfbf7').attr('stroke-width', 3)
+    .attr('paint-order', 'stroke').attr('stroke', chrome().halo).attr('stroke-width', 3)
     .text(d => d.id);
 
   sim.on('tick', () => {
@@ -89,7 +90,7 @@ function renderNetwork(data) {
 
   // Stats
   const s = data.summary || {};
-  svg.append('text').attr('x', 12).attr('y', 18).attr('font-size', 11).attr('fill','#7a7268')
+  svg.append('text').attr('x', 12).attr('y', 18).attr('font-size', 11).attr('fill',chrome().muted)
     .text((s.n_pairs || 0) + ' mentor pairs · ' + (s.n_mentors || 0) + ' distinct mentors · gap ≥ ' + (s.min_gap || 10) + 'y');
 }
 
@@ -103,8 +104,8 @@ function renderTable(data) {
   html += '</tr></thead><tbody>';
   rows.forEach(r => {
     html += '<tr>';
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;"><a href="/author/${encodeURIComponent(r.mentor)}" style="color:#5a3e28;">${escapeHtml(r.mentor)}</a></td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.n_mentees}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);"><a href="/author/${encodeURIComponent(r.mentor)}" style="color:#5a3e28;">${escapeHtml(r.mentor)}</a></td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.n_mentees}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table>';

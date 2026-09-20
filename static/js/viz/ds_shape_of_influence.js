@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _state = { journal: '' };
 
@@ -61,10 +62,10 @@ function renderSummary(data) {
 }
 
 function card(label, big, sub) {
-  return `<div style="padding:0.55rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;">
-    <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
-    <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${big}</div>
-    ${sub ? `<div style="color:#7a7268;font-size:0.78rem;">${escapeHtml(sub)}</div>` : ''}
+  return `<div style="padding:0.55rem 0.8rem;background:var(--chart-halo);border-left:3px solid #5a3e28;font-size:0.84rem;">
+    <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
+    <div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">${big}</div>
+    ${sub ? `<div style="color:var(--chart-muted);font-size:0.78rem;">${escapeHtml(sub)}</div>` : ''}
   </div>`;
 }
 
@@ -84,14 +85,14 @@ function renderLorenz(data) {
   // in the summary card above. Without the label, the diagonal reads as a
   // generic grid line and the Lorenz interpretation gets lost.
   svg.append('line').attr('x1', x(0)).attr('y1', y(0)).attr('x2', x(1)).attr('y2', y(1))
-    .attr('stroke', '#c8c4bc').attr('stroke-dasharray', '4 3');
+    .attr('stroke', chrome().grid).attr('stroke-dasharray', '4 3');
   // Label rotated to follow the diagonal, positioned about 70% along it.
   const lx = x(0.72), ly = y(0.72);
   svg.append('text').attr('x', lx).attr('y', ly - 6)
     .attr('transform', `rotate(-45, ${lx}, ${ly - 6})`)
-    .attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', '#9c9890')
+    .attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', chrome().muted)
     .attr('font-style', 'italic').attr('paint-order', 'stroke')
-    .attr('stroke', '#fdfbf7').attr('stroke-width', 3)
+    .attr('stroke', chrome().halo).attr('stroke-width', 3)
     .text('perfect equality');
 
   // Lorenz curve
@@ -105,7 +106,7 @@ function renderLorenz(data) {
     .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format('.0%'))).selectAll('text').style('font-size', '10px');
   svg.append('g').attr('transform', `translate(${m.left},0)`)
     .call(d3.axisLeft(y).ticks(10).tickFormat(d3.format('.0%'))).selectAll('text').style('font-size', '10px');
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268').text('Lorenz curve — % articles vs % of all citations');
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted).text('Lorenz curve — % articles vs % of all citations');
 }
 
 function renderLogLog(data) {
@@ -127,7 +128,7 @@ function renderLogLog(data) {
     svg.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y).ticks(5, '~s')).selectAll('text').style('font-size','10px');
     svg.append('g').selectAll('circle').data(ft).join('circle')
       .attr('cx', d => x(d.count)).attr('cy', d => y(d.n_articles)).attr('r', 2.5).attr('fill', '#5a3e28').attr('opacity', 0.6);
-    svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 10).attr('fill', '#7a7268').text('Frequency: count of articles by # citations');
+    svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 10).attr('fill', chrome().muted).text('Frequency: count of articles by # citations');
   }
 
   // Rank-frequency (right)
@@ -138,7 +139,7 @@ function renderLogLog(data) {
     svg.append('g').attr('transform', `translate(${m.left + halfW + 20},0)`).call(d3.axisLeft(yr).ticks(5, '~s')).selectAll('text').style('font-size','10px');
     svg.append('g').selectAll('circle').data(rf).join('circle')
       .attr('cx', d => xr(d.rank)).attr('cy', d => yr(d.count)).attr('r', 2.5).attr('fill', '#3a5a28').attr('opacity', 0.6);
-    svg.append('text').attr('x', m.left + halfW + 20).attr('y', 14).attr('font-size', 10).attr('fill', '#7a7268').text('Rank-frequency (Zipf)');
+    svg.append('text').attr('x', m.left + halfW + 20).attr('y', 14).attr('font-size', 10).attr('fill', chrome().muted).text('Rank-frequency (Zipf)');
   }
 }
 

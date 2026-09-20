@@ -2,9 +2,10 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const CAT_COLOR = {
-  one_shot:    "#d4cec5",
+  one_shot:    chrome().grid,
   short_term:  "#b38a6a",
   persistent:  "#3a5a28",
 };
@@ -38,14 +39,14 @@ function renderSummary(data) {
   const s = data.summary || {};
   const cats = s.categories || {};
   const html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.6rem;">
-    <div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;">
-      <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;">Total pairs</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${(s.n_pairs || 0).toLocaleString()}</div>
+    <div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid #5a3e28;font-size:0.84rem;">
+      <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;">Total pairs</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">${(s.n_pairs || 0).toLocaleString()}</div>
     </div>
     ${Object.entries(cats).map(([k, n]) => `
-      <div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid ${CAT_COLOR[k] || '#9c9890'};font-size:0.84rem;">
-        <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;">${escapeHtml(k.replace(/_/g, ' '))}</div>
-        <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${n.toLocaleString()}</div>
+      <div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid ${CAT_COLOR[k] || chrome().muted};font-size:0.84rem;">
+        <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;">${escapeHtml(k.replace(/_/g, ' '))}</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">${n.toLocaleString()}</div>
       </div>`).join('')}
   </div>`;
   document.getElementById('ds-lp-summary').innerHTML = html;
@@ -66,13 +67,13 @@ function renderBars(data) {
   svg.append('g').selectAll('rect').data(entries).join('rect')
     .attr('x', m.left).attr('y', d => y(d[0]))
     .attr('width', d => x(d[1]) - m.left).attr('height', y.bandwidth())
-    .attr('fill', d => CAT_COLOR[d[0]] || '#9c9890');
+    .attr('fill', d => CAT_COLOR[d[0]] || chrome().muted);
   svg.append('g').selectAll('text.lbl').data(entries).join('text')
     .attr('x', m.left - 6).attr('y', d => y(d[0]) + y.bandwidth() / 2 + 3).attr('text-anchor','end')
-    .attr('font-size', 11).attr('fill','#3a3026').text(d => d[0].replace(/_/g, ' '));
+    .attr('font-size', 11).attr('fill',chrome().ink).text(d => d[0].replace(/_/g, ' '));
   svg.append('g').selectAll('text.cnt').data(entries).join('text')
     .attr('x', d => x(d[1]) + 6).attr('y', d => y(d[0]) + y.bandwidth() / 2 + 3)
-    .attr('font-size', 10).attr('fill','#7a7268').text(d => d[1].toLocaleString());
+    .attr('font-size', 10).attr('fill',chrome().muted).text(d => d[1].toLocaleString());
 }
 
 function renderTable(data) {
@@ -85,12 +86,12 @@ function renderTable(data) {
   html += '</tr></thead><tbody>';
   rows.forEach(r => {
     html += '<tr>';
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;"><a href="/author/${encodeURIComponent(r.a)}" style="color:#5a3e28;">${escapeHtml(r.a)}</a> &amp; <a href="/author/${encodeURIComponent(r.b)}" style="color:#5a3e28;">${escapeHtml(r.b)}</a></td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">${r.n}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.span} years</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.first}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.last}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;font-size:0.78rem;">${escapeHtml((r.journals || []).slice(0, 3).join(', '))}${r.journals.length > 3 ? '…' : ''}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);"><a href="/author/${encodeURIComponent(r.a)}" style="color:#5a3e28;">${escapeHtml(r.a)}</a> &amp; <a href="/author/${encodeURIComponent(r.b)}" style="color:#5a3e28;">${escapeHtml(r.b)}</a></td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-weight:600;">${r.n}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.span} years</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.first}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.last}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-size:0.78rem;">${escapeHtml((r.journals || []).slice(0, 3).join(', '))}${r.journals.length > 3 ? '…' : ''}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table>';

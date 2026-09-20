@@ -7,6 +7,7 @@
 // Mirrors static/js/explore-loader.js but for the chapter-organized
 // Datastories tools.
 
+import "./utils/chartjs-theme.js";
 import "./viz/ds_braided_path.js";
 import "./viz/ds_branching_traditions.js";
 import "./viz/ds_origins_frontiers.js";

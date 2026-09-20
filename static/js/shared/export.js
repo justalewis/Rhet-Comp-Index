@@ -21,6 +21,8 @@
 
 const TOOLBAR_CLASS = 'ds-export-toolbar';
 
+import { chrome } from "../utils/theme.js";
+
 export function renderExportToolbar(panelId, options) {
   options = options || {};
   const panel = document.getElementById(panelId);
@@ -41,7 +43,7 @@ export function renderExportToolbar(panelId, options) {
     + 'margin:0.2rem 0 0.5rem;font-size:0.78rem;';
 
   const label = document.createElement('span');
-  label.style.cssText = 'color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;font-size:0.72rem;';
+  label.style.cssText = 'color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;font-size:0.72rem;';
   label.textContent = 'Export';
   bar.appendChild(label);
 
@@ -71,7 +73,7 @@ export function renderExportToolbar(panelId, options) {
     bar.appendChild(csvBtn);
   } else {
     const placeholder = document.createElement('span');
-    placeholder.style.cssText = 'color:#c8c4bc;font-size:0.72rem;font-style:italic;';
+    placeholder.style.cssText = 'color:var(--chart-grid);font-size:0.72rem;font-style:italic;';
     placeholder.textContent = 'CSV n/a';
     placeholder.title = 'This tool does not expose tabular data for CSV export.';
     bar.appendChild(placeholder);
@@ -96,11 +98,11 @@ function _btn(label, onclick) {
   const b = document.createElement('button');
   b.type = 'button';
   b.textContent = label;
-  b.style.cssText = 'padding:0.25rem 0.55rem;background:#fdfbf7;border:1px solid #c8c4bc;'
+  b.style.cssText = 'padding:0.25rem 0.55rem;background:var(--chart-halo);border:1px solid var(--chart-grid);'
     + 'cursor:pointer;font-size:0.78rem;color:#5a3e28;border-radius:2px;';
   b.addEventListener('click', onclick);
-  b.addEventListener('mouseenter', () => { b.style.background = '#f1ede6'; });
-  b.addEventListener('mouseleave', () => { b.style.background = '#fdfbf7'; });
+  b.addEventListener('mouseenter', () => { b.style.background = chrome().grid; });
+  b.addEventListener('mouseleave', () => { b.style.background = chrome().halo; });
   return b;
 }
 
@@ -134,7 +136,7 @@ export function exportPng(panel, svgSelector, stem) {
     canvas.height = h * scale;
     const ctx = canvas.getContext('2d');
     // White background so dark themes don't render as transparent
-    ctx.fillStyle = '#fdfbf7';
+    ctx.fillStyle = chrome().halo;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(blob => {

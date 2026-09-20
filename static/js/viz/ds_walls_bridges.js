@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const CLASS_COLOR = {
   insular:     "#a04525",
@@ -57,17 +58,17 @@ function renderScatter(data) {
     .selectAll('text').style('font-size','10px');
   svg.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y).ticks(6, '~e'))
     .selectAll('text').style('font-size','10px');
-  svg.append('text').attr('x', w/2).attr('y', h - 8).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
+  svg.append('text').attr('x', w/2).attr('y', h - 8).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('Internal density (within-community edges per possible)');
-  svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
+  svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('External density (cross-community)');
 
   const dots = svg.append('g').selectAll('circle').data(comms).join('circle')
     .attr('cx', d => x(d.internal_density))
     .attr('cy', d => y(d.external_density))
     .attr('r', d => r(d.n_articles))
-    .attr('fill', d => CLASS_COLOR[d.classification] || '#9c9890')
-    .attr('opacity', 0.6).attr('stroke', '#3a3026').attr('stroke-width', 0.5)
+    .attr('fill', d => CLASS_COLOR[d.classification] || chrome().muted)
+    .attr('opacity', 0.6).attr('stroke', chrome().ink).attr('stroke-width', 0.5)
     .on('mouseover', function(_, d) { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', r(d.n_articles) * 1.4).raise(); })
     .on('mouseout',  function(_, d) { dots.attr('opacity', 0.6); d3.select(this).attr('r', r(d.n_articles)); });
   dots.append('title').text(d => 'Community #' + (d.rank + 1) + '  · ' + d.n_articles + ' articles\n' +
@@ -97,13 +98,13 @@ function renderTable(data) {
     const topTag = (r.top_tags[0] && r.top_tags[0][0]) || '—';
     const topArt = r.top_articles[0];
     html += '<tr>';
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">#${r.rank + 1}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.n_articles}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.insularity_ratio.toFixed(2)}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;color:${CLASS_COLOR[r.classification] || '#3a3026'};">${escapeHtml(r.classification || '—')}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${escapeHtml(topJournal)}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${escapeHtml(topTag)}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${topArt ? `<a href="/article/${topArt.id}" style="color:#5a3e28;">${escapeHtml(topArt.title || '#'+topArt.id)}</a>` : '—'}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">#${r.rank + 1}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.n_articles}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.insularity_ratio.toFixed(2)}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);color:${CLASS_COLOR[r.classification] || chrome().ink};">${escapeHtml(r.classification || '—')}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${escapeHtml(topJournal)}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${escapeHtml(topTag)}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${topArt ? `<a href="/article/${topArt.id}" style="color:#5a3e28;">${escapeHtml(topArt.title || '#'+topArt.id)}</a>` : '—'}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table>';

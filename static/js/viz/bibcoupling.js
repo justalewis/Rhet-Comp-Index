@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -138,7 +138,7 @@ function renderBibcoupling(container, data) {
     .selectAll('line')
     .data(bibcoupLinks)
     .enter().append('line')
-    .style('stroke',         '#ccc7bb')
+    .style('stroke',         chrome().grid)
     .style('stroke-opacity', d => 0.15 + 0.55 * (d.weight / maxWeight))
     .style('stroke-width',   d => edgeScale(d.weight));
 
@@ -197,7 +197,7 @@ function renderBibcoupling(container, data) {
         .slice(0, 5);
 
       const partnerHtml = partners.length > 0
-        ? '<br><span style="font-size:0.78rem;color:#9c9890;">Most coupled with:</span>' +
+        ? '<br><span style="font-size:0.78rem;color:var(--chart-muted);">Most coupled with:</span>' +
           partners.map(p =>
             `<br><span style="font-size:0.78rem;">\u2022 ${escapeHtml(p.name.length > 60 ? p.name.slice(0, 57) + '\u2026' : p.name)} (${p.weight} shared)</span>`
           ).join('')

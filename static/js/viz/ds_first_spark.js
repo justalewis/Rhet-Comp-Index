@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 // Cap routes shown alongside the global path so columns stay readable.
 const MAX_VISIBLE_ROUTES = 3;
@@ -73,7 +74,7 @@ function renderRoutes(data) {
     sublabel: 'single highest-SPC chain',
     path:     globalTrim.items,
     hidden:   globalTrim.hidden,
-    color:    '#3a3026',
+    color:    chrome().ink,
   }].concat(routes.map((r, i) => {
     const t = _trim(r.articles || []);
     return {
@@ -111,7 +112,7 @@ function renderRoutes(data) {
     svg.append('text')
       .attr('x', x).attr('y', 36)
       .attr('text-anchor', 'middle').attr('font-size', 10)
-      .attr('fill', '#7a7268')
+      .attr('fill', chrome().muted)
       .text(rp.sublabel);
 
     rp.path.forEach((art, i) => {
@@ -130,7 +131,7 @@ function renderRoutes(data) {
       svg.append('circle')
         .attr('cx', x).attr('cy', y).attr('r', 6)
         .attr('fill', GROUP_COLORS[art.group] || rp.color)
-        .attr('stroke', '#fdfbf7').attr('stroke-width', 1.5);
+        .attr('stroke', chrome().halo).attr('stroke-width', 1.5);
 
       // Label sits in the right-side gutter of the column so it never
       // overpaints the connector line. Anchor 'start' from x + 10.
@@ -142,7 +143,7 @@ function renderRoutes(data) {
       a.append('text')
         .attr('x', x + 10).attr('y', y + 3)
         .attr('text-anchor', 'start')
-        .attr('font-size', 10).attr('fill', '#3a3026')
+        .attr('font-size', 10).attr('fill', chrome().ink)
         .text(labelText);
       a.append('title').text(art.title || '#' + art.id);
     });
@@ -153,7 +154,7 @@ function renderRoutes(data) {
       svg.append('text')
         .attr('x', x).attr('y', lastY + ROW_HEIGHT - 4)
         .attr('text-anchor', 'middle').attr('font-size', 9)
-        .attr('fill', '#9c9890').attr('font-style', 'italic')
+        .attr('fill', chrome().muted).attr('font-style', 'italic')
         .text('+ ' + rp.hidden + ' more (see below)');
     }
   });
@@ -165,7 +166,7 @@ function renderTable(data) {
   const stats  = data.stats || {};
   const hidden = Math.max(0, routes.length - MAX_VISIBLE_ROUTES);
 
-  let html = `<div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;margin-bottom:0.6rem;">
+  let html = `<div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid #5a3e28;font-size:0.84rem;margin-bottom:0.6rem;">
     <strong>${stats.n_routes || 0}</strong> key routes through the citation DAG (${(stats.n_nodes || 0).toLocaleString()} articles, ${(stats.n_edges || 0).toLocaleString()} edges).${hidden ? ' Top ' + MAX_VISIBLE_ROUTES + ' shown above; full list below.' : ''}
   </div>`;
 
@@ -174,7 +175,7 @@ function renderTable(data) {
       <summary style="cursor:pointer;font-weight:600;padding:0.3rem 0;">Route ${i + 1} — ${r.n_nodes} articles, SPC ${(r.spc_total || 0).toLocaleString()}</summary>
       <ol style="font-size:0.84rem;padding-left:1.2rem;">`;
     (r.articles || []).forEach(a => {
-      html += `<li><a href="/article/${a.id}" style="color:#5a3e28;">${escapeHtml(a.title || '#'+a.id)}</a> <span style="color:#9c9890;">${escapeHtml(a.journal || '')} · ${a.year || '—'}</span></li>`;
+      html += `<li><a href="/article/${a.id}" style="color:#5a3e28;">${escapeHtml(a.title || '#'+a.id)}</a> <span style="color:var(--chart-muted);">${escapeHtml(a.journal || '')} · ${a.year || '—'}</span></li>`;
     });
     html += '</ol></details>';
   });

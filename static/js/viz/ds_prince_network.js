@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const TYPE_COLOR = {
   single_catalyst:        "#a04525",
@@ -9,7 +10,7 @@ const TYPE_COLOR = {
   journal_specific:       "#608aac",
   subfield_revival:       "#8b6045",
   broad_trend:            "#3a5a28",
-  no_data:                "#d4cec5",
+  no_data:                chrome().grid,
 };
 
 let _filtersWired_loadDsPrinceNetwork = false;
@@ -48,7 +49,7 @@ function renderNetwork(data) {
   const h = beauties.length * beautyH + 60;
   const m = { left: 12, beautyX: 200, princeX: w - 240, right: 24 };
   const svg = container.append('svg').attr('width', w).attr('height', h)
-    .style('background', '#fdfbf7').style('border', '1px solid #e8e4de');
+    .style('background', chrome().halo).style('border', '1px solid #e8e4de');
   const root = enableZoomPan(svg, { scaleExtent: [0.5, 6] });
 
   beauties.forEach((b, i) => {
@@ -56,13 +57,13 @@ function renderNetwork(data) {
 
     // Beauty node
     root.append('circle').attr('cx', m.beautyX).attr('cy', cy).attr('r', 7)
-      .attr('fill', TYPE_COLOR[b.awakening_type] || '#9c9890');
+      .attr('fill', TYPE_COLOR[b.awakening_type] || chrome().muted);
     const a = root.append('a').attr('href', '/article/' + b.beauty.id);
     a.append('text').attr('x', m.beautyX - 10).attr('y', cy + 4)
-      .attr('text-anchor','end').attr('font-size', 10).attr('fill', '#3a3026')
+      .attr('text-anchor','end').attr('font-size', 10).attr('fill', chrome().ink)
       .text((b.beauty.title || '#'+b.beauty.id).slice(0, 35));
     root.append('text').attr('x', m.beautyX - 10).attr('y', cy + 16)
-      .attr('text-anchor','end').attr('font-size', 9).attr('fill', '#9c9890')
+      .attr('text-anchor','end').attr('font-size', 9).attr('fill', chrome().muted)
       .text(b.beauty.pub_year + ' → awakened ' + b.beauty.awakening_year);
 
     // Prince fan
@@ -73,11 +74,11 @@ function renderNetwork(data) {
     princes.forEach((p, pi) => {
       const py = cy - fanH / 2 + pi * stepY;
       root.append('line').attr('x1', m.beautyX + 8).attr('y1', cy).attr('x2', m.princeX - 4).attr('y2', py)
-        .attr('stroke', TYPE_COLOR[b.awakening_type] || '#c8c4bc').attr('stroke-opacity', 0.4).attr('stroke-width', 0.7);
+        .attr('stroke', TYPE_COLOR[b.awakening_type] || chrome().grid).attr('stroke-opacity', 0.4).attr('stroke-width', 0.7);
       root.append('circle').attr('cx', m.princeX).attr('cy', py).attr('r', 3.5)
-        .attr('fill', '#5a3e28').attr('stroke', '#3a3026').attr('stroke-width', 0.4);
+        .attr('fill', '#5a3e28').attr('stroke', chrome().ink).attr('stroke-width', 0.4);
       root.append('text').attr('x', m.princeX + 6).attr('y', py + 3)
-        .attr('font-size', 9).attr('fill', '#3a3026').text((p.title || '#'+p.id).slice(0, 30));
+        .attr('font-size', 9).attr('fill', chrome().ink).text((p.title || '#'+p.id).slice(0, 30));
     });
   });
 }
@@ -89,15 +90,15 @@ function renderTable(data) {
   let html = '<h4 class="methodology-heading">Awakening types</h4>';
   html += '<div style="display:flex;gap:0.6rem;flex-wrap:wrap;font-size:0.84rem;">' +
     Object.entries(stats.by_awakening_type || {}).map(([k, n]) =>
-      `<div style="padding:0.4rem 0.6rem;background:#fdfbf7;border-left:3px solid ${TYPE_COLOR[k] || '#9c9890'};"><strong>${n}</strong> ${escapeHtml(k.replace(/_/g, ' '))}</div>`
+      `<div style="padding:0.4rem 0.6rem;background:var(--chart-halo);border-left:3px solid ${TYPE_COLOR[k] || chrome().muted};"><strong>${n}</strong> ${escapeHtml(k.replace(/_/g, ' '))}</div>`
     ).join('') + '</div>';
   html += '<h4 class="methodology-heading" style="margin-top:1rem;">Beauties &amp; their princes</h4>';
   html += '<ul style="font-size:0.84rem;list-style:none;padding-left:0;">';
   beauties.forEach(b => {
-    html += `<li style="padding:0.4rem 0;border-bottom:1px solid #f1ede6;">
+    html += `<li style="padding:0.4rem 0;border-bottom:1px solid var(--chart-grid);">
       <a href="/article/${b.beauty.id}" style="color:#5a3e28;font-weight:600;">${escapeHtml(b.beauty.title || '#'+b.beauty.id)}</a>
-      <span style="color:#9c9890;"> · ${escapeHtml(b.beauty.journal || '')} · ${b.beauty.pub_year} → ${b.beauty.awakening_year} · sleep ${b.beauty.sleep_years}y · B=${(b.beauty.beauty_coefficient||0).toFixed(0)}</span>
-      <div style="font-size:0.78rem;color:${TYPE_COLOR[b.awakening_type] || '#3a3026'};">${escapeHtml(b.awakening_type.replace(/_/g, ' '))} · ${b.n_princes} princes from ${b.n_journals} journals</div>
+      <span style="color:var(--chart-muted);"> · ${escapeHtml(b.beauty.journal || '')} · ${b.beauty.pub_year} → ${b.beauty.awakening_year} · sleep ${b.beauty.sleep_years}y · B=${(b.beauty.beauty_coefficient||0).toFixed(0)}</span>
+      <div style="font-size:0.78rem;color:${TYPE_COLOR[b.awakening_type] || chrome().ink};">${escapeHtml(b.awakening_type.replace(/_/g, ' '))} · ${b.n_princes} princes from ${b.n_journals} journals</div>
     </li>`;
   });
   html += '</ul>';

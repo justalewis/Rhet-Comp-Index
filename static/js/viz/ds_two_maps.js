@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsTwoMaps = false;
 
@@ -41,10 +42,10 @@ function renderSummary(data) {
 }
 
 function card(label, big, sub) {
-  return `<div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;">
-    <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
-    <div style="font-size:1.2rem;font-weight:700;color:#3a3026;">${big}</div>
-    ${sub ? `<div style="color:#7a7268;font-size:0.78rem;">${escapeHtml(sub)}</div>` : ''}
+  return `<div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid #5a3e28;font-size:0.84rem;">
+    <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
+    <div style="font-size:1.2rem;font-weight:700;color:var(--chart-ink);">${big}</div>
+    ${sub ? `<div style="color:var(--chart-muted);font-size:0.78rem;">${escapeHtml(sub)}</div>` : ''}
   </div>`;
 }
 
@@ -79,7 +80,7 @@ function renderHeatmap(data) {
       svg.append('rect')
         .attr('x', 50 + gi * cellSize).attr('y', 30 + ri * cellSize)
         .attr('width', cellSize - 1).attr('height', cellSize - 1)
-        .attr('fill', v ? color(v) : '#f1ede6')
+        .attr('fill', v ? color(v) : chrome().grid)
         .append('title').text(`coupling cluster ${cl} × citation community ${ci}: ${v} articles`);
     });
   });
@@ -87,15 +88,15 @@ function renderHeatmap(data) {
   // Axes
   citations.forEach((ci, gi) => {
     svg.append('text').attr('x', 50 + gi * cellSize + cellSize / 2).attr('y', 24)
-      .attr('text-anchor','middle').attr('font-size', 9).attr('fill', '#7a7268').text(ci);
+      .attr('text-anchor','middle').attr('font-size', 9).attr('fill', chrome().muted).text(ci);
   });
   couplings.forEach((cl, ri) => {
     svg.append('text').attr('x', 44).attr('y', 30 + ri * cellSize + cellSize / 2 + 3)
-      .attr('text-anchor','end').attr('font-size', 9).attr('fill', '#7a7268').text(cl);
+      .attr('text-anchor','end').attr('font-size', 9).attr('fill', chrome().muted).text(cl);
   });
-  svg.append('text').attr('x', 50).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', 50).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
     .text('Citation community →');
-  svg.append('text').attr('x', 12).attr('y', h / 2).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', 12).attr('y', h / 2).attr('font-size', 11).attr('fill', chrome().muted)
     .attr('transform', `rotate(-90, 12, ${h / 2})`).text('Coupling cluster ↑');
 }
 

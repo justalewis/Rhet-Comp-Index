@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -203,8 +203,8 @@ function updateTeChart() {
           display: hasY2,
           grid: { drawOnChartArea: false },
           title: { display: true, text: 'Count / degree',
-                   font: { family: 'system-ui, sans-serif', size: 11 }, color: '#9c9890' },
-          ticks: { font: { family: 'system-ui, sans-serif', size: 11 }, color: '#9c9890' },
+                   font: { family: 'system-ui, sans-serif', size: 11 }, color: chrome().muted },
+          ticks: { font: { family: 'system-ui, sans-serif', size: 11 }, color: chrome().muted },
         },
       },
     },
@@ -293,7 +293,7 @@ function renderTeForceGraph(container, snapshot) {
 
   const linkSel = g.append('g').selectAll('line')
     .data(links).enter().append('line')
-    .style('stroke', '#ccc7bb').style('stroke-opacity', 0.3)
+    .style('stroke', chrome().grid).style('stroke-opacity', 0.3)
     .style('stroke-width', 0.7);
 
   const tip = d3.select('body').append('div')

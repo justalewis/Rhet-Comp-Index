@@ -1078,3 +1078,393 @@ main:focus { outline: none; }
   padding: var(--space-10) 0; text-align: center;
   font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute);
 }
+
+
+/* ============================================================
+   /explore.
+
+   The markup here keeps its legacy class names on purpose. Eighteen
+   visualisation modules and the loader address this page by id and
+   class -- net-select, acocit-container, citnet-stats, and several
+   dozen more -- so renaming anything would mean editing JavaScript
+   to change a colour. The selectors stay; what changed is that every
+   value behind them now comes from a token.
+   ============================================================ */
+
+.page-intro {
+  font-size: 1.16rem; line-height: 1.6;
+  color: var(--gloss-soft); max-width: 58ch;
+  margin-bottom: var(--space-8);
+}
+
+
+/* -- The accordion: five questions, twenty tools -------------- */
+
+.accordion-nav { margin-bottom: var(--space-10); }
+
+.accordion-section { border-top: 1px solid var(--rule); }
+.accordion-section:last-child { border-bottom: 1px solid var(--rule); }
+
+.accordion-header {
+  display: flex; align-items: center; gap: var(--space-4);
+  width: 100%; text-align: left; cursor: pointer;
+  padding: var(--space-4) 0;
+  background: none; border: 0;
+}
+.accordion-header:hover .accordion-question { color: var(--terracotta); }
+
+.accordion-question {
+  font-family: var(--f-display); font-weight: 400;
+  font-size: var(--text-xl); line-height: 1.2;
+  color: var(--gloss);
+}
+.accordion-orient {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute); margin-top: 0.2rem; max-width: 68ch;
+}
+.accordion-header-text { flex: 1 1 auto; min-width: 0; }
+
+/* The diple, rotated: closed points right, open points down. Same mark
+   as the FAQ rows on Eunomia's Labors and the abstract folds here. */
+.accordion-chevron {
+  flex: none; width: 0; height: 0; font-size: 0;
+  border-left: 6px solid var(--terracotta);
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  transition: transform var(--t-fast);
+}
+.accordion-section.open .accordion-chevron { transform: rotate(90deg); }
+/* The markup still holds the old text arrow inside the span; the border
+   triangle is the mark now, so the glyph itself is hidden by font-size:0
+   above rather than removed from eighteen places in the template. */
+
+/* The loader animates this by writing maxHeight in pixels -- 0 when shut,
+   scrollHeight when open. So it must collapse by max-height and not by
+   display, or the measurement it takes would be of a hidden box. */
+.accordion-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.accordion-section.open .accordion-body { padding-bottom: var(--space-5); }
+
+@media (prefers-reduced-motion: reduce) {
+  .accordion-body { transition: none; }
+}
+
+.accordion-cards {
+  display: grid; gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+}
+.accordion-card {
+  display: block; cursor: pointer;
+  padding: var(--space-4);
+  background: var(--paper);
+  border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.accordion-card:hover { border-color: var(--terracotta); background: var(--papyrus); }
+.accordion-card-name {
+  font-family: var(--f-ui); font-size: var(--text-sm); font-weight: 700;
+  color: var(--gloss); line-height: 1.3;
+}
+.accordion-card:hover .accordion-card-name { color: var(--terracotta); }
+.accordion-card-desc {
+  font-size: 0.875rem; line-height: 1.5;
+  color: var(--dilute); margin-top: 0.25rem;
+}
+
+
+/* -- Panels --------------------------------------------------- */
+
+/* display is switched inline by the loader; do not set it here. */
+.tab-panel { padding-top: var(--space-2); }
+
+.explore-tab { display: none; }   /* legacy tab buttons, kept for the JS */
+
+.tab-intro {
+  font-size: 1.0625rem; line-height: 1.6;
+  color: var(--gloss-soft); max-width: var(--measure);
+  margin-bottom: var(--space-4);
+}
+.tab-coverage-link,
+.coverage-note-link {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute);
+}
+.tab-coverage-link a,
+.coverage-note-link a { color: var(--terracotta); }
+
+.explore-hint {
+  font-family: var(--f-quote); font-style: italic;
+  font-size: 0.9375rem; color: var(--dilute);
+  margin-bottom: var(--space-3);
+}
+
+.loading-msg {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute); padding: var(--space-8) 0; text-align: center;
+}
+
+.chart-section-head {
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--dilute);
+  margin: var(--space-8) 0 var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--rule);
+}
+
+
+/* -- Plot frames ---------------------------------------------- */
+
+.chart-container,
+.chart-container--horiz,
+.chart-container--auto,
+.citnet-container,
+.network-container,
+.heatmap-container {
+  position: relative; width: 100%;
+  background: var(--papyrus);
+  border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.chart-container { height: 480px; }
+.chart-container--horiz { min-height: 360px; height: auto; }
+.chart-container--auto { height: auto; }
+.citnet-container,
+.network-container { min-height: 32rem; }
+
+.chart-container canvas,
+.chart-container--horiz canvas { display: block; }
+.citnet-container svg,
+.network-container svg,
+.heatmap-container svg { display: block; }
+
+
+/* -- Controls: one row above the plot, never beside it -------- */
+
+.chart-toolbar,
+.network-toolbar,
+.citnet-controls,
+.citnet-filters,
+.ds-filter-bar {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-5) 0 var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--rule);
+}
+
+.citnet-filter-group,
+.citations-filter-group,
+.net-control-group {
+  display: flex; align-items: center; gap: var(--space-2);
+}
+
+.filter-label,
+.net-label,
+.citnet-journal-label {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute); white-space: nowrap;
+}
+
+.filter-select,
+.net-select,
+.net-search,
+.te-journal-check {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  padding: 0.34rem 0.55rem;
+  color: var(--gloss); background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+  max-width: 16rem;
+}
+
+.citnet-slider { accent-color: var(--terracotta); }
+
+.filter-apply-btn,
+.net-btn,
+.rp-filter-btn,
+.soi-compare-control,
+.ds-zoom-reset {
+  font-family: var(--f-ui); font-size: var(--text-sm); font-weight: 700;
+  padding: 0.36rem 0.8rem; cursor: pointer;
+  color: var(--terracotta); background: transparent;
+  border: 1px solid var(--terracotta); border-radius: var(--radius-sm);
+  transition: background var(--t-fast);
+}
+.filter-apply-btn:hover,
+.net-btn:hover,
+.rp-filter-btn:hover,
+.soi-compare-control:hover,
+.ds-zoom-reset:hover { background: var(--terracotta-wash); }
+
+.rp-filter-btn.active,
+.net-btn.active {
+  color: var(--added-white); background: var(--terracotta);
+}
+
+.net-stats,
+.citnet-stats-text,
+.citnet-meta {
+  font-family: var(--f-mono); font-size: var(--text-xs);
+  color: var(--dilute); font-variant-numeric: tabular-nums;
+}
+
+
+/* -- The journal picker on the network tabs ------------------- */
+
+.citnet-journal-picker { position: relative; }
+.citnet-journal-summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  padding: 0.34rem 0.6rem;
+  color: var(--gloss-soft); background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+}
+.citnet-journal-summary::-webkit-details-marker { display: none; }
+.citnet-journal-summary::after {
+  content: ""; flex: none; width: 0; height: 0;
+  border-left: 5px solid var(--terracotta);
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform var(--t-fast);
+}
+.citnet-journal-picker[open] .citnet-journal-summary::after { transform: rotate(90deg); }
+
+.citnet-journal-list {
+  position: absolute; z-index: 30; top: 100%; left: 0;
+  min-width: 20rem; max-height: 20rem; overflow-y: auto;
+  margin-top: var(--space-2); padding: var(--space-2) 0;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+.citnet-journal-label {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  padding: 0.2rem var(--space-3); cursor: pointer;
+  font-size: 0.78rem; color: var(--gloss-soft); white-space: normal;
+}
+.citnet-journal-label:hover { background: var(--papyrus-deep); }
+.citnet-journal-label input { accent-color: var(--terracotta); flex: none; margin: 0; }
+
+.citnet-legend,
+.network-legend {
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-3);
+  font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute);
+}
+
+
+/* -- The selection bar under a network ------------------------ */
+
+.net-infobar {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper);
+  border: 1px solid var(--rule); border-left: 2px solid var(--terracotta);
+  border-radius: var(--radius-sm);
+  font-family: var(--f-ui); font-size: var(--text-sm);
+}
+.net-infobar-name { font-weight: 700; color: var(--gloss); }
+.net-infobar-detail { color: var(--dilute); font-size: var(--text-xs); }
+.net-infobar-link { color: var(--terracotta); text-decoration: none; }
+.net-infobar-link:hover { text-decoration: underline; }
+.net-infobar-close {
+  margin-left: auto; cursor: pointer;
+  background: none; border: 0; color: var(--dilute);
+  font-size: 1rem; line-height: 1;
+}
+.net-infobar-close:hover { color: var(--terracotta); }
+
+
+/* -- Methodology, folded under each tool ---------------------- */
+
+.abstract-toggle,
+.methodology-section { border-top: 1px solid var(--rule); margin-top: var(--space-8); }
+
+.abstract-toggle > summary,
+.methodology-summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-4) 0;
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--dilute);
+}
+.abstract-toggle > summary::-webkit-details-marker,
+.methodology-summary::-webkit-details-marker { display: none; }
+.abstract-toggle > summary:hover,
+.methodology-summary:hover { color: var(--terracotta); }
+.abstract-toggle > summary::before,
+.methodology-summary::before {
+  content: ""; flex: none; width: 0; height: 0;
+  border-left: 5px solid var(--terracotta);
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform var(--t-fast);
+}
+.abstract-toggle[open] > summary::before,
+.methodology-section[open] .methodology-summary::before { transform: rotate(90deg); }
+
+.methodology-body { padding: 0 0 var(--space-6); }
+.methodology-body p { max-width: var(--measure); font-size: 0.9375rem; }
+.methodology-heading {
+  font-family: var(--f-ui); font-size: var(--text-sm); font-weight: 700;
+  color: var(--gloss); margin: var(--space-5) 0 var(--space-2);
+}
+.methodology-refs {
+  font-size: 0.875rem; color: var(--dilute);
+  max-width: var(--measure);
+}
+.methodology-refs a { color: var(--terracotta); }
+
+
+/* -- Tooltips -------------------------------------------------
+   The D3 modules each create their own tooltip node and give it a
+   private class, so every one of them is listed. They all get the
+   same object: paper, a hairline, and a terracotta edge on the left.
+
+   The legacy tooltip was an inverted black chip, which in black-figure
+   would have been a light chip on a dark page -- the one element on the
+   site that inverted the wrong way. */
+.heatmap-tooltip,
+.ego-tip, .citnet-tip, .acocit-tip, .bibcoup-tip, .cent-tip,
+.cocit-tip, .comm-tip, .jflow-tip, .te-tip {
+  position: fixed; z-index: 200; pointer-events: none;
+  max-width: 24rem; white-space: normal;
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper); color: var(--gloss);
+  border: 1px solid var(--rule-strong);
+  border-left: 2px solid var(--terracotta);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--f-ui); font-size: 0.8125rem; line-height: 1.5;
+}
+
+
+/* -- Tables inside a panel ------------------------------------ */
+
+.ds-table {
+  border-collapse: collapse; width: 100%;
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.ds-table thead th {
+  font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.09em;
+  font-weight: 700; color: var(--dilute); text-align: left; white-space: nowrap;
+  padding: 0.4rem 0.85rem 0.4rem 0;
+  border-bottom: 2px solid var(--gloss);
+}
+.ds-table td, .ds-table th[scope="row"] {
+  padding: 0.5rem 0.85rem 0.5rem 0; text-align: left; vertical-align: top;
+  border-bottom: 1px solid var(--rule); font-weight: 400;
+}
+.ds-table tbody tr:last-child > * { border-bottom: 2px solid var(--gloss); }
+
+
+@media (max-width: 52rem) {
+  .chart-container { height: 380px; }
+  .citnet-container, .network-container { min-height: 24rem; }
+  .citnet-journal-list { min-width: 0; width: 100%; }
+}

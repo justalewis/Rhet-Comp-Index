@@ -5,6 +5,7 @@
 // utilities (group colors, status messages, simple table builder).
 
 import { escapeHtml as _escapeHtml } from "../utils/tooltips.js";
+import { chrome } from "../utils/theme.js";
 
 export const escapeHtml = _escapeHtml;
 
@@ -12,7 +13,7 @@ export const escapeHtml = _escapeHtml;
 export const GROUP_COLORS = {
   TPC:       "#5a3e28",
   RHET_COMP: "#3a5a28",
-  OTHER:     "#9c9890",
+  OTHER:     chrome().muted,
 };
 
 export const GROUP_LABELS = {
@@ -25,7 +26,7 @@ export const GROUP_LABELS = {
 export function setLoading(containerId, message) {
   const el = document.getElementById(containerId);
   if (!el) return;
-  el.innerHTML = '<div class="loading-msg" style="padding:1rem;color:#9c9890;">' + message + '</div>';
+  el.innerHTML = '<div class="loading-msg" style="padding:1rem;color:var(--chart-muted);">' + message + '</div>';
 }
 
 // Show an error message in `containerId`.
@@ -82,7 +83,7 @@ export function renderTable(containerId, rows, columns, options) {
     columns.forEach(col => {
       const raw = row[col.key];
       const v = col.fmt ? col.fmt(raw, row) : (raw == null ? '' : String(raw));
-      const align = col.align ? ' style="text-align:' + col.align + ';padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;"' : ' style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;"';
+      const align = col.align ? ' style="text-align:' + col.align + ';padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);"' : ' style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);"';
       html += '<td' + align + '>' + v + '</td>';
     });
     html += '</tr>';
@@ -104,7 +105,7 @@ export function articleLink(id, title) {
 export function showStub(containerId, toolName) {
   const el = document.getElementById(containerId);
   if (!el) return;
-  el.innerHTML = '<p class="explore-hint" style="padding:1rem;color:#9c9890;">'
+  el.innerHTML = '<p class="explore-hint" style="padding:1rem;color:var(--chart-muted);">'
     + escapeHtml(toolName) + ' is wired up but the viz is not yet implemented.</p>';
 }
 
@@ -170,7 +171,7 @@ export function enableZoomPan(svg, opts) {
       });
     chip.append('rect')
       .attr('width', 70).attr('height', 22).attr('rx', 3)
-      .attr('fill', '#fdfbf7').attr('stroke', '#c8c4bc').attr('stroke-width', 0.7);
+      .attr('fill', chrome().halo).attr('stroke', chrome().grid).attr('stroke-width', 0.7);
     chip.append('text')
       .attr('x', 35).attr('y', 15).attr('text-anchor', 'middle')
       .attr('font-size', 11).attr('fill', '#5a3e28').text('Reset view');
