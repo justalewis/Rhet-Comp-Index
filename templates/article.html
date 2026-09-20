@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}{{ article.title }} — Pinakes{% endblock %}
 
@@ -34,19 +34,17 @@
 <meta name="DC.type" content="article">
 {% endblock %}
 
-{% block sidebar_footer %}
-    <div class="sidebar-comppile">
-      Looking for books, dissertations, or edited collections?<br>
+{% block capsa_foot %}
+    <p class="sidebar-comppile">
+      Looking for books, dissertations, or edited collections?
       <a href="https://wacclearinghouse.org/comppile/search/" target="_blank" rel="noopener noreferrer">Search CompPile &#8599;</a>
-      — the field's comprehensive bibliography with sources dating from 1939 (117,000+ records).
-    </div>
-
-    <div class="sidebar-footer">
-      <a href="/" class="fetch-btn sidebar-back-link">&larr; Back to index</a>
-    </div>
+      &mdash; the field&rsquo;s comprehensive bibliography with sources dating from 1939 (117,000+ records).
+    </p>
+    <a class="capsa-back" href="/">&larr; Back to the index</a>
 {% endblock %}
 
-{% block main_class %}detail-page{% endblock %}
+
+{% block column_class %}column-inner--read{% endblock %}
 
 {% block content %}
 

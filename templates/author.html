@@ -1,18 +1,17 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}{{ author_name | redact_authors }} — Pinakes{% endblock %}
 
-{% block sidebar_footer %}
-    <div class="sidebar-comppile">
-      Looking for books, dissertations, or edited collections?<br>
+{% block capsa_foot %}
+    <p class="sidebar-comppile">
+      Looking for books, dissertations, or edited collections?
       <a href="https://wacclearinghouse.org/comppile/search/" target="_blank" rel="noopener noreferrer">Search CompPile &#8599;</a>
-      — the field's comprehensive bibliography with sources dating from 1939 (117,000+ records).
-    </div>
-
-    <div class="sidebar-footer">
-      <a href="/authors" class="fetch-btn sidebar-back-link">&larr; All Authors</a>
-    </div>
+      &mdash; the field&rsquo;s comprehensive bibliography with sources dating from 1939 (117,000+ records).
+    </p>
+    <a class="capsa-back" href="/authors">&larr; All authors</a>
 {% endblock %}
+
+{% block column_class %}column-inner--read{% endblock %}
 
 {% block content %}
 
@@ -130,31 +129,31 @@
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.6rem;margin-top:0.7rem;">
           <div>
-            <h4 style="margin:0 0 0.4rem;font-size:0.82rem;color:#7a7268;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">By cluster</h4>
+            <h4 style="margin:0 0 0.4rem;font-size:0.82rem;color:var(--chart-muted);letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">By cluster</h4>
             <ul style="list-style:none;padding:0;margin:0;font-size:0.9rem;line-height:1.7;">
               {% for c in citing_venues.by_cluster %}
               <li>
-                <span style="color:#5a544c;">{{ c.cluster }}</span>
-                <span style="color:#9c9890;">&mdash; {{ c.count }}</span>
+                <span style="color:var(--chart-ink);">{{ c.cluster }}</span>
+                <span style="color:var(--chart-muted);">&mdash; {{ c.count }}</span>
               </li>
               {% endfor %}
             </ul>
           </div>
           <div>
-            <h4 style="margin:0 0 0.4rem;font-size:0.82rem;color:#7a7268;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">Top citing journals</h4>
+            <h4 style="margin:0 0 0.4rem;font-size:0.82rem;color:var(--chart-muted);letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">Top citing journals</h4>
             <ul style="list-style:none;padding:0;margin:0;font-size:0.9rem;line-height:1.7;">
               {% for j in citing_venues.top_journals %}
               <li>
-                <a href="/?journal={{ j.journal | urlencode }}" style="color:#5a3e28;">{{ j.journal }}</a>
-                <span style="color:#9c9890;">&mdash; {{ j.count }}</span>
+                <a href="/?journal={{ j.journal | urlencode }}" style="color:var(--terracotta);">{{ j.journal }}</a>
+                <span style="color:var(--chart-muted);">&mdash; {{ j.count }}</span>
               </li>
               {% endfor %}
             </ul>
           </div>
         </div>
-        <p style="margin:0.8rem 0 0;font-size:0.82rem;color:#9c9890;">
+        <p style="margin:0.8rem 0 0;font-size:0.82rem;color:var(--chart-muted);">
           Counts include only citations from indexed journals that deposit reference lists with CrossRef. Authors whose readers publish primarily in venues without reference deposits will appear less central than they are.
-          <a href="/coverage" style="color:#7a7268;">See coverage notes &rarr;</a>
+          <a href="/coverage" style="color:var(--chart-muted);">See coverage notes &rarr;</a>
         </p>
       </div>
       {% endif %}
@@ -287,13 +286,46 @@ function positionTooltip(tipSel, event, opts) {
 
 // ── Author page visualizations ────────────────────────────────────────────────
 const AUTHOR_NAME = {{ author_name | tojson }};
-const PALETTE = [
-  '#5a3e28','#8b6045','#b38a6a','#c9a882','#d4bc99',
-  '#3a5a28','#456b40','#6b8f60','#8aac82','#b2ccaa',
-  '#28445a','#405c78','#608aac','#82aacc','#aaccdd',
-  '#5a2840','#7a4560','#ac6882','#cc8aaa','#ddaac4',
-  '#5a5828','#787845','#aaaa60','#c8c880','#e0e0a8',
-];
+// This script is a plain <script>, not a module -- its functions are reached
+// from inline handlers in the markup above, so it cannot import from
+// utils/theme.js. It reads the same custom properties directly instead, and
+// the eight steps are the validated categorical order, not the old cycled
+// twenty-five. Past the eighth, the neutral: a repeated hue would say two
+// journals are the same journal.
+const CSSVAR = (n) => getComputedStyle(document.documentElement)
+  .getPropertyValue(n).trim();
+const PALETTE = ['--cat-1','--cat-2','--cat-3','--cat-4',
+                 '--cat-5','--cat-6','--cat-7','--cat-8'].map(CSSVAR);
+const CHROME = {
+  get ink()   { return CSSVAR('--chart-ink'); },
+  get muted() { return CSSVAR('--chart-muted'); },
+  get grid()  { return CSSVAR('--chart-grid'); },
+  get other() { return CSSVAR('--cat-other'); },
+};
+const paletteAt = (i) => (i < PALETTE.length ? PALETTE[i] : CHROME.other);
+
+// Chart.js ships #666 for text and rgba(0,0,0,0.1) for grid lines. The
+// explore and datastories pages get these from utils/chartjs-theme.js via
+// their loaders; this page has no loader, and a classic script cannot
+// import one, so the same four values are set here. Ordering matters: the
+// charts below are built after a fetch resolves, but a module tag would be
+// deferred, and a default read at construction time is read once.
+if (window.Chart) {
+  Chart.defaults.color = CHROME.muted;
+  Chart.defaults.borderColor = CHROME.grid;
+  if (Chart.defaults.font) Chart.defaults.font.family = CSSVAR('--f-ui') || 'system-ui';
+  if (Chart.defaults.plugins && Chart.defaults.plugins.tooltip) {
+    Object.assign(Chart.defaults.plugins.tooltip, {
+      backgroundColor: CSSVAR('--paper'),
+      titleColor: CHROME.ink,
+      bodyColor: CHROME.ink,
+      borderColor: CHROME.grid,
+      borderWidth: 1,
+      cornerRadius: 2,
+      padding: 10,
+    });
+  }
+}
 
 async function loadAuthorInsights() {
   const enc = encodeURIComponent(AUTHOR_NAME);
@@ -334,7 +366,7 @@ function renderTimeline(data) {
   const datasets = data.series.map((s, i) => ({
     label: s.journal,
     data: s.counts,
-    backgroundColor: PALETTE[i % PALETTE.length],
+    backgroundColor: paletteAt(i),
     borderWidth: 0,
     stack: 'articles',
   }));
@@ -345,8 +377,8 @@ function renderTimeline(data) {
     datasets.push({
       label: '\ud83d\udcda Books',
       data: data.years.map(yr => byYear[yr] || null),
-      backgroundColor: '#8b2020',
-      borderColor: '#8b2020',
+      backgroundColor: CSSVAR('--terracotta'),
+      borderColor: CSSVAR('--terracotta'),
       borderWidth: 2,
       type: 'bar',
       stack: 'books',
@@ -513,9 +545,9 @@ function renderCocitationPartners(data) {
   if (!data || data.length === 0) { return; }
   block.style.display = 'block';
   const html = data.map((p, i) =>
-    `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid #ede8e0;font-size:0.88rem;">
-      <a href="/author/${encodeURIComponent(p.partner)}" style="color:#3a2a18;">${p.partner}</a>
-      <span style="color:#8b6045;font-weight:600;">${p.cocitation_count}\u00d7</span>
+    `<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--chart-grid);font-size:0.88rem;">
+      <a href="/author/${encodeURIComponent(p.partner)}" style="color:var(--chart-ink);">${p.partner}</a>
+      <span style="color:var(--terracotta);font-weight:600;">${p.cocitation_count}\u00d7</span>
     </div>`
   ).join('');
   container.innerHTML = html;
@@ -523,4 +555,5 @@ function renderCocitationPartners(data) {
 
 document.addEventListener('DOMContentLoaded', loadAuthorInsights);
 </script>
+<script type="module">import "/static/js/utils/chartjs-theme.js";</script>
 {% endblock %}

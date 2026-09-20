@@ -7,6 +7,8 @@
    the last one has moved, base.html goes and this takes its name.
 
    A page built on this shell fills `content`, and optionally:
+     column_class   — a modifier on the column, e.g. `column-inner--read`
+                      to narrow a prose page to the reading measure
      extra_sprites  — icon sprites beyond the core set
      capsa_tags     — replaces the journal list in the capsa
      capsa_foot     — replaces the back link at its foot
@@ -53,7 +55,7 @@
   </aside>
 
   <main class="column" id="main" tabindex="-1">
-    <div class="column-inner">
+    <div class="column-inner {% block column_class %}{% endblock %}">
       {% block content %}{% endblock %}
     </div>
   </main>
