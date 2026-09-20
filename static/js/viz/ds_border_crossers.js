@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, enableZoomPan, enableDrag } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsBorderCrossers = false;
 
@@ -51,18 +52,18 @@ function renderBars(data) {
     // Title (clickable)
     const a = svg.append('a').attr('href', '/article/' + d.id);
     a.append('text').attr('x', m.left - 10).attr('y', y + 14).attr('text-anchor', 'end')
-      .attr('font-size', 11).attr('fill', '#3a3026')
+      .attr('font-size', 11).attr('fill', chrome().ink)
       .text(((d.title || '#' + d.id)).slice(0, 60) + ((d.title || '').length > 60 ? '…' : ''));
     // Bar
     svg.append('rect').attr('x', m.left).attr('y', y + 4)
       .attr('width', x(d.betweenness) - m.left).attr('height', rowH - 8)
-      .attr('fill', GROUP_COLORS[d.group] || '#9c9890');
+      .attr('fill', GROUP_COLORS[d.group] || chrome().muted);
     // Score
     svg.append('text').attr('x', x(d.betweenness) + 6).attr('y', y + 14)
-      .attr('font-size', 10).attr('fill', '#7a7268')
+      .attr('font-size', 10).attr('fill', chrome().muted)
       .text(d.betweenness.toFixed(4) + '  · ' + d.boundary + ' cross-edges');
   });
-  svg.append('text').attr('x', m.left).attr('y', 12).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 12).attr('font-size', 11).attr('fill', chrome().muted)
     .text('Betweenness centrality, top 25');
 }
 
@@ -72,11 +73,11 @@ function renderNetwork(data) {
   const w = container.node().clientWidth || 720;
   const h = 540;
   const svg = container.append('svg').attr('width', w).attr('height', h)
-    .style('background', '#fdfbf7').style('border', '1px solid #e8e4de');
+    .style('background', chrome().halo).style('border', '1px solid #e8e4de');
 
   const nodes = (data.neighborhood && data.neighborhood.nodes || []).map(n => ({ ...n }));
   const links = (data.neighborhood && data.neighborhood.links || []).map(l => ({ ...l }));
-  if (!nodes.length) { svg.append('text').attr('x', 20).attr('y', 30).attr('fill', '#9c9890').text('No neighbourhood to display.'); return; }
+  if (!nodes.length) { svg.append('text').attr('x', 20).attr('y', 30).attr('fill', chrome().muted).text('No neighbourhood to display.'); return; }
 
   // Zoomable inner group; reset-view chip is drawn by enableZoomPan in the corner.
   const root = enableZoomPan(svg);
@@ -88,12 +89,12 @@ function renderNetwork(data) {
     .force('collide', d3.forceCollide(d => (d.is_seed ? 8 : 4) + 1));
 
   const link = root.append('g').selectAll('line').data(links).join('line')
-    .attr('stroke', '#c8c4bc').attr('stroke-opacity', 0.5).attr('stroke-width', 0.5);
+    .attr('stroke', chrome().grid).attr('stroke-opacity', 0.5).attr('stroke-width', 0.5);
 
   const node = root.append('g').selectAll('circle').data(nodes).join('circle')
     .attr('r', d => d.is_seed ? 6 + Math.sqrt((d.cited_by || 0)) : 3)
-    .attr('fill', d => GROUP_COLORS[d.group] || '#9c9890')
-    .attr('stroke', d => d.is_seed ? '#3a3026' : 'none')
+    .attr('fill', d => GROUP_COLORS[d.group] || chrome().muted)
+    .attr('stroke', d => d.is_seed ? chrome().ink : 'none')
     .attr('stroke-width', d => d.is_seed ? 1.5 : 0)
     .style('cursor', 'pointer')
     .call(enableDrag(sim))
@@ -110,7 +111,7 @@ function renderNetwork(data) {
 
   const tip = d3.select('body').append('div')
     .style('position', 'fixed').style('display', 'none')
-    .style('background', '#fffefb').style('border', '1px solid #c8c4bc')
+    .style('background', '#fffefb').style('border', '1px solid var(--chart-grid)')
     .style('padding', '0.4rem 0.6rem').style('font-size', '0.78rem')
     .style('max-width', '320px').style('z-index', '1000')
     .style('pointer-events', 'none');

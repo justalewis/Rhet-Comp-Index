@@ -64,7 +64,7 @@ export function renderFilterBar(panelId, options) {
   bar = document.createElement('div');
   bar.className = 'ds-filter-bar';
   bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.6rem;align-items:flex-end;'
-    + 'margin:0.4rem 0 0.6rem;padding:0.5rem 0.7rem;background:#fdfbf7;'
+    + 'margin:0.4rem 0 0.6rem;padding:0.5rem 0.7rem;background:var(--chart-halo);'
     + 'border:1px solid #e8e4de;font-size:0.84rem;';
 
   const saved = _loadSaved(panelId);
@@ -73,7 +73,7 @@ export function renderFilterBar(panelId, options) {
   if (scope !== 'no-cluster' && scope !== 'year-only') {
     const wrap = document.createElement('label');
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:0.15rem;min-width:160px;';
-    wrap.innerHTML = '<span style="color:#7a7268;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Cluster</span>';
+    wrap.innerHTML = '<span style="color:var(--chart-muted);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Cluster</span>';
     const sel = document.createElement('select');
     sel.id = panelId + '__cluster';
     sel.innerHTML = '<option value="">All clusters</option>'
@@ -87,18 +87,18 @@ export function renderFilterBar(panelId, options) {
   if (scope !== 'no-journal' && scope !== 'year-only') {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:0.15rem;min-width:180px;position:relative;';
-    wrap.innerHTML = '<span style="color:#7a7268;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Journals</span>';
+    wrap.innerHTML = '<span style="color:var(--chart-muted);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Journals</span>';
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.id = panelId + '__journal-btn';
-    btn.style.cssText = 'padding:0.3rem 0.5rem;border:1px solid #c8c4bc;background:#fff;font-size:0.84rem;cursor:pointer;text-align:left;min-height:1.8rem;';
+    btn.style.cssText = 'padding:0.3rem 0.5rem;border:1px solid var(--chart-grid);background:#fff;font-size:0.84rem;cursor:pointer;text-align:left;min-height:1.8rem;';
     btn.textContent = 'Any journal';
 
     const popup = document.createElement('div');
     popup.id = panelId + '__journal-popup';
     popup.style.cssText = 'display:none;position:absolute;top:100%;left:0;z-index:100;'
-      + 'background:#fff;border:1px solid #c8c4bc;padding:0.4rem 0.5rem;'
+      + 'background:#fff;border:1px solid var(--chart-grid);padding:0.4rem 0.5rem;'
       + 'max-height:280px;overflow-y:auto;min-width:280px;font-size:0.82rem;'
       + 'box-shadow:0 2px 8px rgba(0,0,0,0.08);';
     const savedJournals = new Set(saved.journals || []);
@@ -132,24 +132,24 @@ export function renderFilterBar(panelId, options) {
   if (scope !== 'no-year') {
     const yfWrap = document.createElement('label');
     yfWrap.style.cssText = 'display:flex;flex-direction:column;gap:0.15rem;width:90px;';
-    yfWrap.innerHTML = '<span style="color:#7a7268;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">From</span>';
+    yfWrap.innerHTML = '<span style="color:var(--chart-muted);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">From</span>';
     const yf = document.createElement('input');
     yf.type = 'number';
     yf.id = panelId + '__year-from';
     yf.placeholder = (window.MIN_YEAR || 1900);
-    yf.style.cssText = 'padding:0.3rem 0.4rem;border:1px solid #c8c4bc;font-size:0.84rem;width:100%;';
+    yf.style.cssText = 'padding:0.3rem 0.4rem;border:1px solid var(--chart-grid);font-size:0.84rem;width:100%;';
     yf.value = saved.year_from || '';
     yfWrap.appendChild(yf);
     bar.appendChild(yfWrap);
 
     const ytWrap = document.createElement('label');
     ytWrap.style.cssText = 'display:flex;flex-direction:column;gap:0.15rem;width:90px;';
-    ytWrap.innerHTML = '<span style="color:#7a7268;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">To</span>';
+    ytWrap.innerHTML = '<span style="color:var(--chart-muted);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">To</span>';
     const yt = document.createElement('input');
     yt.type = 'number';
     yt.id = panelId + '__year-to';
     yt.placeholder = (window.MAX_YEAR || new Date().getFullYear());
-    yt.style.cssText = 'padding:0.3rem 0.4rem;border:1px solid #c8c4bc;font-size:0.84rem;width:100%;';
+    yt.style.cssText = 'padding:0.3rem 0.4rem;border:1px solid var(--chart-grid);font-size:0.84rem;width:100%;';
     yt.value = saved.year_to || '';
     ytWrap.appendChild(yt);
     bar.appendChild(ytWrap);
@@ -163,12 +163,12 @@ export function renderFilterBar(panelId, options) {
   applyBtn.className = 'filter-apply-btn';
   applyBtn.textContent = 'Apply';
   applyBtn.id = panelId + '__apply';
-  applyBtn.style.cssText = 'padding:0.4rem 0.9rem;background:#5a3e28;color:#fdfbf7;border:0;cursor:pointer;font-size:0.84rem;';
+  applyBtn.style.cssText = 'padding:0.4rem 0.9rem;background:#5a3e28;color:var(--chart-halo);border:0;cursor:pointer;font-size:0.84rem;';
   const resetBtn = document.createElement('button');
   resetBtn.type = 'button';
   resetBtn.textContent = 'Reset';
   resetBtn.id = panelId + '__reset';
-  resetBtn.style.cssText = 'padding:0.4rem 0.6rem;background:transparent;border:1px solid #c8c4bc;cursor:pointer;font-size:0.84rem;color:#7a7268;';
+  resetBtn.style.cssText = 'padding:0.4rem 0.6rem;background:transparent;border:1px solid var(--chart-grid);cursor:pointer;font-size:0.84rem;color:var(--chart-muted);';
   btnWrap.appendChild(applyBtn);
   btnWrap.appendChild(resetBtn);
   bar.appendChild(btnWrap);
@@ -176,7 +176,7 @@ export function renderFilterBar(panelId, options) {
   // Status caption: shows currently-applied filter summary
   const status = document.createElement('div');
   status.id = panelId + '__filter-status';
-  status.style.cssText = 'flex-basis:100%;color:#7a7268;font-size:0.78rem;font-style:italic;margin-top:0.2rem;';
+  status.style.cssText = 'flex-basis:100%;color:var(--chart-muted);font-size:0.78rem;font-style:italic;margin-top:0.2rem;';
   bar.appendChild(status);
 
   // Insert the bar into the panel — after the methodology details, before

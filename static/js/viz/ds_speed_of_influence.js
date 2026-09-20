@@ -7,6 +7,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const DIR_COLORS = {
   TPC_TO_TPC: "#5a3e28",
@@ -71,7 +72,7 @@ function _injectCompareControl() {
   const wrap = document.createElement('label');
   wrap.className = 'soi-compare-control';
   wrap.style.cssText = 'display:flex;flex-direction:column;gap:0.15rem;min-width:160px;';
-  wrap.innerHTML = '<span style="color:#7a7268;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Compare with</span>';
+  wrap.innerHTML = '<span style="color:var(--chart-muted);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">Compare with</span>';
   const sel = document.createElement('select');
   sel.id = 'soi-compare-cluster';
   sel.innerHTML = '<option value="">(off)</option>' +
@@ -100,14 +101,14 @@ function renderCompareSummary(dataA, dataB) {
   el.appendChild(wrap);
 
   const note = document.createElement('div');
-  note.style.cssText = 'margin-top:0.6rem;font-size:0.78rem;color:#7a7268;';
+  note.style.cssText = 'margin-top:0.6rem;font-size:0.78rem;color:var(--chart-muted);';
   note.innerHTML = 'Comparing two cluster scopes side-by-side. The chart below renders the LEFT-hand cluster only — flip "Compare with" to the right-hand cluster to inspect its distribution.';
   el.appendChild(note);
 }
 
 function _renderCompareColumn(label, data) {
   const col = document.createElement('div');
-  col.style.cssText = 'padding:0.6rem 0.8rem;background:#fdfbf7;border:1px solid #e8e4de;';
+  col.style.cssText = 'padding:0.6rem 0.8rem;background:var(--chart-halo);border:1px solid #e8e4de;';
   const heading = document.createElement('div');
   heading.style.cssText = 'font-size:0.72rem;color:#5a3e28;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:0.4rem;';
   heading.textContent = label;
@@ -117,11 +118,11 @@ function _renderCompareColumn(label, data) {
   Object.entries(data.stats || {}).forEach(([dir, st]) => {
     if (!st) return;
     const card = document.createElement('div');
-    card.style.cssText = 'padding:0.4rem 0.6rem;background:#fff;border-left:3px solid ' + (DIR_COLORS[dir]||'#9c9890') + ';font-size:0.78rem;';
-    card.innerHTML = '<div style="font-size:0.72rem;color:#9c9890;">'
+    card.style.cssText = 'padding:0.4rem 0.6rem;background:#fff;border-left:3px solid ' + (DIR_COLORS[dir]||chrome().muted) + ';font-size:0.78rem;';
+    card.innerHTML = '<div style="font-size:0.72rem;color:var(--chart-muted);">'
       + escapeHtml(data.labels && data.labels[dir] || dir) + '</div>'
-      + '<div style="font-size:1rem;font-weight:700;color:#3a3026;">median ' + st.median + ' yrs</div>'
-      + '<div style="color:#7a7268;font-size:0.72rem;">n=' + st.count.toLocaleString() + '</div>';
+      + '<div style="font-size:1rem;font-weight:700;color:var(--chart-ink);">median ' + st.median + ' yrs</div>'
+      + '<div style="color:var(--chart-muted);font-size:0.72rem;">n=' + st.count.toLocaleString() + '</div>';
     grid.appendChild(card);
   });
   col.appendChild(grid);
@@ -136,11 +137,11 @@ function renderSummary(data) {
   Object.entries(data.stats || {}).forEach(([dir, st]) => {
     if (!st) return;
     const card = document.createElement('div');
-    card.style.cssText = 'padding:0.6rem 0.9rem;background:#fdfbf7;border-left:3px solid ' + (DIR_COLORS[dir]||'#9c9890') + ';font-size:0.84rem;';
-    card.innerHTML = '<div style="font-size:0.78rem;color:#9c9890;text-transform:uppercase;">'
+    card.style.cssText = 'padding:0.6rem 0.9rem;background:var(--chart-halo);border-left:3px solid ' + (DIR_COLORS[dir]||chrome().muted) + ';font-size:0.84rem;';
+    card.innerHTML = '<div style="font-size:0.78rem;color:var(--chart-muted);text-transform:uppercase;">'
       + escapeHtml(data.labels && data.labels[dir] || dir) + '</div>'
-      + '<div style="font-size:1.2rem;font-weight:700;color:#3a3026;">median ' + st.median + ' yrs</div>'
-      + '<div style="color:#7a7268;">mean ' + st.mean + ' · IQR ' + st.p25 + '–' + st.p75 + ' · n=' + st.count.toLocaleString() + '</div>';
+      + '<div style="font-size:1.2rem;font-weight:700;color:var(--chart-ink);">median ' + st.median + ' yrs</div>'
+      + '<div style="color:var(--chart-muted);">mean ' + st.mean + ' · IQR ' + st.p25 + '–' + st.p75 + ' · n=' + st.count.toLocaleString() + '</div>';
     grid.appendChild(card);
   });
   el.appendChild(grid);
@@ -148,7 +149,7 @@ function renderSummary(data) {
   const sig = data.significance || {};
   if (Object.keys(sig).length) {
     const note = document.createElement('div');
-    note.style.cssText = 'margin-top:0.8rem;font-size:0.78rem;color:#7a7268;';
+    note.style.cssText = 'margin-top:0.8rem;font-size:0.78rem;color:var(--chart-muted);';
     note.innerHTML = '<strong>Mann-Whitney U:</strong> ' +
       Object.entries(sig).map(([k, v]) =>
         escapeHtml(k.replace(/_/g, ' ')) + ': p=' + v.p.toExponential(2)
@@ -184,17 +185,17 @@ function renderDistributions(data) {
   const line = d3.line().x(p => x(p.x)).y(p => y(p.y)).curve(d3.curveMonotoneX);
   lines.forEach(l => {
     svg.append('path').datum(l.points).attr('fill', 'none')
-      .attr('stroke', DIR_COLORS[l.dir] || '#9c9890').attr('stroke-width', 2.2).attr('opacity', 0.85).attr('d', line);
+      .attr('stroke', DIR_COLORS[l.dir] || chrome().muted).attr('stroke-width', 2.2).attr('opacity', 0.85).attr('d', line);
   });
 
   const legend = svg.append('g').attr('transform', `translate(${w - m.right - 180}, ${m.top})`);
   Object.entries(data.labels || {}).forEach(([dir, label], i) => {
     legend.append('line').attr('x1', 0).attr('x2', 16).attr('y1', i * 16 + 8).attr('y2', i * 16 + 8)
       .attr('stroke', DIR_COLORS[dir]).attr('stroke-width', 2.5);
-    legend.append('text').attr('x', 22).attr('y', i * 16 + 11).attr('font-size', 11).attr('fill', '#3a3026').text(label);
+    legend.append('text').attr('x', 22).attr('y', i * 16 + 11).attr('font-size', 11).attr('fill', chrome().ink).text(label);
   });
 
-  svg.append('text').attr('x', w / 2).attr('y', h - 5).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', w / 2).attr('y', h - 5).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', chrome().muted)
     .text('Citation delay (years)');
 }
 
@@ -210,7 +211,7 @@ function renderTrends(data) {
     Object.values(temporal).flatMap(d => Object.keys(d))
   )).sort();
   if (!allDecades.length) {
-    svg.append('text').attr('x', m.left).attr('y', 40).attr('fill', '#9c9890').text('Not enough data for decade trends.');
+    svg.append('text').attr('x', m.left).attr('y', 40).attr('fill', chrome().muted).text('Not enough data for decade trends.');
     return;
   }
   const x = d3.scalePoint().domain(allDecades).range([m.left, w - m.right]).padding(0.5);
@@ -227,13 +228,13 @@ function renderTrends(data) {
     const points = Object.entries(decades).map(([dec, mean]) => ({ dec, mean })).sort((a, b) => a.dec.localeCompare(b.dec));
     if (!points.length) return;
     svg.append('path').datum(points).attr('fill', 'none')
-      .attr('stroke', DIR_COLORS[dir] || '#9c9890').attr('stroke-width', 2.2).attr('d', line);
+      .attr('stroke', DIR_COLORS[dir] || chrome().muted).attr('stroke-width', 2.2).attr('d', line);
     points.forEach(p => {
-      svg.append('circle').attr('cx', x(p.dec)).attr('cy', y(p.mean)).attr('r', 3).attr('fill', DIR_COLORS[dir] || '#9c9890');
+      svg.append('circle').attr('cx', x(p.dec)).attr('cy', y(p.mean)).attr('r', 3).attr('fill', DIR_COLORS[dir] || chrome().muted);
     });
   });
 
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
     .text('Mean delay (years), per citing decade');
 }
 

@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsOriginsFrontiers = false;
 
@@ -44,10 +45,10 @@ function renderSummary(data) {
   cards.forEach(([label, count, pct]) => {
     if (count == null) return;
     const card = document.createElement('div');
-    card.style.cssText = 'padding:0.6rem 0.9rem;background:#fdfbf7;border-left:3px solid #b38a6a;font-size:0.84rem;';
-    card.innerHTML = '<div style="font-size:0.78rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;">'
-      + escapeHtml(label) + '</div><div style="font-size:1.3rem;font-weight:700;color:#3a3026;">'
-      + (count || 0).toLocaleString() + (pct != null ? '<span style="font-size:0.86rem;color:#9c9890;font-weight:400;"> · '
+    card.style.cssText = 'padding:0.6rem 0.9rem;background:var(--chart-halo);border-left:3px solid #b38a6a;font-size:0.84rem;';
+    card.innerHTML = '<div style="font-size:0.78rem;color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;">'
+      + escapeHtml(label) + '</div><div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">'
+      + (count || 0).toLocaleString() + (pct != null ? '<span style="font-size:0.86rem;color:var(--chart-muted);font-weight:400;"> · '
       + pct.toFixed(1) + '%</span>' : '') + '</div>';
     grid.appendChild(card);
   });
@@ -73,7 +74,7 @@ function renderYears(data) {
   const ymax = d3.max(stacks, d => d.sources + d.sinks + d.other) || 1;
   const y = d3.scaleLinear().domain([0, ymax]).range([h - m.bottom, m.top]);
 
-  const colors = { sources: '#5a3e28', sinks: '#3a5a28', other: '#d4cec5' };
+  const colors = { sources: '#5a3e28', sinks: '#3a5a28', other: chrome().grid };
   ['other','sinks','sources'].forEach((k, idx, arr) => {
     svg.append('g').selectAll('rect').data(stacks).join('rect')
       .attr('x', d => x(d.year))
@@ -91,7 +92,7 @@ function renderYears(data) {
     .selectAll('text').style('font-size', '10px');
   svg.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y).ticks(6))
     .selectAll('text').style('font-size', '10px');
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
     .text('Articles per year, stacked: sources / sinks / other');
 }
 
@@ -111,15 +112,15 @@ function renderJournals(data) {
   journals.forEach((j, i) => {
     const yp = m.top + i * rowH;
     svg.append('text').attr('x', m.left - 8).attr('y', yp + 14).attr('text-anchor', 'end')
-      .attr('font-size', 10).attr('fill', '#3a3026').text(j.journal);
+      .attr('font-size', 10).attr('fill', chrome().ink).text(j.journal);
     svg.append('rect').attr('x', m.left).attr('y', yp + 4).attr('height', rowH - 8)
       .attr('width', x(j.source_rate || 0) - m.left).attr('fill', '#5a3e28').attr('opacity', 0.85);
     svg.append('rect').attr('x', x(1 - (j.sink_rate || 0))).attr('y', yp + 4).attr('height', rowH - 8)
       .attr('width', (w - m.right) - x(1 - (j.sink_rate || 0))).attr('fill', '#3a5a28').attr('opacity', 0.85);
-    svg.append('text').attr('x', w - m.right + 6).attr('y', yp + 14).attr('font-size', 10).attr('fill', '#7a7268')
+    svg.append('text').attr('x', w - m.right + 6).attr('y', yp + 14).attr('font-size', 10).attr('fill', chrome().muted)
       .text((j.n_articles || 0).toLocaleString());
   });
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
     .text('← source rate     ·     sink rate →');
 }
 
@@ -132,13 +133,13 @@ function renderNotable(data) {
     const arts = notable[k] || [];
     if (!arts.length) return;
     const label = { top_sources: 'Top sources', top_frontier: 'Top frontier sinks', top_data_gap: 'Top data-gap sinks' }[k];
-    html += '<h5 style="margin-top:1rem;color:#3a3026;">' + escapeHtml(label) + '</h5>';
+    html += '<h5 style="margin-top:1rem;color:var(--chart-ink);">' + escapeHtml(label) + '</h5>';
     html += '<ul style="font-size:0.84rem;list-style:none;padding-left:0;">';
     arts.slice(0, 8).forEach(a => {
       const yr = (a.pub_date || '').slice(0, 4);
-      html += '<li style="padding:0.25rem 0;border-bottom:1px solid #f1ede6;">'
+      html += '<li style="padding:0.25rem 0;border-bottom:1px solid var(--chart-grid);">'
         + '<a href="/article/' + a.id + '" style="color:#5a3e28;">' + escapeHtml(a.title || '') + '</a>'
-        + ' <span style="color:#9c9890;">' + escapeHtml(a.journal || '') + (yr ? ' · ' + yr : '') + '</span>'
+        + ' <span style="color:var(--chart-muted);">' + escapeHtml(a.journal || '') + (yr ? ' · ' + yr : '') + '</span>'
         + '</li>';
     });
     html += '</ul>';

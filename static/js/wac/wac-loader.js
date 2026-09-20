@@ -1,5 +1,6 @@
 // wac-loader.js — entry point for /wac. Eager-imports the panel modules (which
 // register themselves), then lazy-renders each card as it scrolls into view.
+import "../utils/chartjs-theme.js";
 import { registry } from "./wac-common.js";
 import "./wac-charts.js";
 import "./wac-graphics.js";

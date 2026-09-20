@@ -31,13 +31,13 @@ function renderSummary(data) {
   const s = data.summary || {};
   const skipped = (s.skipped_tools || []);
   let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.6rem;">
-    <div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;">
-      <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;">Articles surfaced</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${(s.n_articles || 0).toLocaleString()}</div>
+    <div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid #5a3e28;font-size:0.84rem;">
+      <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;">Articles surfaced</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">${(s.n_articles || 0).toLocaleString()}</div>
     </div>
-    <div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid #5a3e28;font-size:0.84rem;">
-      <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;">Tools aggregated</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#3a3026;">${s.n_tools_used || 0}</div>
+    <div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid #5a3e28;font-size:0.84rem;">
+      <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;">Tools aggregated</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">${s.n_tools_used || 0}</div>
     </div>
   </div>`;
   if (skipped.length) {
@@ -67,21 +67,21 @@ function renderTable(data) {
   rows.forEach((r, i) => {
     const toolsList = (r.tools || []).map(t => escapeHtml(t)).join(', ');
     html += '<tr class="be-main-row" data-row="' + i + '">';
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${i + 1}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a></td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.year || '—'}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${escapeHtml(r.journal || '—')}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;color:#5a3e28;">${r.n_tools}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">` +
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${i + 1}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a></td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.year || '—'}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${escapeHtml(r.journal || '—')}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-weight:600;color:#5a3e28;">${r.n_tools}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">` +
               `<button type="button" class="be-toggle" data-row="${i}" ` +
-              `style="padding:0.1rem 0.45rem;background:#fdfbf7;border:1px solid #c8c4bc;cursor:pointer;font-size:0.74rem;border-radius:9px;">tools ▾</button></td>`;
+              `style="padding:0.1rem 0.45rem;background:var(--chart-halo);border:1px solid var(--chart-grid);cursor:pointer;font-size:0.74rem;border-radius:9px;">tools ▾</button></td>`;
     html += '</tr>';
     // Hidden detail row — expanded on toggle. Lists every tool the article
     // appeared in plus its citation_count + cluster bucket if present.
-    html += `<tr class="be-detail-row" data-row="${i}" style="display:none;background:#fdfbf7;">`;
-    html += `<td colspan="6" style="padding:0.45rem 0.8rem;border-bottom:1px solid #f1ede6;font-size:0.78rem;color:#3a3026;">`;
+    html += `<tr class="be-detail-row" data-row="${i}" style="display:none;background:var(--chart-halo);">`;
+    html += `<td colspan="6" style="padding:0.45rem 0.8rem;border-bottom:1px solid var(--chart-grid);font-size:0.78rem;color:var(--chart-ink);">`;
     html += `<strong style="color:#5a3e28;">Surfaced by ${r.n_tools} Datastories tool${r.n_tools !== 1 ? 's' : ''}:</strong> `;
-    html += toolsList || '<em style="color:#9c9890;">no tools recorded</em>';
+    html += toolsList || '<em style="color:var(--chart-muted);">no tools recorded</em>';
     html += `</td></tr>`;
   });
   html += '</tbody></table>';

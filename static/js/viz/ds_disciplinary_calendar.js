@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const TYPE_COLOR = {
   journal_founded:  "#3a5a28",
@@ -59,25 +60,25 @@ function renderTimeline(data) {
   // Event ticks (bottom strip)
   const stripY = h - m.bottom - 30;
   svg.append('line').attr('x1', m.left).attr('x2', w - m.right).attr('y1', stripY).attr('y2', stripY)
-    .attr('stroke', '#c8c4bc');
+    .attr('stroke', chrome().grid);
   events.forEach((ev, i) => {
     const lx = x(ev.year);
     svg.append('circle').attr('cx', lx).attr('cy', stripY).attr('r', 5)
-      .attr('fill', TYPE_COLOR[ev.type] || '#9c9890').attr('stroke', '#3a3026').attr('stroke-width', 0.5)
+      .attr('fill', TYPE_COLOR[ev.type] || chrome().muted).attr('stroke', chrome().ink).attr('stroke-width', 0.5)
       .append('title').text(ev.year + ' · ' + ev.title + ' (' + ev.type + ')');
     // Stagger labels above
     const ly = stripY - 12 - (i % 4) * 12;
     svg.append('line').attr('x1', lx).attr('x2', lx).attr('y1', stripY - 4).attr('y2', ly + 2)
-      .attr('stroke', '#c8c4bc').attr('stroke-width', 0.5);
+      .attr('stroke', chrome().grid).attr('stroke-width', 0.5);
     svg.append('text').attr('x', lx).attr('y', ly).attr('text-anchor','middle')
-      .attr('font-size', 9).attr('fill', TYPE_COLOR[ev.type] || '#3a3026').text(ev.year);
+      .attr('font-size', 9).attr('fill', TYPE_COLOR[ev.type] || chrome().ink).text(ev.year);
   });
 
   svg.append('g').attr('transform', `translate(0,${y(0)})`).call(d3.axisBottom(x).tickFormat(d3.format('d')))
     .selectAll('text').style('font-size','10px');
   svg.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y).ticks(5))
     .selectAll('text').style('font-size','10px');
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill','#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill',chrome().muted)
     .text('Awakenings per year (bars) — disciplinary events (dots, hover for detail)');
 }
 
@@ -96,13 +97,13 @@ function renderCorrelation(data) {
   svg.append('g').selectAll('rect').data(entries).join('rect')
     .attr('x', m.left).attr('y', d => y(d[0]))
     .attr('width', d => x(d[1]) - m.left).attr('height', y.bandwidth())
-    .attr('fill', d => TYPE_COLOR[d[0]] || '#9c9890');
+    .attr('fill', d => TYPE_COLOR[d[0]] || chrome().muted);
   svg.append('g').selectAll('text.lbl').data(entries).join('text')
     .attr('x', m.left - 8).attr('y', d => y(d[0]) + y.bandwidth() / 2 + 3).attr('text-anchor','end')
-    .attr('font-size', 10).attr('fill','#3a3026').text(d => d[0].replace(/_/g, ' '));
+    .attr('font-size', 10).attr('fill',chrome().ink).text(d => d[0].replace(/_/g, ' '));
   svg.append('g').selectAll('text.cnt').data(entries).join('text')
     .attr('x', d => x(d[1]) + 6).attr('y', d => y(d[0]) + y.bandwidth() / 2 + 3)
-    .attr('font-size', 10).attr('fill','#7a7268').text(d => 'avg ' + d[1] + ' awakenings/yr post-event');
+    .attr('font-size', 10).attr('fill',chrome().muted).text(d => 'avg ' + d[1] + ' awakenings/yr post-event');
 }
 
 window.loadDsDisciplinaryCalendar = loadDsDisciplinaryCalendar;

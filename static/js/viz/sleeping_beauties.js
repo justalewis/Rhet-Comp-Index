@@ -7,7 +7,7 @@
 
 import { renderExportToolbar } from "../shared/export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -111,12 +111,12 @@ function renderSleepingBeauties(container, data) {
     tl.forEach(t => {
       const h = Math.max(0.5, (t.count / maxCount) * sparkH);
       const isAwake = t.year >= art.awakening_year;
-      const fill = isAwake ? '#b38a6a' : '#d4cec5';
+      const fill = isAwake ? '#b38a6a' : chrome().grid;
       sparkBars += `<rect x="${(t.year - tl[0].year) * barW}" y="${sparkH - h}" width="${Math.max(1, barW - 0.5)}" height="${h}" fill="${fill}"><title>${t.year}: ${t.count} citation${t.count !== 1 ? 's' : ''}</title></rect>`;
     });
     const sparkSvg = tl.length > 0
       ? `<svg width="${sparkW}" height="${sparkH}" style="vertical-align:middle;margin-left:0.5rem;" role="img" aria-label="Citation timeline (click row for detail)">${sparkBars}</svg>`
-      : '<span style="color:#9c9890;font-size:0.78rem;">no timeline</span>';
+      : '<span style="color:var(--chart-muted);font-size:0.78rem;">no timeline</span>';
 
     const bGloss = beautyCoefficientGloss(art.beauty_coefficient);
 
@@ -127,11 +127,11 @@ function renderSleepingBeauties(container, data) {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
         <div style="min-width:0;flex:1;">
           <a href="/article/${art.id}" class="article-title" style="font-size:0.84rem;">${escapeHtml(art.title)}</a>
-          <div style="font-size:0.76rem;color:#9c9890;margin-top:0.15rem;">
+          <div style="font-size:0.76rem;color:var(--chart-muted);margin-top:0.15rem;">
             ${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 <em>${escapeHtml(art.journal)}</em>
             \u2002\u00b7\u2002Cited ${art.internal_cited_by_count}\u00d7 in index${art.crossref_cited_by_count ? ` (${art.crossref_cited_by_count}\u00d7 globally)` : ''}
           </div>
-          <div style="font-size:0.76rem;color:#9c9890;margin-top:0.1rem;">
+          <div style="font-size:0.76rem;color:var(--chart-muted);margin-top:0.1rem;">
             Slept <strong>${art.sleep_years}</strong> years
             \u2002\u00b7\u2002Awakened <strong>${art.awakening_year}</strong>
             \u2002\u00b7\u2002Peak <strong>${art.peak_citations}</strong>\u00d7 in ${art.peak_year}
@@ -141,7 +141,7 @@ function renderSleepingBeauties(container, data) {
           ${sparkSvg}
           <div style="display:flex;flex-direction:column;align-items:flex-end;min-width:7.2rem;">
             <span style="font-weight:700;font-size:0.92rem;color:#5a3e28;font-variant-numeric:tabular-nums;" title="Beauty Coefficient (Ke et al. 2015) \u2014 quantifies how dormant and how sharp the awakening was">B\u2009=\u2009${art.beauty_coefficient.toFixed(0)}</span>
-            <span style="font-size:0.72rem;color:#9c9890;font-style:italic;line-height:1.2;margin-top:0.1rem;">${bGloss}</span>
+            <span style="font-size:0.72rem;color:var(--chart-muted);font-style:italic;line-height:1.2;margin-top:0.1rem;">${bGloss}</span>
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@ function showSleepingBeautyDetail(art) {
   const counts = tl.map(t => t.count);
 
   // Colour bars: muted during sleep, warm brown after awakening
-  const barColors = years.map(y => y >= art.awakening_year ? '#b38a6a' : '#d4cec5');
+  const barColors = years.map(y => y >= art.awakening_year ? '#b38a6a' : chrome().grid);
 
   // Compute the expected linear trajectory for overlay
   const t0 = parseInt(year);
@@ -223,7 +223,7 @@ function showSleepingBeautyDetail(art) {
           label: 'Expected linear trajectory',
           data: linearData,
           type: 'line',
-          borderColor: '#9c9890',
+          borderColor: chrome().muted,
           borderDash: [5, 3],
           borderWidth: 1.5,
           pointRadius: 0,

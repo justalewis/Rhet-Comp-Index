@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -158,7 +158,7 @@ function renderAuthorCocitation(container, data) {
     .selectAll('line')
     .data(acocitLinks)
     .enter().append('line')
-    .style('stroke',         '#ccc7bb')
+    .style('stroke',         chrome().grid)
     .style('stroke-opacity', d => 0.15 + 0.4 * (d.weight / maxWeight))
     .style('stroke-width',   d => edgeScale(d.weight));
 
@@ -228,7 +228,7 @@ function renderAuthorCocitation(container, data) {
       .slice(0, 3);
 
     const partnerHtml = partners.length > 0
-      ? '<br><span style="font-size:0.78rem;color:#9c9890;">Top co-cited with:</span>' +
+      ? '<br><span style="font-size:0.78rem;color:var(--chart-muted);">Top co-cited with:</span>' +
         partners.map(p =>
           `<br><span style="font-size:0.78rem;">\u2022 ${escapeHtml(p.name)} (${p.weight}\u00d7)</span>`
         ).join('')
@@ -250,7 +250,7 @@ function renderAuthorCocitation(container, data) {
     }).style('stroke', l => {
       const sid = typeof l.source === 'object' ? l.source.id : l.source;
       const tid = typeof l.target === 'object' ? l.target.id : l.target;
-      return (sid === d.id || tid === d.id) ? '#8b6045' : '#ccc7bb';
+      return (sid === d.id || tid === d.id) ? '#8b6045' : chrome().grid;
     });
   })
   .on('mousemove', (event) => {
@@ -259,7 +259,7 @@ function renderAuthorCocitation(container, data) {
   .on('mouseout', () => {
     tip.style('display', 'none');
     acocitLinkSel.style('stroke-opacity', l => 0.15 + 0.4 * (l.weight / maxWeight))
-                  .style('stroke', '#ccc7bb');
+                  .style('stroke', chrome().grid);
   })
   .on('click', (event, d) => {
     event.stopPropagation();

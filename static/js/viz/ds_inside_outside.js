@@ -2,12 +2,13 @@
 import { setLoading, setError, fetchJson, escapeHtml, enableZoomPan } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const QUAD_COLOR = {
   shared_canon: "#3a5a28",
   tpc_specific: "#5a3e28",
   imported:     "#a04525",
-  background:   "#d4cec5",
+  background:   chrome().grid,
 };
 
 let _filtersWired_loadDsInsideOutside = false;
@@ -48,10 +49,10 @@ function renderSummary(data) {
 }
 
 function card(label, big, sub, color) {
-  return `<div style="padding:0.5rem 0.8rem;background:#fdfbf7;border-left:3px solid ${color || '#5a3e28'};font-size:0.84rem;">
-    <div style="font-size:0.74rem;color:#9c9890;text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
-    <div style="font-size:1.2rem;font-weight:700;color:#3a3026;">${big}</div>
-    ${sub ? `<div style="color:#7a7268;font-size:0.78rem;">${escapeHtml(sub)}</div>` : ''}
+  return `<div style="padding:0.5rem 0.8rem;background:var(--chart-halo);border-left:3px solid ${color || '#5a3e28'};font-size:0.84rem;">
+    <div style="font-size:0.74rem;color:var(--chart-muted);text-transform:uppercase;letter-spacing:0.04em;">${escapeHtml(label)}</div>
+    <div style="font-size:1.2rem;font-weight:700;color:var(--chart-ink);">${big}</div>
+    ${sub ? `<div style="color:var(--chart-muted);font-size:0.78rem;">${escapeHtml(sub)}</div>` : ''}
   </div>`;
 }
 
@@ -77,22 +78,22 @@ function renderScatter(data) {
   const minR = 1;
   const maxR = Math.min(d3.max(sample, a => a.global_rank), d3.max(sample, a => a.internal_rank));
   root.append('line').attr('x1', x(minR)).attr('y1', y(minR)).attr('x2', x(maxR)).attr('y2', y(maxR))
-    .attr('stroke', '#c8c4bc').attr('stroke-dasharray', '4 3');
+    .attr('stroke', chrome().grid).attr('stroke-dasharray', '4 3');
 
   root.append('g').attr('transform', `translate(0,${h - m.bottom})`).call(d3.axisBottom(x).ticks(5, '~s'))
     .selectAll('text').style('font-size','10px');
   root.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y).ticks(5, '~s'))
     .selectAll('text').style('font-size','10px');
-  root.append('text').attr('x', w/2).attr('y', h - 6).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
+  root.append('text').attr('x', w/2).attr('y', h - 6).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('Global rank (OpenAlex)');
-  root.append('text').attr('x', 16).attr('y', h/2).attr('transform', `rotate(-90, 16, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
+  root.append('text').attr('x', 16).attr('y', h/2).attr('transform', `rotate(-90, 16, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('Internal rank (corpus)');
 
   const circles = root.append('g').selectAll('circle').data(sample).join('circle')
     .attr('cx', d => x(d.global_rank))
     .attr('cy', d => y(d.internal_rank))
     .attr('r', 2)
-    .attr('fill', d => QUAD_COLOR[d.quadrant] || '#9c9890')
+    .attr('fill', d => QUAD_COLOR[d.quadrant] || chrome().muted)
     .attr('opacity', 0.6)
     .style('cursor', 'pointer')
     .on('click', (e, d) => { if (e.defaultPrevented) return; window.location.href = '/article/' + d.id; })
@@ -115,7 +116,7 @@ function renderScatter(data) {
       .attr('text-anchor', anchor || 'start')
       .attr('font-size', 11).attr('font-weight', 600)
       .attr('fill', color).attr('opacity', 0.85)
-      .attr('paint-order', 'stroke').attr('stroke', '#fdfbf7').attr('stroke-width', 4)
+      .attr('paint-order', 'stroke').attr('stroke', chrome().halo).attr('stroke-width', 4)
       .style('pointer-events', 'none')
       .text(text);
   }
@@ -142,9 +143,9 @@ function renderTable(data) {
 function list(rows) {
   let html = '<ul style="font-size:0.84rem;list-style:none;padding-left:0;">';
   rows.forEach(r => {
-    html += `<li style="padding:0.3rem 0;border-bottom:1px solid #f1ede6;">
+    html += `<li style="padding:0.3rem 0;border-bottom:1px solid var(--chart-grid);">
       <a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a>
-      <div style="font-size:0.78rem;color:#9c9890;">${escapeHtml(r.journal || '')} · ${r.year || '—'} · internal #${r.internal_rank} · global #${r.global_rank}</div>
+      <div style="font-size:0.78rem;color:var(--chart-muted);">${escapeHtml(r.journal || '')} · ${r.year || '—'} · internal #${r.internal_rank} · global #${r.global_rank}</div>
     </li>`;
   });
   return html + '</ul>';

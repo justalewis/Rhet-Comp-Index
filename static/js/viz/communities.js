@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -113,7 +113,7 @@ function renderCommunities(container, data) {
 
   const linkSel = g.append('g').selectAll('line')
     .data(links).enter().append('line')
-    .style('stroke', '#ccc7bb').style('stroke-opacity', 0.4)
+    .style('stroke', chrome().grid).style('stroke-opacity', 0.4)
     .style('stroke-width', d => Math.max(0.5, Math.min(d.weight * 1.5, 4)));
 
   const tip = d3.select('body').append('div')
@@ -243,7 +243,7 @@ function renderCommunityTables(data) {
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${commColor(c.id)};margin-right:0.3rem;"></span>
         Community ${c.id + 1} <span style="font-weight:normal;color:#999;">(${c.size} articles)</span>
       </h4>
-      <div style="font-size:0.74rem;color:#7a7268;margin-bottom:0.4rem;">
+      <div style="font-size:0.74rem;color:var(--chart-muted);margin-bottom:0.4rem;">
         <span title="Citations between members of this community">${ins.internal} internal edges</span>
          &middot; <span title="Citations crossing the community boundary">${ins.external} cross-community</span>
          &middot; insularity <strong>${ratio}</strong> (${insLabel})

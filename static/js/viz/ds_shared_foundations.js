@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, enableZoomPan, enableDrag } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsSharedFoundations = false;
 
@@ -36,11 +37,11 @@ function renderNetwork(data) {
   container.selectAll('*').remove();
   const w = container.node().clientWidth || 720, h = 560;
   const svg = container.append('svg').attr('width', w).attr('height', h)
-    .style('background', '#fdfbf7').style('border', '1px solid #e8e4de');
+    .style('background', chrome().halo).style('border', '1px solid #e8e4de');
 
   const nodes = (data.nodes || []).map(n => ({...n}));
   const links = (data.links || []).map(l => ({...l}));
-  if (!nodes.length) { svg.append('text').attr('x', 20).attr('y', 30).attr('fill','#9c9890').text('No coupling pairs at this threshold.'); return; }
+  if (!nodes.length) { svg.append('text').attr('x', 20).attr('y', 30).attr('fill',chrome().muted).text('No coupling pairs at this threshold.'); return; }
 
   const root = enableZoomPan(svg);
 
@@ -51,13 +52,13 @@ function renderNetwork(data) {
     .force('collide', d3.forceCollide(5));
 
   const link = root.append('g').selectAll('line').data(links).join('line')
-    .attr('stroke', '#c8c4bc').attr('stroke-opacity', 0.5)
+    .attr('stroke', chrome().grid).attr('stroke-opacity', 0.5)
     .attr('stroke-width', d => Math.min(2.5, 0.4 + Math.log(d.value || 1)));
 
   const nodeG = root.append('g').selectAll('circle').data(nodes).join('circle')
     .attr('r', d => 3 + Math.sqrt(d.degree || 0) * 0.6)
-    .attr('fill', d => GROUP_COLORS[d.group] || '#9c9890')
-    .attr('stroke', '#3a3026').attr('stroke-width', 0.4)
+    .attr('fill', d => GROUP_COLORS[d.group] || chrome().muted)
+    .attr('stroke', chrome().ink).attr('stroke-width', 0.4)
     .style('cursor','pointer')
     .call(enableDrag(sim))
     .on('click', (e, d) => { if (e.defaultPrevented) return; window.location.href = '/article/' + d.id; });
@@ -68,9 +69,9 @@ function renderNetwork(data) {
   // Labels for the top 20 by degree only — full labels would obscure the network.
   const labelNodes = nodes.slice().sort((a, b) => (b.degree || 0) - (a.degree || 0)).slice(0, 20);
   const label = root.append('g').selectAll('text').data(labelNodes).join('text')
-    .attr('font-size', 10).attr('fill', '#3a3026').attr('text-anchor', 'middle')
+    .attr('font-size', 10).attr('fill', chrome().ink).attr('text-anchor', 'middle')
     .attr('pointer-events', 'none')
-    .attr('paint-order', 'stroke').attr('stroke', '#fdfbf7').attr('stroke-width', 3)
+    .attr('paint-order', 'stroke').attr('stroke', chrome().halo).attr('stroke-width', 3)
     .text(d => {
       const auth = d.authors ? d.authors.split(';')[0].trim().split(' ').slice(-1)[0] : '';
       return (auth || (d.title || '').slice(0, 18)) + (d.year ? ' ' + d.year : '');
@@ -86,7 +87,7 @@ function renderNetwork(data) {
 
   // Stats footer
   const stats = data.stats || {};
-  svg.append('text').attr('x', 12).attr('y', 18).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', 12).attr('y', 18).attr('font-size', 11).attr('fill', chrome().muted)
     .text(stats.n_pairs + ' coupling pairs, showing top ' + (stats.n_nodes || 0) + ' articles');
 }
 

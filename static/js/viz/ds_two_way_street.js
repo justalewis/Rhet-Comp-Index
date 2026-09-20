@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsTwoWayStreet = false;
 
@@ -59,10 +60,10 @@ function renderSummary(data) {
   ];
   cards.forEach(c => {
     const card = document.createElement('div');
-    card.style.cssText = 'padding:0.6rem 0.9rem;background:#fdfbf7;border-left:3px solid ' + c.color + ';font-size:0.84rem;';
-    card.innerHTML = '<div style="font-size:0.78rem;color:#9c9890;text-transform:uppercase;">' + escapeHtml(c.title) + '</div>'
-      + '<div style="font-size:1.3rem;font-weight:700;color:#3a3026;">' + c.big + '</div>'
-      + '<div style="color:#7a7268;">' + c.sub + '</div>';
+    card.style.cssText = 'padding:0.6rem 0.9rem;background:var(--chart-halo);border-left:3px solid ' + c.color + ';font-size:0.84rem;';
+    card.innerHTML = '<div style="font-size:0.78rem;color:var(--chart-muted);text-transform:uppercase;">' + escapeHtml(c.title) + '</div>'
+      + '<div style="font-size:1.3rem;font-weight:700;color:var(--chart-ink);">' + c.big + '</div>'
+      + '<div style="color:var(--chart-muted);">' + c.sub + '</div>';
     grid.appendChild(card);
   });
   el.appendChild(grid);
@@ -91,7 +92,7 @@ function renderTrends(data) {
     .attr('y', t => yLeft(t.cross))
     .attr('width', 32)
     .attr('height', t => yLeft(0) - yLeft(t.cross))
-    .attr('fill', '#d4cec5');
+    .attr('fill', chrome().grid);
 
   // Line: reciprocity rate
   const line = d3.line().x(t => x(String(t.decade))).y(t => yRight(t.rate)).curve(d3.curveMonotoneX);
@@ -108,7 +109,7 @@ function renderTrends(data) {
   svg.append('g').attr('transform', `translate(${w - m.right},0)`).call(d3.axisRight(yRight).ticks(5).tickFormat(d3.format('.0%')))
     .selectAll('text').style('font-size', '10px');
 
-  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', '#7a7268')
+  svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
     .text('Cross-field edges (bars) and reciprocity rate (line) per decade');
 }
 
@@ -128,9 +129,9 @@ function renderTable(data) {
   const tabHtml = '<div style="margin-bottom:0.6rem;font-size:0.82rem;">' +
     tabs.map(t => '<button type="button" data-tw-view="' + t + '" ' +
       'style="margin-right:0.3rem;padding:0.25rem 0.7rem;cursor:pointer;' +
-      'background:' + (_dsTwView === t ? '#5a3e28' : '#fdfbf7') + ';' +
-      'color:' + (_dsTwView === t ? '#fdfbf7' : '#5a3e28') + ';' +
-      'border:1px solid #c8c4bc;border-radius:11px;font-size:0.78rem;">' +
+      'background:' + (_dsTwView === t ? '#5a3e28' : chrome().halo) + ';' +
+      'color:' + (_dsTwView === t ? chrome().halo : '#5a3e28') + ';' +
+      'border:1px solid var(--chart-grid);border-radius:11px;font-size:0.78rem;">' +
       'by ' + t + '</button>').join('') +
     '</div>';
 
@@ -160,13 +161,13 @@ function _renderArticleTable(rows) {
   html += '</tr></thead><tbody>';
   rows.forEach(r => {
     html += '<tr>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">'
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">'
       + '<a href="/article/' + r.id + '" style="color:#5a3e28;">' + escapeHtml(r.title || ('#' + r.id)) + '</a>'
-      + '<div style="font-size:0.78rem;color:#9c9890;">' + escapeHtml(r.journal || '') + '</div></td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + (r.year || '—') + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">' + r.n_mutual_partners + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + r.n_cites_rc + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + r.n_cited_by_rc + '</td>';
+      + '<div style="font-size:0.78rem;color:var(--chart-muted);">' + escapeHtml(r.journal || '') + '</div></td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + (r.year || '—') + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-weight:600;">' + r.n_mutual_partners + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + r.n_cites_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + r.n_cited_by_rc + '</td>';
     html += '</tr>';
   });
   html += '</tbody></table>';
@@ -195,11 +196,11 @@ function _renderAuthorTable(rows) {
   html += '</tr></thead><tbody>';
   arr.slice(0, 50).forEach(a => {
     html += '<tr>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + escapeHtml(a.author) + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + a.n_articles + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">' + a.n_mutual_partners + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + a.n_cites_rc + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + a.n_cited_by_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + escapeHtml(a.author) + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + a.n_articles + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-weight:600;">' + a.n_mutual_partners + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + a.n_cites_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + a.n_cited_by_rc + '</td>';
     html += '</tr>';
   });
   html += '</tbody></table>';
@@ -225,11 +226,11 @@ function _renderJournalTable(rows) {
   html += '</tr></thead><tbody>';
   arr.forEach(j => {
     html += '<tr>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + escapeHtml(j.journal) + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + j.n_articles + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;font-weight:600;">' + j.n_mutual_partners + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + j.n_cites_rc + '</td>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + j.n_cited_by_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + escapeHtml(j.journal) + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + j.n_articles + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);font-weight:600;">' + j.n_mutual_partners + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + j.n_cites_rc + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + j.n_cited_by_rc + '</td>';
     html += '</tr>';
   });
   html += '</tbody></table>';

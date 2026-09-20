@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsCommunitiesTime = false;
 
@@ -48,7 +49,7 @@ function renderSankey(data) {
 
   // Toolbar with the small-flows toggle. Re-renders on change.
   const toolbar = el.append('div').style('margin-bottom', '0.4rem')
-    .style('font-size', '0.82rem').style('color', '#7a7268');
+    .style('font-size', '0.82rem').style('color', chrome().muted);
   toolbar.html('<label style="cursor:pointer;display:inline-flex;align-items:center;gap:0.3rem;">' +
     '<input type="checkbox" id="ds-ct-show-small"' + (_ctShowSmallFlows ? ' checked' : '') + '>' +
     '<span>Show flows below 1% of decade max</span></label>');
@@ -101,7 +102,7 @@ function renderSankey(data) {
   const palette = d3.schemeTableau10.concat(d3.schemeSet3);
   const journalColor = {};
   journalsSeen.forEach((j, i) => { journalColor[j] = palette[i % palette.length]; });
-  const colorOfNode = d => journalColor[d.top_journal || '—'] || '#9c9890';
+  const colorOfNode = d => journalColor[d.top_journal || '—'] || chrome().muted;
 
   // Reserve space on the right for a legend.
   const legendW = 220;
@@ -124,14 +125,14 @@ function renderSankey(data) {
 
   const legend = svg.append('g').attr('transform', 'translate(' + (w - legendW + 4) + ', 10)');
   legend.append('text').attr('x', 0).attr('y', 12)
-    .attr('font-size', 11).attr('font-weight', 600).attr('fill', '#3a3026')
+    .attr('font-size', 11).attr('font-weight', 600).attr('fill', chrome().ink)
     .text('Color = top journal of community');
   legendOrder.forEach((j, i) => {
     const ly = 26 + i * 16;
     legend.append('rect').attr('x', 0).attr('y', ly - 9).attr('width', 12).attr('height', 12)
       .attr('fill', journalColor[j]).attr('opacity', 0.85);
     const labelText = j.length > 32 ? j.slice(0, 30) + '…' : j;
-    legend.append('text').attr('x', 18).attr('y', ly).attr('font-size', 10).attr('fill', '#3a3026').text(labelText)
+    legend.append('text').attr('x', 18).attr('y', ly).attr('font-size', 10).attr('fill', chrome().ink).text(labelText)
       .append('title').text(j + ' — ' + (journalSize[j] || 0) + ' articles total');
   });
 
@@ -159,7 +160,7 @@ function renderSankey(data) {
   ng.append('text').attr('x', d => d.x0 < (w - legendW) / 2 ? d.x1 + 6 : d.x0 - 6)
     .attr('y', d => (d.y0 + d.y1) / 2).attr('dy', '0.35em')
     .attr('text-anchor', d => d.x0 < (w - legendW) / 2 ? 'start' : 'end')
-    .attr('fill', '#3a3026').attr('font-size', 10)
+    .attr('fill', chrome().ink).attr('font-size', 10)
     .text(d => {
       const tj = (d.top_journal || '').trim();
       const tjShort = tj.length > 22 ? tj.slice(0, 20) + '…' : tj;
@@ -174,9 +175,9 @@ function renderDetail(data) {
 
   let html = '<h4 class="methodology-heading">Per-decade community detail</h4>';
   decades.forEach(d => {
-    html += `<div style="margin:0.8rem 0;padding:0.6rem 0.8rem;background:#fdfbf7;border-left:3px solid #b38a6a;">
-      <div style="font-weight:600;color:#3a3026;">${escapeHtml(d.label)}</div>
-      <div style="font-size:0.78rem;color:#7a7268;">modularity ${d.modularity} · ${d.n_nodes} articles · ${d.n_edges} edges · ${d.communities.length} communities</div>`;
+    html += `<div style="margin:0.8rem 0;padding:0.6rem 0.8rem;background:var(--chart-halo);border-left:3px solid #b38a6a;">
+      <div style="font-weight:600;color:var(--chart-ink);">${escapeHtml(d.label)}</div>
+      <div style="font-size:0.78rem;color:var(--chart-muted);">modularity ${d.modularity} · ${d.n_nodes} articles · ${d.n_edges} edges · ${d.communities.length} communities</div>`;
     if (d.communities.length) {
       html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:0.4rem;"><thead><tr>';
       ['#','Size','Top journal','Top tag','Top article'].forEach(h => html += '<th style="text-align:left;border-bottom:1px solid #e8e4de;padding:0.25rem 0.4rem;">' + h + '</th>');

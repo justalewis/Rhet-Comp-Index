@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 const BREADTH_COLOR = {
   broadly_canonical:  "#3a5a28",
@@ -56,9 +57,9 @@ function renderScatter(data) {
     .selectAll('text').style('font-size','10px');
   svg.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y))
     .selectAll('text').style('font-size','10px');
-  svg.append('text').attr('x', w/2).attr('y', h - 8).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
+  svg.append('text').attr('x', w/2).attr('y', h - 8).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('Self-journal rate (% of citations from same journal)');
-  svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill','#7a7268')
+  svg.append('text').attr('x', 14).attr('y', h/2).attr('transform', `rotate(-90, 14, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('Unique citing authors');
 
   // Quadrant grid: median lines + per-quadrant captions to make the
@@ -73,8 +74,8 @@ function renderScatter(data) {
   function quad(text, qx, qy, anchor) {
     svg.append('text').attr('x', qx).attr('y', qy)
       .attr('text-anchor', anchor || 'start').attr('font-size', 10).attr('font-style','italic')
-      .attr('fill', '#9c9890').attr('paint-order','stroke')
-      .attr('stroke','#fdfbf7').attr('stroke-width', 3)
+      .attr('fill', chrome().muted).attr('paint-order','stroke')
+      .attr('stroke',chrome().halo).attr('stroke-width', 3)
       .style('pointer-events','none').text(text);
   }
   quad('broadly canonical',  m.left + 8,         m.top + 14,             'start');
@@ -86,9 +87,9 @@ function renderScatter(data) {
     .attr('cx', d => x(d.self_journal_rate))
     .attr('cy', d => y(d.unique_citing_authors))
     .attr('r',  d => r(d.total_citations))
-    .attr('fill', d => BREADTH_COLOR[d.breadth] || '#9c9890')
+    .attr('fill', d => BREADTH_COLOR[d.breadth] || chrome().muted)
     .attr('opacity', 0.6)
-    .attr('stroke', '#3a3026').attr('stroke-width', 0.5)
+    .attr('stroke', chrome().ink).attr('stroke-width', 0.5)
     .style('cursor','pointer')
     .on('click', (e, d) => { window.location.href = '/article/' + d.id; })
     .on('mouseover', function(_, d) { dots.attr('opacity', 0.08); d3.select(this).attr('opacity', 1).attr('r', r(d.total_citations) * 1.6).raise(); })
@@ -118,13 +119,13 @@ function renderTable(data) {
   html += '</tr></thead><tbody>';
   rows.forEach(r => {
     html += '<tr>';
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a><div style="font-size:0.78rem;color:#9c9890;">${escapeHtml(r.journal || '')}</div></td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.year || '—'}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.total_citations}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${(r.self_journal_rate*100).toFixed(0)}%</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${r.unique_citing_authors}</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;">${(r.top_citer_share*100).toFixed(0)}%</td>`;
-    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid #f1ede6;color:${BREADTH_COLOR[r.breadth] || '#3a3026'};">${escapeHtml(r.breadth.replace(/_/g,' '))}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);"><a href="/article/${r.id}" style="color:#5a3e28;">${escapeHtml(r.title || '#'+r.id)}</a><div style="font-size:0.78rem;color:var(--chart-muted);">${escapeHtml(r.journal || '')}</div></td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.year || '—'}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.total_citations}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${(r.self_journal_rate*100).toFixed(0)}%</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${r.unique_citing_authors}</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);">${(r.top_citer_share*100).toFixed(0)}%</td>`;
+    html += `<td style="padding:0.3rem 0.5rem;border-bottom:1px solid var(--chart-grid);color:${BREADTH_COLOR[r.breadth] || chrome().ink};">${escapeHtml(r.breadth.replace(/_/g,' '))}</td>`;
     html += '</tr>';
   });
   html += '</tbody></table>';

@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS, GROUP_LABELS } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsBranchingTraditions = false;
 
@@ -47,20 +48,20 @@ function render(data) {
     const card = summary.append('div')
       .style('flex', '1 1 200px')
       .style('padding', '0.8rem 1rem')
-      .style('border-left', '4px solid ' + (GROUP_COLORS[g.group] || '#9c9890'))
-      .style('background', '#fdfbf7')
+      .style('border-left', '4px solid ' + (GROUP_COLORS[g.group] || chrome().muted))
+      .style('background', chrome().halo)
       .style('font-size', '0.84rem');
-    card.append('div').style('font-weight', '600').style('color', '#3a3026').style('font-size', '0.78rem')
+    card.append('div').style('font-weight', '600').style('color', chrome().ink).style('font-size', '0.78rem')
       .text((g.label || GROUP_LABELS[g.group] || g.group).toUpperCase());
-    card.append('div').style('font-size', '1.4rem').style('font-weight', '700').style('color', '#3a3026')
+    card.append('div').style('font-size', '1.4rem').style('font-weight', '700').style('color', chrome().ink)
       .text((g.article_count || 0).toLocaleString() + ' articles');
-    card.append('div').style('color', '#7a7268').text(g.journal_count + ' journals');
+    card.append('div').style('color', chrome().muted).text(g.journal_count + ' journals');
   });
 
   // Per-journal table grouped by tradition
   groups.forEach(g => {
     const wrap = container.append('div').style('margin-bottom', '1.4rem');
-    wrap.append('h4').attr('class', 'methodology-heading').style('color', GROUP_COLORS[g.group] || '#3a3026')
+    wrap.append('h4').attr('class', 'methodology-heading').style('color', GROUP_COLORS[g.group] || chrome().ink)
       .text(g.label || GROUP_LABELS[g.group] || g.group);
     const tbl = wrap.append('table')
       .attr('class', 'ds-table')
@@ -73,10 +74,10 @@ function render(data) {
     const tbody = tbl.append('tbody');
     (g.journals || []).forEach(j => {
       const row = tbody.append('tr');
-      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid #f1ede6').text(j.journal);
-      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid #f1ede6').text((j.article_count || 0).toLocaleString());
-      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid #f1ede6').text(j.earliest_year || '—');
-      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid #f1ede6').text(j.latest_year || '—');
+      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid var(--chart-grid)').text(j.journal);
+      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid var(--chart-grid)').text((j.article_count || 0).toLocaleString());
+      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid var(--chart-grid)').text(j.earliest_year || '—');
+      row.append('td').style('padding', '0.3rem 0.5rem').style('border-bottom', '1px solid var(--chart-grid)').text(j.latest_year || '—');
     });
   });
 }

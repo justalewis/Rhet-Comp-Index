@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml, GROUP_COLORS } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _filtersWired_loadDsShiftingCurrents = false;
 
@@ -49,16 +50,16 @@ function renderPaths(data) {
     const x = m.left + ci * colW + colW / 2;
     // Header
     svg.append('text').attr('x', x).attr('y', 18).attr('text-anchor', 'middle')
-      .attr('font-size', 13).attr('font-weight', 600).attr('fill', '#3a3026').text(dec.label);
+      .attr('font-size', 13).attr('font-weight', 600).attr('fill', chrome().ink).text(dec.label);
     svg.append('text').attr('x', x).attr('y', 32).attr('text-anchor', 'middle')
-      .attr('font-size', 10).attr('fill', '#9c9890')
+      .attr('font-size', 10).attr('fill', chrome().muted)
       .text((dec.stats && dec.stats.path_len ? dec.stats.path_len + ' nodes  ·  ' : '0 nodes  ·  ') +
             (dec.stats && dec.stats.n_edges || 0).toLocaleString() + ' edges in DAG');
 
     const path = dec.path || [];
     if (!path.length) {
       svg.append('text').attr('x', x).attr('y', m.top + 16).attr('text-anchor', 'middle')
-        .attr('fill', '#9c9890').attr('font-size', 11).text('(no path)');
+        .attr('fill', chrome().muted).attr('font-size', 11).text('(no path)');
       return;
     }
 
@@ -69,19 +70,19 @@ function renderPaths(data) {
       if (next) {
         svg.append('line').attr('x1', x).attr('x2', x)
           .attr('y1', y + 12).attr('y2', y + rowH - 12)
-          .attr('stroke', '#c8c4bc').attr('stroke-width', 1);
+          .attr('stroke', chrome().grid).attr('stroke-width', 1);
       }
       // Node
       svg.append('circle').attr('cx', x).attr('cy', y).attr('r', 8)
-        .attr('fill', GROUP_COLORS[art.group] || '#9c9890')
-        .attr('stroke', '#fdfbf7').attr('stroke-width', 2);
+        .attr('fill', GROUP_COLORS[art.group] || chrome().muted)
+        .attr('stroke', chrome().halo).attr('stroke-width', 2);
       // Label (clickable)
       const a = svg.append('a').attr('href', '/article/' + art.id);
       const lbl = (art.title || '#' + art.id);
       const auth = art.authors ? art.authors.split(';')[0].trim().split(' ').slice(-1)[0] : '';
       const yr = art.year || '';
       a.append('text').attr('x', x).attr('y', y + 22).attr('text-anchor', 'middle')
-        .attr('font-size', 9).attr('fill', '#3a3026')
+        .attr('font-size', 9).attr('fill', chrome().ink)
         .text((auth + (yr ? ' (' + yr + ')' : '')).slice(0, 28));
       a.append('title').text(lbl);
     });
@@ -105,12 +106,12 @@ function renderPersistence(data) {
     html += '</tr></thead><tbody>';
     multi.forEach(i => {
       html += '<tr>';
-      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">'
+      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">'
         + '<a href="/article/' + i.id + '" style="color:#5a3e28;">' + escapeHtml(i.title || '#' + i.id) + '</a>'
-        + '<div style="font-size:0.78rem;color:#9c9890;">' + escapeHtml(i.journal || '') + '</div></td>';
-      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + (i.year || '—') + '</td>';
-      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + i.decades.join(', ') + '</td>';
-      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + i.n + '</td>';
+        + '<div style="font-size:0.78rem;color:var(--chart-muted);">' + escapeHtml(i.journal || '') + '</div></td>';
+      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + (i.year || '—') + '</td>';
+      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + i.decades.join(', ') + '</td>';
+      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + i.n + '</td>';
       html += '</tr>';
     });
     html += '</tbody></table>';

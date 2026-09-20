@@ -10,6 +10,7 @@
 
 // Eager imports — every viz module attaches its inline-handler functions
 // to `window` at top level when imported.
+import "./utils/chartjs-theme.js";
 import "./viz/timeline.js";
 import "./viz/topics.js";
 import "./viz/author_network.js";

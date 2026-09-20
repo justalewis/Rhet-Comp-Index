@@ -8,7 +8,7 @@
 import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -154,7 +154,7 @@ function focusOnNode(id) {
   document.getElementById('citnet-stats').innerHTML =
     `Focused on <strong>${escapeHtml(seed ? seed.title : '#' + id)}</strong> ` +
     `· ${nodes.length} articles in 2-hop neighbourhood · ${subLinks.length} edges ` +
-    `<button id="citnet-clear-focus" style="margin-left:0.6rem;padding:0.15rem 0.5rem;background:#fdfbf7;border:1px solid #c8c4bc;cursor:pointer;font-size:0.78rem;border-radius:11px;">Clear focus</button>`;
+    `<button id="citnet-clear-focus" style="margin-left:0.6rem;padding:0.15rem 0.5rem;background:var(--chart-halo);border:1px solid var(--chart-grid);cursor:pointer;font-size:0.78rem;border-radius:11px;">Clear focus</button>`;
   document.getElementById('citnet-clear-focus').addEventListener('click', () => {
     _citnetFocusId = null;
     renderCitationNetwork(document.getElementById('citnet-container'), _citnetFullData);
@@ -193,7 +193,7 @@ function renderCitationNetwork(container, data) {
     .selectAll('line')
     .data(citnetLinks)
     .enter().append('line')
-    .style('stroke',         '#ccc7bb')
+    .style('stroke',         chrome().grid)
     .style('stroke-opacity', 0.35)
     .style('stroke-width',   0.7);
 

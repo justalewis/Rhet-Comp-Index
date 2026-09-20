@@ -7,7 +7,7 @@
 
 import { renderExportToolbar } from "../shared/export.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
-import { journalColor, citnetJournalColor } from "../utils/colors.js";
+import { journalColor, citnetJournalColor, chrome, CATEGORICAL_LIMIT } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -31,13 +31,35 @@ async function loadTimeline() {
   renderTimeline(allSeries);
 }
 
+/**
+ * Rank by total output and keep the head; sum everything below into one
+ * series rather than drawing it as many.
+ *
+ * The palette carries eight validated hues and folds the rest to a single
+ * neutral. Handing Chart.js 55 series under that rule produced 47 legend
+ * entries in the same grey -- a legend that says nothing, 47 times. One
+ * aggregated band says the true thing: this is the rest of the field.
+ */
+function foldTail(series, limit) {
+  if (series.length <= limit) return series;
+  const total = s => s.counts.reduce((a, b) => a + (b || 0), 0);
+  const ranked = [...series].sort((a, b) => total(b) - total(a));
+  const head = ranked.slice(0, limit);
+  const tail = ranked.slice(limit);
+  return head.concat([{
+    journal: `Other (${tail.length} journals)`,
+    counts: allYears.map((_y, i) => tail.reduce((sum, s) => sum + (s.counts[i] || 0), 0)),
+    __other: true,
+  }]);
+}
+
 function renderTimeline(series) {
   const ctx = document.getElementById('timeline-chart').getContext('2d');
 
-  const datasets = series.map((s, i) => ({
+  const datasets = foldTail(series, CATEGORICAL_LIMIT).map((s, i) => ({
     label: s.journal,
     data:  s.counts,
-    backgroundColor: journalColor(i),
+    backgroundColor: s.__other ? chrome().other : journalColor(i),
     borderWidth: 0,
   }));
 
@@ -53,7 +75,7 @@ function renderTimeline(series) {
         legend: {
           position: 'bottom',
           labels: {
-            font: { family: 'system-ui, sans-serif', size: 11 },
+            font: { size: 11 },
             boxWidth: 12,
             padding: 8,
           }

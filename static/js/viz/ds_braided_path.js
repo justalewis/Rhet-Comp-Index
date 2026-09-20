@@ -2,6 +2,7 @@
 import { setLoading, setError, fetchJson, escapeHtml } from "../shared/common.js";
 import { renderFilterBar, filterParams } from "../shared/filters.js";
 import { renderExportToolbar } from "../shared/export.js";
+import { chrome } from "../utils/theme.js";
 
 let _data = null;
 let _filtersWired = false;
@@ -81,7 +82,7 @@ function drawSankey(pane) {
     .style('font', '11px system-ui, sans-serif');
 
   if (!pane.nodes || !pane.nodes.length || !pane.links || !pane.links.length) {
-    svg.append('text').attr('x', 20).attr('y', 30).attr('fill', '#9c9890')
+    svg.append('text').attr('x', 20).attr('y', 30).attr('fill', chrome().muted)
       .text('No flows recorded for this period.');
     return;
   }
@@ -101,7 +102,7 @@ function drawSankey(pane) {
   const colorOf = d => {
     if (d.group === 'TPC')       return '#5a3e28';
     if (d.group === 'RHET_COMP') return '#3a5a28';
-    return '#9c9890';
+    return chrome().muted;
   };
 
   svg.append('g')
@@ -133,7 +134,7 @@ function drawSankey(pane) {
     .attr('y', d => (d.y0 + d.y1) / 2)
     .attr('dy', '0.35em')
     .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
-    .attr('fill', '#3a3026')
+    .attr('fill', chrome().ink)
     .text(d => d.name + ' (' + (d.value || 0).toLocaleString() + ')');
 }
 
@@ -149,9 +150,9 @@ function renderSummaryTable() {
   html += '</tr></thead><tbody>';
   _data.summary.forEach(row => {
     html += '<tr>';
-    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + escapeHtml(row.label || (row.decade + 's')) + '</td>';
+    html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + escapeHtml(row.label || (row.decade + 's')) + '</td>';
     ['tpc_tpc', 'tpc_rc', 'rc_tpc', 'rc_rc', 'total'].forEach(k => {
-      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid #f1ede6;">' + (row[k] || 0).toLocaleString() + '</td>';
+      html += '<td style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--chart-grid);">' + (row[k] || 0).toLocaleString() + '</td>';
     });
     html += '</tr>';
   });
