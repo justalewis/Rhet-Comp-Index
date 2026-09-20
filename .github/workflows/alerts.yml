@@ -28,8 +28,11 @@
 name: Weekly alert digests
 
 on:
-  schedule:
-    - cron: '17 14 * * 5'
+  # Schedule stopped 2026-09-19 with the move to the WAC Clearinghouse; the
+  # digest now runs there under Windows Task Scheduler. See cron.yml.
+  #
+  # schedule:
+  #   - cron: '17 14 * * 5'
   workflow_dispatch:
     inputs:
       dry_run:

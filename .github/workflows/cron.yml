@@ -10,12 +10,19 @@
 name: Daily fetch + backup
 
 on:
-  schedule:
-    # 03:23 UTC daily. Cron syntax: minute hour day month dow.
-    # NOT on the hour: GitHub throttles ':00' crons hard — these runs were
-    # firing ~3.5h late (06:40) or being dropped entirely. An off-peak minute
-    # schedules far more reliably. Still best-effort; may delay a few minutes.
-    - cron: '23 3 * * *'
+  # Schedule stopped 2026-09-19. Pinakes moved to the WAC Clearinghouse and
+  # these jobs now run on that server under Windows Task Scheduler (see
+  # deploy/windows/Install-PinakesTasks.ps1). pinakes.xyz serves the redirect
+  # Worker in deploy/xyz-redirect, so a scheduled POST here would only be
+  # redirected, and the bearer token would be dropped crossing hosts. Restore
+  # the two lines below only if the app ever moves back to Fly.
+  #
+  # schedule:
+  #   # 03:23 UTC daily. Cron syntax: minute hour day month dow.
+  #   # NOT on the hour: GitHub throttles ':00' crons hard — these runs were
+  #   # firing ~3.5h late (06:40) or being dropped entirely. An off-peak minute
+  #   # schedules far more reliably. Still best-effort; may delay a few minutes.
+  #   - cron: '23 3 * * *'
   # Manual trigger from the Actions tab for testing or emergency runs.
   workflow_dispatch:
 
