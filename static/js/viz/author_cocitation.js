@@ -9,6 +9,7 @@ import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
+import { renderJournalLegend } from "../utils/legend.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -128,11 +129,7 @@ function renderAuthorCocitation(container, data) {
   // Legend — colour by top journal
   const seenJournals = [...new Set(acocitNodes.map(n => n.top_journal).filter(Boolean))].sort();
   const legendEl = document.getElementById('acocit-legend');
-  legendEl.innerHTML = seenJournals.map(j =>
-    `<span class="citnet-legend-item">` +
-    `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
-    `${escapeHtml(j)}</span>`
-  ).join('');
+  renderJournalLegend(legendEl, seenJournals);
 
   const W = container.clientWidth || 820;
   const H = 600;

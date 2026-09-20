@@ -519,10 +519,17 @@ def build_sidebar():
             key=lambda j: j["name"].lower(),
         )
         if members:
+            # journal_map holds the same dicts as all_journals, so tagging a
+            # member here tags it everywhere. The visualisations colour by
+            # sub-field and need the label to travel with the journal.
+            for m in members:
+                m["group"] = group_label
             journal_groups.append({"label": group_label, "journals": members})
             assigned.update(n for n in names if n in journal_map)
     ungrouped = [j for j in all_journals if j["name"] not in assigned]
     if ungrouped:
+        for m in ungrouped:
+            m["group"] = "Other"
         journal_groups.append({"label": "Other", "journals": ungrouped})
 
     return print_journals, web_journals, all_journals, journal_groups
