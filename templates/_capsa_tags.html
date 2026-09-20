@@ -1,0 +1,71 @@
+{# ============================================================
+   The sillybos tags. A roll carried a small parchment label with
+   its title written on it, hanging out of the capsa so a reader
+   could find the thing without unpacking the box. Fifty-four of
+   them here, grouped as _journal_list.html groups them.
+
+   The current journal takes a diple in the margin rather than a
+   colour wash, so the mark survives a printout with background
+   graphics turned off and does not rest on colour alone.
+
+   Journals we cannot reach are set in faience, which marks absence
+   in this system and marks nothing else.
+
+   On a phone the list folds. Reflowed into chips it still runs to
+   about 2,600px, which is three screens of navigation before the
+   page itself starts; the disclosure below keeps it one tap away
+   instead. It is open on anything wider.
+   ============================================================ #}
+
+<details class="tags-fold" id="tags-fold">
+  <summary>
+    <span>Journals</span>
+    {% if all_journals %}<span class="tags-count">{{ all_journals | length }}</span>{% endif %}
+  </summary>
+
+  <div class="tags">
+
+    <a class="tag" href="/" {% if not request.args.get('journal') and active_nav == 'index' %}aria-current="page"{% endif %}>
+      <span class="jname">All journals</span>
+    </a>
+
+    {% for group in journal_groups %}
+    <div class="tags-head">{{ group.label }}</div>
+      {% for j in group.journals %}
+      <a class="tag" href="/?journal={{ j.name | urlencode }}"
+         {% if request.args.get('journal') == j.name %}aria-current="page"{% endif %}>
+        <span class="jname">{{ j.name }}</span>
+        <span class="jmeta">
+          {% if j.source == 'rss' %}<span class="src">RSS</span>{% endif %}
+          {% if j.source == 'scrape' %}<span class="src">web</span>{% endif %}
+          {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    {% endfor %}
+
+    {% if unavailable %}
+    <div class="tags-head absent">Unavailable</div>
+      {% for j in unavailable %}
+      <span class="tag absent" title="{{ j.note }}">
+        <span class="jname">{{ j.name }}</span>
+      </span>
+      {% endfor %}
+    {% endif %}
+
+  </div>
+</details>
+
+{# Run during parse rather than on DOMContentLoaded: the element starts
+   closed, so a phone never flashes the open list, and a wide screen opens
+   it before the first paint. #}
+<script>
+(function () {
+  var fold = document.getElementById('tags-fold');
+  if (!fold) return;
+  var narrow = window.matchMedia('(max-width: 62rem)');
+  function sync() { fold.open = !narrow.matches; }
+  sync();
+  narrow.addEventListener('change', sync);
+})();
+</script>

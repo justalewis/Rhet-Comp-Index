@@ -190,8 +190,11 @@ def test_route_count_matches_expected(client):
     #        GET /feed/select/<code>{,.xml,.opml} (a reader's own selection,
     #        encoded deterministically so the same picks give the same URL),
     #        GET /feeds/select (no-JS target of the tickbox form).
-    assert len(rules) == 157, (
-        f"Expected 157 routes, got {len(rules)}. "
+    #  +  1  GET /design/icons (2026-09-19): reference sheet for the Alexandrian
+    #        icon set, and the end-to-end check that tokens.css, the self-hosted
+    #        faces and the CSP agree. Unlinked, noindex, Disallow: /design/.
+    assert len(rules) == 158, (
+        f"Expected 158 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

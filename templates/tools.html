@@ -1,155 +1,124 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
-{% block title %}All Tools — Pinakes{% endblock %}
+{# The pilot page for the Alexandrian rebuild. Same twenty tools and the
+   same five questions as before; what is new is the shell, the type, and
+   a mark for each tool. The orienting lines under each question are the
+   ones /explore already uses on its accordion, so the two pages answer
+   the same question the same way. #}
+
+{% block title %}All Tools &mdash; Pinakes{% endblock %}
 
 {% block head_extra %}
   <meta name="description" content="All analytical tools in Pinakes: citation networks, co-authorship graphs, topic heatmaps, centrality analysis, community detection, and more.">
-  <style>
-    .tool-card-name { margin: 0 0 0.35rem 0; }
-    .tool-card-name a { color: var(--accent); text-decoration: none; }
-    .tool-card-name a:hover { text-decoration: underline; }
-    .tool-card-desc { margin: 0; }
-    .tools-footer {
-      margin-top: 2.5rem;
-      padding-top: 1.2rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      font-family: var(--font-ui);
-      font-size: 0.9rem;
-    }
-    .tools-footer a { color: var(--link); text-decoration: none; }
-    .tools-footer a:hover { text-decoration: underline; }
-  </style>
 {% endblock %}
+
+{% block extra_sprites %}{% include "_icons_tools.html" %}{% endblock %}
 
 {% block content %}
 
-    <div class="content-header">
-      <h2>All Tools</h2>
-      <span class="result-count">Every analytical tool on Pinakes, with descriptions and direct links.</span>
-    </div>
+{% set sections = [
+  {
+    'question': 'What Has the Field Published?',
+    'orient': "Publication volume, institutional output, and the current week's scholarship.",
+    'tools': [
+      ('ic-timeline', '/explore#timeline', 'Publication Timeline',
+       'Article output per year across every indexed journal, filterable by venue.'),
+      ('ic-institutions', '/explore#institutions', 'Institutions',
+       'Which universities produce the most scholarship, tracked over time via OpenAlex.'),
+      ('ic-new', '/new', "What's New",
+       'Articles added to the index in the last seven days, grouped by journal.'),
+    ]
+  },
+  {
+    'question': 'How Does the Field Cite?',
+    'orient': 'Citation patterns, flows between journals, and how citation density changes over time.',
+    'tools': [
+      ('ic-citnet', '/explore#citnet', 'Citation Network',
+       'The global directed citation network: articles as nodes, citations as edges, filterable by journal and year.'),
+      ('ic-most-cited', '/most-cited', 'Most Cited',
+       'Articles ranked by how often they are cited within the index, filterable by journal, topic, and decade.'),
+      ('ic-cite-trends', '/explore#citation-trends', 'Citation Trends',
+       'Average citations per article by publication year: how citation density changes over time.'),
+      ('ic-journal-flow', '/explore#journal-flow', 'Journal Citation Flow',
+       'Journal-to-journal citation flow as a chord diagram: directional intellectual trade between venues.'),
+      ('ic-half-life', '/explore#half-life', 'Half-Life',
+       'Citing and cited half-life for each journal: how far back does a journal reach, and how long does its work get cited?'),
+    ]
+  },
+  {
+    'question': 'What Belongs Together?',
+    'orient': 'Which works the field treats as related, which communities form, and how knowledge flows through time.',
+    'tools': [
+      ('ic-cocitation', '/explore#cocitation', 'Article Co-Citation',
+       'Articles the field treats as intellectually related, based on how often they are cited together.'),
+      ('ic-author-cocitation', '/explore#author-cocitation', 'Author Co-Citation',
+       'Scholars the field perceives as intellectually connected, based on co-citation by others.'),
+      ('ic-bibcoupling', '/explore#bibcoupling', 'Bibliographic Coupling',
+       'Articles that read the same things: linked by shared references.'),
+      ('ic-communities', '/explore#communities', 'Community Detection',
+       'Clusters of densely interconnected articles identified by the Louvain algorithm.'),
+      ('ic-centrality', '/explore#centrality', 'Centrality Analysis',
+       'Structural importance: which articles are cited by influential work (PageRank) and which bridge separate communities (betweenness).'),
+      ('ic-main-path', '/explore#main-path', 'Main Path Analysis',
+       'The backbone of knowledge flow: the single most-traversed chain from the research frontier to foundational works.'),
+      ('ic-sleeping', '/explore#sleeping-beauties', 'Sleeping Beauties',
+       'Articles that went years with little citation before experiencing sudden recognition.'),
+      ('ic-temporal', '/explore#temporal-evolution', 'Temporal Network Evolution',
+       "How the citation network's density, clustering, and modularity have changed over time."),
+    ]
+  },
+  {
+    'question': 'Who Works With Whom?',
+    'orient': 'Collaborative relationships and individual scholarly profiles.',
+    'tools': [
+      ('ic-coauthorship', '/explore#authors', 'Co-Authorship Network',
+       'Authors who have published together, sized by publication count, linked by shared articles.'),
+      ('ic-author-profiles', '/authors', 'Author Profiles',
+       'Individual profile pages with publication timeline, co-author network, topic distribution, and co-citation partners.'),
+    ]
+  },
+  {
+    'question': 'What Is the Field About?',
+    'orient': 'Topic patterns, thematic connections, and how to find related reading.',
+    'tools': [
+      ('ic-topics', '/explore#topics', 'Topic Co-Occurrence',
+       'How often pairs of subject tags appear together: which research threads the field treats as connected.'),
+      ('ic-reading-path', '/explore#reading-path', 'Reading Path',
+       'Given one article, find what to read next: backward citations, forward citations, co-citation neighbors, and coupling neighbors ranked by relevance.'),
+    ]
+  }
+] %}
 
-    <!-- Section 1 -->
-    <div class="tools-section">
-      <h3 class="tools-section-heading">What Has the Field Published?</h3>
-      <div class="tools-grid">
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#timeline">Publication Timeline</a></p>
-          <p class="tool-card-desc">Article output per year across every indexed journal, filterable by venue.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#institutions">Institutions</a></p>
-          <p class="tool-card-desc">Which universities produce the most scholarship, tracked over time via OpenAlex.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/new">What's New</a></p>
-          <p class="tool-card-desc">Articles added to the index in the last seven days, grouped by journal.</p>
-        </div>
-      </div>
-    </div>
+<div class="page-head">
+  <h1>All Tools</h1>
+  <p class="lede">Twenty ways to read the index rather than search it. Each one takes the same corpus &mdash; {{ '{:,}'.format(total_count) if total_count else 'every article' }} across the journals in the capsa &mdash; and asks it a different question.</p>
+</div>
 
-    <!-- Section 2 -->
-    <div class="tools-section">
-      <h3 class="tools-section-heading">How Does the Field Cite?</h3>
-      <div class="tools-grid">
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#citnet">Citation Network</a></p>
-          <p class="tool-card-desc">The global directed citation network: articles as nodes, citations as edges, filterable by journal and year.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/most-cited">Most Cited</a></p>
-          <p class="tool-card-desc">Articles ranked by how often they are cited within the index, filterable by journal, topic, and decade.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#citation-trends">Citation Trends</a></p>
-          <p class="tool-card-desc">Average citations per article by publication year: how citation density changes over time.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#journal-flow">Journal Citation Flow</a></p>
-          <p class="tool-card-desc">Journal-to-journal citation flow as a chord diagram: directional intellectual trade between venues.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#half-life">Half-Life</a></p>
-          <p class="tool-card-desc">Citing and cited half-life for each journal: how far back does a journal reach, and how long does its work get cited?</p>
-        </div>
-      </div>
-    </div>
+{% for s in sections %}
+<section>
+  <div class="section-head">
+    <h2>{{ s.question }}</h2>
+    <p>{{ s.orient }}</p>
+  </div>
+  <div class="tool-grid">
+    {% for sym, href, name, desc in s.tools %}
+    <a class="tool" href="{{ href }}">
+      <svg class="ic" aria-hidden="true"><use href="#{{ sym }}"/></svg>
+      <span class="tname">{{ name }}</span>
+      <p class="tdesc">{{ desc }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
 
-    <!-- Section 3 -->
-    <div class="tools-section">
-      <h3 class="tools-section-heading">What Belongs Together?</h3>
-      <div class="tools-grid">
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#cocitation">Article Co-Citation</a></p>
-          <p class="tool-card-desc">Articles the field treats as intellectually related, based on how often they are cited together.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#author-cocitation">Author Co-Citation</a></p>
-          <p class="tool-card-desc">Scholars the field perceives as intellectually connected, based on co-citation by others.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#bibcoupling">Bibliographic Coupling</a></p>
-          <p class="tool-card-desc">Articles that read the same things: linked by shared references.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#communities">Community Detection</a></p>
-          <p class="tool-card-desc">Clusters of densely interconnected articles identified by the Louvain algorithm.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#centrality">Centrality Analysis</a></p>
-          <p class="tool-card-desc">Structural importance: which articles are cited by influential work (PageRank) and which bridge separate communities (betweenness).</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#main-path">Main Path Analysis</a></p>
-          <p class="tool-card-desc">The backbone of knowledge flow: the single most-traversed chain from the research frontier to foundational works.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#sleeping-beauties">Sleeping Beauties</a></p>
-          <p class="tool-card-desc">Articles that went years with little citation before experiencing sudden recognition.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#temporal-evolution">Temporal Network Evolution</a></p>
-          <p class="tool-card-desc">How the citation network's density, clustering, and modularity have changed over time.</p>
-        </div>
-      </div>
-    </div>
+<div class="column-foot">
+  <a href="/explore">&larr; Back to Explore</a>
+  <a href="/coverage">Data Coverage &amp; Methodology &rarr;</a>
+</div>
 
-    <!-- Section 4 -->
-    <div class="tools-section">
-      <h3 class="tools-section-heading">Who Works With Whom?</h3>
-      <div class="tools-grid">
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#authors">Co-Authorship Network</a></p>
-          <p class="tool-card-desc">Authors who have published together, sized by publication count, linked by shared articles.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/authors">Author Profiles</a></p>
-          <p class="tool-card-desc">Individual profile pages with publication timeline, co-author network, topic distribution, and co-citation partners.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 5 -->
-    <div class="tools-section">
-      <h3 class="tools-section-heading">What Is the Field About?</h3>
-      <div class="tools-grid">
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#topics">Topic Co-Occurrence</a></p>
-          <p class="tool-card-desc">How often pairs of subject tags appear together: which research threads the field treats as connected.</p>
-        </div>
-        <div class="tool-card">
-          <p class="tool-card-name"><a href="/explore#reading-path">Reading Path</a></p>
-          <p class="tool-card-desc">Given one article, find what to read next: backward citations, forward citations, co-citation neighbors, and coupling neighbors ranked by relevance.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer links -->
-    <div class="tools-footer">
-      <a href="/explore">&larr; Back to Explore</a>
-      <a href="/coverage">Data Coverage &amp; Methodology &rarr;</a>
-    </div>
+<svg class="coronis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <path d="M5 15c4 0 5-8 9-8s5 4 5 4"/><path d="M9 19h9"/>
+</svg>
 
 {% endblock %}

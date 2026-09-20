@@ -4,12 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Pinakes{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  {# The stylesheet set is a block so the Alexandrian Suite rebuild can land
+     one template at a time. A rebuilt page overrides `stylesheets` with
+     {% include "_alexandrian_head.html" %} and drops the legacy sheets
+     entirely; everything not yet rebuilt keeps the default below. The same
+     goes for `legacy_theme`, which carries the Scandi/Terminal toggles the
+     new system replaces with red-figure/black-figure. #}
+  {% block stylesheets %}
   <style>
-    /* Last-resort token values for when the design-system CDN is
-       unreachable. tokens.css (linked next) defines the same names later
-       in the cascade, so it wins whenever it loads. */
+    /* Interim values for the pages not yet rebuilt on the Alexandrian Suite.
+       These were written as a fallback for an unreachable design-system CDN,
+       but they have been the *only* values in play since the move to the
+       Clearinghouse: the CSP never listed justalewis.github.io, so the token
+       stylesheet was blocked on every request. The dead <link> is gone rather
+       than left to fail in the console. */
     :root {
       --bg: #F7F5F1;
       --accent: #2C4A3A;
@@ -19,12 +28,12 @@
       --font-mono: ui-monospace, Consolas, 'Courier New', monospace;
     }
   </style>
-  <!-- Lewis Design System tokens (colors, type, spacing) — must load before
-       style.css, which maps Pinakes variables onto these tokens. -->
-  <link rel="stylesheet" href="https://justalewis.github.io/lewis-design-system/v1/tokens.css">
   <link rel="stylesheet" href="/static/style.css?v={{ version }}">
   <link rel="stylesheet" href="/static/style-scandi.css?v={{ version }}">
   <link rel="stylesheet" href="/static/style-terminal.css?v={{ version }}">
+  {% endblock %}
+
+  {% block legacy_theme %}
   <script>(function(){var t=localStorage.getItem('rc-theme');if(t==='terminal'){document.documentElement.classList.add('terminal');}else if(t==='scandi'){document.documentElement.classList.add('scandi');}})();</script>
   <script>
     document.addEventListener('DOMContentLoaded',function(){
@@ -58,9 +67,16 @@
       document.body.appendChild(scandiBtn);
     });
   </script>
+  {% endblock %}
+
   {% block head_extra %}{% endblock %}
 </head>
 <body{% block body_attrs %}{% endblock %}>
+{# The core icon sprite, inert until a page references a symbol. It is
+   on by default because every rebuilt page needs the sidebar marks;
+   <defs> content never renders, so the legacy pages carry it without
+   drawing anything. #}
+{% block icon_sprite %}{% include "_icons_core.html" %}{% endblock %}
 {% block body %}{% endblock %}
 {% block body_scripts %}{% endblock %}
 <script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

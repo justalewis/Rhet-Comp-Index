@@ -14,5 +14,6 @@
 *.png  binary
 *.gif  binary
 *.ico  binary
+*.woff2 binary
 *.pdf  binary
 *.docx binary

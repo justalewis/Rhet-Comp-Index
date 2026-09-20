@@ -1,0 +1,245 @@
+{% extends "base-core.html" %}
+
+{# The first page built on the Alexandrian Suite, and for now the only
+   one. It doubles as the reference sheet for the icon set and as the
+   end-to-end check on the foundations: if the faces below render as
+   Didot and Literata rather than Georgia, then tokens.css, fonts.css,
+   the woff2 MIME type and the CSP are all correct together. #}
+
+{% block title %}Icon specimen — Pinakes{% endblock %}
+
+{% block stylesheets %}{% include "_alexandrian_head.html" %}{% endblock %}
+{% block legacy_theme %}{% endblock %}
+
+{% block icon_sprite %}
+  {% include "_icons_core.html" %}
+  {% include "_icons_tools.html" %}
+  {% include "_icons_datastories.html" %}
+{% endblock %}
+
+{% block head_extra %}
+<meta name="robots" content="noindex">
+<style>
+  .sheet { max-width: 62rem; margin: 0 auto; padding: var(--space-10) var(--space-6) var(--space-16); }
+
+  .sheet-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-4); }
+  .sheet h1 { font-size: var(--text-3xl); margin-bottom: var(--space-3); }
+  .sheet .lede { font-size: 1.16rem; line-height: 1.6; color: var(--gloss-soft); max-width: 58ch; }
+
+  .figure-toggle {
+    font-family: var(--f-ui); font-size: var(--text-sm); font-weight: 700;
+    padding: 0.4rem 0.85rem; color: var(--terracotta); background: transparent;
+    border: 1px solid var(--terracotta); border-radius: var(--radius-sm);
+  }
+  .figure-toggle:hover { background: var(--terracotta-wash); }
+
+  /* The paragraphos, hanging in the gutter rather than ruling the page. */
+  .sheet > section + section::before {
+    content: ""; display: block; width: 2.5rem; height: 0;
+    border-top: 2px solid var(--gloss); margin: var(--space-12) 0 var(--space-8);
+  }
+
+  .sheet h2 { font-size: var(--text-2xl); margin-bottom: var(--space-2); }
+  .sheet h3 {
+    font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.09em; color: var(--dilute);
+    margin: var(--space-8) 0 var(--space-4);
+    padding-bottom: var(--space-2); border-bottom: 1px solid var(--rule);
+  }
+  .sheet .note { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); max-width: 68ch; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); gap: var(--space-3); }
+  .cell {
+    display: flex; align-items: flex-start; gap: var(--space-3);
+    background: var(--paper); border: 1px solid var(--rule);
+    border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4);
+  }
+  .cell .nm { font-family: var(--f-ui); font-size: var(--text-sm); line-height: 1.3; }
+  .cell .gl { display: block; font-family: var(--f-quote); font-style: italic; color: var(--dilute); margin-top: 0.1rem; }
+  .cell code { display: block; font-size: 0.72rem; color: var(--dilute-light); margin-top: 0.2rem; }
+
+  /* Type specimen: the four faces, plus Greek and polytonic, which is
+     the reason the full 23-face set is carried rather than the subset. */
+  .type-row { border-top: 1px solid var(--rule); padding: var(--space-4) 0; display: grid; grid-template-columns: 7rem minmax(0,1fr); gap: var(--space-4); align-items: baseline; }
+  .type-row .who { font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute); line-height: 1.4; }
+  .s-display { font-family: var(--f-display); font-size: 2rem; line-height: 1.1; }
+  .s-body { font-family: var(--f-body); font-size: 1.0625rem; }
+  .s-body b { font-weight: 600; }
+  .s-quote { font-family: var(--f-quote); font-style: italic; font-size: 1.3rem; }
+  .s-ui { font-family: var(--f-ui); font-size: var(--text-base); }
+
+  .sizes { display: flex; align-items: flex-end; gap: var(--space-5); flex-wrap: wrap; }
+  .sizes figure { margin: 0; text-align: center; }
+  .sizes figcaption { font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute); margin-top: var(--space-2); }
+
+  .coronis { display: block; width: 22px; height: 22px; margin: var(--space-12) 0 0; color: var(--dilute-light); }
+
+  @media (max-width: 40rem) { .sheet { padding: var(--space-8) var(--space-4) var(--space-12); } }
+</style>
+{% endblock %}
+
+{% block body %}
+
+{% set core_set = [
+  ('ic-pi','Wordmark','the Pi of Pinakes'),
+  ('ic-new','What&rsquo;s New','asteriskos &#8251;'),
+  ('ic-atlas','Atlas','orbis terrarum'),
+  ('ic-explore','Explore','diple periestigmene'),
+  ('ic-datastories','Datastories','volumen'),
+  ('ic-authors','Authors','alpha &#913;'),
+  ('ic-citations','Citations','diple &#8250;'),
+  ('ic-books','Books','codex, shut'),
+  ('ic-coverage','Coverage','a measure part-full'),
+  ('ic-glossary','Glossary','codex, ruled'),
+  ('ic-feeds','Feeds','the cut end of a roll'),
+  ('ic-about','About','coronis')
+] %}
+
+{% set tool_set = [
+  ('ic-timeline','Publication Timeline','stichometry'),
+  ('ic-institutions','Institutions','stoa'),
+  ('ic-new','What&rsquo;s New','asteriskos &#8251;'),
+  ('ic-citnet','Citation Network','chi &#935;'),
+  ('ic-most-cited','Most Cited','three diplai'),
+  ('ic-cite-trends','Citation Trends','kanon'),
+  ('ic-journal-flow','Journal Citation Flow','sigma against antisigma'),
+  ('ic-half-life','Half-Life','the klepsydra&rsquo;s fall'),
+  ('ic-cocitation','Article Co-Citation','converging upward'),
+  ('ic-author-cocitation','Author Co-Citation','two alphas'),
+  ('ic-bibcoupling','Bibliographic Coupling','converging downward'),
+  ('ic-communities','Community Detection','delta &#916;'),
+  ('ic-centrality','Centrality Analysis','theta &#920;'),
+  ('ic-main-path','Main Path Analysis','paragraphos'),
+  ('ic-sleeping','Sleeping Beauties','obelos, then asteriskos'),
+  ('ic-temporal','Temporal Evolution','growth rings'),
+  ('ic-coauthorship','Co-Authorship Network','psi &#936;'),
+  ('ic-author-profiles','Author Profiles','sillybos'),
+  ('ic-topics','Topic Co-Occurrence','the pinax'),
+  ('ic-reading-path','Reading Path','diple &#8250;')
+] %}
+
+{% set ds_set = [
+  ('ic-ds-ch3-braided-path','The Braided Path','Ch 3'),
+  ('ic-ds-ch3-branching-traditions','Branching Traditions','Ch 3'),
+  ('ic-ds-ch3-origins-frontiers','Origins and Frontiers','Ch 3'),
+  ('ic-ds-ch4-shifting-currents','Shifting Currents','Ch 4'),
+  ('ic-ds-ch4-speed-of-influence','The Speed of Influence','Ch 4'),
+  ('ic-ds-ch4-border-crossers','Border Crossers','Ch 4'),
+  ('ic-ds-ch4-two-way-street','The Two-Way Street','Ch 4'),
+  ('ic-ds-ch5-shape-of-influence','The Shape of Influence','Ch 5'),
+  ('ic-ds-ch5-long-tail','The Long Tail','Ch 5'),
+  ('ic-ds-ch5-fair-ranking','The Fair Ranking','Ch 5'),
+  ('ic-ds-ch5-shifting-canons','Shifting Canons','Ch 5'),
+  ('ic-ds-ch5-reach-of-citation','The Reach of a Citation','Ch 5'),
+  ('ic-ds-ch5-inside-outside','Inside and Outside','Ch 5'),
+  ('ic-ds-ch6-communities-time','Communities Over Time','Ch 6'),
+  ('ic-ds-ch6-walls-bridges','Walls and Bridges','Ch 6'),
+  ('ic-ds-ch6-first-spark','The First Spark','Ch 6'),
+  ('ic-ds-ch7-shared-foundations','Shared Foundations','Ch 7'),
+  ('ic-ds-ch7-two-maps','Two Maps of the Field','Ch 7'),
+  ('ic-ds-ch7-books-everyone-reads','The Books Everyone Reads','Ch 7'),
+  ('ic-ds-ch7-uneven-debts','Uneven Debts','Ch 7'),
+  ('ic-ds-ch8-solo-to-squad','Solo to Squad','Ch 8'),
+  ('ic-ds-ch8-academic-lineages','Academic Lineages','Ch 8'),
+  ('ic-ds-ch8-lasting-partnerships','Lasting Partnerships','Ch 8'),
+  ('ic-ds-ch9-prince-network','The Prince Network','Ch 9'),
+  ('ic-ds-ch9-disciplinary-calendar','The Disciplinary Calendar','Ch 9'),
+  ('ic-ds-ch9-unread-canon','The Unread Canon','Ch 9')
+] %}
+
+{% macro cell(sym, name, gloss) %}
+<div class="cell">
+  <svg class="ic" aria-hidden="true"><use href="#{{ sym }}"/></svg>
+  <span class="nm">{{ name|safe }}<span class="gl">{{ gloss|safe }}</span><code>{{ sym }}</code></span>
+</div>
+{% endmacro %}
+
+<main class="sheet">
+
+  <section>
+    <div class="sheet-head">
+      <div>
+        <h1>Icon specimen</h1>
+        <p class="lede">Fifty-seven marks for Pinakes, drawn from the Alexandrian critical apparatus, Greek letterforms, and the furniture of a library that catalogued rolls.</p>
+      </div>
+      <button class="figure-toggle" type="button" id="figure-toggle">Black-figure</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>The faces</h2>
+    <p class="note">If these render as Georgia, the font pipeline is broken. The Greek and polytonic lines are why Pinakes carries all twenty-three faces rather than the twelve the redirect page needed.</p>
+
+    <div class="type-row"><span class="who">GFS Didot<br>display</span><span class="s-display">Pinakes &middot; &Pi;&iota;&nu;&alpha;&kappa;&epsilon;&sigmaf; &middot; 1997</span></div>
+    <div class="type-row"><span class="who">Literata<br>body, 400 &amp; 600</span><span class="s-body">A free index of scholarship in rhetoric and composition. <b>Fifty-four journals, and counting.</b></span></div>
+    <div class="type-row"><span class="who">Literata<br>polytonic</span><span class="s-body">&#7936;&nu;&alpha;&gamma;&iota;&gamma;&nu;&#8061;&sigma;&kappa;&omega; &middot; &#7969;&#960;&iota;&sigma;&tau;&#8053;&mu;&eta; &middot; &#7969;&#8051;&xi;&iota;&sigmaf;</span></div>
+    <div class="type-row"><span class="who">EB Garamond<br>quote</span><span class="s-quote">Curating disciplinary knowledge</span></div>
+    <div class="type-row"><span class="who">Atkinson<br>UI</span><span class="s-ui">Search titles, authors, abstracts &middot; Export BibTeX &middot; RIS</span></div>
+  </section>
+
+  <section>
+    <h2>Sizes and states</h2>
+    <p class="note">One accent per mark, and it is always the element carrying the meaning. Dense lists take <code>.ic-quiet</code>, which drops to a single colour so a sidebar of fifty-four journals does not spend the terracotta budget. <code>.ic-absent</code> is faience, which marks absence here as it does everywhere else in the system.</p>
+    <div class="sizes">
+      <figure><svg class="ic ic-sm" aria-hidden="true"><use href="#ic-centrality"/></svg><figcaption>.ic-sm 18</figcaption></figure>
+      <figure><svg class="ic" aria-hidden="true"><use href="#ic-centrality"/></svg><figcaption>default 24</figcaption></figure>
+      <figure><svg class="ic ic-lg" aria-hidden="true"><use href="#ic-centrality"/></svg><figcaption>.ic-lg 32</figcaption></figure>
+      <figure><svg class="ic ic-xl" aria-hidden="true"><use href="#ic-centrality"/></svg><figcaption>.ic-xl 44</figcaption></figure>
+      <figure><svg class="ic ic-lg ic-quiet" aria-hidden="true"><use href="#ic-centrality"/></svg><figcaption>.ic-quiet</figcaption></figure>
+      <figure><svg class="ic ic-lg ic-absent" aria-hidden="true"><use href="#ic-centrality"/></svg><figcaption>.ic-absent</figcaption></figure>
+      <figure><svg class="ic ic-xl ic-wordmark" aria-hidden="true"><use href="#ic-pi"/></svg><figcaption>.ic-wordmark</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>The core set</h2>
+    <p class="note">The wordmark mark and the eleven sidebar destinations. Carried on every page by <code>base-core.html</code>.</p>
+    <h3>_icons_core.html &middot; 12 symbols</h3>
+    <div class="grid">{% for s, n, g in core_set %}{{ cell(s, n, g) }}{% endfor %}</div>
+  </section>
+
+  <section>
+    <h2>The tools</h2>
+    <p class="note">Twenty analytical tools in the five question-framed sections of <code>/tools</code>. Co-Citation and Bibliographic Coupling are drawn as exact inversions of one another, because that is their relationship: one converges upward on the works a third cites together, the other converges downward on the source two works share.</p>
+    <h3>_icons_tools.html &middot; 19 symbols, plus ic-new from the core set</h3>
+    <div class="grid">{% for s, n, g in tool_set %}{{ cell(s, n, g) }}{% endfor %}</div>
+  </section>
+
+  <section>
+    <h2>Datastories</h2>
+    <p class="note">One mark per chapter panel, loaded only on the Datastories pages. The zygon hangs level for The Fair Ranking and tilted for Uneven Debts; the stemma divides for Branching Traditions and descends for Academic Lineages.</p>
+    <h3>_icons_datastories.html &middot; 26 symbols</h3>
+    <div class="grid">{% for s, n, g in ds_set %}{{ cell(s, n, g) }}{% endfor %}</div>
+  </section>
+
+  <svg class="coronis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+    <path d="M5 15c4 0 5-8 9-8s5 4 5 4"/><path d="M9 19h9"/>
+  </svg>
+
+</main>
+
+<script>
+(function(){
+  var b = document.getElementById('figure-toggle');
+  if (!b) return;
+  function current(){
+    var set = document.documentElement.getAttribute('data-theme');
+    if (set === 'light' || set === 'dark') return set;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function label(){ b.textContent = current() === 'dark' ? 'Red-figure' : 'Black-figure'; }
+  label();
+  b.addEventListener('click', function(){
+    var next = current() === 'dark' ? 'light' : 'dark';
+    var el = document.documentElement;
+    el.classList.add('figure-switching');
+    el.setAttribute('data-theme', next);
+    try { localStorage.setItem('pinakes-figure', next); } catch (e) {}
+    label();
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { el.classList.remove('figure-switching'); });
+    });
+  });
+})();
+</script>
+{% endblock %}

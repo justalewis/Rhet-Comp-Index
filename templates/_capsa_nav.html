@@ -1,0 +1,195 @@
+{# ============================================================
+   The eleven destinations, rebuilt on the core icon set. Replaces
+   _feature_nav.html for pages on the Alexandrian shell; the two
+   carry the same links, so they can be compared side by side while
+   the migration runs.
+
+   Only the top level takes icons. The groups below expand inline
+   rather than floating, and their items stay plain: the tool marks
+   live in _icons_tools.html, which is loaded on /tools and /explore
+   and nowhere else, so referencing them here would leave broken
+   <use> targets on every other page.
+   ============================================================ #}
+
+<div class="nav-item">
+  <a class="nav-link" href="/new" {% if active_nav == 'new' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-new"/></svg>
+    <span class="nav-label">What&rsquo;s New</span>
+    {% if new_count %}<span class="nav-count">{{ new_count }}</span>{% endif %}
+  </a>
+</div>
+
+<div class="nav-item">
+  <a class="nav-link" href="/atlas" {% if active_nav == 'atlas' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-atlas"/></svg>
+    <span class="nav-label">Atlas</span>
+  </a>
+</div>
+
+<div class="nav-item">
+  <button class="nav-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-explore"/></svg>
+    <span class="nav-label">Explore</span>
+    <span class="nav-chevron" aria-hidden="true"></span>
+  </button>
+  <div class="nav-dropdown">
+    <a class="lead" href="/tools">Browse all tools &rarr;</a>
+
+    <span class="group">What has the field published?</span>
+    <a href="/explore#timeline">Publication Timeline</a>
+    <a href="/explore#institutions">Institutions</a>
+
+    <span class="group">How does the field cite?</span>
+    <a href="/explore#citnet">Citation Network</a>
+    <a href="/explore#citation-trends">Citation Trends</a>
+    <a href="/explore#journal-flow">Journal Citation Flow</a>
+    <a href="/explore#half-life">Half-Life</a>
+
+    <span class="group">What belongs together?</span>
+    <a href="/explore#cocitation">Article Co-Citation</a>
+    <a href="/explore#author-cocitation">Author Co-Citation</a>
+    <a href="/explore#bibcoupling">Bibliographic Coupling</a>
+    <a href="/explore#communities">Community Detection</a>
+    <a href="/explore#centrality">Centrality Analysis</a>
+    <a href="/explore#main-path">Main Path Analysis</a>
+    <a href="/explore#sleeping-beauties">Sleeping Beauties</a>
+    <a href="/explore#temporal-evolution">Temporal Network Evolution</a>
+
+    <span class="group">Who works with whom?</span>
+    <a href="/explore#authors">Co-Authorship Network</a>
+
+    <span class="group">What is the field about?</span>
+    <a href="/explore#topics">Topic Co-Occurrence</a>
+    <a href="/explore#reading-path">Reading Path</a>
+  </div>
+</div>
+
+{# Two render modes, as in _feature_nav.html: collaborators who have signed
+   in get the chapter outline, everyone else gets the landing page. The
+   outline stays private until publication. #}
+<div class="nav-item">
+  {% if datastories_authed %}
+  <button class="nav-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-datastories"/></svg>
+    <span class="nav-label">Datastories</span>
+    <span class="nav-chevron" aria-hidden="true"></span>
+  </button>
+  <div class="nav-dropdown">
+    <a class="lead" href="/datastories">About Datastories</a>
+    <a href="/datastories/tools">All Tools</a>
+
+    <span class="group">Ch 3 &mdash; The Citation Backbone</span>
+    <a href="/datastories/tools#ch3-braided-path">The Braided Path</a>
+    <a href="/datastories/tools#ch3-branching-traditions">Branching Traditions</a>
+    <a href="/datastories/tools#ch3-origins-frontiers">Origins and Frontiers</a>
+
+    <span class="group">Ch 4 &mdash; Two Fields or One?</span>
+    <a href="/datastories/tools#ch4-shifting-currents">Shifting Currents</a>
+    <a href="/datastories/tools#ch4-speed-of-influence">The Speed of Influence</a>
+    <a href="/datastories/tools#ch4-border-crossers">Border Crossers</a>
+    <a href="/datastories/tools#ch4-two-way-street">The Two-Way Street</a>
+
+    <span class="group">Ch 5 &mdash; The Canon Machine</span>
+    <a href="/datastories/tools#ch5-shape-of-influence">The Shape of Influence</a>
+    <a href="/datastories/tools#ch5-long-tail">The Long Tail</a>
+    <a href="/datastories/tools#ch5-fair-ranking">The Fair Ranking</a>
+    <a href="/datastories/tools#ch5-shifting-canons">Shifting Canons</a>
+    <a href="/datastories/tools#ch5-reach-of-citation">The Reach of a Citation</a>
+    <a href="/datastories/tools#ch5-inside-outside">Inside and Outside</a>
+
+    <span class="group">Ch 6 &mdash; Community Structure</span>
+    <a href="/datastories/tools#ch6-communities-time">Communities Over Time</a>
+    <a href="/datastories/tools#ch6-walls-bridges">Walls and Bridges</a>
+    <a href="/datastories/tools#ch6-first-spark">The First Spark</a>
+
+    <span class="group">Ch 7 &mdash; Reference Networks</span>
+    <a href="/datastories/tools#ch7-shared-foundations">Shared Foundations</a>
+    <a href="/datastories/tools#ch7-two-maps">Two Maps of the Field</a>
+    <a href="/datastories/tools#ch7-books-everyone-reads">The Books Everyone Reads</a>
+    <a href="/datastories/tools#ch7-uneven-debts">Uneven Debts</a>
+
+    <span class="group">Ch 8 &mdash; Authorship</span>
+    <a href="/datastories/tools#ch8-solo-to-squad">Solo to Squad</a>
+    <a href="/datastories/tools#ch8-academic-lineages">Academic Lineages</a>
+    <a href="/datastories/tools#ch8-lasting-partnerships">Lasting Partnerships</a>
+
+    <span class="group">Ch 9 &mdash; Sleeping Beauties</span>
+    <a href="/datastories/tools#ch9-prince-network">Prince Network</a>
+    <a href="/datastories/tools#ch9-disciplinary-calendar">The Disciplinary Calendar</a>
+    <a href="/datastories/tools#ch9-unread-canon">The Unread Canon</a>
+  </div>
+  {% else %}
+  <a class="nav-link" href="/datastories" {% if active_nav == 'datastories' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-datastories"/></svg>
+    <span class="nav-label">Datastories</span>
+  </a>
+  {% endif %}
+</div>
+
+<div class="nav-item">
+  <button class="nav-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-authors"/></svg>
+    <span class="nav-label">Authors</span>
+    <span class="nav-chevron" aria-hidden="true"></span>
+  </button>
+  <div class="nav-dropdown">
+    <a href="/authors">Author Index</a>
+    <a href="/explore#author-cocitation">Author Co-Citation</a>
+    <a href="/explore#authors">Author Network</a>
+  </div>
+</div>
+
+<div class="nav-item">
+  <button class="nav-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-citations"/></svg>
+    <span class="nav-label">Citations</span>
+    <span class="nav-chevron" aria-hidden="true"></span>
+  </button>
+  <div class="nav-dropdown">
+    <a href="/most-cited">Most Cited</a>
+    <a href="/most-cited?view=journal">By Journal</a>
+    <a href="/most-cited?view=topic">By Topic</a>
+    <a href="/most-cited?view=decade">By Decade</a>
+    <a href="/explore#cocitation">Co-Citation</a>
+  </div>
+</div>
+
+<div class="nav-item">
+  <a class="nav-link" href="/books" {% if active_nav == 'books' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-books"/></svg>
+    <span class="nav-label">Books</span>
+  </a>
+</div>
+
+<div class="nav-item">
+  <a class="nav-link" href="/coverage" {% if active_nav == 'coverage' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-coverage"/></svg>
+    <span class="nav-label">Coverage</span>
+  </a>
+</div>
+
+<div class="nav-item">
+  <a class="nav-link" href="/glossary" {% if active_nav == 'glossary' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-glossary"/></svg>
+    <span class="nav-label">Glossary</span>
+  </a>
+</div>
+
+<div class="nav-item">
+  <a class="nav-link" href="/feeds" {% if active_nav == 'feeds' %}aria-current="page"{% endif %}>
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-feeds"/></svg>
+    <span class="nav-label">Feeds</span>
+  </a>
+</div>
+
+<div class="nav-item">
+  <button class="nav-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+    <svg class="ic ic-sm" aria-hidden="true"><use href="#ic-about"/></svg>
+    <span class="nav-label">About</span>
+    <span class="nav-chevron" aria-hidden="true"></span>
+  </button>
+  <div class="nav-dropdown">
+    <a href="/about">About Pinakes</a>
+    <a href="/about#author-privacy">Request Name Removal</a>
+  </div>
+</div>
