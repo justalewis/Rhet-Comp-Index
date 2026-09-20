@@ -179,6 +179,11 @@ main:focus { outline: none; }
   padding: var(--space-10) var(--space-8) var(--space-16);
 }
 
+/* A page that is mostly prose -- one article, one author -- narrows to
+   something closer to the book-roll measure. 64rem is right for a grid of
+   cards and much too wide for a paragraph. */
+.column-inner--read { max-width: 52rem; }
+
 
 /* -- The wordmark, at the head of the capsa ------------------ */
 
@@ -1468,3 +1473,469 @@ main:focus { outline: none; }
   .citnet-container, .network-container { min-height: 24rem; }
   .citnet-journal-list { min-width: 0; width: 100%; }
 }
+
+
+/* ============================================================
+   The article list, under its older name.
+
+   index.html was rebuilt with .entry; article.html and author.html
+   still say .article, and their markup is addressed by the tag-vote
+   and topic-suggestion scripts. Rather than rename in two templates
+   and the JavaScript that reads them, the old names are given the
+   same object here. When those pages are next touched the aliases
+   can go.
+   ============================================================ */
+
+.article-list { list-style: none; padding: 0; margin: 0; }
+
+.article {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--rule);
+  margin: 0;
+}
+.article:last-child { border-bottom: 2px solid var(--gloss); }
+
+.article-meta-top {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  font-family: var(--f-ui); font-size: var(--text-xs);
+  color: var(--dilute); margin-bottom: var(--space-2);
+}
+.article-journal { font-weight: 700; color: var(--gloss-soft); }
+.article-date { font-variant-numeric: tabular-nums; }
+.article-affiliation { color: var(--dilute-light); }
+
+.article-title-row {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  max-width: var(--measure);
+}
+.article-title {
+  font-family: var(--f-body); font-size: 1.0625rem; line-height: 1.4;
+  color: var(--gloss); text-decoration: none; text-wrap: pretty;
+}
+.article-title:hover {
+  color: var(--terracotta); text-decoration: underline; text-underline-offset: 0.18em;
+}
+.article-detail-link {
+  flex: none; color: var(--dilute-light); text-decoration: none;
+  font-size: 0.8rem; line-height: 1;
+}
+.article-detail-link:hover { color: var(--terracotta); }
+
+.article-authors {
+  font-family: var(--f-ui); font-size: 0.8125rem;
+  color: var(--dilute); margin-top: var(--space-2);
+  max-width: var(--measure);
+}
+.article-authors.no-data { font-style: italic; color: var(--dilute-light); }
+
+.article-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.article-tag {
+  font-family: var(--f-ui); font-size: var(--text-xs);
+  padding: 0.14em 0.45em;
+  color: var(--dilute); background: var(--papyrus-deep);
+  border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+.article-tag:hover {
+  color: var(--terracotta); border-color: var(--terracotta);
+  background: var(--terracotta-wash);
+}
+/* A reader's tag, not the classifier's. Faience would mean absence, so
+   this takes the terracotta wash instead: present, but contributed. */
+.article-tag--community {
+  background: var(--terracotta-wash);
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.article-doi { font-family: var(--f-ui); font-size: var(--text-xs); margin-top: var(--space-2); }
+.article-doi a { color: var(--dilute); font-family: var(--f-mono); font-size: 0.72rem; }
+.article-doi a:hover { color: var(--terracotta); }
+
+.content-header {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.content-header h1, .content-header h2 { font-size: var(--text-3xl); margin: 0; }
+
+.empty-state { padding: var(--space-12) 0; color: var(--dilute); max-width: var(--measure); }
+.empty-state p { margin-bottom: var(--space-3); }
+.empty-hint { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute-light); }
+
+
+/* ============================================================
+   One article: the full record.
+   ============================================================ */
+
+.detail-header { margin-bottom: var(--space-6); }
+.detail-title {
+  font-family: var(--f-display); font-weight: 400;
+  font-size: var(--text-3xl); line-height: var(--leading-tight);
+  letter-spacing: -0.01em; text-wrap: balance;
+  margin: 0 0 var(--space-4);
+  color: var(--gloss);
+}
+/* The title is wrapped in a link to the publisher, so without this it takes
+   the global anchor treatment and a whole display-size heading arrives
+   underlined in terracotta. It is the title first and a link second. */
+.detail-title a {
+  color: inherit; text-decoration: none;
+}
+.detail-title a:hover {
+  color: var(--terracotta);
+  text-decoration: underline; text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+.detail-meta {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute);
+}
+
+.detail-authors { margin: var(--space-4) 0 0; }
+.detail-author-item {
+  display: block; font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--gloss-soft); margin-bottom: 0.2rem;
+}
+.author-link { color: var(--terracotta); text-decoration: none; }
+.author-link:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+.author-affiliation-inline { color: var(--dilute-light); font-size: var(--text-xs); }
+
+.detail-section-head {
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--dilute);
+  margin: var(--space-10) 0 var(--space-3);
+  padding-bottom: var(--space-2); border-bottom: 2px solid var(--gloss);
+}
+
+.detail-abstract {
+  font-size: 1.0625rem; line-height: 1.65;
+  color: var(--gloss-soft); max-width: var(--measure);
+}
+
+/* The record proper: a two-column list, set like a catalogue entry. */
+.detail-fields {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-5);
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  max-width: 52rem;
+}
+.detail-fields dt {
+  color: var(--dilute); font-size: var(--text-xs);
+  text-transform: uppercase; letter-spacing: 0.06em; padding-top: 0.15em;
+}
+.detail-fields dd { margin: 0; color: var(--gloss-soft); overflow-wrap: break-word; }
+
+.export-links { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-5); }
+.export-btn {
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  padding: 0.32rem 0.7rem; cursor: pointer;
+  color: var(--terracotta); background: transparent;
+  border: 1px solid var(--terracotta); border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+.export-btn:hover { background: var(--terracotta-wash); color: var(--terracotta); }
+
+.oa-status-text, .ext-doi-link, .citation-network-link, .comppile-ref-link {
+  font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute);
+}
+.citation-network-link a, .comppile-ref-link a, .ext-doi-link a { color: var(--terracotta); }
+
+
+/* -- Citation context ----------------------------------------- */
+
+.citation-stats {
+  display: flex; flex-wrap: wrap; gap: var(--space-6);
+  margin: var(--space-4) 0 var(--space-6);
+}
+/* Numerals in the display face: a didone's figures are the best thing
+   about it, and this section is made of them. */
+.citation-stat {
+  font-family: var(--f-display); font-size: 2.1rem; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--gloss);
+  border-top: 2px solid var(--gloss); padding-top: var(--space-2);
+  min-width: 7rem;
+}
+.citation-stat .label,
+.citation-subcount {
+  display: block; font-family: var(--f-ui); font-size: var(--text-xs);
+  font-variant-numeric: normal; color: var(--dilute);
+  margin-top: 0.3rem; line-height: 1.35;
+}
+
+.citation-columns {
+  display: grid; gap: var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+.citation-col-head {
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--dilute);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2); border-bottom: 1px solid var(--rule);
+}
+
+.citation-list { list-style: none; padding: 0; margin: 0; }
+.citation-list--bibliography { padding-left: 0; }
+.citation-item {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.9375rem; line-height: 1.5;
+}
+.citation-item:last-child { border-bottom: 0; }
+/* Outside the index: the work is real, we just do not hold it. */
+.citation-item--ext { color: var(--dilute); }
+
+.citation-title { color: var(--gloss); text-decoration: none; }
+.citation-title:hover { color: var(--terracotta); text-decoration: underline; text-underline-offset: 0.18em; }
+.citation-title--plain { color: var(--gloss-soft); }
+.citation-byline, .citation-journal {
+  display: block; font-family: var(--f-ui); font-size: var(--text-xs);
+  color: var(--dilute); margin-top: 0.2rem;
+}
+
+.citation-empty, .citation-pending, .citation-overflow, .citation-coverage-note {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute); padding: var(--space-3) 0;
+}
+.citation-pending { font-style: italic; }
+.citation-coverage-note { color: var(--dilute-light); font-size: var(--text-xs); max-width: 70ch; }
+
+
+/* -- Reader-contributed tags ---------------------------------- */
+
+.tag-vote { display: inline-flex; align-items: center; gap: 0.15rem; margin-left: 0.25rem; }
+.tag-vote-btn {
+  cursor: pointer; line-height: 1;
+  padding: 0 0.15rem; font-size: 0.7rem;
+  color: var(--dilute-light); background: none; border: 0;
+}
+.tag-vote-btn:hover { color: var(--terracotta); }
+
+.tag-suggest { margin-top: var(--space-4); }
+.tag-suggest-toggle {
+  font-family: var(--f-ui); font-size: var(--text-xs);
+  color: var(--dilute); background: none; border: 0;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 0.18em;
+}
+.tag-suggest-toggle:hover { color: var(--terracotta); }
+.tag-suggest-form {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.tag-suggest-input {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  padding: 0.34rem 0.55rem; flex: 1 1 14rem;
+  color: var(--gloss); background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+}
+.tag-suggest-submit {
+  font-family: var(--f-ui); font-size: var(--text-sm); font-weight: 700;
+  padding: 0.34rem 0.9rem; cursor: pointer;
+  color: var(--added-white); background: var(--terracotta);
+  border: 1px solid var(--terracotta); border-radius: var(--radius-sm);
+}
+.tag-suggest-msg { font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute); }
+
+.topic-chip {
+  font-family: var(--f-ui); font-size: var(--text-xs);
+  padding: 0.14em 0.45em; margin: 0 0.2rem 0.2rem 0;
+  display: inline-block;
+  color: var(--dilute); background: var(--papyrus-deep);
+  border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+.topic-chip:hover { color: var(--terracotta); border-color: var(--terracotta); }
+.topics-empty { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute-light); }
+
+
+/* -- Related ---------------------------------------------------- */
+
+.related-section { margin-top: var(--space-10); }
+.related-list { list-style: none; padding: 0; margin: 0; }
+.related-item {
+  padding: var(--space-3) 0; border-bottom: 1px solid var(--rule);
+  font-size: 0.9375rem; line-height: 1.5;
+}
+.related-item:last-child { border-bottom: 0; }
+.related-item a { color: var(--gloss); text-decoration: none; }
+.related-item a:hover { color: var(--terracotta); text-decoration: underline; text-underline-offset: 0.18em; }
+
+
+/* ============================================================
+   One author.
+   ============================================================ */
+
+.author-profile-meta {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute); margin-bottom: var(--space-6);
+}
+.author-profile-institution { color: var(--gloss-soft); }
+.author-orcid-link, .author-comppile-link, .cocitation-link { color: var(--terracotta); }
+.cocitation-hint { font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute-light); }
+
+.author-redacted-note {
+  background: var(--paper); border-left: 2px solid var(--faience);
+  padding: var(--space-4) var(--space-5);
+  color: var(--dilute); font-size: 0.9375rem;
+  margin-bottom: var(--space-6); max-width: var(--measure);
+}
+.author-redacted-tag {
+  font-family: var(--f-ui); font-size: var(--text-xs);
+  color: var(--faience); background: var(--faience-wash);
+  padding: 0.14em 0.45em; border-radius: var(--radius-sm);
+}
+
+.author-affiliation-summary {
+  cursor: pointer; list-style: none;
+  font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute);
+}
+.author-affiliation-summary::-webkit-details-marker { display: none; }
+.author-affiliation-label { font-weight: 700; color: var(--gloss-soft); }
+.author-affiliation-item { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); }
+.author-affiliation-more { font-size: var(--text-xs); color: var(--dilute-light); }
+
+/* Topic distribution: a bar per topic, terracotta on a papyrus track. */
+.author-topics-list { list-style: none; padding: 0; margin: var(--space-4) 0 0; }
+.author-topic-row {
+  display: grid; grid-template-columns: minmax(6rem, 12rem) minmax(0, 1fr) 3rem;
+  align-items: center; gap: var(--space-3);
+  padding: 0.25rem 0;
+  font-family: var(--f-ui); font-size: var(--text-sm);
+}
+.author-topic-label { color: var(--gloss-soft); overflow-wrap: break-word; }
+.author-topic-bar-wrap {
+  background: var(--papyrus-deep); border-radius: 1px; height: 0.6rem;
+  border: 1px solid var(--rule);
+}
+.author-topic-bar { background: var(--terracotta); height: 100%; border-radius: 1px; }
+.author-topic-count {
+  font-family: var(--f-mono); font-size: var(--text-xs);
+  color: var(--dilute); text-align: right; font-variant-numeric: tabular-nums;
+}
+.author-topics-toggle {
+  font-family: var(--f-ui); font-size: var(--text-xs);
+  color: var(--dilute); background: none; border: 0; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 0.18em;
+  margin-top: var(--space-3);
+}
+.author-topics-toggle:hover { color: var(--terracotta); }
+
+/* Insight panels: the small charts on a profile. */
+.author-insights { margin-top: var(--space-10); }
+.insight-row {
+  display: grid; gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+}
+.insight-col { min-width: 0; }
+.insight-heading {
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--dilute);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2); border-bottom: 1px solid var(--rule);
+}
+.insight-block { margin-bottom: var(--space-8); }
+.insight-chart-wrap {
+  position: relative; width: 100%; min-height: 15rem;
+  background: var(--papyrus);
+  border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.insight-note { font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute-light); margin-top: var(--space-2); }
+.insight-empty { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); padding: var(--space-6) 0; }
+
+/* Books by this author. */
+.author-books-section { margin-top: var(--space-10); }
+.author-books-heading {
+  font-family: var(--f-ui); font-size: var(--text-xs); font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--dilute);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2); border-bottom: 2px solid var(--gloss);
+}
+.author-books-list { list-style: none; padding: 0; margin: 0; }
+.author-book-item { padding: var(--space-3) 0; border-bottom: 1px solid var(--rule); }
+.author-book-item:last-child { border-bottom: 0; }
+.author-book-title { color: var(--gloss); text-decoration: none; font-size: 1rem; }
+.author-book-title:hover { color: var(--terracotta); text-decoration: underline; text-underline-offset: 0.18em; }
+.author-book-meta, .author-book-series, .author-book-role {
+  font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute);
+}
+.author-book-role { font-style: italic; }
+
+
+/* ============================================================
+   The author index.
+   ============================================================ */
+
+.alpha-nav {
+  display: flex; flex-wrap: wrap; gap: var(--space-1);
+  margin: var(--space-5) 0;
+  padding-bottom: var(--space-4); border-bottom: 1px solid var(--rule);
+}
+.alpha-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.9rem; padding: 0.22rem 0.4rem;
+  font-family: var(--f-display); font-size: 1.05rem; line-height: 1;
+  color: var(--gloss-soft); text-decoration: none;
+  border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+.alpha-link:hover { color: var(--terracotta); border-color: var(--terracotta); }
+.alpha-link-active {
+  color: var(--added-white); background: var(--terracotta); border-color: var(--terracotta);
+}
+.alpha-prompt { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); }
+.alpha-nav-picker { margin-bottom: var(--space-4); }
+
+.author-filter-wrap {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.author-filter-input {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  padding: 0.44rem 0.62rem; flex: 1 1 18rem;
+  color: var(--gloss); background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius-sm);
+}
+.author-filter-count, .author-count {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--dilute); font-variant-numeric: tabular-nums;
+}
+
+.author-list, .author-list-full { list-style: none; padding: 0; margin: 0; }
+.author-list-full { columns: 2; column-gap: var(--space-8); }
+@media (max-width: 52rem) { .author-list-full { columns: 1; } }
+
+.author-item {
+  break-inside: avoid;
+  padding: var(--space-2) 0; border-bottom: 1px solid var(--rule);
+}
+.author-item-main { display: flex; align-items: baseline; gap: var(--space-2); }
+.author-name-link {
+  font-family: var(--f-ui); font-size: var(--text-sm);
+  color: var(--gloss); text-decoration: none;
+}
+.author-name-link:hover { color: var(--terracotta); text-decoration: underline; text-underline-offset: 0.18em; }
+.author-institution { font-family: var(--f-ui); font-size: var(--text-xs); color: var(--dilute-light); }
+.no-results { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); padding: var(--space-8) 0; }
+
+.letter {
+  font-family: var(--f-display); font-size: var(--text-xl);
+  color: var(--terracotta); margin: var(--space-6) 0 var(--space-2);
+}
+
+
+/* -- CompPile pointer, on the detail pages -------------------- */
+
+.comppile-search-form {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.sidebar-comppile { font-family: var(--f-ui); font-size: var(--text-xs); line-height: 1.5; color: var(--dilute); }
+.sidebar-comppile a { color: var(--terracotta); }
+.sidebar-back-link { font-family: var(--f-ui); font-size: var(--text-sm); color: var(--dilute); text-decoration: none; }
+.sidebar-back-link:hover { color: var(--terracotta); }

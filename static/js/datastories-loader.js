@@ -8,6 +8,7 @@
 // Datastories tools.
 
 import "./utils/chartjs-theme.js";
+import { onFigureChange } from "./utils/theme.js";
 import "./viz/ds_braided_path.js";
 import "./viz/ds_branching_traditions.js";
 import "./viz/ds_origins_frontiers.js";
@@ -169,3 +170,29 @@ window.addEventListener('DOMContentLoaded', () => {
 // ── Inline-handler globals ────────────────────────────────────
 window.toggleAccordion = toggleAccordion;
 window.showTab         = showTab;
+
+
+// ── Redraw on a figure change ────────────────────────────────────────────
+//
+// Same reasoning as explore-loader.js: an SVG scene already drawn keeps the
+// hues it was painted with, so the visible tool is asked to draw itself
+// again. TOOLS already knows every loader by name, so this is a lookup.
+
+function visibleDsTab() {
+  const panel = Array.from(document.querySelectorAll('.tab-panel'))
+    .find(p => p.style.display !== 'none' && p.offsetParent !== null);
+  return panel ? panel.id.replace(/^tab-/, '') : null;
+}
+
+onFigureChange(function () {
+  const name = visibleDsTab();
+  const tool = name && TOOLS[name];
+  const fn = tool && window[tool.loader];
+  if (typeof fn === 'function') {
+    try {
+      fn();
+    } catch (err) {
+      console.warn('figure redraw failed for', name, err);
+    }
+  }
+});

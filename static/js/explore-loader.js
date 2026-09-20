@@ -11,6 +11,7 @@
 // Eager imports — every viz module attaches its inline-handler functions
 // to `window` at top level when imported.
 import "./utils/chartjs-theme.js";
+import { onFigureChange } from "./utils/theme.js";
 import "./viz/timeline.js";
 import "./viz/topics.js";
 import "./viz/author_network.js";
@@ -299,4 +300,58 @@ window.addEventListener('hashchange', function () {
   if (!hash) return;
   const btn = document.querySelector('.explore-tab[data-hash="' + hash + '"]');
   if (btn && !btn.classList.contains('active')) btn.click();
+});
+
+
+// ── Redraw on a figure change ────────────────────────────────────────────
+//
+// The D3 tools read their colours from colors.js at draw time, and colors.js
+// rebuilds when the figure changes -- but a force layout already on screen
+// was painted with the old values and has no reason to repaint itself.
+// Chart.js charts are recoloured in place by utils/chartjs-theme.js; an SVG
+// scene cannot be, because each module owns its own mapping from datum to
+// mark. So the tool that is actually visible is asked to draw itself again.
+//
+// Only that one. The rest are drawn fresh when they are next shown, and
+// re-running eighteen loaders would refetch eighteen endpoints for tools
+// nobody is looking at.
+
+const REDRAW = {
+  timeline:     'loadTimeline',
+  topics:       'loadHeatmap',
+  network:      'loadNetwork',
+  authorcocit:  'initAuthorCocitation',
+  citations:    'loadCitations',
+  cittrends:    'loadCitTrends',
+  citnet:       'loadCitationNetwork',
+  centrality:   'loadCentrality',
+  communities:  'loadCommunities',
+  cocitation:   'loadCocitation',
+  bibcoupling:  'loadBibcoupling',
+  sleepers:     'loadSleepingBeauties',
+  journalflow:  'loadJournalFlow',
+  halflife:     'loadHalfLife',
+  mainpath:     'loadMainPath',
+  temporal:     'loadTemporalEvolution',
+  readingpath:  'initReadingPath',
+  institutions: 'loadInstitutions',
+};
+
+function visibleTabName() {
+  const panel = Array.from(document.querySelectorAll('.tab-panel'))
+    .find(p => p.style.display !== 'none' && p.offsetParent !== null);
+  return panel ? panel.id.replace(/^tab-/, '') : null;
+}
+
+onFigureChange(function () {
+  const name = visibleTabName();
+  const fn = name && REDRAW[name];
+  if (fn && typeof window[fn] === 'function') {
+    try {
+      window[fn]();
+    } catch (e) {
+      // A tool that cannot redraw should not take the toggle down with it.
+      console.warn('figure redraw failed for', name, e);
+    }
+  }
 });
