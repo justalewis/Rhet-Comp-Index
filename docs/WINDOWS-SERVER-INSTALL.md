@@ -136,13 +136,14 @@ python -c "import flask, waitress, apscheduler, lxml, networkx, bs4, feedparser;
 
 ## 6. Configure environment variables
 
-The application reads three environment variables:
+The application reads four environment variables:
 
 | Variable | Purpose | Recommended value |
 |---|---|---|
 | `DB_PATH` | Absolute path to the SQLite file | `C:\Pinakes\data\articles.db` |
 | `PORT` | Port the web server binds on | `8080` |
 | `FLASK_ENV` | Set to `production` to disable debug mode | `production` |
+| `PINAKES_SITE_URL` | Public address this host answers on. Digest emails and the admin scripts build their links from it. | `https://pinakes.wacclearinghouse.org` on production, `https://testpinakes.wacclearinghouse.org` on the test host |
 
 Set them at the **Machine** scope so they are visible to the Windows Service account:
 
@@ -150,13 +151,16 @@ Set them at the **Machine** scope so they are visible to the Windows Service acc
 [Environment]::SetEnvironmentVariable("DB_PATH",   "C:\Pinakes\data\articles.db", "Machine")
 [Environment]::SetEnvironmentVariable("PORT",      "8080",                         "Machine")
 [Environment]::SetEnvironmentVariable("FLASK_ENV", "production",                   "Machine")
+[Environment]::SetEnvironmentVariable("PINAKES_SITE_URL", "https://pinakes.wacclearinghouse.org", "Machine")
 ```
 
 Close and reopen PowerShell to pick them up in your current session, then confirm:
 
 ```powershell
-$env:DB_PATH; $env:PORT; $env:FLASK_ENV
+$env:DB_PATH; $env:PORT; $env:FLASK_ENV; $env:PINAKES_SITE_URL
 ```
+
+> Set `PINAKES_SITE_URL` on **both** hosts. `deploy/windows/Pinakes.Common.ps1` falls back to the test host when it is unset, so an unset production box sends the admin scripts at the test server. Restart the `Pinakes-Web` service after changing it, since the service reads the value at startup.
 
 > **Do not put the database on a network share (SMB/UNC path).** SQLite's file locking is unreliable over SMB and will eventually corrupt the database. Keep `DB_PATH` on a local NTFS volume. If you need off-box backup, back up the file from the local volume using Robocopy or Windows Server Backup — see §12.
 
