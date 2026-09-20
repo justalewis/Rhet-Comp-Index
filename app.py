@@ -23,6 +23,7 @@ Cross-module re-exports for `app.X` access from tests:
 from __future__ import annotations
 
 import logging
+import mimetypes
 import os
 import threading
 import time
@@ -163,6 +164,16 @@ def _ensure_wac_data():
 
 
 # ── Factory ─────────────────────────────────────────────────────────────────
+
+# Flask serves /static through Werkzeug, which types files with the stdlib
+# `mimetypes` module. On Windows that module seeds itself from the registry,
+# where .woff2 is frequently absent, so the self-hosted Alexandrian faces
+# would go out as application/octet-stream. Browsers sniff woff2 regardless,
+# but the Clearinghouse box sits behind IIS/ARR and an explicit type is one
+# less thing for a proxy to second-guess.
+mimetypes.add_type("font/woff2", ".woff2")
+mimetypes.add_type("image/svg+xml", ".svg")
+
 
 def create_app() -> Flask:
     """Build and configure the Flask app. Imported once at module load."""

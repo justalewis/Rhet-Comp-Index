@@ -1,0 +1,96 @@
+{# ============================================================
+   Alexandrian icon sprite — core set: the wordmark mark and the
+   eleven sidebar destinations. Included once by base-core.html, so
+   it is present on every page.
+
+   Drawing rules, so the set stays one hand as it grows:
+     · 24x24 grid, content inset to 3-21, nothing on the bleed
+     · fill none, stroke currentColor, 1.6 width, round caps
+     · exactly ONE accented element per icon, carrying the meaning
+     · accents use inline style + custom property, because document
+       CSS does not cross the shadow tree a <use> clone lives in,
+       while inherited custom properties do
+
+   Vocabulary is the Alexandrian critical apparatus, Greek letter-
+   forms, and library objects. Nothing is invented where a scribal
+   mark already means the right thing.
+   ============================================================ #}
+<svg class="ic-sprite" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+
+  {# The Pi of Pinakes, as on the favicon: three strokes, no bowl. #}
+  <symbol id="ic-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path style="stroke:var(--ic-accent)" d="M5 6h14M8.5 6v13M15.5 6v13"/>
+  </symbol>
+
+  {# Asteriskos: the mark for a line that belongs here and is missing. #}
+  <symbol id="ic-new" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path style="stroke:var(--ic-accent)" d="M12 4v16M5.3 8l13.4 8M18.7 8 5.3 16"/>
+  </symbol>
+
+  {# The orbis terrarum: the circle of the world, divided. #}
+  <symbol id="ic-atlas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/>
+    <path d="M3.6 9.5h16.8"/>
+    <path style="stroke:var(--ic-accent)" d="M12 9.5V21"/>
+  </symbol>
+
+  {# Diple periestigmene: the dotted diple, "a reading worth examining". #}
+  <symbol id="ic-explore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.5 5l7 7-7 7"/>
+    <circle style="fill:var(--ic-accent);stroke:none" cx="18.4" cy="8.4" r="1.35"/>
+    <circle style="fill:var(--ic-accent);stroke:none" cx="18.4" cy="15.6" r="1.35"/>
+  </symbol>
+
+  {# Volumen: the roll, held at the left and opened to the right. #}
+  <symbol id="ic-datastories" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.6" y="4" width="3.8" height="16" rx="1.9"/>
+    <path d="M7.4 5.8h12.9v12.4H7.4"/>
+    <path style="stroke:var(--ic-accent)" d="M10.6 10h6.4M10.6 14h6.4"/>
+  </symbol>
+
+  {# Alpha, for anything scoped to a person. #}
+  <symbol id="ic-authors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 18.5 12 5.5l8 13"/>
+    <path style="stroke:var(--ic-accent)" d="M7.6 13.4h8.8"/>
+  </symbol>
+
+  {# The diple, single: the plain mark for "note this passage". #}
+  <symbol id="ic-citations" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path style="stroke:var(--ic-accent)" d="M8.5 4.5 16.5 12l-8 7.5"/>
+  </symbol>
+
+  {# Codex, shut: board, spine, and the sillybos strip on the cover. #}
+  <symbol id="ic-books" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 3.5h14v17H5z"/>
+    <path d="M8.6 3.5v17"/>
+    <path style="stroke:var(--ic-accent)" d="M11.6 8h4.6"/>
+  </symbol>
+
+  {# A measure standing part-full: how much of a run is actually indexed. #}
+  <symbol id="ic-coverage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="8.4" width="18" height="7.2" rx="1"/>
+    <rect style="fill:var(--ic-accent);stroke:none" x="4.2" y="9.6" width="9.4" height="4.8"/>
+    <path d="M17.2 8.4v7.2"/>
+  </symbol>
+
+  {# The codex open, ruled: a lexicon rather than a book to read through. #}
+  <symbol id="ic-glossary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6.6v13.2"/>
+    <path d="M12 6.6C10.1 5.1 7.1 4.6 3.6 5.1v13.2c3.5-.5 6.5 0 8.4 1.5M12 6.6c1.9-1.5 4.9-2 8.4-1.5v13.2c-3.5-.5-6.5 0-8.4 1.5"/>
+    <path style="stroke:var(--ic-accent)" d="M5.8 9.2h3.8M14.4 9.2h3.8"/>
+  </symbol>
+
+  {# The cut end of a roll: the fibre arcs out from the umbilicus. #}
+  <symbol id="ic-feeds" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle style="fill:var(--ic-accent);stroke:none" cx="6" cy="18.1" r="1.9"/>
+    <path d="M4.6 12.3a7.5 7.5 0 0 1 7.1 7.1"/>
+    <path d="M4.6 6.5a13.3 13.3 0 0 1 12.9 12.9"/>
+  </symbol>
+
+  {# The coronis, which closed a text and named the scribe. #}
+  <symbol id="ic-about" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 15c4 0 5-8 9-8s5 4 5 4"/>
+    <path style="stroke:var(--ic-accent)" d="M9 19h9"/>
+  </symbol>
+
+</defs></svg>

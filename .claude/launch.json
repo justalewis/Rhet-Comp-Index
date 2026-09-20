@@ -3,14 +3,18 @@
   "configurations": [
     {
       "name": "pinakes",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["app.py"],
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "app.py"
+      ],
       "port": 5000
     },
     {
       "name": "xyz-redirect",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["deploy/xyz-redirect/scripts/dev.mjs"],
+      "runtimeArgs": [
+        "deploy/xyz-redirect/scripts/dev.mjs"
+      ],
       "port": 8787
     }
   ]

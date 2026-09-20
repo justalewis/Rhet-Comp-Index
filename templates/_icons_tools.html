@@ -1,0 +1,137 @@
+{# ============================================================
+   Alexandrian icon sprite — the analytical tools. Included by the
+   pages that render tool cards or tool panels (/tools, /explore).
+   "What's New" is not here; it uses ic-new from the core set.
+
+   Two of these are drawn as deliberate inversions of each other:
+   co-citation converges upward (two works a third cites together),
+   bibliographic coupling converges downward (two works citing the
+   same source). Learn one and you have read the other.
+   ============================================================ #}
+<svg class="ic-sprite" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+
+  {# Stichometry: the running line-count marked down a roll's margin. #}
+  <symbol id="ic-timeline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 20h18"/><path d="M7 20v-5M11 20v-9M15 20v-7"/>
+    <path style="stroke:var(--ic-accent)" d="M19 20V5"/>
+  </symbol>
+
+  {# The stoa: architrave, columns, stylobate. #}
+  <symbol id="ic-institutions" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path style="stroke:var(--ic-accent)" d="M3 9 12 4l9 5"/>
+    <path d="M6 9v9M12 9v9M18 9v9"/><path d="M3 20h18"/>
+  </symbol>
+
+  {# Chi: the crossing. Four works, and the paths between them. #}
+  <symbol id="ic-citnet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path style="stroke:var(--ic-accent)" d="M7.4 7.4 16.6 16.6M16.6 7.4 7.4 16.6"/>
+    <circle cx="5.6" cy="5.6" r="2"/><circle cx="18.4" cy="5.6" r="2"/>
+    <circle cx="5.6" cy="18.4" r="2"/><circle cx="18.4" cy="18.4" r="2"/>
+  </symbol>
+
+  {# Three diplai: noted, and noted, and noted again. #}
+  <symbol id="ic-most-cited" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 6l4 6-4 6"/><path d="M11 6l4 6-4 6"/>
+    <path style="stroke:var(--ic-accent)" d="M17 6l4 6-4 6"/>
+  </symbol>
+
+  {# The kanon: a ruled baseline, with the reading taken against it. #}
+  <symbol id="ic-cite-trends" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 20h18"/><path d="M4 16l5-3 4 3 6-8"/>
+    <circle style="fill:var(--ic-accent);stroke:none" cx="19" cy="8" r="2"/>
+  </symbol>
+
+  {# Sigma against antisigma: two arcs facing, and the trade between. #}
+  <symbol id="ic-journal-flow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.5 4.5a8 8 0 0 0 0 15"/><path d="M14.5 4.5a8 8 0 0 1 0 15"/>
+    <path style="stroke:var(--ic-accent)" d="M10.5 10h3.5M12.6 8.6 14.2 10l-1.6 1.4"/>
+    <path style="stroke:var(--ic-accent)" d="M13.5 15H10M11.4 13.6 9.8 15l1.6 1.4"/>
+  </symbol>
+
+  {# The fall of a klepsydra: steep, then long, with the half marked. #}
+  <symbol id="ic-half-life" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 20h18"/><path d="M4 6c6.5 0 5.5 14 16 14"/>
+    <path style="stroke:var(--ic-accent)" d="M8.6 20v-6.4"/>
+  </symbol>
+
+  {# Converging upward: one work cites both, so the field pairs them. #}
+  <symbol id="ic-cocitation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="6" cy="7" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="12" cy="19" r="2"/>
+    <path d="M11.2 17.2 7 8.9M12.8 17.2 17 8.9"/>
+    <path style="stroke:var(--ic-accent)" stroke-dasharray="2 2.2" d="M8 7h8"/>
+  </symbol>
+
+  {# The same relation between two alphas: people, not articles. #}
+  <symbol id="ic-author-cocitation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 16.5 6.2 9l3.2 7.5M4.4 14.2h3.6"/>
+    <path d="M14.6 16.5 17.8 9l3.2 7.5M16 14.2h3.6"/>
+    <path style="stroke:var(--ic-accent)" stroke-dasharray="2 2.2" d="M10.2 12.8h3.6"/>
+  </symbol>
+
+  {# Converging downward: two works standing on one shared source. #}
+  <symbol id="ic-bibcoupling" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/>
+    <circle style="fill:var(--ic-accent);stroke:none" cx="12" cy="18.5" r="2"/>
+    <path d="M6.8 6.9 11 15.9M17.2 6.9 13 15.9"/>
+  </symbol>
+
+  {# Delta thrice: the field falling into groups. #}
+  <symbol id="ic-communities" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 4.5 9 10H3z"/><path d="M18 4.5 21 10h-6z"/>
+    <path style="stroke:var(--ic-accent)" d="M12 13.5 15 19H9z"/>
+  </symbol>
+
+  {# Theta, which in its oldest form is a circle with the centre marked. #}
+  <symbol id="ic-centrality" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3.4"/>
+    <path d="M12 3v2.6M12 18.4V21M3 12h2.6M18.4 12H21M5.6 5.6 7.5 7.5M18.4 5.6 16.5 7.5M5.6 18.4 7.5 16.5M18.4 18.4 16.5 16.5"/>
+    <circle style="fill:var(--ic-accent);stroke:none" cx="12" cy="12" r="1.2"/>
+  </symbol>
+
+  {# The paragraphos run long: one stroke traversing, the rest left faint. #}
+  <symbol id="ic-main-path" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path opacity=".45" d="M10 10.8V7M15 16.9v3.1"/>
+    <circle cx="4.5" cy="18" r="1.8"/><circle cx="10" cy="12.6" r="1.8"/>
+    <circle cx="15" cy="15" r="1.8"/><circle cx="20" cy="5.6" r="1.8"/>
+    <path style="stroke:var(--ic-accent)" d="M5.8 16.7 8.7 13.9M11.7 13.4 13.4 14.3M16.4 13.6 18.9 7.1"/>
+  </symbol>
+
+  {# Obelized for years, then the asteriskos: struck out, then wanted. #}
+  <symbol id="ic-sleeping" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 20h18"/><path d="M4 18h10l3-10.6"/>
+    <circle style="fill:var(--ic-accent);stroke:none" cx="17.3" cy="6.4" r="2"/>
+  </symbol>
+
+  {# Growth rings: the same network, read outward through time. #}
+  <symbol id="ic-temporal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="2.6"/><path d="M12 5.4a6.6 6.6 0 0 1 0 13.2"/>
+    <path style="stroke:var(--ic-accent)" d="M12 2.4a9.6 9.6 0 0 1 0 19.2"/>
+  </symbol>
+
+  {# Psi: three strands off one stem. #}
+  <symbol id="ic-coauthorship" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 5.5v5a6 6 0 0 0 12 0v-5"/><path d="M12 5.5v15"/>
+    <path style="stroke:var(--ic-accent)" d="M8.2 20.5h7.6"/>
+  </symbol>
+
+  {# The sillybos: the tag that hung off a roll carrying its name. #}
+  <symbol id="ic-author-profiles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3h12v18l-6-4.6L6 21z"/>
+    <path style="stroke:var(--ic-accent)" d="M9.5 13.2 12 7.6l2.5 5.6M10.6 11.6h2.8"/>
+  </symbol>
+
+  {# The pinax itself: a ruled tablet, with the cells that struck. #}
+  <symbol id="ic-topics" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect style="fill:var(--ic-wash);stroke:none" x="9" y="9" width="6" height="6"/>
+    <rect style="fill:var(--ic-wash);stroke:none" opacity=".55" x="15" y="3.5" width="5.5" height="5.5"/>
+    <rect x="3.5" y="3.5" width="17" height="17" rx="1"/>
+    <path d="M9 3.5v17M15 3.5v17M3.5 9h17M3.5 15h17"/>
+  </symbol>
+
+  {# Ruled lines, and a diple in the margin pointing on to the next. #}
+  <symbol id="ic-reading-path" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 6.5h12M4 12h12M4 17.5h8"/>
+    <path style="stroke:var(--ic-accent)" d="M16.8 14l3.2 3.5-3.2 3.5"/>
+  </symbol>
+
+</defs></svg>

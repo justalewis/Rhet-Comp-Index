@@ -1,0 +1,229 @@
+/* Copied verbatim from eunomiaslabors.xyz/static/tokens.css so Pinakes,
+   Eunomia's Labors, and the pinakes.xyz redirect page share one palette.
+   Edit it there first, then copy it here. */
+
+/* ============================================================
+   THE ALEXANDRIAN SUITE — design tokens for Eunomia's Labors.
+
+   Replaces the Lewis Design System on this site. The palette is
+   sampled from Attic red-figure rather than picked from a wheel:
+   the fired black gloss, the reserved terracotta of the clay body,
+   the dilute brown the painters made by watering the slip, and
+   added white. Three values and a neutral.
+
+   Dark mode is not a theme hack. A red-figure vase is already a
+   dark-ground design, so inverting gloss and clay is black-figure.
+
+   Nothing here loads from a third party; fonts.css serves the four
+   families from this origin, which is why the CSP can stay at
+   style-src 'self'; font-src 'self'.
+   ============================================================ */
+
+:root {
+
+  /* -- Ground ------------------------------------------------- */
+  --papyrus:      #F5EFE1;   /* page */
+  --papyrus-deep: #EDE4D2;   /* recessed bands, code, table caption */
+  --paper:        #FBF7EE;   /* cards, callouts, form fields */
+
+  /* -- Black gloss — the fired slip. Warm, never neutral. ----- */
+  --gloss:        #1C1A17;   /* all body text, all structural rules */
+  --gloss-soft:   #33302A;
+
+  /* -- Dilute glaze — slip thinned with water. --------------- */
+  --dilute:       #6A5F4E;   /* secondary text */
+  --dilute-light: #8C8271;   /* tertiary; never body copy */
+
+  /* -- Reserved clay. The only saturated value on the site. --- */
+  /* Held under 5% of any painted area. At 10% this reads as an
+     autumn-harvest page. There is deliberately no second warm hue:
+     no gold, no olive, no laurel green. */
+  --terracotta:      #A8462C;
+  --terracotta-lift: #C2593B;
+  --terracotta-wash: #EFDDD4;
+
+  --added-white:  #FFFDF8;   /* text ON terracotta */
+
+  /* -- Faience. Marks absence, and nothing else. -------------- */
+  --faience:      #4A6670;
+  --faience-wash: #DFE7E9;
+
+  /* -- Rules -------------------------------------------------- */
+  --rule:         #DDD3BF;   /* hairlines */
+  --rule-strong:  #8A7F68;   /* form-field borders; must clear 3:1 */
+
+  /* -- Status ------------------------------------------------- */
+  --good-bg:   #E7E0CE;  --good-fg:   #5C4A22;
+  --warn-bg:   #F0E2D2;  --warn-fg:   #7A4A24;
+  --err-bg:    #EFDDD4;  --err-fg:    #8E3A22;
+  --neutral-bg:#E4E7E4;  --neutral-fg:#4A5550;
+
+  /* -- Type --------------------------------------------------- */
+  --f-display: 'GFS Didot', 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --f-quote:   'EB Garamond', Georgia, 'Times New Roman', serif;
+  --f-body:    'Literata', Georgia, 'Times New Roman', serif;
+  --f-ui:      'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Consolas, monospace;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.5rem;
+  --text-2xl:  2rem;
+  --text-3xl:  2.75rem;
+  --text-4xl:  3.75rem;
+
+  --leading-tight: 1.08;
+  --leading-snug:  1.35;
+  --leading-base:  1.65;
+
+  /* The book-roll measure. Greek literary papyri ran 15–25 letters
+     wide; 62 characters is the modern equivalent of reading a roll
+     one hand-span at a time, and it is narrower than a wide screen
+     will tempt you into. */
+  --measure: 62ch;
+
+  /* -- Spacing (4px base) ------------------------------------ */
+  --space-1:  0.25rem;  --space-2:  0.5rem;   --space-3:  0.75rem;
+  --space-4:  1rem;     --space-5:  1.25rem;  --space-6:  1.5rem;
+  --space-8:  2rem;     --space-10: 2.5rem;   --space-12: 3rem;
+  --space-16: 4rem;     --space-20: 5rem;     --space-24: 6rem;
+
+  --radius-sm: 2px;     /* the system is essentially unrounded */
+  --shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.05);
+
+  --t-fast: 0.12s ease;
+  --t-base: 0.2s ease;
+
+  /* Papyrus fibre: an SVG turbulence filter as a data URI. About
+     700 bytes, no network request, scales to any viewport. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='0.055'/%3E%3C/svg%3E");
+}
+
+
+/* ============================================================
+   Black-figure: the same palette with gloss and clay exchanged.
+   ============================================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papyrus:      #171512;
+    --papyrus-deep: #12100E;
+    --paper:        #1F1C18;
+
+    --gloss:        #F0E9DA;
+    --gloss-soft:   #D8D0C0;
+
+    --dilute:       #ADA18C;
+    --dilute-light: #877C69;
+
+    --terracotta:      #DD7C5F;
+    --terracotta-lift: #EC9376;
+    --terracotta-wash: #3A241B;
+    --added-white:  #1A120E;   /* text ON the lifted terracotta */
+
+    --faience:      #93AEB8;
+    --faience-wash: #1E2A2E;
+
+    --rule:         #332E26;
+    --rule-strong:  #7F7562;
+
+    --good-bg:   #2A2418;  --good-fg:   #D3C39A;
+    --warn-bg:   #32241A;  --warn-fg:   #E0B48C;
+    --err-bg:    #3A241B;  --err-fg:    #EBA88E;
+    --neutral-bg:#232725;  --neutral-fg:#AFBAB4;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='0.09'/%3E%3C/svg%3E");
+  }
+}
+
+:root[data-theme="dark"] {
+  --papyrus:#171512; --papyrus-deep:#12100E; --paper:#1F1C18;
+  --gloss:#F0E9DA; --gloss-soft:#D8D0C0;
+  --dilute:#ADA18C; --dilute-light:#877C69;
+  --terracotta:#DD7C5F; --terracotta-lift:#EC9376; --terracotta-wash:#3A241B;
+  --added-white:#1A120E;
+  --faience:#93AEB8; --faience-wash:#1E2A2E;
+  --rule:#332E26; --rule-strong:#7F7562;
+  --good-bg:#2A2418; --good-fg:#D3C39A;
+  --warn-bg:#32241A; --warn-fg:#E0B48C;
+  --err-bg:#3A241B;  --err-fg:#EBA88E;
+  --neutral-bg:#232725; --neutral-fg:#AFBAB4;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+}
+
+
+/* ============================================================
+   Element baseline. Layout and components live in style.css.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--papyrus);
+  background-image: var(--grain);
+  color: var(--gloss);
+  font-family: var(--f-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2 {
+  font-family: var(--f-display);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-4);
+  color: var(--gloss);
+  text-wrap: balance;
+}
+
+h3, h4, h5, h6 {
+  font-family: var(--f-ui);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--space-3);
+  color: var(--gloss);
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-base); }
+
+p { margin: 0 0 var(--space-4); }
+
+a {
+  color: var(--terracotta);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+a:hover { color: var(--terracotta-lift); text-decoration-color: currentColor; }
+
+code, pre, kbd, samp {
+  font-family: var(--f-mono);
+  font-size: 0.88em;
+}
+
+button { font-family: inherit; cursor: pointer; }
+::placeholder { color: var(--dilute-light); opacity: 1; }
+::selection { background: var(--terracotta-wash); color: var(--gloss); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

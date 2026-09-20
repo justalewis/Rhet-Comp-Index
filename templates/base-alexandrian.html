@@ -1,0 +1,116 @@
+{# ============================================================
+   The Alexandrian shell: capsa on the left, column on the right.
+
+   This is the replacement for base.html, kept alongside it rather
+   than swapped in, so the eighteen templates still on the legacy
+   sheets are untouched while pages move across one at a time. When
+   the last one has moved, base.html goes and this takes its name.
+
+   A page built on this shell fills `content`, and optionally:
+     extra_sprites  — icon sprites beyond the core set
+     capsa_tags     — replaces the journal list in the capsa
+     capsa_foot     — replaces the back link at its foot
+   ============================================================ #}
+{% extends "base-core.html" %}
+
+{% block stylesheets %}{% include "_alexandrian_head.html" %}{% endblock %}
+{% block legacy_theme %}{% endblock %}
+
+{% block icon_sprite %}
+  {% include "_icons_core.html" %}
+  {% block extra_sprites %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="layout">
+
+  <aside class="capsa">
+
+    <div class="capsa-head">
+      <a class="wordmark" href="/">
+        <svg class="ic ic-wordmark" aria-hidden="true"><use href="#ic-pi"/></svg>
+        <span>
+          <span class="name">Pinakes</span>
+          <span class="sub">Curating disciplinary knowledge</span>
+        </span>
+      </a>
+    </div>
+
+    <nav class="capsa-nav" aria-label="Sections and journals">
+      {% include "_capsa_nav.html" %}
+      {% block capsa_tags %}{% include "_capsa_tags.html" %}{% endblock %}
+    </nav>
+
+    <div class="capsa-foot">
+      {% block capsa_foot %}
+      <a class="capsa-back" href="/">&#8592; Back to the index</a>
+      {% endblock %}
+      <button class="figure-toggle" type="button" id="figure-toggle" aria-live="polite">Black-figure</button>
+    </div>
+
+  </aside>
+
+  <main class="column" id="main" tabindex="-1">
+    <div class="column-inner">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function () {
+  /* Collapsible nav groups. One open at a time, closed by Escape or by a
+     click anywhere else, which is how the legacy nav behaved too. */
+  function closeAll(except) {
+    document.querySelectorAll('.nav-item.open').forEach(function (el) {
+      if (el !== except) {
+        el.classList.remove('open');
+        var t = el.querySelector('.nav-trigger');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+  document.querySelectorAll('.nav-trigger').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      var item = btn.closest('.nav-item');
+      var open = item.classList.contains('open');
+      closeAll();
+      if (!open) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+      e.stopPropagation();
+    });
+  });
+  document.addEventListener('click', function () { closeAll(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
+
+  /* Red-figure and black-figure. The button reports the figure it would
+     switch you TO, and the choice is remembered; _alexandrian_head.html
+     applies it before first paint on the next page. */
+  var b = document.getElementById('figure-toggle');
+  if (!b) return;
+  function current() {
+    var set = document.documentElement.getAttribute('data-theme');
+    if (set === 'light' || set === 'dark') return set;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function label() { b.textContent = current() === 'dark' ? 'Red-figure' : 'Black-figure'; }
+  label();
+  b.addEventListener('click', function () {
+    var next = current() === 'dark' ? 'light' : 'dark';
+    var el = document.documentElement;
+    el.classList.add('figure-switching');
+    el.setAttribute('data-theme', next);
+    try { localStorage.setItem('pinakes-figure', next); } catch (e) {}
+    label();
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { el.classList.remove('figure-switching'); });
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{# ============================================================
+   The Alexandrian Suite head. A rebuilt template pulls this in by
+   overriding base-core.html's `stylesheets` block:
+
+     {% block stylesheets %}{% include "_alexandrian_head.html" %}{% endblock %}
+     {% block legacy_theme %}{% endblock %}
+
+   Clearing `legacy_theme` at the same time is not optional: it
+   carries the Scandi and Terminal toggles, and those sheets are not
+   loaded here, so the buttons would flip a class nothing answers to.
+
+   Order matters. tokens.css declares the palette and the element
+   baseline, fonts.css maps the faces it names, pinakes.css builds
+   the components on top. Nothing loads from a third party, which is
+   what lets the CSP stay at style-src 'self'; font-src 'self'.
+   ============================================================ #}
+<link rel="stylesheet" href="/static/tokens.css?v={{ version }}">
+<link rel="stylesheet" href="/static/fonts.css?v={{ version }}">
+<link rel="stylesheet" href="/static/pinakes.css?v={{ version }}">
+
+<meta name="theme-color" content="#F5EFE1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171512" media="(prefers-color-scheme: dark)">
+
+{# Red-figure and black-figure follow the reader's system setting. This
+   applies a saved override before first paint, so a reader who chose
+   the other figure does not watch the page repaint into it. #}
+<script>(function(){try{var f=localStorage.getItem('pinakes-figure');if(f==='light'||f==='dark'){document.documentElement.setAttribute('data-theme',f);}}catch(e){}})();</script>

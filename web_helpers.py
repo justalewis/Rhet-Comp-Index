@@ -126,13 +126,28 @@ def set_security_headers(response):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # Two directives here were actively breaking things on the Clearinghouse
+    # host. `style-src` never listed justalewis.github.io, so the Lewis Design
+    # System tokens were blocked on every request and the whole site ran on
+    # the literal fallbacks in base-core.html; that <link> is now gone and the
+    # Alexandrian Suite serves from this origin instead, which is what
+    # `font-src 'self'` is for -- it was absent entirely, so self-hosted faces
+    # could not have loaded. And `connect-src 'self'` blocked the GoatCounter
+    # beacon, which posts to pinakes.goatcounter.com.
+    #
+    # The two Google Fonts origins are on borrowed time. Nothing in the
+    # Alexandrian Suite touches them; they are here only because
+    # style-terminal.css:9 @imports Share Tech Mono, and that sheet is served
+    # to every page that has not been rebuilt yet. Drop both when the Terminal
+    # and Scandi themes are retired, and the policy names no third party for
+    # styles or fonts at all.
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net gc.zgo.at; "
         "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
-        "font-src fonts.gstatic.com; "
+        "font-src 'self' fonts.gstatic.com; "
         "img-src 'self' data:; "
-        "connect-src 'self'"
+        "connect-src 'self' pinakes.goatcounter.com"
     )
     return response
 

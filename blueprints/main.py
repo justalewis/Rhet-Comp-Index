@@ -40,6 +40,7 @@ Disallow: /export
 Disallow: /fetch
 Disallow: /datastories
 Disallow: /citations
+Disallow: /design/
 Disallow: /feed
 Disallow: /*?seed=
 Disallow: /*&seed=
@@ -248,7 +249,24 @@ def tools():
         journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
         new_count=new_count,
+        total_count=get_total_count(),
     )
+
+
+@bp.route("/design/icons")
+def design_icons():
+    """Reference sheet for the Alexandrian icon set: all 57 marks, the four
+    faces, and the size and state variants.
+
+    It is also the end-to-end check on the design-system foundations. Until
+    the /tools pilot lands this is the only page served on tokens.css +
+    fonts.css + pinakes.css, so if the specimen renders in Didot and
+    Literata and the marks take their terracotta accent, then the CSP, the
+    woff2 MIME registration and the token layer are all correct together.
+
+    Unlinked and noindex; see _ROBOTS_TXT.
+    """
+    return render_template("design_icons.html")
 
 
 @bp.route("/citations")
