@@ -9,6 +9,7 @@ import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
+import { renderJournalLegend } from "../utils/legend.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -111,11 +112,7 @@ function renderBibcoupling(container, data) {
   // Legend — colour by journal
   const seenJournals = [...new Set(bibcoupNodes.map(n => n.journal))].sort();
   const legendEl = document.getElementById('bibcoup-legend');
-  legendEl.innerHTML = seenJournals.map(j =>
-    `<span class="citnet-legend-item">` +
-    `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
-    `${escapeHtml(j)}</span>`
-  ).join('');
+  renderJournalLegend(legendEl, seenJournals);
 
   const W = container.clientWidth || 820;
   const H = 600;

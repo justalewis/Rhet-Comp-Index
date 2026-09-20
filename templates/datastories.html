@@ -271,7 +271,11 @@
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12"></script>
 
-<script>window.ALL_JOURNALS = {{ all_journals | tojson | safe }};</script>
+{# The group order decides which hue each sub-field owns, so it has to
+   come from journals.py's declaration order and not from whichever
+   journal happens to sort first. #}
+<script>window.ALL_JOURNALS = {{ all_journals | tojson | safe }};
+window.JOURNAL_GROUP_ORDER = {{ journal_groups | map(attribute='label') | list | tojson | safe }};</script>
 <script>window.MIN_YEAR = {{ min_year }}; window.MAX_YEAR = {{ max_year }};</script>
 <script>window.DS_CLUSTER_OPTIONS = {{ cluster_options | tojson | safe }};</script>
 

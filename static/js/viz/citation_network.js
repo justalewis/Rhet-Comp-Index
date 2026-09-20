@@ -9,6 +9,7 @@ import { renderExportToolbar } from "../shared/export.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
+import { renderJournalLegend } from "../utils/legend.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 
@@ -97,13 +98,8 @@ async function loadCitationNetwork() {
   // checkbox and triggers a reload, so the legend doubles as a fast
   // "show only this journal" / "remove this journal" affordance.
   const seenJournals = [...new Set(data.nodes.map(n => n.journal))].sort();
-  document.getElementById('citnet-legend').innerHTML = seenJournals.map(j =>
-    `<span class="citnet-legend-item" data-journal="${escapeHtml(j)}" ` +
-       `style="cursor:pointer;" title="Click to toggle this journal in the filter">` +
-    `<span class="citnet-legend-dot" style="background:${citnetJournalColor(j)}"></span>` +
-    `${escapeHtml(j)}</span>`
-  ).join('');
-  document.querySelectorAll('#citnet-legend .citnet-legend-item').forEach(el => {
+  renderJournalLegend('citnet-legend', seenJournals, { interactive: true });
+  document.querySelectorAll('#citnet-legend .jlegend-item').forEach(el => {
     el.addEventListener('click', () => {
       const name = el.getAttribute('data-journal');
       const cb = [...document.querySelectorAll('.citnet-journal-check')]
