@@ -1,379 +1,286 @@
-{% extends "base.html" %}
+{% extends "base-alexandrian.html" %}
 
-{% block title %}Pinakes — Rhetoric &amp; Composition{% endblock %}
+{# The index, on the Alexandrian Suite. Same route context as before; what
+   changed is the shell, the type, and the shape of an entry.
+
+   Cards were the wrong container for this page. Callimachus's Pinakes were
+   a catalogue, and a catalogue is a ruled list -- two hundred entries in
+   boxes is a wall, two hundred separated by hairlines is a column you can
+   run your eye down. The entries below borrow the discipline of the
+   coverage table on Eunomia's Labors: rules and nothing else. #}
+
+{% block title %}Pinakes &mdash; Rhetoric &amp; Composition{% endblock %}
 
 {% block head_extra %}
 <meta name="description" content="Pinakes is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication. Browse 40,000+ articles and 3,200+ books from major journals and university presses.">
 {% if feed_slug %}
-<link rel="alternate" type="application/atom+xml" title="Pinakes — {{ feed_journal }}" href="/feed/{{ feed_slug }}.xml">
+<link rel="alternate" type="application/atom+xml" title="Pinakes &mdash; {{ feed_journal }}" href="/feed/{{ feed_slug }}.xml">
 {% else %}
-<link rel="alternate" type="application/atom+xml" title="Pinakes — new in rhetoric and composition" href="/feed.xml">
+<link rel="alternate" type="application/atom+xml" title="Pinakes &mdash; new in rhetoric and composition" href="/feed.xml">
 {% endif %}
 {% endblock %}
 
-{% block sidebar_content %}
-      <!-- ── Journal filter (alphabetical checkbox dropdown) ─────── -->
-      <div class="journal-filter-wrapper">
-        <details class="journal-filter" id="journal-filter"
-                 {% if active_journals %}open{% endif %}>
-          <summary class="journal-filter-summary">
-            <span class="filter-summary-text">
-              {% if not active_journals %}
-                All Journals
-              {% elif active_journals|length == 1 %}
-                {{ active_journals[0]|truncate(26, true, '…') }}
-              {% else %}
-                {{ active_journals|length }} journals selected
-              {% endif %}
-            </span>
-            <span class="dropdown-arrow">▾</span>
-          </summary>
-          <div class="journal-filter-list">
-            <label class="journal-check-label all-journals-label">
-              <input type="checkbox" class="journal-check" id="check-all"
-                     {% if not active_journals %}checked{% endif %}
-                     onchange="toggleAllJournals(this)">
-              <span class="jname">All Journals</span>
-            </label>
-            {% for group in journal_groups %}
-            <div class="journal-filter-divider"></div>
-            <div class="journal-group-label">{{ group.label }}</div>
-            {% for j in group.journals %}
-            <label class="journal-check-label">
-              <input type="checkbox" class="journal-check journal-check-item"
-                     value="{{ j.name }}"
-                     {% if j.name in active_journals %}checked{% endif %}
-                     onchange="updateJournalFilter()">
-              <span class="jname">{{ j.name }}</span>
-              {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
-            </label>
-            {% endfor %}
-            {% endfor %}
-            {% if unavailable %}
-            <div class="journal-filter-divider"></div>
-            {% for j in unavailable %}
-            <span class="journal-check-label unavailable" title="{{ j.note }}">
-              <span class="jname unavailable-name">{{ j.name }}</span>
-            </span>
-            {% endfor %}
-            {% endif %}
-          </div>
-        </details>
-      </div>
+{# The picker replaces the tag field here, as the legacy sidebar did: on the
+   index you are selecting journals to filter by, not navigating to one. #}
+{% block capsa_tags %}
+<details class="picker" id="journal-filter" {% if active_journals %}open{% endif %}>
+  <summary>
+    <span class="picker-summary-text">
+      {% if not active_journals %}All journals
+      {% elif active_journals|length == 1 %}{{ active_journals[0]|truncate(24, true, '…') }}
+      {% else %}{{ active_journals|length }} journals selected{% endif %}
+    </span>
+  </summary>
+  <div class="picker-list">
+    <label>
+      <input type="checkbox" id="check-all" {% if not active_journals %}checked{% endif %}
+             onchange="toggleAllJournals(this)">
+      <span class="jname">All journals</span>
+    </label>
+    {% for group in journal_groups %}
+    <div class="picker-group">{{ group.label }}</div>
+      {% for j in group.journals %}
+      <label>
+        <input type="checkbox" class="journal-check-item" value="{{ j.name }}"
+               {% if j.name in active_journals %}checked{% endif %}
+               onchange="updateJournalFilter()">
+        <span class="jname">{{ j.name }}</span>
+        {% if j.count %}<span class="jcount">{{ j.count }}</span>{% endif %}
+      </label>
+      {% endfor %}
+    {% endfor %}
+    {% if unavailable %}
+    <div class="picker-group">Unavailable</div>
+      {% for j in unavailable %}
+      <label class="absent" title="{{ j.note }}"><span class="jname">{{ j.name }}</span></label>
+      {% endfor %}
+    {% endif %}
+  </div>
+</details>
 {% endblock %}
 
-{% block sidebar_footer %}
-    <div class="sidebar-comppile">
-      Looking for books, dissertations, or edited collections?<br>
-      <a href="https://wacclearinghouse.org/comppile/search/" target="_blank" rel="noopener noreferrer">Search CompPile &#8599;</a>
-      — the field's comprehensive bibliography with sources dating from 1939 (117,000+ records).
-    </div>
-
-    <div class="sidebar-footer">
-      <button id="fetch-btn" class="fetch-btn" onclick="triggerFetch(false)">
-        Refresh all sources
-      </button>
-      <p class="fetch-note">CrossRef · RSS feeds · Web scraping</p>
-      <button id="deep-fetch-btn" class="fetch-btn fetch-btn--deep" onclick="triggerFetch(true)"
-              title="Recheck every journal's full back catalog against CrossRef, fill missing metadata, and re-run all harvesters. Takes a while.">
-        Deep refresh
-      </button>
-      <p class="fetch-note">Full back-catalog recheck</p>
-    </div>
+{% block capsa_foot %}
+<p class="comppile">
+  Looking for books, dissertations, or edited collections?
+  <a href="https://wacclearinghouse.org/comppile/search/" target="_blank" rel="noopener noreferrer">Search CompPile &#8599;</a>
+  &mdash; the field&rsquo;s comprehensive bibliography with sources dating from 1939 (117,000+ records).
+</p>
+<div>
+  <button id="fetch-btn" class="fetch-btn" onclick="triggerFetch(false)">Refresh all sources</button>
+  <p class="fetch-note">CrossRef &middot; RSS feeds &middot; Web scraping</p>
+  <button id="deep-fetch-btn" class="fetch-btn fetch-btn--deep" onclick="triggerFetch(true)"
+          title="Recheck every journal's full back catalog against CrossRef, fill missing metadata, and re-run all harvesters. Takes a while.">Deep refresh</button>
+  <p class="fetch-note">Full back-catalog recheck</p>
+</div>
 {% endblock %}
 
 {% block content %}
 
-    <!-- ── First-visit orientation hero (suppressed when filters are active) ─ -->
-    {% if not active_journals and not selected_source and not active_q and not active_year_from and not active_year_to and not active_tag and page == 1 %}
-    <section class="home-hero" style="margin:0 0 2rem;padding:1.4rem 1.6rem;background:#fdfbf7;border:1px solid #e8e4de;border-radius:4px;">
-      <p style="margin:0 0 0.7rem;font-size:1.05rem;line-height:1.55;color:#3a3026;">
-        <strong>Pinakes</strong> is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication: more than 50,000 articles from 54 journals, plus 3,200+ scholarly books from seven university presses.
-      </p>
-      <p style="margin:0 0 1rem;font-size:0.96rem;line-height:1.55;color:#5a544c;">
-        The <a href="/explore" style="color:var(--accent, #2C4A3A);">Explore tools</a> turn that corpus into questions you can ask: who's citing whom, what conversations cluster together, what's been reread, and what's been forgotten. Search the full index below, or start here:
-      </p>
-      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0.5rem 1.6rem;font-size:0.92rem;line-height:1.5;">
-        <li>&rarr;&nbsp;<a href="/atlas" style="color:var(--accent, #2C4A3A);"><strong>Atlas of the Field</strong></a> <span style="color:#9c9890;">enter the index through your sub-area</span></li>
-        <li>&rarr;&nbsp;<a href="/most-cited" style="color:var(--accent, #2C4A3A);"><strong>Most Cited</strong></a> <span style="color:#9c9890;">what the field has treated as foundational</span></li>
-        <li>&rarr;&nbsp;<a href="/tools" style="color:var(--accent, #2C4A3A);"><strong>Browse all tools</strong></a> <span style="color:#9c9890;">questions you can ask the corpus</span></li>
-        <li>&rarr;&nbsp;<a href="/about" style="color:var(--accent, #2C4A3A);"><strong>About this project</strong></a> <span style="color:#9c9890;">what Pinakes is and what it isn't</span></li>
-      </ul>
-    </section>
-    {% endif %}
+{% if not active_journals and not selected_source and not active_q and not active_year_from and not active_year_to and not active_tag and page == 1 %}
+<section class="orient">
+  <p><strong>Pinakes</strong> is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication: more than 50,000 articles from 54 journals, plus 3,200+ scholarly books from seven university presses.</p>
+  <p>The <a href="/explore">Explore tools</a> turn that corpus into questions you can ask: who&rsquo;s citing whom, what conversations cluster together, what&rsquo;s been reread, and what&rsquo;s been forgotten. Search the full index below, or start here:</p>
+  <ul class="orient-starts">
+    <li><a href="/atlas">Atlas of the Field<span class="gloss">enter the index through your sub-area</span></a></li>
+    <li><a href="/most-cited">Most Cited<span class="gloss">what the field has treated as foundational</span></a></li>
+    <li><a href="/tools">Browse all tools<span class="gloss">questions you can ask the corpus</span></a></li>
+    <li><a href="/about">About this project<span class="gloss">what Pinakes is and what it isn&rsquo;t</span></a></li>
+  </ul>
+</section>
+{% endif %}
 
-    <!-- Content header -->
-    <div class="content-header">
-      {% if active_journals and active_journals|length == 1 %}
-        <h2>{{ active_journals[0] }}</h2>
-      {% elif active_journals and active_journals|length > 1 %}
-        <h2>{{ active_journals|length }} Journals</h2>
-      {% elif selected_source == 'crossref' %}
-        <h2>Print Journals</h2>
-      {% elif selected_source == 'rss' %}
-        <h2>Web Journals — RSS</h2>
-      {% elif selected_source == 'scrape' %}
-        <h2>Web Journals — Scraped</h2>
-      {% else %}
-        <h2>All Journals</h2>
-      {% endif %}
-      <span class="result-count">{{ total }} article{% if total != 1 %}s{% endif %}</span>
+<div class="column-head">
+  <h1>
+    {% if active_journals and active_journals|length == 1 %}{{ active_journals[0] }}
+    {% elif active_journals and active_journals|length > 1 %}{{ active_journals|length }} Journals
+    {% elif selected_source == 'crossref' %}Print Journals
+    {% elif selected_source == 'rss' %}Web Journals &mdash; RSS
+    {% elif selected_source == 'scrape' %}Web Journals &mdash; Scraped
+    {% else %}All Journals{% endif %}
+  </h1>
+  <span class="result-count">{{ '{:,}'.format(total) }} article{% if total != 1 %}s{% endif %}</span>
+</div>
+
+<div class="sift">
+  <form method="get" action="/" autocomplete="off">
+
+    {% for j in active_journals %}<input type="hidden" name="journal" value="{{ j }}">{% endfor %}
+    {% if selected_source %}<input type="hidden" name="source" value="{{ selected_source }}">{% endif %}
+
+    <div class="sift-row">
+      <input type="text" name="q" value="{{ active_q }}"
+             placeholder="Search titles, authors, abstracts&hellip;" spellcheck="false"
+             aria-label="Search the index">
+      <button class="btn" type="submit">Search</button>
     </div>
 
-    <!-- ── Search & filter bar ──────────────────────────── -->
-    <div class="filter-section">
-      <form class="filter-form" method="get" action="/" autocomplete="off">
+    <div class="sift-row">
+      <span class="sift-label">Year</span>
+      <select name="year_from" aria-label="Year from">
+        <option value="">From&hellip;</option>
+        {% if min_year %}{% for y in range(max_year, min_year - 1, -1) %}
+        <option value="{{ y }}" {% if active_year_from == y | string %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}{% endif %}
+      </select>
+      <span class="sift-dash">&ndash;</span>
+      <select name="year_to" aria-label="Year to">
+        <option value="">To&hellip;</option>
+        {% if max_year %}{% for y in range(max_year, min_year - 1, -1) %}
+        <option value="{{ y }}" {% if active_year_to == y | string %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}{% endif %}
+      </select>
 
-        <!-- Preserve journal / source selections when searching -->
-        {% for j in active_journals %}
-        <input type="hidden" name="journal" value="{{ j }}">
+      {% if all_tags %}
+      <span class="sift-label">Topic</span>
+      <select name="tag" aria-label="Topic">
+        <option value="">All topics&hellip;</option>
+        {% for tag_name, tag_count in all_tags %}
+        <option value="{{ tag_name }}" {% if active_tag == tag_name %}selected{% endif %}>{{ tag_name }} ({{ tag_count }})</option>
         {% endfor %}
-        {% if selected_source %}
-        <input type="hidden" name="source" value="{{ selected_source }}">
-        {% endif %}
-
-        <!-- Full-text search bar -->
-        <div class="search-row">
-          <input class="search-input"
-                 type="text"
-                 name="q"
-                 value="{{ active_q }}"
-                 placeholder="Search titles, authors, abstracts…"
-                 spellcheck="false">
-          <button class="search-btn" type="submit">Search</button>
-        </div>
-
-        <!-- Secondary filters: year range + topic tag -->
-        <div class="filter-row">
-
-          <span class="filter-label">Year:</span>
-          <select name="year_from" class="filter-select">
-            <option value="">From…</option>
-            {% if min_year %}
-            {% for y in range(max_year, min_year - 1, -1) %}
-            <option value="{{ y }}"
-              {% if active_year_from == y | string %}selected{% endif %}>{{ y }}</option>
-            {% endfor %}
-            {% endif %}
-          </select>
-
-          <span class="filter-dash">–</span>
-
-          <select name="year_to" class="filter-select">
-            <option value="">To…</option>
-            {% if max_year %}
-            {% for y in range(max_year, min_year - 1, -1) %}
-            <option value="{{ y }}"
-              {% if active_year_to == y | string %}selected{% endif %}>{{ y }}</option>
-            {% endfor %}
-            {% endif %}
-          </select>
-
-          {% if all_tags %}
-          <span class="filter-label filter-label-spaced">Topic:</span>
-          <select name="tag" class="filter-select filter-select-tag">
-            <option value="">All topics…</option>
-            {% for tag_name, tag_count in all_tags %}
-            <option value="{{ tag_name }}"
-              {% if active_tag == tag_name %}selected{% endif %}>
-              {{ tag_name }} ({{ tag_count }})
-            </option>
-            {% endfor %}
-          </select>
-          {% endif %}
-
-          <button class="filter-apply-btn" type="submit">Apply</button>
-
-          {% if active_q or active_year_from or active_year_to or active_tag %}
-          <a class="filter-clear"
-             href="/?{% for j in active_journals %}journal={{ j | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}">
-            Clear
-          </a>
-          {% endif %}
-
-        </div><!-- /filter-row -->
-
-        <!-- Export buttons -->
-        <div class="export-row">
-          <span class="filter-label">Export:</span>
-          <button type="submit" formaction="/export" name="format" value="bibtex" class="export-btn">BibTeX</button>
-          <button type="submit" formaction="/export" name="format" value="ris" class="export-btn">RIS</button>
-          {% if feed_slug %}
-          <a href="/feed/{{ feed_slug }}.xml" class="export-btn">Subscribe (Atom)</a>
-          {% endif %}
-          {% if alerts_enabled %}
-          {# GET, so every active filter rides along on the query string and the
-             signup page can show the visitor the search they are subscribing to. #}
-          <button type="submit" formaction="/alerts/new" formmethod="get" class="export-btn">Email me these</button>
-          {% endif %}
-        </div>
-
-      </form>
-
-      <!-- Active filter pills -->
-      {% set has_filters = active_q or active_year_from or active_year_to or active_tag %}
-      {% if has_filters %}
-      <div class="active-filters">
-
-        {% if active_q %}
-        <span class="filter-pill">
-          <span class="pill-label">&#x22;{{ active_q }}&#x22;</span>
-          <a class="pill-remove" href="#"
-             onclick="removeFilter('q'); return false;"
-             title="Remove search">&#x00D7;</a>
-        </span>
-        {% endif %}
-
-        {% if active_year_from or active_year_to %}
-        <span class="filter-pill">
-          <span class="pill-label">
-            {{ active_year_from or '…' }}&thinsp;–&thinsp;{{ active_year_to or '…' }}
-          </span>
-          <a class="pill-remove" href="#"
-             onclick="removeFilters('year_from','year_to'); return false;"
-             title="Remove year range">&#x00D7;</a>
-        </span>
-        {% endif %}
-
-        {% if active_tag %}
-        <span class="filter-pill">
-          <span class="pill-label">{{ active_tag }}</span>
-          <a class="pill-remove" href="#"
-             onclick="removeFilter('tag'); return false;"
-             title="Remove topic filter">&#x00D7;</a>
-        </span>
-        {% endif %}
-
-      </div><!-- /active-filters -->
+      </select>
       {% endif %}
 
-    </div><!-- /filter-section -->
+      <button class="btn-quiet" type="submit">Apply</button>
 
-    {% if grouped %}
-
-      <!-- Article list, grouped by publication period -->
-      {% for period, articles in grouped %}
-      <section class="period-section">
-        <h3 class="period-heading">{{ period | format_period }}</h3>
-        <ol class="article-list">
-          {% for a in articles %}
-          <li class="article">
-
-            {# COinS for Zotero/Mendeley auto-detection #}
-            <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ a.title | urlencode }}&amp;rft.jtitle={{ a.journal | urlencode }}{% if a.pub_date %}&amp;rft.date={{ a.pub_date | urlencode }}{% endif %}{% if a.doi %}&amp;rft_id=info%3Adoi%2F{{ a.doi | urlencode }}{% endif %}{% if a.authors and not a.authors.split(';')[0].strip().startswith('Redacted Author ') %}&amp;rft.au={{ a.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
-
-            <!-- Journal + date line -->
-            <div class="article-meta-top">
-              {% if not active_journals or active_journals|length > 1 %}
-              <span class="article-journal">{{ a.journal }}</span>
-              {% endif %}
-              {% if a.pub_date %}
-              <span class="article-date">{{ a.pub_date | display_date }}</span>
-              {% endif %}
-              {% if a.source == 'scrape' %}
-              <span class="src-badge scrape" title="Scraped — author and abstract data may be incomplete">web</span>
-              {% elif a.source == 'rss' %}
-              <span class="src-badge rss" title="Via RSS feed">RSS</span>
-              {% endif %}
-              {% if a.oa_url %}
-              <a class="oa-badge" href="{{ a.oa_url }}" target="_blank" rel="noopener" title="Open access PDF available">OA PDF</a>
-              {% endif %}
-            </div>
-
-            <!-- Title + detail link -->
-            <div class="article-title-row">
-              <a class="article-title" href="/article/{{ a.id }}">
-                {{ a.title }}
-              </a>
-              <a class="article-detail-link" href="{{ a.url }}" target="_blank" rel="noopener" title="View on publisher site">&#8599;</a>
-            </div>
-
-            <!-- Authors + citation count -->
-            {% if a.authors %}
-            <div class="article-authors">
-              {{ a.authors | redact_authors }}
-              {% if a.citation_count and a.citation_count > 0 %}
-              <span class="cite-count">(cited {{ a.citation_count }}&times;)</span>
-              {% endif %}
-            </div>
-            {% elif a.source == 'scrape' %}
-            <div class="article-authors no-data">Author data unavailable</div>
-            {% endif %}
-
-            <!-- Abstract toggle -->
-            {% if a.abstract %}
-            <details class="abstract-toggle">
-              <summary>Abstract</summary>
-              <p class="abstract-text">{{ a.abstract }}</p>
-            </details>
-            {% endif %}
-
-            <!-- Tags (shown only when tags exist) -->
-            {% if a.tags %}
-            <div class="article-tags">
-              {% for t in a.tags.strip('|').split('|') %}
-              {% if t.strip() %}
-              <a class="article-tag"
-                 href="/?{% for j in active_journals %}journal={{ j | urlencode }}&{% endfor %}tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
-              {% endif %}
-              {% endfor %}
-            </div>
-            {% endif %}
-
-            <!-- CrossRef subject keywords (when available and distinct from tags) -->
-            {% if a.keywords %}
-            <div class="article-keywords">
-              <span class="keywords-label">Subjects:</span> {{ a.keywords }}
-            </div>
-            {% endif %}
-
-            <!-- DOI line (CrossRef articles only) -->
-            {% if a.doi %}
-            <div class="article-doi">
-              <a href="{{ a.url }}" target="_blank" rel="noopener">doi:{{ a.doi }}</a>
-            </div>
-            {% endif %}
-
-          </li>
-          {% endfor %}
-        </ol>
-      </section>
-      {% endfor %}
-
-      <!-- Pagination -->
-      {% if total_pages > 1 %}
-      <nav class="pagination">
-        {% if page > 1 %}
-          <a class="page-link"
-             href="?{{ filter_qs }}{% if filter_qs %}&{% endif %}page={{ page - 1 }}">&larr; Previous</a>
-        {% endif %}
-        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
-        {% if page < total_pages %}
-          <a class="page-link"
-             href="?{{ filter_qs }}{% if filter_qs %}&{% endif %}page={{ page + 1 }}">Next &rarr;</a>
-        {% endif %}
-      </nav>
-      {% endif %}
-
-    {% else %}
-    <div class="empty-state">
       {% if active_q or active_year_from or active_year_to or active_tag %}
-        <p>No articles matched your filters.</p>
-        <p><a href="/?{% for j in active_journals %}journal={{ j | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}">Clear all filters</a> to see all articles.</p>
-      {% else %}
-        <p>No articles in the database yet.</p>
-        <p>Click <strong>Refresh all sources</strong> in the sidebar to fetch recent publications.</p>
-        <p class="empty-hint">First run is slow: CrossRef pulls full history for each journal.</p>
+      <a class="sift-clear" href="/?{% for j in active_journals %}journal={{ j | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}">Clear</a>
       {% endif %}
     </div>
+
+    <div class="sift-row">
+      <span class="sift-label">Export</span>
+      <button class="btn-quiet" type="submit" formaction="/export" name="format" value="bibtex">BibTeX</button>
+      <button class="btn-quiet" type="submit" formaction="/export" name="format" value="ris">RIS</button>
+      {% if feed_slug %}<a class="btn-quiet" href="/feed/{{ feed_slug }}.xml">Subscribe (Atom)</a>{% endif %}
+      {% if alerts_enabled %}
+      {# GET, so every active filter rides along on the query string and the
+         signup page can show the visitor the search they are subscribing to. #}
+      <button class="btn-quiet" type="submit" formaction="/alerts/new" formmethod="get">Email me these</button>
+      {% endif %}
+    </div>
+
+  </form>
+
+  {% if active_q or active_year_from or active_year_to or active_tag %}
+  <div class="sift-active">
+    {% if active_q %}
+    <span class="pill">&ldquo;{{ active_q }}&rdquo;<a href="#" onclick="removeFilter('q'); return false;" title="Remove search" aria-label="Remove search filter">&times;</a></span>
     {% endif %}
+    {% if active_year_from or active_year_to %}
+    <span class="pill">{{ active_year_from or '…' }}&thinsp;&ndash;&thinsp;{{ active_year_to or '…' }}<a href="#" onclick="removeFilters('year_from','year_to'); return false;" title="Remove year range" aria-label="Remove year range filter">&times;</a></span>
+    {% endif %}
+    {% if active_tag %}
+    <span class="pill">{{ active_tag }}<a href="#" onclick="removeFilter('tag'); return false;" title="Remove topic filter" aria-label="Remove topic filter">&times;</a></span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if grouped %}
+
+  {% for period, articles in grouped %}
+  <section class="period">
+    <h2 class="period-head">{{ period | format_period }}</h2>
+    <ol class="entries">
+      {% for a in articles %}
+      <li class="entry">
+
+        {# COinS for Zotero/Mendeley auto-detection #}
+        <span class="Z3988" title="ctx_ver=Z39.88-2004&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle={{ a.title | urlencode }}&amp;rft.jtitle={{ a.journal | urlencode }}{% if a.pub_date %}&amp;rft.date={{ a.pub_date | urlencode }}{% endif %}{% if a.doi %}&amp;rft_id=info%3Adoi%2F{{ a.doi | urlencode }}{% endif %}{% if a.authors and not a.authors.split(';')[0].strip().startswith('Redacted Author ') %}&amp;rft.au={{ a.authors.split(';')[0].strip() | urlencode }}{% endif %}"></span>
+
+        <div class="entry-meta">
+          {% if not active_journals or active_journals|length > 1 %}
+          <span class="entry-journal">{{ a.journal }}</span>
+          {% endif %}
+          {% if a.pub_date %}<span class="entry-date">{{ a.pub_date | display_date }}</span>{% endif %}
+          {% if a.source == 'scrape' %}
+          <span class="src" title="Scraped — author and abstract data may be incomplete">web</span>
+          {% elif a.source == 'rss' %}
+          <span class="src" title="Via RSS feed">RSS</span>
+          {% endif %}
+          {% if a.oa_url %}
+          <a class="oa-badge" href="{{ a.oa_url }}" target="_blank" rel="noopener" title="Open access PDF available">OA PDF</a>
+          {% endif %}
+        </div>
+
+        <div class="entry-title-row">
+          <a class="entry-title" href="/article/{{ a.id }}">{{ a.title }}</a>
+          <a class="entry-out" href="{{ a.url }}" target="_blank" rel="noopener" title="View on publisher site" aria-label="View on publisher site">&#8599;</a>
+        </div>
+
+        {% if a.authors %}
+        <div class="entry-authors">
+          {{ a.authors | redact_authors }}
+          {% if a.citation_count and a.citation_count > 0 %}<span class="cite-count">cited {{ a.citation_count }}&times;</span>{% endif %}
+        </div>
+        {% elif a.source == 'scrape' %}
+        <div class="entry-authors no-data">Author data unavailable</div>
+        {% endif %}
+
+        {% if a.abstract %}
+        <details class="abstract">
+          <summary>Abstract</summary>
+          <p class="abstract-text">{{ a.abstract }}</p>
+        </details>
+        {% endif %}
+
+        {% if a.tags %}
+        <div class="entry-tags">
+          {% for t in a.tags.strip('|').split('|') %}{% if t.strip() %}
+          <a class="entry-tag" href="/?{% for j in active_journals %}journal={{ j | urlencode }}&{% endfor %}tag={{ t.strip() | urlencode }}">{{ t.strip() }}</a>
+          {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if a.keywords %}
+        <div class="entry-keywords"><span class="label">Subjects:</span> {{ a.keywords }}</div>
+        {% endif %}
+
+        {% if a.doi %}
+        <div class="entry-doi"><a href="{{ a.url }}" target="_blank" rel="noopener">doi:{{ a.doi }}</a></div>
+        {% endif %}
+
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endfor %}
+
+  {% if total_pages > 1 %}
+  <nav class="pagination" aria-label="Pagination">
+    {% if page > 1 %}
+    <a class="btn-quiet" href="?{{ filter_qs }}{% if filter_qs %}&{% endif %}page={{ page - 1 }}">&larr; Previous</a>
+    {% else %}<span></span>{% endif %}
+    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a class="btn-quiet" href="?{{ filter_qs }}{% if filter_qs %}&{% endif %}page={{ page + 1 }}">Next &rarr;</a>
+    {% else %}<span></span>{% endif %}
+  </nav>
+  {% endif %}
+
+{% else %}
+<div class="empty">
+  {% if active_q or active_year_from or active_year_to or active_tag %}
+    <p>No articles matched your filters.</p>
+    <p><a href="/?{% for j in active_journals %}journal={{ j | urlencode }}{% if not loop.last %}&{% endif %}{% endfor %}">Clear all filters</a> to see all articles.</p>
+  {% else %}
+    <p>No articles in the database yet.</p>
+    <p>Use <strong>Refresh all sources</strong> in the capsa to fetch recent publications.</p>
+    <p class="hint">First run is slow: CrossRef pulls full history for each journal.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<svg class="coronis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <path d="M5 15c4 0 5-8 9-8s5 4 5 4"/><path d="M9 19h9"/>
+</svg>
+
 {% endblock %}
 
 {% block body_scripts %}
-<div id="fetch-status" class="fetch-status" style="display:none"></div>
+<div id="fetch-status" class="fetch-status" role="status" style="display:none"></div>
 
 <script>
-// ── Fetch trigger ────────────────────────────────────────────────────────────
 function triggerFetch(deep) {
   const btn    = document.getElementById(deep ? 'deep-fetch-btn' : 'fetch-btn');
   const status = document.getElementById('fetch-status');
@@ -403,7 +310,6 @@ function triggerFetch(deep) {
     });
 }
 
-// ── Filter pill removal ──────────────────────────────────────────────────────
 function removeFilter(param) {
   const url = new URL(window.location);
   url.searchParams.delete(param);
@@ -418,7 +324,6 @@ function removeFilters(...params) {
   window.location = url.toString();
 }
 
-// ── Journal checkbox filter ───────────────────────────────────────────────────
 function toggleAllJournals(checkbox) {
   if (checkbox.checked) {
     document.querySelectorAll('.journal-check-item').forEach(cb => cb.checked = false);
@@ -427,13 +332,12 @@ function toggleAllJournals(checkbox) {
     url.searchParams.delete('page');
     window.location = url.toString();
   } else {
-    checkbox.checked = true; // keep checked if user tries to uncheck it directly
+    checkbox.checked = true; // keep checked if the reader tries to uncheck it directly
   }
 }
 
 function updateJournalFilter() {
-  const checked = [...document.querySelectorAll('.journal-check-item:checked')]
-    .map(cb => cb.value);
+  const checked = [...document.querySelectorAll('.journal-check-item:checked')].map(cb => cb.value);
   document.getElementById('check-all').checked = (checked.length === 0);
   const url = new URL(window.location);
   url.searchParams.delete('journal');
