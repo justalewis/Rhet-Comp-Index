@@ -17,6 +17,11 @@
    instead. It is open on anything wider.
    ============================================================ #}
 
+{# Not every page supplies the sidebar context -- /about, /glossary and the
+   admin pages render without touching the journal tables. Jinja's Undefined
+   raises when iterated, so the whole field is gated rather than each loop,
+   and a page with no journals simply has no tag field. #}
+{% if journal_groups %}
 <details class="tags-fold" id="tags-fold">
   <summary>
     <span>Journals</span>
@@ -55,6 +60,7 @@
 
   </div>
 </details>
+{% endif %}
 
 {# Run during parse rather than on DOMContentLoaded: the element starts
    closed, so a phone never flashes the open list, and a wide screen opens

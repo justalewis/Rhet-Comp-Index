@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Glossary — Pinakes{% endblock %}
 
@@ -6,27 +6,9 @@
 <meta name="description" content="A plain-language glossary of the bibliometric terms used across Pinakes — citation, co-citation, coupling, centrality, modularity, sleeping beauties, half-life, and the data-source terms (CrossRef, OpenAlex, DOI) that determine what each tool can see.">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block content %}
 
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/new">What's New</a>
-        <a href="/explore">Explore</a>
-        <a href="/authors">Authors</a>
-        <a href="/most-cited">Most Cited</a>
-        <a href="/books">Books</a>
-        <a href="/coverage">Coverage</a>
-        <a href="/about">About</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="about-content">
-
-    <h1 class="about-title">Glossary</h1>
+    <h1 class="page-title">Glossary</h1>
 
     <p>The Pinakes Explore and Datastories tools borrow vocabulary from bibliometrics, a sub-field of information science with its own conventions and unstated assumptions. This page collects the terms a Rhet/Comp reader most often encounters across the toolkit, with short plain-language definitions and one example from the indexed corpus where one is useful.</p>
 
@@ -103,9 +85,7 @@
 
     <p style="margin-top:2.2rem;"><a href="/about">&larr; Back to About</a> &middot; <a href="/coverage">Coverage notes</a> &middot; <a href="/explore">Explore tools</a></p>
 
-  </main>
-
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot;
     <a href="/new">What's New</a> &middot;
     <a href="/explore">Explore</a> &middot;
@@ -119,5 +99,4 @@
     &copy; 2026 Justin Lewis
   </footer>
 
-</div>
 {% endblock %}

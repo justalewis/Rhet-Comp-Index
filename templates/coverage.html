@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Index Coverage — Pinakes{% endblock %}
 
@@ -6,28 +6,13 @@
 <meta name="description" content="What Pinakes covers and what it doesn't: a transparent breakdown of journal and book indexing completeness, CrossRef coverage, and data limitations.">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block content %}
 
   <!-- ── Top nav ───────────────────────────────────────────── -->
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/new">What's New</a>
-        <a href="/explore">Explore</a>
-        <a href="/authors">Authors</a>
-        <a href="/most-cited">Most Cited</a>
-        <a href="/books">Books</a>
-        <a href="/coverage">Coverage</a>
-      </nav>
-    </div>
-  </header>
 
   <!-- ── Main content ─────────────────────────────────────── -->
-  <main class="about-content">
 
-    <h1 class="about-title">Index Coverage</h1>
+    <h1 class="page-title">Index Coverage</h1>
 
     <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing; it also explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
 
@@ -314,10 +299,8 @@
 
     <p>&larr; <a href="/about">Back to About</a></p>
 
-  </main>
-
   <!-- ── Footer ───────────────────────────────────────────── -->
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot;
     <a href="/new">What's New</a> &middot;
     <a href="/explore">Explore</a> &middot;
@@ -330,7 +313,6 @@
     &copy; 2026 Justin Lewis
   </footer>
 
-</div><!-- /about-page-wrap -->
 {% endblock %}
 
 {% block body_scripts %}

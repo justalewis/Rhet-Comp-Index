@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Redaction Review — Pinakes{% endblock %}
 
@@ -6,20 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block column_class %}column-inner--read{% endblock %}
 
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/about">About</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="about-content" style="max-width:54rem;">
-    <h1 class="about-title">Redaction Review</h1>
+{% block content %}
+    <h1 class="page-title">Redaction Review</h1>
     <p style="color:#6a655c;">Author opt-out requests. Verified requests await your decision; approving redacts the named author across the index (reversible). Nothing here is visible without your admin token.</p>
 
     <!-- ── Token gate ─────────────────────────────────────────── -->
@@ -42,9 +32,8 @@
     </div>
 
     <div id="queue"></div>
-  </main>
 
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot; <a href="/about">About</a>
     &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
   </footer>

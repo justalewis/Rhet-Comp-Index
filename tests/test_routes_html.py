@@ -89,15 +89,29 @@ def test_404_renders_custom_error_template(client):
 
 
 def test_404_inherits_from_base_core(client):
-    """error.html extends base-core.html — confirm the theme-switcher
-    script and CSS hooks inherited from the base template come through.
-    Doesn't assert sidebar markup: error.html intentionally extends
-    base-core.html (no sidebar) so a DB outage doesn't cascade into a
-    second failure trying to render the journal list."""
+    """error.html extends base-core.html — confirm the stylesheet set and
+    the figure-override script come through.
+
+    It deliberately does NOT extend base-alexandrian.html: that shell
+    renders the capsa, and the capsa's journal tags touch the DB for
+    article counts. The most likely reason this page is showing at all is
+    that the DB is unreachable, so rendering the sidebar would cascade one
+    failure into a second. That invariant is asserted directly below.
+
+    Updated when error.html moved to the Alexandrian Suite: the old
+    assertions looked for the rc-theme toggle and style.css, which are the
+    legacy theme system this replaced.
+    """
     resp = client.get("/this-path-does-not-exist")
     body = resp.get_data(as_text=True)
-    assert "rc-theme" in body, "base-core.html theme-toggle script missing"
-    assert "/static/style.css" in body, "base-core.html style include missing"
+    assert "/static/tokens.css" in body, "Alexandrian tokens missing"
+    assert "/static/pinakes.css" in body, "component stylesheet missing"
+    assert "pinakes-figure" in body, "figure-override script missing"
+    # The legacy sheets and their toggle are gone from this page.
+    assert "/static/style.css" not in body
+    assert "rc-theme" not in body
+    # No sidebar: nothing here may touch the journal tables.
+    assert 'class="capsa"' not in body, "error page must not render the capsa"
     # error-specific content is still there
     assert "error-page" in body
 

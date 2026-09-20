@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Request Name Removal — Pinakes{% endblock %}
 
@@ -7,23 +7,8 @@
 <meta name="robots" content="noindex">
 {% endblock %}
 
-{% block body %}
-<div class="about-page-wrap">
-
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/about">About</a>
-        <a href="/explore">Explore</a>
-        <a href="/authors">Authors</a>
-        <a href="/coverage">Coverage</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="about-content">
-    <h1 class="about-title">Request Name Removal</h1>
+{% block content %}
+    <h1 class="page-title">Request Name Removal</h1>
 
     {% if stage == "form" %}
     <p>If you would rather not have your name appear in this index, you can ask to have it removed. Your scholarship stays in the database and keeps counting in the site's metrics — citations, co-authorship, the network maps. What changes is that your name and identifying traces are replaced with a neutral tag, <em>“Name Redacted by Author Request,”</em> everywhere they appear.</p>
@@ -94,9 +79,7 @@
     <p>You can <a href="/redaction-request">start a new request</a>, or email <a href="mailto:justalewis1@gmail.com">justalewis1@gmail.com</a> for help.</p>
     {% endif %}
 
-  </main>
-
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot;
     <a href="/about">About</a> &middot;
     <a href="/explore">Explore</a> &middot;
@@ -105,5 +88,4 @@
     &copy; 2026 Justin Lewis
   </footer>
 
-</div>
 {% endblock %}

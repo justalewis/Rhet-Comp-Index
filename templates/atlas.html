@@ -1,4 +1,4 @@
-{% extends "base-core.html" %}
+{% extends "base-alexandrian.html" %}
 
 {% block title %}Atlas of the Field — Pinakes{% endblock %}
 
@@ -27,28 +27,9 @@
     "A small cluster centered on community-engaged writing and rhetoric. <em>Community Literacy Journal</em> is the flagship; <em>Reflections</em> is a complementary venue for community-engaged scholarship and pedagogy. The cluster overlaps substantively with WAC, with rhetoric of social engagement, and with parts of the technical-communication social-justice turn. Expect the citation networks to show edges reaching into all three.",
 } %}
 
-{% block body %}
-<div class="about-page-wrap">
+{% block content %}
 
-  <header class="about-nav">
-    <div class="about-nav-inner">
-      <a href="/" class="about-nav-home">Rhetoric &amp; Composition — Pinakes</a>
-      <nav class="about-nav-links">
-        <a href="/new">What's New</a>
-        <a href="/explore">Explore</a>
-        <a href="/authors">Authors</a>
-        <a href="/most-cited">Most Cited</a>
-        <a href="/books">Books</a>
-        <a href="/coverage">Coverage</a>
-        <a href="/glossary">Glossary</a>
-        <a href="/about">About</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="about-content">
-
-    <h1 class="about-title">Atlas of the Field</h1>
+    <h1 class="page-title">Atlas of the Field</h1>
 
     <p>Rhetoric and composition is a federation of sub-areas with overlapping interests, distinct journal infrastructures, and different histories of how they came to look the way they do. The seven clusters below organize the indexed corpus along the lines the field already uses to sort itself. Each cluster has a one-paragraph orientation, a list of indexed journals (with live article counts), and named entry points into the Explore tools pre-scoped to that conversation.</p>
 
@@ -131,9 +112,7 @@
 
     <p style="margin-top:1.4rem;"><a href="/about">&larr; Back to About</a> &middot; <a href="/coverage">Coverage notes</a> &middot; <a href="/glossary">Glossary</a></p>
 
-  </main>
-
-  <footer class="about-page-footer">
+  <footer class="column-foot">
     <a href="/">Index</a> &middot;
     <a href="/new">What's New</a> &middot;
     <a href="/explore">Explore</a> &middot;
@@ -147,5 +126,4 @@
     &copy; 2026 Justin Lewis
   </footer>
 
-</div>
 {% endblock %}
