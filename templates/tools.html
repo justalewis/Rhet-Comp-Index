@@ -91,7 +91,7 @@
 
 <div class="page-head">
   <h1>All Tools</h1>
-  <p class="lede">Twenty ways to read the index rather than search it. Each one takes the same corpus &mdash; {{ '{:,}'.format(total_count) if total_count else 'every article' }} across the journals in the capsa &mdash; and asks it a different question.</p>
+  <p class="lede">Each of these twenty tools asks a different question of the same corpus: {{ '{:,}'.format(total_count) ~ ' articles' if total_count else 'every article' }} across the journals in the capsa.</p>
 </div>
 
 {% for s in sections %}

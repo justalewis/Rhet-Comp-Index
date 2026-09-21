@@ -3,7 +3,7 @@
 {% block title %}Index Coverage — Pinakes{% endblock %}
 
 {% block head_extra %}
-<meta name="description" content="What Pinakes covers and what it doesn't: a transparent breakdown of journal and book indexing completeness, CrossRef coverage, and data limitations.">
+<meta name="description" content="What Pinakes covers and what it doesn't: a breakdown of journal and book indexing completeness, CrossRef coverage, and data limitations.">
 {% endblock %}
 
 {% block content %}
@@ -16,7 +16,7 @@
 
     <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing; it also explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
 
-    <p>Understanding coverage matters for using the analytical tools on the <a href="/explore">Explore</a> page honestly. The co-authorship network, citation graph, citation trend charts, Most Cited rankings, topic heatmap, and institution visualizations are all built from the same underlying data. Venues with partial coverage contribute less to those visualizations than their actual presence in the field would warrant.</p>
+    <p>The co-authorship network, citation graph, citation trend charts, Most Cited rankings, topic heatmap, and institution visualizations on the <a href="/explore">Explore</a> page are all built from the same underlying data, so venues with partial coverage contribute less to them than their presence in the field would warrant.</p>
 
     <aside class="coverage-tldr" style="margin:1.8rem 0 2.2rem;padding:1.2rem 1.4rem;background:var(--paper, #fdfbf7);border-left:4px solid var(--accent, #2C4A3A);">
       <p style="margin:0 0 0.5rem;font-size:0.86rem;font-weight:600;color:var(--accent, #2C4A3A);letter-spacing:0.05em;text-transform:uppercase;">If you read nothing else on this page</p>
@@ -59,7 +59,7 @@
 
     <h2>Two Tiers of Indexing</h2>
 
-    <p>Pinakes draws from two kinds of sources. The distinction matters for everything downstream: citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
+    <p>Pinakes draws from two kinds of sources, and which kind supplies a journal's records determines what its articles contribute to citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
 
     <p><strong>Full CrossRef indexing</strong> means a journal registers each article's metadata (title, authors, abstract, publication date, reference list) with <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer">CrossRef</a> using a registered DOI. This enables: citation tracking (because CrossRef carries reference lists), OpenAlex enrichment (institutional affiliations, topic classifications, open-access status), and reliable author disambiguation. Most commercial publishers and NCTE do this for current content.</p>
 
@@ -128,12 +128,12 @@
     <h3>Manually indexed print journals — no DOIs</h3>
     <p>These journals exist only as print-era records: no DOIs, no machine-readable reference lists, no web presence (or no machine-readable web presence). Coverage comes from hand-compiled article indexes or secondary bibliographic sources. Records include title, author, volume/issue, and date; some include keywords and annotations.</p>
     <ul class="coverage-list coverage-list--partial">
-      <li><em>Pre/Text: A Journal of Rhetorical Theory</em> (ed. Victor J. Vitanza, 1980–2016) — 234 articles across volumes 1–22; volumes 19–20 not indexed. The journal is one of the most significant theory-oriented publications in the history of rhetoric and composition and was never digitized.</li>
+      <li><em>Pre/Text: A Journal of Rhetorical Theory</em> (ed. Victor J. Vitanza, 1980–2016) — 234 articles across volumes 1–22; volumes 19–20 not indexed. The journal was never digitized.</li>
       <li><em>JAC: A Journal of Rhetoric, Culture, and Politics</em> (originally <em>JAC: Journal of Advanced Composition</em>, 1980–2014) — 1,180 articles across volumes 1–34, sourced from <a href="https://wacclearinghouse.org/comppile/" target="_blank" rel="noopener noreferrer">CompPile</a> records. JAC was a subscription print journal that ceased active publication around 2014 and never deposited DOIs. Records include CompPile's keyword vocabulary and annotations (annotations present for about 1% of entries). Book reviews are tagged as such.</li>
     </ul>
 
     <h3>RSS or scrape only — no CrossRef DOIs</h3>
-    <p>These are legitimate field journals that have not registered DOIs. Pinakes collects title, author, and date from RSS feeds, OAI-PMH endpoints, or by parsing the journal website. No citation data, no OpenAlex enrichment, no reference lists.</p>
+    <p>For these journals, Pinakes collects title, author, and date from RSS feeds, OAI-PMH endpoints, or the journal's own web pages, so their articles carry no citation data, reference lists, or OpenAlex enrichment.</p>
     <ul class="coverage-list coverage-list--partial">
       <li><em>Kairos: A Journal of Rhetoric, Technology, and Pedagogy</em> — custom HTML format; scraped manually per issue</li>
       <li><em>Enculturation</em> — RSS only</li>
@@ -269,7 +269,7 @@
 
     <h3>Era breakdown: outbound-citation yield by decade</h3>
 
-    <p>The era breakdown is where CrossRef's deposit history becomes legible. For most of the NCTE and NCTE-era journals, pre-2000 articles have no outbound citation data at all — not because the work doesn't cite anything, but because reference lists for those volumes were never deposited with CrossRef. Coverage climbs sharply through the 2010s and approaches parity for 2020+ issues.</p>
+    <p>For most of the NCTE and NCTE-era journals, pre-2000 articles have no outbound citation data at all, because reference lists for those volumes were never deposited with CrossRef. Coverage climbs sharply through the 2010s and approaches parity for 2020+ issues.</p>
 
     <div class="coverage-table-wrap">
       <table class="coverage-table coverage-table--era" data-sortable>

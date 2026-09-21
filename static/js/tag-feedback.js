@@ -94,7 +94,7 @@
   // What each backend status means for the reader.
   var SUGGEST_MSG = {
     pending: ["Thanks! Your topic is queued for review and will appear once approved.", "ok"],
-    bumped:  ["Thanks! Someone suggested that too — we&rsquo;ve noted the extra support.", "ok"],
+    bumped:  ["Thanks. Someone else suggested that topic too, and your suggestion has been added to theirs.", "ok"],
     exists:  ["That topic is already on this article.", "warn"],
     approved:["That topic was already suggested and approved — it should be showing above.", "warn"],
     rejected:["That topic was suggested before and wasn&rsquo;t a fit for this article.", "warn"]
@@ -118,7 +118,7 @@
             showMsg(m[0], m[1]);
             input.value = "";
           } else if (rateLimited(r.status)) {
-            showMsg("Thanks for the enthusiasm! You&rsquo;ve suggested several — please try again later.", "warn");
+            showMsg("You&rsquo;ve suggested several topics in a short time. Please try again later.", "warn");
           } else {
             showMsg(esc((r.data && r.data.error) || "Couldn&rsquo;t submit that topic."), "warn");
           }

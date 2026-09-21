@@ -19,14 +19,14 @@
     <p class="wac-kicker">A publishing-house portrait</p>
     <h1>The WAC Clearinghouse, as a Press</h1>
     <p class="wac-dek">
-      Most of Pinakes reads the field one journal at a time. This page does the
-      opposite: it gathers everything the WAC Clearinghouse has put a DOI on —
+      Most of Pinakes reads the field one journal at a time. This page gathers
+      everything the WAC Clearinghouse has put a DOI on —
       <strong>{{ "{:,}".format(overview.total_works) }}</strong> works across
       {{ overview.year_min }}–{{ overview.year_max }}, journals and books
-      together — and asks what a <em>house</em> looks like when you see its whole
-      output at once. No citation graphs live here: the Clearinghouse deposits
-      almost no reference lists, so this is a portrait drawn from authors,
-      editors, affiliations, venues, and the count of who later cited each work.
+      together — to show the press's output as a whole. Because the
+      Clearinghouse deposits almost no reference lists, the page has no citation
+      graphs; it works from authors, editors, affiliations, venues, and counts of
+      who later cited each work.
     </p>
 
     <div class="wac-kpis">
@@ -53,8 +53,8 @@
   <!-- ════════ 1. THE PRESS AT A GLANCE ════════ -->
   <section class="wac-section" id="glance">
     <h2>1 · The press at a glance</h2>
-    <p class="wac-lede">Fifty years of output across a journal program and a book
-      program, shown together as one publishing organism.</p>
+    <p class="wac-lede">Fifty years of output from the journal program and the book
+      program, shown together.</p>
 
     <div class="wac-card wac-wide" data-viz="timeline">
       <div class="wac-card-head">
@@ -64,7 +64,7 @@
         </div>
       </div>
       <div class="wac-chart-wrap"><canvas id="wac-timeline"></canvas></div>
-      <p class="wac-note">Book bands legitimately begin later — the press launched
+      <p class="wac-note">The book bands begin later because the press launched
         its book program decades after its first journals.</p>
     </div>
 
@@ -88,9 +88,9 @@
   <!-- ════════ 2. AUTHORS ACROSS THE WHOLE CATALOG ════════ -->
   <section class="wac-section" id="authors">
     <h2>2 · Authors across the whole catalog</h2>
-    <p class="wac-lede">The publisher-only payoff: a scholar's entire footprint —
-      monograph, edited collection, chapter, and journal article — a shape no
-      single journal can assemble.</p>
+    <p class="wac-lede">Across the whole press, a scholar's record can include monographs,
+      edited collections, chapters, and journal articles; a single journal's
+      data shows only the articles.</p>
 
     <div class="wac-card wac-wide" data-viz="cross-format-authors">
       <div class="wac-card-head">
@@ -157,8 +157,8 @@
   <!-- ════════ 3. EDITORS AS FIELD-BROKERS ════════ -->
   <section class="wac-section" id="editors">
     <h2>3 · Editors as field-brokers</h2>
-    <p class="wac-lede">The curators a per-journal lens never names: who assembles
-      the press's edited collections, and how many scholars they bring into print.</p>
+    <p class="wac-lede">Who assembles the press's edited collections, and how many
+      scholars each editor brings into print.</p>
 
     <div class="wac-card wac-wide" data-viz="editor-brokers">
       <div class="wac-card-head">
@@ -206,8 +206,8 @@
   <section class="wac-section" id="institutions">
     <h2>4 · Who feeds the catalog</h2>
     <p class="wac-lede">Which universities supply the press's authors across every
-      venue combined — read off raw, lightly-normalized affiliation strings, with
-      coverage stated up front.</p>
+      venue combined, read from raw, lightly normalized affiliation strings. The
+      last chart in this section shows how many records carry an affiliation at all.</p>
 
     <div class="wac-card wac-wide" data-viz="institutions">
       <div class="wac-card-head">
@@ -252,9 +252,9 @@
   <!-- ════════ 5. THE CITED CANON ════════ -->
   <section class="wac-section" id="canon">
     <h2>5 · The cited canon</h2>
-    <p class="wac-lede">What the field actually built on — ranked by inbound
-      CrossRef citations, books and articles side by side, with attention's heavy
-      concentration made explicit.</p>
+    <p class="wac-lede">The press's most-cited works, ranked by inbound CrossRef
+      citations, with books and articles side by side. The Lorenz curve below shows
+      how concentrated those citations are.</p>
 
     <div class="wac-card wac-wide" data-viz="most-cited">
       <div class="wac-card-head">
@@ -304,9 +304,8 @@
   <!-- ════════ 6. ANATOMY OF THE BOOK PROGRAM ════════ -->
   <section class="wac-section" id="books">
     <h2>6 · Anatomy of the book program</h2>
-    <p class="wac-lede">The half of the house a journal view never sees: how edited
-      collections are built, and how to walk any one of them from cover to
-      contributors.</p>
+    <p class="wac-lede">How the press's edited collections are built, with a way to walk
+      any one of them from cover to contributors.</p>
 
     <div class="wac-grid-2">
       <div class="wac-card" data-viz="collection-anatomy">
@@ -353,8 +352,8 @@
   <!-- ════════ 7. FIELD TEXTURE ════════ -->
   <section class="wac-section" id="texture">
     <h2>7 · Field texture</h2>
-    <p class="wac-lede">Lighter-grain views — how collaboration grew, what the
-      titles talk about, the press's relational fabric, and its one cross-language
+    <p class="wac-lede">Smaller views: how collaboration grew, what the titles talk
+      about, which authors share collections, and the press's one cross-language
       venue.</p>
 
     <div class="wac-grid-2">
@@ -400,9 +399,8 @@
           </div>
         </div>
         <div id="wac-copresence" class="wac-canvas wac-h480"></div>
-        <p class="wac-note">Authors linked when they have chapters in the same
-          edited collection — a citation-free relational map the book program makes
-          possible.</p>
+        <p class="wac-note">Authors are linked when they have chapters in the same
+          edited collection.</p>
       </div>
       <div class="wac-card" data-viz="spanish-spotlight">
         <div class="wac-card-head"><h3>The cross-language edge</h3></div>
@@ -414,7 +412,7 @@
   <footer class="wac-footer">
     <p>Built from a CrossRef harvest of DOI prefix <code>10.37514</code>
       ({{ "{:,}".format(overview.total_works) }} works, {{ overview.year_min }}–{{ overview.year_max }}).
-      A descriptive portrait, not a ranking. Author identity is name-string based;
+      Author identity is name-string based;
       institutions are derived from raw affiliation strings; citation counts are
       inbound CrossRef only. No outbound-reference / citation-network analysis is
       possible from this catalog.</p>
