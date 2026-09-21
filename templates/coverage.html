@@ -1,6 +1,6 @@
 {% extends "base-alexandrian.html" %}
 
-{% block title %}Index Coverage — Pinakes{% endblock %}
+{% block title %}Index coverage — Pinakes{% endblock %}
 
 {% block head_extra %}
 <meta name="description" content="What Pinakes covers and what it doesn't: a breakdown of journal and book indexing completeness, CrossRef coverage, and data limitations.">
@@ -12,7 +12,7 @@
 
   <!-- ── Main content ─────────────────────────────────────── -->
 
-    <h1 class="page-title">Index Coverage</h1>
+    <h1 class="page-title">Index coverage</h1>
 
     <p>Not all journals in Pinakes are indexed the same way, and not all relevant publishers are indexed at all. This page documents what's fully covered, what's partially covered, and what's missing; it also explains why these gaps exist at the level of infrastructure rather than curatorial choice.</p>
 
@@ -30,7 +30,7 @@
     </aside>
 
     {% if detailed %}
-    <h2>Corpus Snapshot</h2>
+    <h2>Corpus snapshot</h2>
 
     <p class="coverage-snapshot-meta">Live counts generated
        <time datetime="{{ detailed.generated_at }}">{{ detailed.generated_at[:10] }}</time>.</p>
@@ -57,7 +57,7 @@
     <p>The vocabulary used below: <em>outbound</em> means an article's own reference list is in the index (the article cites others). <em>Inbound</em> means at least one other article in the index cites it. <em>Resolved edges</em> are citations whose target DOI matched an article already indexed in Pinakes; the unresolved remainder are citations to books, conference proceedings, other journals, or works outside the corpus. <em>Intra-journal</em> edges are citations where source and target are in the same journal, a measure of within-journal self-reference.</p>
     {% endif %}
 
-    <h2>Two Tiers of Indexing</h2>
+    <h2>Two tiers of indexing</h2>
 
     <p>Pinakes draws from two kinds of sources, and which kind supplies a journal's records determines what its articles contribute to citations, author affiliations, topic tagging, and the visualizations on the Explore page.</p>
 
@@ -65,7 +65,7 @@
 
     <p><strong>RSS or scrape-only indexing</strong> means Pinakes collects basic article metadata (title, authors, publication date) from an RSS feed or by parsing the journal's website. These articles appear in search results and the timeline, but they contribute <em>nothing</em> to the citation network, and OpenAlex enrichment is hit-or-miss without a DOI. Author affiliation data for these articles is largely absent.</p>
 
-    <h2>Coverage by Sub-Area</h2>
+    <h2>Coverage by sub-area</h2>
 
     <p>The seven-cluster scheme used in the <a href="/atlas">Atlas of the Field</a> and the journal sidebar maps roughly onto distinct coverage profiles. Reading the index by sub-area rather than by individual journal helps locate where the citation networks overweight some scholarship and underweight others.</p>
 
@@ -85,7 +85,7 @@
       <li><strong>Community Literacy</strong> &mdash; <em>Community Literacy Journal</em> has full CrossRef coverage. <em>Reflections</em>, RSS-only until spring 2026, now has full CrossRef coverage: Penn State Libraries deposited its complete metadata and reference lists in May 2026, and the journal contributes citation edges. As with Writing Centers and WAC, much of the cluster's scholarly conversation lives in books and edited collections that are partially indexed.</li>
     </ul>
 
-    <h2>Journals: Full CrossRef Coverage</h2>
+    <h2>Journals: full CrossRef coverage</h2>
 
     <p>The following journals contribute complete metadata including reference lists and, in most cases, author affiliations via OpenAlex:</p>
 
@@ -121,7 +121,7 @@
       <li><em>Reflections: A Journal of Community-Engaged Writing and Rhetoric</em> (Penn State Libraries; full metadata and reference lists deposited May 2026)</li>
     </ul>
 
-    <h2>Journals: Partial or Limited Coverage</h2>
+    <h2>Journals: partial or limited coverage</h2>
 
     <p>These journals are in the index but contribute reduced data to the visualizations. The technical reason varies by venue.</p>
 
@@ -168,7 +168,7 @@
       <li><em>Literacy in Composition Studies</em> — OA; DOIs registered under prefix 10.21623 but ISSN linkage was incomplete until recently. Reference lists are scraped from HTML galleys rather than deposited with CrossRef.</li>
     </ul>
 
-    <h2>Books: University Presses with Gaps</h2>
+    <h2>Books: university presses with gaps</h2>
 
     <p>The books index covers roughly 3,200 titles from seven publishers. The gaps in book coverage stem from a structural problem distinct from the journal situation: CrossRef's data model was designed around journals, where a container (journal title + ISSN) gives you a reliable handle on a series. For books, the equivalent would be the series ISSN, a standard that exists but that most publishers either don't register or don't include in their CrossRef deposits. This means you can't query CrossRef for "all books in X series" the way you can query for "all articles in X journal."</p>
 
@@ -193,7 +193,7 @@
       <li><strong>Cambridge University Press</strong> and <strong>Oxford University Press</strong> — both have DOIs for relevant titles, but their relevant series aren't queryable by series via CrossRef. Full coverage would require a manually compiled title list.</li>
     </ul>
 
-    <h2>What This Means for the Visualizations</h2>
+    <h2>What this means for the visualizations</h2>
 
     <p>The analytical tools on the <a href="/explore">Explore</a> page are built entirely from the indexed data. Coverage gaps affect each visualization differently:</p>
 
@@ -206,7 +206,7 @@
     </ul>
 
     {% if detailed %}
-    <h2>Per-Journal Accounting</h2>
+    <h2>Per-journal accounting</h2>
 
     <p>The table below is the authoritative, live accounting of what's indexed. Columns: total article count; publication-year range; articles whose reference list was returned by CrossRef (<em>with outbound</em>); raw outbound edges and the fraction that resolved to indexed articles; articles cited from inside the corpus (<em>with inbound</em>); within-journal self-citation share of resolved outbound edges; OpenAlex enrichment rate; network topology (<em>isolates</em> have neither in- nor outbound edges; <em>pure sinks</em> are cited from inside the corpus but their own references were never deposited; <em>hubs</em> have both).</p>
 

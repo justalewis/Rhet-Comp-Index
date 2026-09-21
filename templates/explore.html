@@ -26,7 +26,7 @@
       <div class="accordion-section" data-section="published">
         <button class="accordion-header" onclick="toggleAccordion(this)">
           <div class="accordion-header-text">
-            <div class="accordion-question">What Has the Field Published?</div>
+            <div class="accordion-question">What has the field published?</div>
             <div class="accordion-orient">Publication volume, institutional output, and the current week's scholarship.</div>
           </div>
           <span class="accordion-chevron">&#9660;</span>
@@ -53,7 +53,7 @@
       <div class="accordion-section" data-section="cite">
         <button class="accordion-header" onclick="toggleAccordion(this)">
           <div class="accordion-header-text">
-            <div class="accordion-question">How Does the Field Cite?</div>
+            <div class="accordion-question">How does the field cite?</div>
             <div class="accordion-orient">Citation patterns, flows between journals, and how citation density changes over time.</div>
           </div>
           <span class="accordion-chevron">&#9660;</span>
@@ -88,7 +88,7 @@
       <div class="accordion-section" data-section="together">
         <button class="accordion-header" onclick="toggleAccordion(this)">
           <div class="accordion-header-text">
-            <div class="accordion-question">What Belongs Together?</div>
+            <div class="accordion-question">What belongs together?</div>
             <div class="accordion-orient">Which works the field treats as related, which communities form, and how knowledge flows through time.</div>
           </div>
           <span class="accordion-chevron">&#9660;</span>
@@ -135,7 +135,7 @@
       <div class="accordion-section" data-section="collab">
         <button class="accordion-header" onclick="toggleAccordion(this)">
           <div class="accordion-header-text">
-            <div class="accordion-question">Who Works With Whom?</div>
+            <div class="accordion-question">Who works with whom?</div>
             <div class="accordion-orient">Collaborative relationships and individual scholarly profiles.</div>
           </div>
           <span class="accordion-chevron">&#9660;</span>
@@ -158,7 +158,7 @@
       <div class="accordion-section" data-section="about">
         <button class="accordion-header" onclick="toggleAccordion(this)">
           <div class="accordion-header-text">
-            <div class="accordion-question">What Is the Field About?</div>
+            <div class="accordion-question">What is the field about?</div>
             <div class="accordion-orient">Topic patterns, thematic connections, and how to find related reading.</div>
           </div>
           <span class="accordion-chevron">&#9660;</span>
@@ -205,7 +205,7 @@
 
     <!-- ── Timeline tab ──────────────────────────────────────── -->
     <div id="tab-timeline" class="tab-panel" style="display:none;">
-      <p class="tab-intro">Article output over time, broken down by journal, across the full indexed history (the earliest records reach the 1930s). Toggle to show all journals or focus on the eight most prolific — useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record. Pre-1990 coverage is sparse for most journals; the early decades of the curve reflect what publishers have deposited, not necessarily what was published.</p>
+      <p class="tab-intro">Article output over time, broken down by journal, across the full indexed history (the earliest records reach the 1930s). The eight most prolific journals get their own bands and the rest share an "Other" band, which a toggle can hide. The chart is useful for spotting publication surges, editorial changes, and the relative weight of each venue in the field's record. Pre-1990 coverage is sparse for most journals; the early decades of the curve reflect what publishers have deposited, not necessarily what was published.</p>
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: not all journals contribute equal data to this chart →</a></p>
 
       {{ how_to_read(
@@ -219,7 +219,7 @@
         <div class="methodology-body">
 
         <h4 class="methodology-heading">Tool orientation</h4>
-        <p>The Publication Timeline shows how article output is distributed across years and journals. Each colored band in a year's stacked bar represents one journal's contribution to that year's published total. Read horizontally, the chart traces each venue's publishing rhythm; read vertically, it shows the field's total output for each year.</p>
+        <p>The Publication Timeline shows how article output is distributed across years and journals. Each colored band in a year's stacked bar is one of the eight most prolific journals, and a single "Other" band sums the rest. Read horizontally, the chart traces each venue's publishing rhythm; read vertically, it shows the field's total output for each year.</p>
 
         <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) against the full Pinakes index, the chart spans 1990 to 2026 and aggregates 35,108 articles across 51 indexed journals. <em>College English</em> contributes the tallest single column (2,622 indexed articles), followed by <em>College Composition and Communication</em> (2,455), <em>IEEE Transactions on Professional Communication</em> (1,918), <em>Rhetorica</em> (1,900), and <em>Computers and Composition</em> (1,543). The five-journal block accounts for roughly a third of the entire indexed corpus.</p>
 
@@ -577,7 +577,7 @@
 
       <!-- Ranked pairs table -->
       <div id="acocit-pairs-section" style="display:none;margin-top:2rem;">
-        <h4 class="chart-section-head">Top Author Co-Citation Pairs</h4>
+        <h4 class="chart-section-head">Top author co-citation pairs</h4>
         <p style="font-size:0.85rem;color:#8b6045;margin-bottom:0.8rem;">Pairs ranked by how often subsequent articles in the index cite work by both authors. Higher counts mean the field more consistently treats these two scholars as part of the same intellectual conversation.</p>
         <div id="acocit-pairs-container"></div>
       </div>
@@ -1087,13 +1087,13 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.5rem;">
 
           <div>
-            <h4 class="chart-section-head">Top 25 — Eigenvector Centrality</h4>
+            <h4 class="chart-section-head">Top 25 — eigenvector centrality</h4>
             <p class="explore-hint" style="margin-top:0;">Articles connected to the most highly-connected work in the network. High eigenvector centrality means an article is cited by (or cites) other influential articles; the metric weights <em>who</em> cites you more heavily than how many do.</p>
             <ol class="article-list" id="cent-table-eigen" style="font-size:0.85rem;"></ol>
           </div>
 
           <div>
-            <h4 class="chart-section-head">Top 25 — Betweenness Centrality</h4>
+            <h4 class="chart-section-head">Top 25 — betweenness centrality</h4>
             <p class="explore-hint" style="margin-top:0;">Bridge articles that connect different clusters of scholarship. High betweenness centrality means an article sits on many of the shortest paths between other articles — it links conversations that would otherwise be separate.</p>
             <ol class="article-list" id="cent-table-between" style="font-size:0.85rem;"></ol>
           </div>
@@ -2201,12 +2201,12 @@
         </div>
       </details>
 
-      <h4 class="chart-section-head">Top 25 Institutions by Article Count</h4>
+      <h4 class="chart-section-head">Top 25 institutions by article count</h4>
       <div class="chart-container chart-container--horiz" id="inst-bar-container">
         <div class="loading-msg">Loading institution data…</div>
       </div>
 
-      <h4 class="chart-section-head" style="margin-top:2rem;">Top 10 Institutions Over Time</h4>
+      <h4 class="chart-section-head" style="margin-top:2rem;">Top 10 institutions over time</h4>
       <div class="chart-container" id="inst-line-container">
         <canvas id="inst-line-chart"></canvas>
       </div>

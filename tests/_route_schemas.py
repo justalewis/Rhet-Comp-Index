@@ -35,10 +35,10 @@ HTML_ROUTE_HEADINGS: dict[str, str] = {
     "/":              "Journals",     # index header varies; covers all branches
     "/authors":       "Authors",
     "/explore":       "Explore",
-    "/tools":         "All Tools",
+    "/tools":         "All tools",
     "/new":           "What's New",
-    "/about":         "What This Is",
-    "/coverage":      "Corpus Snapshot",
+    "/about":         "What this is",
+    "/coverage":      "Corpus snapshot",
     "/most-cited":    "Most cited in this index",
     "/books":         "Books",
     "/glossary":      "Citation concepts",

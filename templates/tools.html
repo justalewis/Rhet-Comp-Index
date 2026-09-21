@@ -6,7 +6,7 @@
    ones /explore already uses on its accordion, so the two pages answer
    the same question the same way. #}
 
-{% block title %}All Tools &mdash; Pinakes{% endblock %}
+{% block title %}All tools &mdash; Pinakes{% endblock %}
 
 {% block head_extra %}
   <meta name="description" content="All analytical tools in Pinakes: citation networks, co-authorship graphs, topic heatmaps, centrality analysis, community detection, and more.">
@@ -18,7 +18,7 @@
 
 {% set sections = [
   {
-    'question': 'What Has the Field Published?',
+    'question': 'What has the field published?',
     'orient': "Publication volume, institutional output, and the current week's scholarship.",
     'tools': [
       ('ic-timeline', '/explore#timeline', 'Publication Timeline',
@@ -30,7 +30,7 @@
     ]
   },
   {
-    'question': 'How Does the Field Cite?',
+    'question': 'How does the field cite?',
     'orient': 'Citation patterns, flows between journals, and how citation density changes over time.',
     'tools': [
       ('ic-citnet', '/explore#citnet', 'Citation Network',
@@ -46,7 +46,7 @@
     ]
   },
   {
-    'question': 'What Belongs Together?',
+    'question': 'What belongs together?',
     'orient': 'Which works the field treats as related, which communities form, and how knowledge flows through time.',
     'tools': [
       ('ic-cocitation', '/explore#cocitation', 'Article Co-Citation',
@@ -68,7 +68,7 @@
     ]
   },
   {
-    'question': 'Who Works With Whom?',
+    'question': 'Who works with whom?',
     'orient': 'Collaborative relationships and individual scholarly profiles.',
     'tools': [
       ('ic-coauthorship', '/explore#authors', 'Co-Authorship Network',
@@ -78,7 +78,7 @@
     ]
   },
   {
-    'question': 'What Is the Field About?',
+    'question': 'What is the field about?',
     'orient': 'Topic patterns, thematic connections, and how to find related reading.',
     'tools': [
       ('ic-topics', '/explore#topics', 'Topic Co-Occurrence',
@@ -90,7 +90,7 @@
 ] %}
 
 <div class="page-head">
-  <h1>All Tools</h1>
+  <h1>All tools</h1>
   <p class="lede">Each of these twenty tools asks a different question of the same corpus: {{ '{:,}'.format(total_count) ~ ' articles' if total_count else 'every article' }} across the journals in the capsa.</p>
 </div>
 

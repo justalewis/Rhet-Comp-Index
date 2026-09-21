@@ -85,7 +85,7 @@
       <p class="insight-note" id="insight-note">Loading profile…</p>
 
       <div class="insight-block" id="timeline-block">
-        <h3 class="insight-heading">Publication Timeline</h3>
+        <h3 class="insight-heading">Publication timeline</h3>
         <div class="insight-chart-wrap">
           <canvas id="author-timeline-chart"></canvas>
         </div>
@@ -93,17 +93,17 @@
 
       <div class="insight-row">
         <div class="insight-col" id="coauthor-block">
-          <h3 class="insight-heading">Co-Author Network</h3>
+          <h3 class="insight-heading">Co-author network</h3>
           <div id="author-network-container"></div>
         </div>
         <div class="insight-col" id="topics-block">
-          <h3 class="insight-heading">Research Topics</h3>
+          <h3 class="insight-heading">Research topics</h3>
           <div id="author-topics-container"></div>
         </div>
       </div>
 
       <div class="insight-block" id="cocitation-block" style="display:none;">
-        <h3 class="insight-heading">Co-Cited With</h3>
+        <h3 class="insight-heading">Co-cited with</h3>
         <p class="cocitation-hint">Scholars most frequently cited alongside {{ author_name | redact_authors }} by subsequent articles in the index.</p>
         <div id="author-cocitation-list"></div>
         <a href="/explore#author-cocitation" class="cocitation-link">See full co-citation network &rarr;</a>
@@ -111,7 +111,7 @@
 
       {% if citing_venues and citing_venues.total > 0 %}
       <div class="insight-block">
-        <h3 class="insight-heading">Who Reads {{ author_surname }}</h3>
+        <h3 class="insight-heading">Who reads {{ author_surname }}</h3>
         {% set top_cluster = citing_venues.by_cluster[0] if citing_venues.by_cluster else None %}
         {% if top_cluster %}
         {% set top_share_pct = (top_cluster.count * 100 / citing_venues.total) | round(0, 'floor') | int %}

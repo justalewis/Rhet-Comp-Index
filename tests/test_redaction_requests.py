@@ -160,7 +160,7 @@ def test_about_page_explains_how_to_request_removal(client):
     resp = client.get("/about")
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
-    assert "Author Privacy" in body
+    assert "Author privacy" in body
     assert 'id="author-privacy"' in body
     assert "mailto:jlewis2@olympic.edu" in body
 
