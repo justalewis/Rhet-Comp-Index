@@ -122,7 +122,7 @@ function renderScatter(data) {
   }
   quadLabel('Shared canon', m.left + 8, m.top + 16, QUAD_COLOR.shared_canon);
   quadLabel('TPC-specific', m.left + 8, h - m.bottom - 8, QUAD_COLOR.tpc_specific);
-  quadLabel('Imported, not metabolized', w - m.right - 8, m.top + 16, QUAD_COLOR.imported, 'end');
+  quadLabel('Imported (cited more outside)', w - m.right - 8, m.top + 16, QUAD_COLOR.imported, 'end');
   quadLabel('Background', w - m.right - 8, h - m.bottom - 8, QUAD_COLOR.background, 'end');
 }
 
@@ -130,11 +130,11 @@ function renderTable(data) {
   const el = document.getElementById('ds-io-table');
   let html = '';
   if ((data.tpc_specific || []).length) {
-    html += '<h5 style="color:#5a3e28;">TPC-specific canon (top internal, lower global)</h5>';
+    html += '<h5 style="color:#5a3e28;">Field-specific canon (top internal, lower global)</h5>';
     html += list(data.tpc_specific.slice(0, 10));
   }
   if ((data.imported || []).length) {
-    html += '<h5 style="color:#a04525;margin-top:1rem;">Imported but not metabolized (top global, lower internal)</h5>';
+    html += '<h5 style="color:#a04525;margin-top:1rem;">Imported (top global, lower internal)</h5>';
     html += list(data.imported.slice(0, 10));
   }
   el.innerHTML = html || '<p class="explore-hint">No divergent articles.</p>';

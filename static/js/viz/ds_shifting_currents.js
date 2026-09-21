@@ -98,7 +98,7 @@ function renderPersistence(data) {
   const multi = items.filter(i => i.n >= 2).slice(0, 25);
   let html = '<h4 class="methodology-heading">Articles on multiple decade paths (persistent backbone)</h4>';
   if (!multi.length) {
-    html += '<p class="explore-hint">No articles appear on more than one decade\'s main path. Each era has its own backbone.</p>';
+    html += '<p class="explore-hint">No articles appear on more than one decade\'s main path.</p>';
   } else {
     html += '<table class="ds-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;">';
     html += '<thead><tr>';

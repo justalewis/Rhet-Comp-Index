@@ -66,7 +66,7 @@ function renderTrends(data) {
   svg.append('g').attr('transform', `translate(${w - m.right},0)`).call(d3.axisRight(yR).tickFormat(d3.format('.0%'))).selectAll('text').style('font-size','10px');
 
   svg.append('text').attr('x', m.left).attr('y', 14).attr('font-size', 11).attr('fill', chrome().muted)
-    .text('Mean (solid) and median (dashed) authors per article — single-author share (grey area)');
+    .text('Mean (solid) and median (dashed) authors per article — single-author share (gray area)');
 }
 
 function renderTable(data) {

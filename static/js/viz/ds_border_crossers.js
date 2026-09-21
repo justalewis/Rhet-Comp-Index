@@ -77,7 +77,7 @@ function renderNetwork(data) {
 
   const nodes = (data.neighborhood && data.neighborhood.nodes || []).map(n => ({ ...n }));
   const links = (data.neighborhood && data.neighborhood.links || []).map(l => ({ ...l }));
-  if (!nodes.length) { svg.append('text').attr('x', 20).attr('y', 30).attr('fill', chrome().muted).text('No neighbourhood to display.'); return; }
+  if (!nodes.length) { svg.append('text').attr('x', 20).attr('y', 30).attr('fill', chrome().muted).text('No neighborhood to display.'); return; }
 
   // Zoomable inner group; reset-view chip is drawn by enableZoomPan in the corner.
   const root = enableZoomPan(svg);
