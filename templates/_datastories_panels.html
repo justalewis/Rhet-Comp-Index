@@ -22,7 +22,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <h4 class="methodology-heading">Tool orientation</h4>
       <p>The Braided Path tracks citation traffic between Technical &amp; Professional Communication (TPC) and Rhetoric/Composition (RC) decade by decade. Each Sankey panel shows where the decade's citations originate (left) and where they land (right); width encodes count. The decade summary table beneath quantifies what the eye picks up.</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the diagram shows citation traffic growing across the decades while staying asymmetric. Pre-1990s the field carried 901 inter- and intra-cluster citations &mdash; 258 TPC&rarr;TPC, 462 RC&rarr;RC, 79 TPC&rarr;RC, and only 9 RC&rarr;TPC. By the 2020s the total has grown twentyfold to 18,250, and the asymmetry persists: TPC cites RC at 862 edges per decade while RC cites TPC at 444. TPC remains the more outwardly engaged neighborhood; RC stays largely inside its own conversation across all five decades.</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the diagram shows citation traffic growing across the decades while staying asymmetric. Pre-1990s the field carried 901 inter- and intra-cluster citations, among them 258 TPC&rarr;TPC, 462 RC&rarr;RC, 79 TPC&rarr;RC, and only 9 RC&rarr;TPC. By the 2020s the total has grown twentyfold to 18,250, and the asymmetry persists: in that decade TPC cites RC along 862 edges while RC cites TPC along 444. TPC remains the more outwardly engaged neighborhood; RC stays largely inside its own conversation across all five decades.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
       <p>Each citation edge is bucketed by the decade of its citing article. Source and target articles are mapped to a field group via the <code>journal_groups</code> classification (TPC / RC / OTHER). Within each decade, citations are aggregated to TPC&rarr;TPC, TPC&rarr;RC, RC&rarr;TPC, RC&rarr;RC, plus OTHER as a residual category. Sankey nodes are per-decade group buckets; widths are raw citation counts. The <code>journal_groups</code> mapping is hand-curated and remains stable across runs.<sup>1</sup></p>
@@ -68,21 +68,21 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-origins-frontiers" class="tab-panel" style="display:none;">
-  <p class="tab-intro">Sources are articles cited inside the corpus but never citing anything in it (foundational works the field reaches back to). Sinks are the reverse: articles that cite into the corpus but are never cited from it (the active research frontier, plus genuine dead-ends).</p>
+  <p class="tab-intro">Sources are articles that no indexed article cites; sinks are articles that cite no indexed article. The terms follow graph theory, where a citation points from the citing article to the one it cites, so a source has no citations coming in and a sink none going out.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>Origins and Frontiers separates the indexed corpus into the work the field reaches back to (sources: cited but never citing inside the index) and the work that is currently citing into the field but has not yet been cited from it (sinks: citing but never cited). Sinks split into two sub-categories: <em>frontier</em> (recent enough that not being cited is normal) and <em>data-gap</em> (old enough that the absence of citation more likely reflects missing reference deposits than genuine non-citation).</p>
+      <p>Origins and Frontiers sorts the indexed corpus by where each article sits at the edges of the citation graph. Sources are articles no indexed article cites; sinks are articles that cite nothing inside the index, and an article can be both. Sinks split three ways: <em>data-gap</em> (Pinakes never fetched the article's reference list, so it can't be shown citing anything), <em>frontier</em> (references fetched, published in or after the 2021 cutoff), and <em>true</em> (references fetched, published before the cutoff, citing only work outside the index).</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the tool surfaces 54,169 articles. 43,476 (80.3%) are sources &mdash; foundational work that other indexed articles cite but that itself cites nothing inside the corpus, often because its own reference list reaches into books, dissertations, or journals outside the index. 3,202 articles (5.9%) are frontier sinks under the 2021 cutoff, and 6,810 (12.6%) are data-gap sinks, which more likely reflect missing reference deposits than genuine isolation. The most-cited source is Adrienne Rich's 1972 "When We Dead Awaken: Writing as Re-Vision," with 402 CrossRef citations.</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the tool surfaces 54,169 articles. 43,476 (80.3%) are sources: no other indexed article cites them. 3,202 articles (5.9%) are frontier sinks under the 2021 cutoff, and 6,810 (12.6%) are data-gap sinks, whose reference lists were never fetched. Among sources, the one most widely cited elsewhere is Adrienne Rich's 1972 "When We Dead Awaken: Writing as Re-Vision," with 402 CrossRef citations and none from indexed articles.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>Sources are articles with internal in-degree &ge;&nbsp;1 and out-degree =&nbsp;0; sinks are out-degree &ge;&nbsp;1 and in-degree =&nbsp;0. Sinks published after the frontier-cutoff year are flagged <em>frontier</em>; older sinks are <em>data-gap</em>. Per-journal rates report each venue's source-rate and sink-rate.<sup>1</sup></p>
+      <p>Sources are articles with an internal in-degree of 0 (no indexed article cites them); sinks are articles with an internal out-degree of 0 (they cite no indexed article). Sinks whose reference lists were never fetched are flagged <em>data-gap</em>; the rest are <em>frontier</em> if published in or after the cutoff year (2021) and <em>true</em> otherwise. Per-journal rates report each venue's share of sources and its share of true sinks, and the year chart stacks sources, true sinks, and all other articles.<sup>1</sup></p>
 
       <h4 class="methodology-heading">Controls</h4>
-      <p>Filtering to a <strong>cluster</strong> shows what is foundational for that subfield specifically &mdash; selecting <em>Technical Communication</em> reveals which articles the TC sub-area reaches back to. The <strong>year range</strong> shifts the frontier-cutoff implicitly: an upper bound near the present makes more articles look like frontier sinks; a tighter window makes the data-gap category more obvious.</p>
+      <p>The <strong>cluster</strong> and <strong>year range</strong> filters narrow which articles are counted. Each article's status still comes from its citations across the whole index, and the frontier cutoff stays at 2021 whatever the range.</p>
 
       <h4 class="methodology-heading">References</h4>
       <ol class="methodology-refs">
@@ -103,21 +103,21 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 <!-- ════════════════════════════════════════════════════════════════ -->
 
 <div id="tab-ds-shifting-currents" class="tab-panel" style="display:none;">
-  <p class="tab-intro">A separate Hummon-Doreian main path computed for each of five decade windows (1970s&ndash;80s, 1990s, 2000s, 2010s, 2020s). Articles that appear on multiple decades' paths are flagged as <em>persistent</em>; articles that anchor a single decade are <em>decade-specific</em>.</p>
+  <p class="tab-intro">A separate Hummon-Doreian main path computed for each of five decade windows (1970s&ndash;80s, 1990s, 2000s, 2010s, 2020s), each built only from citations between articles published inside that window.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>Shifting Currents computes a separate Hummon-Doreian main path for each of five decade windows (1970s&ndash;80s, 1990s, 2000s, 2010s, 2020s) and reports each decade's backbone alongside a cross-decade persistence ranking. Articles that appear on multiple decades' paths are flagged as <em>persistent</em>; articles that anchor a single decade are <em>decade-specific</em>.</p>
+      <p>Shifting Currents computes a separate Hummon-Doreian main path for each of five decade windows (1970s&ndash;80s, 1990s, 2000s, 2010s, 2020s) and reports each decade's backbone. Because each window's graph admits only citations between articles published inside it, no article can appear on more than one decade's path.</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the five decade paths surface different anchor articles. The 1970s&ndash;80s path is short (4 articles) and led by Mike Rose's 1980 "Rigid Rules, Inflexible Plans, and the Stifling of Language." The 1990s extends to 8 articles led by Nancy Nelson Spivey's "Transforming Texts." The 2000s shrinks back to 6 articles anchored by Dorothy Winsor's "Ordering Work." The 2010s runs to 12 articles led by the multi-author "Symposium: On the Framework for Success in Postsecondary Writing." The 2020s holds 9 articles. The persistence list collects 39 articles that appear on more than one decade's path &mdash; a small set whose membership marks the texts that have shaped the field's backbone across multiple eras rather than within a single decade.</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the five decade paths surface different anchor articles. The 1970s&ndash;80s path is short (4 articles) and led by Mike Rose's 1980 "Rigid Rules, Inflexible Plans, and the Stifling of Language." The 1990s extends to 8 articles led by Nancy Nelson Spivey's "Transforming Texts." The 2000s shrinks back to 6 articles anchored by Dorothy Winsor's "Ordering Work." The 2010s runs to 12 articles led by the multi-author "Symposium: On the Framework for Success in Postsecondary Writing." The 2020s holds 9 articles. The five paths hold 39 articles in all, and none appears on more than one decade's path.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>For each decade, the citation DAG restricted to that decade's articles and their citations is constructed; cycles are removed via topological-sort breaks; SPC (search path count) is computed for every edge; the highest-SPC chain from a source to a sink is reported as the decade's main path.<sup>1</sup> Cross-decade persistence is then computed by counting how many decade paths each article appears on. The result is a per-decade reading list plus a persistence ranking that surfaces cross-era anchor texts.</p>
+      <p>For each decade, the citation DAG restricted to that decade's articles and their citations is constructed; cycles are removed via topological-sort breaks; SPC (search path count) is computed for every edge; the highest-SPC chain from a source to a sink is reported as the decade's main path.<sup>1</sup> Cross-decade persistence is then computed by counting how many decade paths each article appears on; since every citation in a window has both ends inside it, that count is always one. The result is a per-decade reading list.</p>
 
       <h4 class="methodology-heading">Controls</h4>
-      <p>Filters narrow the DAG that each decade's main path is computed on. <strong>Cluster</strong> turns the tool into "the decade-by-decade backbone within this subfield." A tight <strong>year range</strong> makes the per-decade slices sparser; widening usually produces longer paths. Computed fresh on the first cache miss (a second or two); identical filter combinations return instantly after.</p>
+      <p>Filters narrow the DAG that each decade's main path is computed on. <strong>Cluster</strong> turns the tool into "the decade-by-decade backbone within this subfield." A tight <strong>year range</strong> makes the per-decade slices sparser; widening usually produces longer paths. Computed fresh on the first cache miss (30&ndash;90 seconds); identical filter combinations return instantly after.</p>
 
       <h4 class="methodology-heading">References</h4>
       <ol class="methodology-refs">
@@ -145,7 +145,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <p>Each citation edge's delay is (citing year &minus; cited year). Edges are bucketed by the field-group of source and target into the four directional categories. Mann-Whitney U tests compare distributions pairwise to flag whether observed differences are statistically distinguishable from random fluctuation.<sup>1</sup> Reported statistics include count, mean, median, Q25, Q75, standard deviation, and maximum.</p>
 
       <h4 class="methodology-heading">Controls</h4>
-      <p>Filters scope every direction's delay distribution. Applying a <strong>cluster</strong> filter asks how fast that subfield consumes its own work versus reaches across the boundary. The <strong>year range</strong> filters by citing year, so narrowing to a recent slice tracks contemporary citation tempo specifically &mdash; a useful diagnostic for whether cross-cluster delays are rising or falling over time.</p>
+      <p>Filters scope every direction's delay distribution, and they apply to both ends of each citation. A <strong>cluster</strong> filter therefore keeps only citations inside that cluster, which drops the cross-boundary directions; use it to read one subfield's internal tempo. The <strong>year range</strong> bounds the cited article's year as well as the citing article's, so a narrow recent slice also cuts off long delays.</p>
 
       <h4 class="methodology-heading">References</h4>
       <ol class="methodology-refs">
@@ -160,18 +160,18 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-border-crossers" class="tab-panel" style="display:none;">
-  <p class="tab-intro">High-betweenness articles that connect TPC and RC neighborhoods. These are the works that, if removed, would lengthen the average shortest path between the two sub-fields most.</p>
+  <p class="tab-intro">Articles that sit on the most shortest paths through the citation graph, with a count of each one's links to articles outside its own group.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>Border Crossers identifies high-betweenness articles that connect TPC and RC neighborhoods. These are the works that, if removed, would lengthen the average shortest path between the two sub-fields most. Border Crossers reports both betweenness scores and a separate count of cross-cluster boundary edges incident to each candidate, so a node ranks high only if it both lies on many shortest paths <em>and</em> actually carries cross-boundary traffic rather than just within-cluster traffic.</p>
+      <p>Border Crossers looks for the articles that connect TPC and RC neighborhoods. It ranks articles by betweenness centrality, which counts how many shortest paths through the undirected citation graph pass through each one, and reports alongside it a count of each article's links to articles outside its own group. The ranking follows betweenness; the boundary count shows which highly ranked articles actually carry traffic across the boundary rather than within their own cluster.</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus (13,442 articles, 44,322 edges), the top bridge is Jenny Edbauer's 2005 "Unframing Models of Public Distribution: From Rhetorical Situation to Rhetorical Ecologies" (RC, 135 citations, betweenness 0.034, 55 boundary edges), followed by Bruffee's 1984 "Collaborative Learning and the 'Conversation of Mankind'" (RC, 108 citations, 61 boundary edges) and Russell's 1997 "Rethinking Genre in School and Society" (RC, 129 citations, 93 boundary edges) &mdash; the article with the highest count of TPC-RC boundary edges in the entire corpus. Jones, Moore, and Walton's 2016 "Disrupting the Past" appears at fourth place but with only 16 boundary edges: its high citation count and within-cluster centrality do not translate into a cross-cluster connector role.</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus (13,442 articles, 44,322 edges), the top bridge is Jenny Edbauer's 2005 "Unframing Models of Public Distribution: From Rhetorical Situation to Rhetorical Ecologies" (RC, 135 citations, betweenness 0.034, 55 boundary edges), followed by Bruffee's 1984 "Collaborative Learning and the 'Conversation of Mankind'" (RC, 108 citations, 61 boundary edges) and Russell's 1997 "Rethinking Genre in School and Society" (RC, 129 citations, 93 boundary edges), the highest boundary-edge count in the corpus. Jones, Moore, and Walton's 2016 "Disrupting the Past" appears at fourth place but with only 16 boundary edges: its high citation count and within-cluster centrality do not translate into a cross-cluster connector role.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>Betweenness centrality is estimated on the full undirected citation graph with Brandes-style pivot sampling (256 source pivots, fixed seed):<sup>1</sup> exact computation grows quadratically with the corpus and now runs to tens of minutes, while the sampled estimate preserves the top-of-ranking order this tool reports at a small fraction of the cost. Boundary-crossing flow (the count of cross-cluster edges incident to each node) is reported alongside betweenness so the user can distinguish genuine bridges from locally-central nodes. The neighborhood subgraph for each top bridge is included for the force-directed view, which renders the bridge node together with its first-degree cross-cluster neighbors.</p>
+      <p>Betweenness centrality is estimated on the full undirected citation graph with Brandes-style pivot sampling (256 source pivots, fixed seed):<sup>1</sup> exact computation grows quadratically with the corpus and now runs to tens of minutes, while the sampled estimate preserves the top-of-ranking order this tool reports at a small fraction of the cost. Boundary-crossing flow (the count of each node's links to articles outside its own group) is reported alongside betweenness so the user can distinguish genuine bridges from locally central nodes. The force-directed view renders the top 25 bridges together with all their first-degree neighbors, capped at 300 nodes.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>Bridge detection runs on whatever subgraph the filters carve out. Filtering to a <strong>cluster</strong> finds within-cluster bridges &mdash; useful when "TPC-vs-RC" is not the boundary of interest. <strong>Year range</strong> on citing date constrains which edges the betweenness algorithm sees. Heaviest tool in the project: the sampled estimate takes on the order of a minute per unique filter combination on first compute, and the nightly pre-warm keeps the default view cached.</p>
@@ -200,10 +200,10 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, RC's outreach to TPC is returned at a substantially higher rate than TPC's outreach to RC. Of 1,277 TPC articles that cite RC work, only 270 (21.1%) get cited back by RC; of 387 RC articles that cite TPC work, 143 (37.0%) get cited back by TPC. TPC reaches out to RC more often than the reverse (1,277 outgoing vs. 387), but its outreach is the less likely to be returned. At the strict edge level (A&rarr;B paired with a literal B&rarr;A counterpart), the rate is 0.0%, since two articles can cite each other only when they appear at nearly the same time. The article-level rate instead asks whether each cluster's outreach gets <em>any</em> return engagement at all.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>Article-level reciprocity for an article <em>A</em> is the count of distinct articles in the other group that <em>A</em> both cites and is cited by. Edge-level reciprocity is the fraction of A&rarr;B edges with a B&rarr;A counterpart on the same article pair. Trends are computed per decade of the citing article so the user can read whether reciprocity rates are rising or falling over time.<sup>1</sup></p>
+      <p>An article <em>A</em> counts as reciprocated when it cites the other group and at least one article from that group cites it; the Most-reciprocated table then ranks articles by how many other-group articles <em>A</em> both cites and is cited by. Edge-level reciprocity is the fraction of A&rarr;B edges with a B&rarr;A counterpart on the same article pair. Trends are computed per decade of the citing article so the user can read whether reciprocity rates are rising or falling over time.<sup>1</sup></p>
 
       <h4 class="methodology-heading">Controls</h4>
-      <p>Cluster and journal filters scope which articles get counted on each side of the boundary. A useful pattern is to lock to <em>Rhetoric</em>, run, then switch to <em>Technical Communication</em> &mdash; the comparison is whether one cluster reciprocates more than the other. Year-range filters narrow the analysis to a specific decade, which can surface generational shifts in cross-cluster engagement.</p>
+      <p>Cluster and journal filters apply to both ends of each citation, so a filter that covers only one side of the boundary leaves no cross-group citations to count. To compare the two sides, run the default scope or pick journals from both groups. Year-range filters narrow the analysis to a specific decade, which can surface generational shifts in cross-cluster engagement.</p>
 
       <h4 class="methodology-heading">References</h4>
       <ol class="methodology-refs">
@@ -236,7 +236,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <p>Articles are ordered by internal citation count to produce a Lorenz curve; the Gini coefficient is computed as twice the area between the curve and the equality diagonal. A power-law fit (alpha, x_min) is computed via maximum likelihood on the long tail; alternative distributions (lognormal, exponential) are compared via Vuong's likelihood-ratio test.<sup>2</sup></p>
 
       <h4 class="methodology-heading">Controls</h4>
-      <p>The Lorenz curve and Gini are population statistics &mdash; they describe inequality within whatever scope the user chooses. The whole-corpus Gini of 0.909 hides large variation between subfields. Filtering to <em>Composition &amp; Writing Studies</em> or to <em>Technical Communication</em> alone produces a different Gini for each, so the subfields can be compared directly.</p>
+      <p>The Lorenz curve and Gini are population statistics &mdash; they describe inequality within whatever scope the user chooses. The whole-corpus Gini hides large variation between subfields. Filtering to <em>Composition &amp; Writing Studies</em> or to <em>Technical Communication</em> alone produces a different Gini for each, so the subfields can be compared directly.</p>
 
       <h4 class="methodology-heading">References</h4>
       <ol class="methodology-refs">
@@ -328,18 +328,18 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-shifting-canons" class="tab-panel" style="display:none;">
-  <p class="tab-intro">Top-cited articles per generation of citing scholars (pre-1995, 1995&ndash;2004, 2005&ndash;2014, 2015+). Articles can be enduring (top-N every generation), rising (climbing the ranks), fading (slipping off), or generational-only.</p>
+  <p class="tab-intro">Top-cited articles per generation of citing scholars (pre-1995, 1995&ndash;2004, 2005&ndash;2014, 2015+). Articles can be enduring (top-N in every generation), rising (missing from the first generation's list but on the last one's), fading (the reverse), generational-only (on one list only), or intermittent (any other pattern).</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>Shifting Canons reports the top-cited articles per generation of citing scholars (pre-1995, 1995&ndash;2004, 2005&ndash;2014, 2015+). Articles can be enduring (top-N every generation), rising (climbing the ranks across generations), fading (slipping off), or generational-only (appearing in only one window).</p>
+      <p>Shifting Canons reports the top-cited articles per generation of citing scholars (pre-1995, 1995&ndash;2004, 2005&ndash;2014, 2015+). Articles can be enduring (top-N in every generation), rising (missing from the first generation's list but on the last one's), fading (on the first list but not the last), generational-only (appearing in only one window), or intermittent (any other pattern).</p>
 
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, Bruffee's 1984 "Collaborative Learning and the 'Conversation of Mankind'" anchors the pre-1995 generation; Cooper and Selfe's 1990 "Computer Conferences and Learning" leads the 1995&ndash;2004 generation; Russell's 1997 "Rethinking Genre in School and Society" leads the 2005&ndash;2014 generation. Across the four windows the cross-generation classification flags 7 articles as <em>fading</em>, 5 as <em>rising</em>, 3 as <em>intermittent</em>, and 66 as <em>generational-only</em>: most articles that reach one generation's top-N reach no other generation's.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>For each generation window, the top-N most-cited articles are determined using only citations from articles whose own publication year falls within that window. Cross-generation classification then uses presence and rank movement across the four windows: stable presence with rising rank flags <em>rising</em>; stable presence with falling rank flags <em>fading</em>; non-monotonic presence flags <em>intermittent</em>; presence in only one window flags <em>generational-only</em>.<sup>1</sup></p>
+      <p>For each generation window, the top-N most-cited articles are determined using only citations from articles whose own publication year falls within that window. Cross-generation classification then uses presence alone across the four windows: presence in all four flags <em>enduring</em>; presence in exactly one flags <em>generational-only</em>; otherwise, absence from the first window with presence in the last flags <em>rising</em>, presence in the first with absence from the last flags <em>fading</em>, and any other pattern flags <em>intermittent</em>.<sup>1</sup></p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>Filtering by <strong>cluster</strong> rebuilds each generation's top-N from the citation traffic <em>that cluster</em> generates &mdash; the comparison shifts to "what each generation of Rhetoric / TPC / CWS scholars treated as canonical." Rising and fading articles surface differently in different clusters.</p>
@@ -357,7 +357,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-reach-of-citation" class="tab-panel" style="display:none;">
-  <p class="tab-intro">The shape of how each top article accumulated its citations: steady classics climb steadily, late bloomers spike years after publication, one-wave articles rise sharply then plateau.</p>
+  <p class="tab-intro">The shape of how each top article accumulated its citations: steady classics climb smoothly, late bloomers spike years after publication, and one-wave articles take at least half their citations in a single peak year.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
@@ -368,7 +368,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the top 100 articles, 78 classify as <em>late_bloomer</em> and 22 as <em>steady_classic</em>; the front-loaded and one-wave categories are empty. Among the field's most-cited articles, citation accumulates late. Jones, Moore, and Walton's 2016 "Disrupting the Past" exemplifies the pattern: 0 citations in 2016 and 2017, then 5 in 2018, 16 in 2019, 8 in 2020, 21 in 2021, peaking at 38 in 2022 (six years after publication), then 14, 19, 22 across 2023&ndash;2025. Cumulative citations climbed from 0 to 88 in the first six years and to 146 by 2026.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>For each top article, internal citations are bucketed by year of citing article. Pattern classification proceeds via the position and shape of the per-year series:<sup>1</sup> <em>steady_classic</em> (smooth growth without a sharp peak), <em>front_loaded</em> (most citations in first 3 years post-publication), <em>late_bloomer</em> (peak occurs more than 5 years post-publication), <em>one_wave</em> (single peak followed by decline), and the residual <em>too_recent</em> / <em>too_few</em> categories.</p>
+      <p>For each top article, internal citations are bucketed by year of citing article. Pattern classification proceeds via the position and shape of the per-year series:<sup>1</sup> after screening out <em>too_few</em> (under 5 citations) and <em>too_recent</em> (4 or fewer years old) articles, <em>front_loaded</em> (at least 60% of citations in the publication year and the two after), <em>late_bloomer</em> (peak at least 5 years after publication, and at least twice the average annual rate), <em>one_wave</em> (at least half of all citations in the peak year), and <em>steady_classic</em> for every other series.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p><strong>Cluster</strong> changes both which top-cited articles are eligible (citation count is computed within scope) and which citing articles contribute to each accumulation curve. <strong>Top N</strong> sets the number of sparkline cards in the grid.</p>
@@ -385,18 +385,18 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-inside-outside" class="tab-panel" style="display:none;">
-  <p class="tab-intro">Internal (corpus) versus global (OpenAlex) citation rank. Articles that rank high internally but low globally are <em>field-specific canon</em>; the reverse pattern (high globally, low internally) marks articles cited more outside the corpus than within it.</p>
+  <p class="tab-intro">Internal (corpus) versus global (CrossRef) citation rank. Articles that rank high internally but low globally are <em>field-specific canon</em>; the reverse pattern (high globally, low internally) marks articles cited more outside the corpus than within it.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>Inside / Outside compares each article's internal (corpus) citation rank against its global (OpenAlex) citation rank. Articles that rank high internally but low globally are field-specific canon; the reverse pattern (high globally, low internally) marks articles cited more outside the corpus than within it.</p>
+      <p>Inside / Outside compares each article's internal (corpus) citation rank against its global (CrossRef) citation rank. Articles that rank high internally but low globally are field-specific canon; the reverse pattern (high globally, low internally) marks articles cited more outside the corpus than within it.</p>
 
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the comparison covers 18,620 articles. The Spearman rank correlation between internal and global rank is &rho; = 0.57 (p &approx; 0), indicating moderate alignment between the two rankings. The four quadrants partition the corpus: 17,995 articles sit in the <em>background</em> quadrant (low on both), 253 are <em>tpc_specific</em> (high internal, low global), 119 are <em>shared_canon</em> (high on both), and 253 are <em>imported</em> (high global, low internal). The 119 shared-canon articles are cited heavily both inside the corpus and beyond it; the 253 imported articles are cited widely beyond the corpus but seldom within it.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>Internal rank is computed by ordering articles on internal citation count; global rank is computed by ordering on OpenAlex's <code>cited_by_count</code>. The Spearman rank correlation is computed across the full comparison set.<sup>1</sup> Articles in the top 100 of either ranking are tabulated; quadrant labels partition the scatter into four interpretive zones using percentile cutoffs on each axis.</p>
+      <p>Internal rank is computed by ordering articles on internal citation count; global rank is computed by ordering on CrossRef's <code>cited_by_count</code>. The Spearman rank correlation is computed across the full comparison set.<sup>1</sup> The top 25 articles in each divergent quadrant are returned (the page lists 10 of each); quadrant labels partition the scatter into four interpretive zones using percentile cutoffs on each axis.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>Cluster and journal filters narrow the scatter to articles published in that scope. The Spearman correlation is recomputed on the filtered set, which lets the user ask whether internal and global citation track each other more tightly in TPC than in Rhetoric, or whether one cluster has a heavier "imported" tail than the other.</p>
@@ -446,13 +446,13 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-walls-bridges" class="tab-panel" style="display:none;">
-  <p class="tab-intro">For each citation community, how much of its citation traffic stays within the community versus crossing to others. Insular communities sit on the y-axis; integrative communities sit toward the diagonal.</p>
+  <p class="tab-intro">For each citation community, how much of its citation traffic stays within the community versus crossing to others. Insular communities sit low and to the right (high internal density, little external traffic); integrative communities sit higher on the chart.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>Walls and Bridges scores each citation community on how much of its citation traffic stays within the community versus crossing to others. Insular communities sit on the y-axis (high internal density relative to external); integrative communities sit toward the diagonal (citation traffic distributed across community boundaries).</p>
+      <p>Walls and Bridges scores each citation community on how much of its citation traffic stays within the community versus crossing to others. Insular communities sit low and to the right (high internal density relative to external); integrative communities sit higher on the chart (citation traffic distributed across community boundaries).</p>
 
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus (13,442 articles, 44,322 edges, 25 communities), the Cognitive-Process community led by Flower and Hayes's 1981 article carries the highest insularity ratio, 65.1, across 1,185 articles. The social-justice TC community led by Jones, Moore, and Walton's 2016 "Disrupting the Past" sits at 25.0 across 1,728 articles &mdash; large and still insular, but materially more outward-facing than the Cognitive-Process community. The genre / activity-systems community led by Russell's 1997 "Rethinking Genre" sits at 19.7 across 1,364 articles, which makes it the most integrative of the three largest communities &mdash; consistent with Russell's article carrying the most boundary edges in the Border Crossers tool.</p>
 
@@ -567,21 +567,21 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-books-everyone-reads" class="tab-panel" style="display:none;">
-  <p class="tab-intro">A "master works" list derived from the Datastories book's own figures: which articles appear across the most chapters' analyses. The closer an article gets to appearing in every chapter, the more central it is to the book's argument.</p>
+  <p class="tab-intro">A "master works" list built from six Datastories tools: which articles appear in the most of their results. The more of these tools an article appears in, the more central it is to the book's argument.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>The Books Everyone Reads aggregates the article-ID lists every other Datastories tool returns and ranks the union by how many tools surface each article. The closer an article gets to appearing in every chapter's analysis, the more central it is to the book's overall argument about the field's structure.</p>
+      <p>The Books Everyone Reads aggregates the article-ID lists from six Datastories tools (Border Crossers, The Long Tail, The Fair Ranking, Shifting Canons, The Reach of a Citation, and Walls and Bridges) and ranks the union by how many tools surface each article. The more of these tools an article appears in, the more central it is to the book's argument about the field's structure.</p>
 
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the aggregator returns 247 articles surfaced by 6 tools across the chapters. Flower and Hayes's 1981 "A Cognitive Process Theory of Writing" appears in all 6 surfacing tools (Border Crossers, Shifting Canons, Fair Ranking, Long Tail, Reach of Citation, Walls and Bridges) and leads the master list. Fahnestock's 1986 "Accommodating Science" appears in the same 6 tools, so the two leading articles come from different lines of work: cognition and process for Flower and Hayes, the rhetoric of science for Fahnestock.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>The aggregator runs each upstream Datastories tool that returns an article-ID list (filtering out tools that don't, like the chord diagrams) and unions the results. Each article's score is the count of distinct tools (and indirectly chapters) it appears in. Tied articles are broken by total internal citation count.<sup>1</sup> When upstream @cached tools have not been pre-warmed they are skipped to avoid worker timeouts; the skipped-tools list is reported in the summary so users can tell whether the result is partial.</p>
+      <p>The aggregator runs a fixed roster of six upstream tools, each of which returns an article-ID list, and unions the results. Each article's score is the count of distinct tools it appears in. Tied articles are broken by total internal citation count.<sup>1</sup> When upstream @cached tools have not been pre-warmed they are skipped to avoid worker timeouts; the skipped-tools list is reported in the summary so users can tell whether the result is partial.</p>
 
       <h4 class="methodology-heading">Controls</h4>
-      <p>The aggregate is built from filter-aware sub-tools. Applying a <strong>cluster</strong> filter derives a master-works list specific to that subfield &mdash; articles that show up across that cluster's view of every other tool. Each underlying tool uses the same filter, so the answer is "books everyone in this scope reads, by Datastories' own measures."</p>
+      <p>The aggregate is built from filter-aware sub-tools. Applying a <strong>cluster</strong> filter derives a master-works list specific to that subfield &mdash; articles that show up across that cluster's view of the six tools. Each underlying tool uses the same filter, so the answer is "books everyone in this scope reads, by Datastories' own measures."</p>
 
       <h4 class="methodology-heading">References</h4>
       <ol class="methodology-refs">
@@ -626,7 +626,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 <!-- ════════════════════════════════════════════════════════════════ -->
 
 <div id="tab-ds-solo-to-squad" class="tab-panel" style="display:none;">
-  <p class="tab-intro">Article team-size over time. The single-author percentage, the median author count, and the year the median crossed each threshold &mdash; with milestone markers for the first 5+ author article and the first 10+ author article.</p>
+  <p class="tab-intro">Article team-size over time: the single-author percentage and the mean and median author counts, with milestone markers for the first 5+ author article, the first 10+ author article, and the first year the single-author share fell below half.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
@@ -665,7 +665,7 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index; minimum gap = 10 years), the heuristic identifies 9,346 mentorship pairs across 1,681 distinct mentors. The most prolific mentor by inferred mentees is Richard Leo Enos at 106 mentees, followed by Richard Beach at 82 and Edward M. White at 79 &mdash; all senior figures whose long publication histories combined with broad co-authorship rosters produce many qualifying pairs. The single most-active mentorship pair is Cynthia L. Selfe (first pub 1980) and Scott Lloyd DeWitt (first pub 1997) with 23 co-authored articles spanning 2004&ndash;2015, a 17-year gap between first publications. The heuristic will mislabel late-career first publications (someone whose first indexed work appears late but whose actual career began earlier) and lateral collaborations between scholars whose careers happen to be offset; aggregate patterns such as the prolific-mentors list are more reliable than any single pair.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>For each author, first-publication year is computed from the corpus. For each co-author pair, if the gap between their first publications exceeds the threshold (default 10 years), the pair is recorded as a probable mentorship and the older author is recorded as the mentor.<sup>1</sup> The reported mentorship graph is therefore a heuristic upper bound rather than a verified network &mdash; structural patterns in the graph are interpretable but individual pairs may be mislabeled.</p>
+      <p>For each author, first-publication year is computed from the corpus. For each co-author pair, if the gap between their first publications meets or exceeds the threshold (default 10 years), the pair is recorded as a probable mentorship and the older author is recorded as the mentor.<sup>1</sup> The reported mentorship graph is therefore a heuristic upper bound rather than a verified network &mdash; structural patterns in the graph are interpretable but individual pairs may be mislabeled.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>Filtering to a <strong>cluster</strong> narrows the corpus the lineage inference runs on, which usually produces a denser local mentorship graph (mentors and mentees are more likely to share a venue). <strong>Min year gap</strong> tightens the heuristic &mdash; 8 catches more pairs with more false positives; 15 catches only obvious mentorships.</p>
@@ -696,10 +696,10 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <h4 class="methodology-heading">Tool orientation</h4>
       <p>Lasting Partnerships classifies every co-author pair in the corpus by persistence: how long the collaboration ran and how many articles it produced. The bulk of co-authorship is one-shot; a small persistent tail makes up the field's stable collaborative units.</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, 52,233 co-authoring pairs are classified: 48,526 (92.9%) are <em>one_shot</em> (single article), 3,391 (6.5%) are <em>short_term</em> (two articles), and only 316 pairs (0.6%) are <em>persistent</em> (three or more articles spanning at least five years). The most-persistent pair is Joe Erickson and Kevin Roozen at 65 co-authored articles spanning 12 years (2004&ndash;2016), followed by Cynthia L. Selfe and Gail E. Hawisher at 58 articles across a 28-year span (1988&ndash;2016) and Jennifer L. Holberg and Marcy Taylor at 45 articles across 26 years (1999&ndash;2025).</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, 52,233 co-authoring pairs are classified: 48,526 (92.9%) are <em>one_shot</em> (single article), 3,391 (6.5%) are <em>short_term</em> (two articles, or more across fewer than five years), and only 316 pairs (0.6%) are <em>persistent</em> (three or more articles spanning at least five years). The most-persistent pair is Joe Erickson and Kevin Roozen at 65 co-authored articles spanning 12 years (2004&ndash;2016), followed by Cynthia L. Selfe and Gail E. Hawisher at 58 articles across a 28-year span (1988&ndash;2016) and Jennifer L. Holberg and Marcy Taylor at 45 articles across 26 years (1999&ndash;2025).</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>For each co-author pair, total co-authored articles, year span (last article year minus first article year), and journals involved are computed. Classification: <em>one_shot</em> = 1 article; <em>short_term</em> = 2 articles; <em>persistent</em> = at least 3 articles spanning at least 5 years.<sup>1</sup> The boundaries are interpretable rather than empirically optimized.</p>
+      <p>For each co-author pair, total co-authored articles, year span (last article year minus first article year), and journals involved are computed. Classification: <em>one_shot</em> = 1 article; <em>short_term</em> = 2 articles, or 3 or more spanning fewer than 5 years; <em>persistent</em> = at least 3 articles spanning at least 5 years.<sup>1</sup> The boundaries are interpretable rather than empirically optimized.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>The pair-classification statistics are computed on the filtered set. Filtering to a <strong>cluster</strong> surfaces persistent partnerships within that cluster only, for users asking who collaborates over the long run in a particular sub-area.</p>
@@ -721,18 +721,18 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 <!-- ════════════════════════════════════════════════════════════════ -->
 
 <div id="tab-ds-prince-network" class="tab-panel" style="display:none;">
-  <p class="tab-intro">For each sleeping beauty article, the "princes" that woke it up. Awakening type characterizes how the rediscovery happened: a single catalyst, a new sub-field, or a broad revival.</p>
+  <p class="tab-intro">For each sleeping beauty article, the "princes" that woke it up. Awakening type characterizes how the rediscovery happened: one prince, princes from a single journal, princes sharing one first author, a broad trend across journals, or a revival within a sub-area.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>The Prince Network attaches awakening narratives to each sleeping beauty: which articles cited the beauty during its awakening window, and what pattern those citers form. Awakening type classifies the rediscovery: <em>single_catalyst</em> (one prince paper drives the surge), <em>journal_specific</em> (the awakening concentrates in a single venue), <em>subfield_revival</em> (a single sub-area rediscovers the work), or <em>broad_trend</em> (citations come from across the field).</p>
+      <p>The Prince Network attaches awakening narratives to each sleeping beauty: which articles cited the beauty during its awakening window, and what pattern those citers form. Awakening type classifies the rediscovery: <em>single_catalyst</em> (one prince paper), <em>journal_specific</em> (every prince in a single venue), <em>individual_rediscovery</em> (every prince sharing one first author), <em>broad_trend</em> (eight or more princes across four or more journals), or <em>subfield_revival</em> (any other pattern).</p>
 
       <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the tool returns 15 sleeping beauties with their princes. The dominant pattern is <em>broad_trend</em>, at 13 of 15. Cargile Cook's 2002 "Layered Literacies" leads the list (the corpus's heaviest sleeping beauty by Beauty Coefficient), with awakening citers spanning multiple TC venues; the 1974 "Students' Right to Their Own Language" introduction shows a similar broad-trend awakening in 2018 driven by the post-2015 social-justice turn.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>Sleeping beauties come from the existing Beauty Coefficient computation in the Sleeping Beauties tool.<sup>1</sup> Princes are the articles that cited the beauty in the awakening window (the years immediately after the awakening year). Awakening types are inferred from the prince set: a single dominant prince flags <em>single_catalyst</em>; concentration in a single journal flags <em>journal_specific</em>; concentration in a single research community flags <em>subfield_revival</em>; broad distribution across the field flags <em>broad_trend</em>.</p>
+      <p>Sleeping beauties come from the existing Beauty Coefficient computation in the Sleeping Beauties tool.<sup>1</sup> Princes are the articles that cited the beauty from the year before its awakening onward. Awakening types are inferred from the prince set: a single prince flags <em>single_catalyst</em>; princes from a single journal flag <em>journal_specific</em>; princes sharing one first author flag <em>individual_rediscovery</em>; eight or more princes across four or more journals flag <em>broad_trend</em>; any other set flags <em>subfield_revival</em>.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>Filters narrow the corpus the underlying sleeping-beauty detection runs on. Selecting a <strong>cluster</strong> reveals subfield-specific awakening patterns &mdash; for example, "what kinds of articles wake up the dormant Rhetoric corpus?" Heavy first-time compute when filters change.</p>
@@ -756,10 +756,10 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
       <h4 class="methodology-heading">Tool orientation</h4>
       <p>Disciplinary Calendar lays a curated timeline of disciplinary events (journal foundings, landmark articles, special issues, external crises) against the corpus's awakening spikes. Where an event coincides with a sustained rise in sleeping-beauty awakenings, the event is plausibly catalytic; where the awakening signal is flat across event years, the event probably did little to change which older work the field cited.</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the timeline carries 18 hand-curated events from 1949 (the founding of <em>College Composition and Communication</em>; Shannon's information theory) through 2026, plotted against the awakening years of 200 sleeping beauties. The post-event 5-year-window analysis returns sharply different awakening rates by event type: <em>landmark_article</em> events show a mean of 3.71 awakenings in the five years following, <em>external_crisis</em> events show 3.12, and <em>journal_founded</em> events show only 1.15. Awakenings follow landmark articles and external crises at roughly three times the rate they follow journal foundings.</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index) across the indexed corpus, the timeline carries 18 hand-curated events from 1949 (the founding of <em>College Composition and Communication</em>; Shannon's information theory) through 2022, plotted against the awakening years of 200 sleeping beauties. The post-event 5-year-window analysis returns sharply different awakening rates by event type: <em>landmark_article</em> events show a mean of 3.71 awakenings per year across the event year and the four years after, <em>external_crisis</em> events show 3.12, and <em>journal_founded</em> events show only 1.15. Awakenings follow landmark articles and external crises at roughly three times the rate they follow journal foundings.</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>The events table is hand-curated and lives in <code>data/disciplinary_events.json</code>. Awakening spikes come from per-year counts of sleeping-beauty awakening years computed by the Sleeping Beauties tool. Per-event-type correlations are computed as the mean count of awakenings occurring in the five years following each event of that type.<sup>1</sup> Proximity does not establish causation: the means measure post-event awakening density, not causal influence.</p>
+      <p>The events table is hand-curated: a seed list in <code>db/datastories.py</code>, which <code>data/disciplinary_events.json</code> can extend. Awakening spikes come from per-year counts of sleeping-beauty awakening years computed by the Sleeping Beauties tool. Per-event-type rates are computed as the mean number of awakenings per year across the event year and the four years after it, over every event of that type.<sup>1</sup> Proximity does not establish causation: the means measure post-event awakening density, not causal influence.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>The events list itself is curated and not user-filterable. <strong>Cluster</strong> and <strong>year range</strong> reshape the awakening-spike series the events are laid against; with a cluster filter the post-event awakening rates by event type often shift, suggesting that some event types catalyze some subfields more than others.</p>
@@ -776,18 +776,18 @@ panel is independently rendered/loaded by static/js/datastories-loader.js.
 </div>
 
 <div id="tab-ds-unread-canon" class="tab-panel" style="display:none;">
-  <p class="tab-intro">Articles cited heavily in the wider scholarly world (per OpenAlex) but rarely cited inside this corpus. The "unread canon" is work published in the indexed journals that outside scholarship cites far more often than the corpus does.</p>
+  <p class="tab-intro">Articles cited heavily in the wider scholarly world (per CrossRef) but rarely cited inside this corpus. The "unread canon" is work published in the indexed journals that outside scholarship cites far more often than the corpus does.</p>
   <details class="abstract-toggle methodology-section">
     <summary class="methodology-summary">Methodology</summary>
     <div class="methodology-body">
 
       <h4 class="methodology-heading">Tool orientation</h4>
-      <p>The Unread Canon surfaces articles cited heavily in the wider scholarly world (per OpenAlex) but rarely cited inside this corpus. These are articles in the indexed journals whose citations come overwhelmingly from outside the corpus.</p>
+      <p>The Unread Canon surfaces articles cited heavily in the wider scholarly world (per CrossRef) but rarely cited inside this corpus. These are articles in the indexed journals whose citations come overwhelmingly from outside the corpus.</p>
 
-      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index; global cited_by &ge; 100 and internal cited_by &le; 2), 40 articles surface as unread canon. Adrienne Rich's 1972 "When We Dead Awaken: Writing as Re-Vision" leads at zero internal citations against 402 CrossRef-tracked global citations &mdash; a ratio of 402.0. Lowry and Gaskin's 2014 PLS-SEM methodology piece in <em>IEEE Transactions on Professional Communication</em> follows with a similar profile, and Kellogg's 2008 "Training writing skills" sits at 2 internal citations against 429 global &mdash; ratio 143.0.</p>
+      <p>Run with default parameters (June 2026 corpus snapshot; the live tool reflects the current index; global cited_by &ge; 100 and internal cited_by &le; 2), 40 articles surface as unread canon. Among them, Adrienne Rich's 1972 "When We Dead Awaken: Writing as Re-Vision" has zero internal citations against 402 CrossRef-tracked global citations (a ratio of 402.0); Lowry and Gaskin's 2014 PLS-SEM methodology piece in <em>IEEE Transactions on Professional Communication</em> has a similar profile; and Kellogg's 2008 "Training writing skills" has 2 internal citations against 429 global (a ratio of 143.0).</p>
 
       <h4 class="methodology-heading">Methodology</h4>
-      <p>Articles are filtered to those with global <code>cited_by_count</code> from OpenAlex at or above 100 and internal citation count at or below 2.<sup>1</sup> The result is ranked by the ratio of global to max(1, internal). Authors of these articles tend to be field-adjacent figures.</p>
+      <p>Articles are filtered to those with a global CrossRef <code>cited_by_count</code> at or above 100 and an internal citation count at or below 2.<sup>1</sup> The list is sorted by global citation count, and each article's ratio is its global count divided by one more than its internal count. Authors of these articles tend to be field-adjacent figures.</p>
 
       <h4 class="methodology-heading">Controls</h4>
       <p>Filters scope which articles count as unread canon. A cluster filter limits the list to articles published in that subfield's journals, so each subfield can see which of its own articles are cited widely elsewhere but seldom inside the corpus.</p>

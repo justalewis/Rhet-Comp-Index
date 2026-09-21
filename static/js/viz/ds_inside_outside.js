@@ -85,7 +85,7 @@ function renderScatter(data) {
   root.append('g').attr('transform', `translate(${m.left},0)`).call(d3.axisLeft(y).ticks(5, '~s'))
     .selectAll('text').style('font-size','10px');
   root.append('text').attr('x', w/2).attr('y', h - 6).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
-    .text('Global rank (OpenAlex)');
+    .text('Global rank (CrossRef)');
   root.append('text').attr('x', 16).attr('y', h/2).attr('transform', `rotate(-90, 16, ${h/2})`).attr('text-anchor','middle').attr('font-size',11).attr('fill',chrome().muted)
     .text('Internal rank (corpus)');
 

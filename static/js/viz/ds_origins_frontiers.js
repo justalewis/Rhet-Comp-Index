@@ -132,7 +132,7 @@ function renderNotable(data) {
   ['top_sources', 'top_frontier', 'top_data_gap'].forEach(k => {
     const arts = notable[k] || [];
     if (!arts.length) return;
-    const label = { top_sources: 'Top sources', top_frontier: 'Top frontier sinks', top_data_gap: 'Top data-gap sinks' }[k];
+    const label = { top_sources: 'Top sources', top_frontier: 'Top frontier sinks', top_data_gap: 'Oldest true sinks' }[k];
     html += '<h5 style="margin-top:1rem;color:var(--chart-ink);">' + escapeHtml(label) + '</h5>';
     html += '<ul style="font-size:0.84rem;list-style:none;padding-left:0;">';
     arts.slice(0, 8).forEach(a => {
