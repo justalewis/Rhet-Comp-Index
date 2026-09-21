@@ -41,7 +41,7 @@
       <li><span class="stat-num">{{ detailed.totals.journals_total }}</span>
           <span class="stat-label">journals</span></li>
       <li><span class="stat-num">{{ "{:,}".format(detailed.totals.books_total) }}</span>
-          <span class="stat-label">books</span></li>
+          <span class="stat-label">book and chapter records</span></li>
       <li><span class="stat-num">{{ "{:,}".format(detailed.totals.citations_total) }}</span>
           <span class="stat-label">citation edges</span></li>
       <li><span class="stat-num">{{ "{:,}".format(detailed.totals.citations_resolved_total) }}</span>
@@ -76,7 +76,7 @@
 
       <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Rhetoric of Health and Medicine</em> all have full CrossRef coverage with complete reference lists. This is the cluster where citation-network analyses are most reliable; the in-progress <em>Datastories</em> project uses it as its primary corpus for that reason.</li>
 
-      <li><strong>Writing Centers</strong> &mdash; Mixed. <em>WLN: A Journal of Writing Center Scholarship</em> has full CrossRef coverage; <em>Writing Center Journal</em> is partially CrossRef-registered with stronger recent coverage; <em>Writing Lab Newsletter</em> (the older newsletter form) has partial coverage; <em>The Peer Review</em> (IWCA's open journal) has limited CrossRef compliance. Citation analyses underweight writing-center scholarship overall, and pre-2010 writing-center work is especially sparse.</li>
+      <li><strong>Writing Centers</strong> &mdash; Mixed. <em>WLN: A Journal of Writing Center Scholarship</em> has registered DOIs since 2015, but deposits them without an ISSN or reference lists, so Pinakes doesn't yet index its current run, and its earlier run as <em>Writing Lab Newsletter</em> is indexed only issue by issue; <em>Writing Center Journal</em> is partially CrossRef-registered with stronger recent coverage; <em>The Peer Review</em> (IWCA's open journal) has limited CrossRef compliance. Citation analyses underweight writing-center scholarship overall, and pre-2010 writing-center work is especially sparse.</li>
 
       <li><strong>WAC / Writing Across the Curriculum</strong> &mdash; The two indexed journals (<em>Across the Disciplines</em>, <em>The WAC Journal</em>) are both hosted on the WAC Clearinghouse and have full CrossRef coverage. The bigger coverage limitation here is structural: a substantial share of WAC scholarship lives in monographs and edited collections from WAC Clearinghouse Press and other WAC-friendly publishers, and those books are only partially indexed. Citation networks systematically underweight WAC's monograph-based argumentative work.</li>
 
@@ -112,7 +112,6 @@
       <li><em>Communication Design Quarterly Review</em> (ACM SIGDOC)</li>
       <li><em>Across the Disciplines</em> (WAC Clearinghouse)</li>
       <li><em>The WAC Journal</em> (WAC Clearinghouse)</li>
-      <li><em>WLN: A Journal of Writing Center Scholarship</em> (WAC Clearinghouse)</li>
       <li><em>Journal of Writing Analytics</em> (WAC Clearinghouse)</li>
       <li><em>Prompt: A Journal of Academic Writing Assignments</em> (WAC Clearinghouse)</li>
       <li><em>Peitho</em> (Coalition of Feminist Scholars in Communication, via WAC Clearinghouse)</li>
@@ -142,6 +141,7 @@
       <li><em>KB Journal</em> (Kenneth Burke Society) — RSS only</li>
       <li><em>Journal of Response to Writing</em> (BYU ScholarsArchive, bepress) — OAI-PMH harvest. Full archive (2015–present) with titles, authors, and abstracts; no DOIs. Strong candidate for the DOI-deposit outreach pattern Reflections completed with Penn State Libraries in May 2026.</li>
       <li><em>WPA: Writing Program Administration</em> (Council of Writing Program Administrators) — full run (1977–present, 103 issues) indexed from the CWPA archive page. Titles and authors throughout; no abstracts. The journal has never registered a DOI, so it contributes no citation edges. DOI-registration outreach to the incoming editorial team is in progress.</li>
+      <li><em>Writing Lab Newsletter</em> — 354 issue-level records scraped from full-issue PDFs, running through 2013; no DOIs, abstracts, or reference lists. The journal's current run, <em>WLN: A Journal of Writing Center Scholarship</em> (volume 40 on, 2015–present), has DOIs from the WAC Clearinghouse, but they are deposited without an ISSN or reference lists, so Pinakes doesn't yet index it.</li>
     </ul>
 
     <h3>OJS installations without CrossRef registration</h3>
@@ -170,7 +170,7 @@
 
     <h2>Books: university presses with gaps</h2>
 
-    <p>The books index covers roughly 3,200 titles from seven publishers. The gaps in book coverage stem from a structural problem distinct from the journal situation: CrossRef's data model was designed around journals, where a container (journal title + ISSN) gives you a reliable handle on a series. For books, the equivalent would be the series ISSN, a standard that exists but that most publishers either don't register or don't include in their CrossRef deposits. This means you can't query CrossRef for "all books in X series" the way you can query for "all articles in X journal."</p>
+    <p>The books index covers about 800 titles from seven publishers, along with chapter-level records for their edited collections. The gaps in book coverage stem from a structural problem distinct from the journal situation: CrossRef's data model was designed around journals, where a container (journal title + ISSN) gives you a reliable handle on a series. For books, the equivalent would be the series ISSN, a standard that exists but that most publishers either don't register or don't include in their CrossRef deposits. This means you can't query CrossRef for "all books in X series" the way you can query for "all articles in X journal."</p>
 
     <h3>Series metadata missing from CrossRef</h3>
     <p>These publishers have DOI-registered books but don't include series names in CrossRef, making their relevant series undiscoverable by automated query. Coverage in Pinakes comes from manually curated title lists and direct ISBN lookups.</p>
@@ -199,7 +199,7 @@
 
     <ul class="coverage-list">
       <li><strong>Publication timeline</strong> — Journals indexed via RSS or scrape appear in the timeline but may have gaps where issues weren't captured. Pre-2000 back catalog is sparse for most journals.</li>
-      <li><strong>Topic co-occurrence heatmap</strong> — Tags are drawn from a 61-term disciplinary vocabulary matched against title and abstract text, currently covering about 61% of indexed articles. Most untagged articles are pre-1990 <em>College English</em> content — literary criticism, poetry, and fiction that falls outside the disciplinary scope of rhetoric and composition — or very early <em>CCC</em> articles with no abstract and allusive titles. RSS-only journals also have reduced tagging accuracy because many of their articles lack abstracts.</li>
+      <li><strong>Topic co-occurrence heatmap</strong> — Tags are drawn from a 61-term disciplinary vocabulary matched against title and abstract text, and 63% of indexed articles carry at least one (34,191 of 54,251 in September 2026). Most untagged articles have no abstract (69%), and just over half predate 1990. <em>College English</em> and <em>CCC</em> account for about half of them; many of the older <em>College English</em> pieces are literary criticism, poetry, and fiction, which fall outside the vocabulary. Articles with an abstract are tagged 77% of the time, against 48% for articles without one.</li>
       <li><strong>Author network</strong> — Co-authorship links depend on articles being in the index. Authors who publish primarily in venues with partial coverage will appear less connected than they actually are. Solo authors may appear as isolates even if they have collaborative work in unindexed venues.</li>
       <li><strong>Citation network</strong> — Only journals that deposit reference lists with CrossRef contribute citation edges. See the coverage table on the <a href="/explore#citations">Citations tab</a> for per-journal detail. RSS-only journals contribute zero citation edges regardless of how frequently they cite or are cited.</li>
       <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>

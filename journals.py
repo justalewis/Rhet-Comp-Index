@@ -53,7 +53,9 @@ CROSSREF_JOURNALS = [
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
     # English Journal (NCTE): not indexed in CrossRef
-    # WLN: A Journal of Writing Center Scholarship: in CrossRef but no DOIs deposited; print archive (1975–2015) scraped separately
+    # WLN: A Journal of Writing Center Scholarship: DOIs since vol. 40 (2015) under 10.37514,
+    # deposited with no ISSN (so this ISSN harvest can't find them) and no reference lists.
+    # The older Writing Lab Newsletter volumes are scraped separately (strategy "wln").
 ]
 
 # ── Web-native journals with confirmed RSS/Atom feeds ─────────────────────────
