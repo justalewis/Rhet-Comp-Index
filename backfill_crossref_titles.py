@@ -28,7 +28,9 @@ import requests
 
 from db import get_conn, init_db
 from fetcher import HEADERS, CROSSREF_BASE, ROWS_PER_PAGE, _full_title
-from journals import CROSSREF_JOURNALS, ISSN_TO_NAME
+from journals import (
+    CROSSREF_JOURNALS, ISSN_TO_NAME, crossref_query_params, crossref_doi_ok,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,7 +46,7 @@ def fetch_titles_for_issn(issn: str) -> dict[str, str]:
     """Walk every CrossRef work for `issn`, return DOI -> canonical title."""
     out: dict[str, str] = {}
     params = {
-        "filter": f"issn:{issn},type:journal-article",
+        **crossref_query_params(issn),
         "select": "DOI,title,subtitle",
         "rows":   ROWS_PER_PAGE,
         "cursor": "*",
@@ -66,7 +68,7 @@ def fetch_titles_for_issn(issn: str) -> dict[str, str]:
 
         for item in items:
             doi = (item.get("DOI") or "").strip().lower()
-            if not doi:
+            if not doi or not crossref_doi_ok(issn, doi):
                 continue
             title = _full_title(item)
             if title:

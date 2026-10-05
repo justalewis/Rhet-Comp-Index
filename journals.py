@@ -36,6 +36,10 @@ CROSSREF_JOURNALS = [
     {"name": "Peitho",                                         "issn": "2169-0774"},  # Coalition of Feminist Scholars / WAC Clearinghouse — 114 DOIs
     {"name": "Double Helix",                                   "issn": "2372-7497"},  # WAC Clearinghouse — 112 DOIs, 2012–2024
     {"name": "Open Words: Access and English Studies",         "issn": "2690-392X"},  # WAC Clearinghouse — 136 DOIs, 2006–2023 (online ISSN; references backfilled via CrossRef 2026-06)
+    # RLEE: CrossRef holds the works (DOI prefix 10.37514/rle-j, 40 articles after one duplicate DOI is excluded, 2024–present)
+    # but the deposits carry NO ISSN, so filter=issn:2998-7016 returns 0. The ISSN here is
+    # only the journal's identity key; the real selector is in CROSSREF_SELECTORS below.
+    {"name": "Revista Latinoamericana de Estudios de la Escritura", "issn": "2998-7016"},  # WAC Clearinghouse / ALES — multilingual (es/pt/en), semi-annual, OA
     # Other CrossRef-indexed journals
     {"name": "Advances in the History of Rhetoric",            "issn": "1936-0835"},  # Penn State UP — 312 DOIs, 1998–2019
     {"name": "Assessing Writing",                              "issn": "1075-2935"},  # Elsevier — 1000 DOIs, 1994–present
@@ -57,6 +61,47 @@ CROSSREF_JOURNALS = [
     # deposited with no ISSN (so this ISSN harvest can't find them) and no reference lists.
     # The older Writing Lab Newsletter volumes are scraped separately (strategy "wln").
 ]
+
+# Journals whose CrossRef deposits don't carry an ISSN, so `issn:` matches nothing.
+# Keyed by the ISSN in CROSSREF_JOURNALS. "doi_prefix" is a DOI-string prefix used
+# both to narrow the query (CrossRef can only filter on the registrant prefix, which
+# WAC Clearinghouse shares across all its journals and books) and, crucially, to
+# post-filter results: query.container-title is a fuzzy match, so the DOI check is
+# what guarantees only this journal's records get stored.
+CROSSREF_SELECTORS = {
+    "2998-7016": {
+        "registrant": "10.37514",
+        "container_title": "Revista Latinoamericana de Estudios de la Escritura",
+        "doi_prefix": "10.37514/rle-j.",
+        # Mis-registered duplicates. 2025.4.2.02 (vol/issue transposed, old
+        # wac.colostate.edu landing URL) is the same article as 2025.2.4.02.
+        # Drop this entry once the Clearinghouse corrects the CrossRef record.
+        "exclude_dois": {"10.37514/rle-j.2025.4.2.02"},
+    },
+}
+
+
+def crossref_query_params(issn):
+    """Base CrossRef params (filter, plus query.container-title if needed) that
+    select one journal's articles. Callers add select/rows/cursor/dates."""
+    sel = CROSSREF_SELECTORS.get(issn)
+    if not sel:
+        return {"filter": f"issn:{issn},type:journal-article"}
+    return {
+        "filter": f"prefix:{sel['registrant']},type:journal-article",
+        "query.container-title": sel["container_title"],
+    }
+
+
+def crossref_doi_ok(issn, doi):
+    """False if `doi` isn't one of this journal's. Always True for ISSN-filtered
+    journals, where CrossRef has already done the selecting."""
+    sel = CROSSREF_SELECTORS.get(issn)
+    if not sel:
+        return True
+    d = (doi or "").lower()
+    return d.startswith(sel["doi_prefix"]) and d not in sel.get("exclude_dois", ())
+
 
 # ── Web-native journals with confirmed RSS/Atom feeds ─────────────────────────
 # All feed URLs verified March 2026.
@@ -270,6 +315,7 @@ GOLD_OA_JOURNALS = {
     "Peitho",
     "Double Helix",
     "Open Words: Access and English Studies",
+    "Revista Latinoamericana de Estudios de la Escritura",
     # Independent OA journals
     "Kairos: A Journal of Rhetoric, Technology, and Pedagogy",
     "Enculturation",
@@ -332,6 +378,7 @@ JOURNAL_GROUPS = [
         "Open Words: Access and English Studies",
         "Journal of Response to Writing",
         "WPA: Writing Program Administration",
+        "Revista Latinoamericana de Estudios de la Escritura",
     ]),
     ("Rhetoric", [
         "Rhetoric Society Quarterly",

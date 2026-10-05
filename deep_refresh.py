@@ -43,7 +43,10 @@ from fetcher import (
     CROSSREF_BASE, HEADERS, ROWS_PER_PAGE,
     _full_title, _parse_abstract, _parse_authors, _parse_date,
 )
-from journals import CROSSREF_JOURNALS, GOLD_OA_JOURNALS
+from journals import (
+    CROSSREF_JOURNALS, GOLD_OA_JOURNALS,
+    crossref_query_params, crossref_doi_ok,
+)
 from monitoring import capture_fetcher_error
 from tagger import auto_tag
 
@@ -61,7 +64,7 @@ SOURCE_NAME = "deep_refresh"
 
 def _crossref_count(issn):
     """Total journal-article works CrossRef holds for an ISSN (rows=0 query)."""
-    params = {"filter": f"issn:{issn},type:journal-article", "rows": 0}
+    params = {**crossref_query_params(issn), "rows": 0}
     resp = requests.get(CROSSREF_BASE, params=params, headers=HEADERS, timeout=30)
     resp.raise_for_status()
     return resp.json()["message"]["total-results"]
@@ -140,7 +143,7 @@ def deep_fetch_journal(issn, name):
     """
     log.info("Deep fetch: %s (%s)", name, issn)
     params = {
-        "filter": f"issn:{issn},type:journal-article",
+        **crossref_query_params(issn),
         "select": "DOI,title,subtitle,author,abstract,published-print,"
                   "published-online,issued,container-title,subject",
         # NB: CrossRef rejects sort-by-date combined with cursor paging
@@ -170,7 +173,7 @@ def deep_fetch_journal(issn, name):
         fills = []
         for item in items:
             doi = item.get("DOI", "").strip()
-            if not doi:
+            if not doi or not crossref_doi_ok(issn, doi):
                 continue
             url = f"https://doi.org/{doi}"
             title = _full_title(item) or "(no title)"

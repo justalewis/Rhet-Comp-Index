@@ -20,7 +20,10 @@ import requests
 from datetime import datetime
 
 from db import init_db, upsert_article, update_fetch_log, get_last_fetch
-from journals import CROSSREF_JOURNALS, ISSN_TO_NAME, GOLD_OA_JOURNALS
+from journals import (
+    CROSSREF_JOURNALS, ISSN_TO_NAME, GOLD_OA_JOURNALS,
+    crossref_query_params, crossref_doi_ok,
+)
 from tagger import auto_tag
 from monitoring import capture_fetcher_error
 
@@ -178,7 +181,7 @@ def fetch_journal(issn, since_date=None):
              f"  since {since_date}" if since_date else "  [full]")
 
     params = {
-        "filter": f"issn:{issn},type:journal-article",
+        **crossref_query_params(issn),
         "select": "DOI,title,subtitle,author,abstract,published-print,published-online,issued,container-title",
         # NB: CrossRef rejects sort-by-date combined with cursor paging
         # ("sort-criteria-incompatible-with-cursor"), so results arrive
@@ -207,7 +210,7 @@ def fetch_journal(issn, since_date=None):
 
         for item in items:
             doi = item.get("DOI", "").strip()
-            if not doi:
+            if not doi or not crossref_doi_ok(issn, doi):
                 continue
 
             title = _full_title(item) or "(no title)"
