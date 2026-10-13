@@ -51,6 +51,10 @@ CROSSREF_JOURNALS = [
     {"name": "Rhetorica",                                      "issn": "1533-8541"},  # U California Press / ISHR — 2,062 DOIs, 1983–present (online ISSN; print 0734-8584 returns half)
     {"name": "Argumentation",                                  "issn": "0920-427X"},  # Springer — 1,382 DOIs, 1987–present
     {"name": "Res Rhetorica",                                  "issn": "2392-3113"},  # Polish Rhetorical Society — 308 DOIs, OA
+    # RPC: the online ISSN returns all 56 (vol 1 under MUSE's 10.1353/rhp, vols 2–3 under MSU's
+    # 10.14321/rpc); the print ISSN 2693-7522 returns only the 35 MSU records and misses vol 1.
+    # Vol 4.1 (2024) isn't deposited at all — hand-ingested from MUSE by ingest_rpc_4_1.py.
+    {"name": "Rhetoric, Politics & Culture",                   "issn": "2693-7549"},  # Michigan State UP / Project MUSE — 56 DOIs, 2021–2023
     {"name": "Journal of Writing Research",                    "issn": "2030-1006"},  # 295 DOIs, 2008–present
     {"name": "Writing and Pedagogy",                           "issn": "1756-5839"},  # Equinox — 334 DOIs, 2009–present
     {"name": "Journal of Academic Writing",                    "issn": "2225-8973"},  # EATAW — 245 DOIs, OA
@@ -385,6 +389,7 @@ JOURNAL_GROUPS = [
         "Rhetoric Review",
         "Philosophy & Rhetoric",
         "Rhetoric & Public Affairs",
+        "Rhetoric, Politics & Culture",
         "Poroi",
         "Advances in the History of Rhetoric",
         "Rhetorica",

@@ -1,0 +1,2023 @@
+{
+ "journal": "Rhetoric, Politics & Culture",
+ "volume": "4",
+ "issue": "1",
+ "issue_date": "Summer 2024",
+ "pub_date": "2024-06-01",
+ "source_url": "https://muse.jhu.edu/issue/57634",
+ "harvested": "2026-10-12",
+ "note": "Not deposited in CrossRef or indexed by OpenAlex as of 2026-10-12. Metadata from MUSE citation_* meta tags; no DOIs, no abstracts.",
+ "articles": [
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001291",
+   "title": "Editor's Introduction",
+   "authors": [
+    "Ersula J. Ore"
+   ],
+   "pages": "v-viii",
+   "references": []
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001292",
+   "title": "Interrogating Key Terms: A Vital Process in Ethical Decision-Making and Socially Responsible Action",
+   "authors": [
+    "Jacqueline Jones Royster"
+   ],
+   "pages": "1-9",
+   "references": [
+    {
+     "authors": [
+      "Krista Ratcliffe"
+     ],
+     "title": "Rhetorical Listening: Identification, Gender, Whiteness",
+     "journal_title": null,
+     "publisher": "Southern Illinois University Press",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jacqueline Jones Royster"
+     ],
+     "title": "Making the World a Better Place: African American Women Advocates, Activists, and Leaders, 1773–1900",
+     "journal_title": null,
+     "publisher": "University of Pittsburgh Press",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jacqueline Jones Royster",
+      "Shiben Banerji",
+      "Rubén Casas"
+     ],
+     "title": "In the Shadows of Democracy: Possibilities for Rhetoric Beyond Rhetorical Studies",
+     "journal_title": null,
+     "publisher": "Intermezzo-Enculturation",
+     "year": null,
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jacqueline Jones Royster",
+      "Andrea A Lunsford"
+     ],
+     "title": "Reclaiming Rhetorica",
+     "journal_title": null,
+     "publisher": "University of Pittsburgh Press",
+     "year": "1995",
+     "volume": null,
+     "issue": null,
+     "first_page": "167"
+    },
+    {
+     "authors": [],
+     "title": "A Guide to Trump's Nicknames and Insults about the 2020 Democratic Field",
+     "journal_title": "NBC News",
+     "publisher": null,
+     "year": "2019",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "Colleagues Are Fed Up with Senator Tommy Tuberville Blocking Military Appointments",
+     "journal_title": "NPR",
+     "publisher": null,
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "Marjorie Taylor Greene Defiant after Failing to Remove House Speaker Mike Johnson",
+     "journal_title": "BBC",
+     "publisher": null,
+     "year": "2024",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    }
+   ]
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001293",
+   "title": "Rhetorical Studies, Anti-Wokeness, and the Role of Care in Precarious Times: A Black Queer Perspective",
+   "authors": [
+    "Rico Self"
+   ],
+   "pages": "11-18",
+   "references": [
+    {
+     "authors": [
+      "Makiya Seminera"
+     ],
+     "title": "North Carolina Public Universities Board Repeals Policy in Vote That Likely Cuts Diversity Jobs",
+     "journal_title": "Associated Press",
+     "publisher": null,
+     "year": "2024",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Paul Dans",
+      "Steven Groves"
+     ],
+     "title": "Mandate for Leadership: The Conservative Promise",
+     "journal_title": null,
+     "publisher": "The Heritage Foundation",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Liam Knox"
+     ],
+     "title": "UNC System's Controlled DEI Demolition",
+     "journal_title": "Inside Higher Ed",
+     "publisher": null,
+     "year": "2024",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Cherrie Moraga",
+      "Glorian Anzaldúa"
+     ],
+     "title": "This Bridge Called My Back: Writings by Radical Women of Color",
+     "journal_title": null,
+     "publisher": "SUNY Press",
+     "year": "2015",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "E Patrick Johnson"
+     ],
+     "title": "Quare Studies, or (Almost) Everything I Know About Queer Studies I Learned from My Grandmother",
+     "journal_title": "Text and Performance Quarterly",
+     "publisher": null,
+     "year": "2001",
+     "volume": "21",
+     "issue": "1",
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Rico Self"
+     ],
+     "title": "'If you cared about the people, you would have cared about me: Constructing Black Trans Allyship",
+     "journal_title": "Chasing: Atlanta, Women's Studies in Communication",
+     "publisher": null,
+     "year": "2021",
+     "volume": "8",
+     "issue": "1",
+     "first_page": "123"
+    },
+    {
+     "authors": [
+      "Rico Self"
+     ],
+     "title": "Negotiating Rhetorics of Diversity Through Performances of Propriety: A Quare Autocritography",
+     "journal_title": "Communication and Critical/Cultural Studies",
+     "publisher": null,
+     "year": "2024",
+     "volume": null,
+     "issue": null,
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "Rico Self",
+      "Bernadette Marie Calafell",
+      "Shinsuke Eguchi"
+     ],
+     "title": "The Handbook of Ethnicity and Race in Communication",
+     "journal_title": null,
+     "publisher": "Routledge",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": "122"
+    },
+    {
+     "authors": [
+      "Rico Self",
+      "Ashley R Hall"
+     ],
+     "title": "Refusing to Die: Black Queer and Feminist Worldmaking Amid Anti-Black State Violence",
+     "journal_title": "QED: A Journal in GLBTQ Worldmaking",
+     "publisher": null,
+     "year": "2021",
+     "volume": "8",
+     "issue": "1",
+     "first_page": "123"
+    },
+    {
+     "authors": [
+      "Roderick Ferguson"
+     ],
+     "title": "Aberrations in Black: Toward a Queer of Color Critique",
+     "journal_title": null,
+     "publisher": "University of Minnesota Press",
+     "year": "2003",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "E Patrick Johnson",
+      "Mae G Henderson"
+     ],
+     "title": "Black Queer Studies: A Critical Anthology",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "E Patrick Johnson"
+     ],
+     "title": "No Tea, No Shade: New Writings in Black Queer Studies",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2016",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Rico Self",
+      "Ashley Noel Mack",
+      "Bryan J McCann"
+     ],
+     "title": "BbyMutha's Readings as Black Queer Feminine Fugitivity",
+     "journal_title": "QED: A Journal in GLBTQ World-making",
+     "publisher": null,
+     "year": "2021",
+     "volume": "8",
+     "issue": "2",
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "Marsha Houston",
+      "Olga Idriss Davis"
+     ],
+     "title": "Centering Ourselves: African American Feminist and Womanist Studies of Discourse",
+     "journal_title": null,
+     "publisher": "Hampton Press",
+     "year": "2002",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "E Patrick Johnson",
+      "Mae G Henderson"
+     ],
+     "title": "Black Queer Studies: A Critical Anthology",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": "15"
+    },
+    {
+     "authors": [
+      "Joshua Chambers-Letson"
+     ],
+     "title": "After the Party: A Minifesto for Queer of Color Life",
+     "journal_title": null,
+     "publisher": "NYU Press",
+     "year": "2018",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Angela Davis"
+     ],
+     "title": "Angela Davis: An Autobiography",
+     "journal_title": null,
+     "publisher": "International Publishers",
+     "year": "2018",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Josiah Ryan"
+     ],
+     "title": "'This was a whitelash': Van Jones' Take on the Election Results",
+     "journal_title": "CNN",
+     "publisher": null,
+     "year": "2016",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Emerson Cram"
+     ],
+     "title": "Fascist Energizing: Rhetorics of Transantagonism as Affective Metabolism",
+     "journal_title": "Quarterly Journal of Speech",
+     "publisher": null,
+     "year": "2024",
+     "volume": "110",
+     "issue": "3",
+     "first_page": "442"
+    },
+    {
+     "authors": [
+      "Roderick Ferguson"
+     ],
+     "title": "Aberrations in Black: Toward a Queer of Color Critique",
+     "journal_title": null,
+     "publisher": "University of Minnesota Press",
+     "year": "2003",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Dwight McBride"
+     ],
+     "title": "Why I Hate Abercrombie and Fitch: Essays on Race and Sexuality",
+     "journal_title": null,
+     "publisher": "NYU Press",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Angela Davis"
+     ],
+     "title": "Women, Race, and Class",
+     "journal_title": null,
+     "publisher": "Random House",
+     "year": "1983",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Patricia Hill Collins"
+     ],
+     "title": "Black Feminist Thought: Knowledge, Consciousness, and the Politics of Empowerment",
+     "journal_title": null,
+     "publisher": "Routledge",
+     "year": "2000",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "bell hooks"
+     ],
+     "title": "Feminist Theory: From Margin to Center",
+     "journal_title": null,
+     "publisher": "Routledge",
+     "year": "2015",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Cathy Cohen"
+     ],
+     "title": "Punks, Bulldaggers and Welfare Queens; The Radical Potential of Queer Politics?",
+     "journal_title": "GLQ",
+     "publisher": null,
+     "year": "1997",
+     "volume": "3",
+     "issue": null,
+     "first_page": "437"
+    },
+    {
+     "authors": [
+      "Devon W Carbado",
+      "Dwight A McBride",
+      "Donald Weise"
+     ],
+     "title": "Black Like Us: A Century of Lesbian, Gay, and Bisexual African American Fiction",
+     "journal_title": null,
+     "publisher": "Cleiss Press",
+     "year": "2011",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Audre Lorde"
+     ],
+     "title": "Sister Outsider: Essays and Speeches by Audre Lorde",
+     "journal_title": null,
+     "publisher": "Random House",
+     "year": "2007",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "E Patrick Johnson"
+     ],
+     "title": "Sweet Tea: Black Gay Men of the South— An Oral History",
+     "journal_title": null,
+     "publisher": "UNC Press",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Hortense Spillers"
+     ],
+     "title": "Mama's Baby, Papa's Maybe: An American Grammar Book",
+     "journal_title": "Diacritics",
+     "publisher": null,
+     "year": "1987",
+     "volume": "17",
+     "issue": "2",
+     "first_page": "64"
+    },
+    {
+     "authors": [
+      "Barry Brummett"
+     ],
+     "title": "Rhetorical Theory as Heuristic and Moral: A Pedadogical Justification",
+     "journal_title": "Communication Education",
+     "publisher": null,
+     "year": "1984",
+     "volume": "33",
+     "issue": "2",
+     "first_page": "97"
+    },
+    {
+     "authors": [
+      "Charlene Carruthers"
+     ],
+     "title": "Unapologetic: A Black, Queer, and Feminist Mandate for Radical Movements",
+     "journal_title": null,
+     "publisher": "Beacon Press",
+     "year": "2018",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Michael Harriot"
+     ],
+     "title": "Weaponizing Woke: A Brief History of White Definitions",
+     "journal_title": "TheRoot",
+     "publisher": null,
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Roderick Ferguson"
+     ],
+     "title": "The Reorder of Things: The University and Its Pedagogies of Minority Difference",
+     "journal_title": null,
+     "publisher": "University of Minnesota Press",
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "A Audre Lorde"
+     ],
+     "title": "Burst of Light and Other Essays",
+     "journal_title": null,
+     "publisher": "Ixia Press",
+     "year": "2017",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "José E Muñoz"
+     ],
+     "title": "Disidentifications: Queers of Color and the Performance of Politics",
+     "journal_title": null,
+     "publisher": "University of Minnesota Press",
+     "year": "1999",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Kevin Quashie"
+     ],
+     "title": "Black Aliveness, or a Poetics of Being",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    }
+   ]
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001294",
+   "title": "Critical Cultural Studies Is Messy, Authoritarianism Is Not",
+   "authors": [
+    "Rachel E. Dubrofsky"
+   ],
+   "pages": "19-25",
+   "references": [
+    {
+     "authors": [
+      "Stuart Hall"
+     ],
+     "title": "Race, Culture, and Communications: Looking Backward and Forward at Cultural Studies",
+     "journal_title": "Rethinking Marxism",
+     "publisher": null,
+     "year": "1992",
+     "volume": "1",
+     "issue": "5",
+     "first_page": "1011"
+    },
+    {
+     "authors": [
+      "Marina Levina"
+     ],
+     "title": "Doing critical cultural studies in the Age of Totalitarian Thought",
+     "journal_title": "Communication and Critical/Cultural Studies",
+     "publisher": null,
+     "year": "2025",
+     "volume": "22",
+     "issue": "1",
+     "first_page": "5"
+    }
+   ]
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001295",
+   "title": "Same Rats, New Holes: Remembering Racism and Schooling in the Old and New White Supremacies",
+   "authors": [
+    "Carmen Kynard"
+   ],
+   "pages": "27-35",
+   "references": [
+    {
+     "authors": [
+      "Lucille Clifton",
+      "Kevin Young",
+      "Michael S Glaser"
+     ],
+     "title": "The Collected Poems of Lucille Clifton1965–2010",
+     "journal_title": null,
+     "publisher": "BOA Editions",
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "John Kucsera",
+      "Gary Orfield"
+     ],
+     "title": "New York State's Extreme School Segregation: Inequality, Inaction and a Damaged Future",
+     "journal_title": "The Civil Rights Project",
+     "publisher": null,
+     "year": "2014",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Naaz Modan"
+     ],
+     "title": "Report: NYC Schools Remain Segregated Even within Diverse Districts",
+     "journal_title": "K-12Dive",
+     "publisher": null,
+     "year": "2020",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Eliza Shapiro"
+     ],
+     "title": "Segregation Has Been the Story of New York City's Schools for 50 Years",
+     "journal_title": "New York Times",
+     "publisher": null,
+     "year": "2019",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Henry Giroux"
+     ],
+     "title": "Race, Pedagogy, and Whiteness in Dangerous Minds",
+     "journal_title": "Cineaste",
+     "publisher": null,
+     "year": "1997",
+     "volume": "22",
+     "issue": "4",
+     "first_page": "46"
+    },
+    {
+     "authors": [
+      "Ronald E Chennault"
+     ],
+     "title": "The Minds behind a Dangerous Film",
+     "journal_title": "Review of Education, Pedagogy, and Cultural Studies",
+     "publisher": null,
+     "year": "1996",
+     "volume": "18",
+     "issue": "4",
+     "first_page": "385"
+    },
+    {
+     "authors": [
+      "Michael Dumas"
+     ],
+     "title": "Against the Dark: Antiblackness in Education Policy and Discourse",
+     "journal_title": "Theory Into Practice",
+     "publisher": null,
+     "year": "2016",
+     "volume": "55",
+     "issue": "1",
+     "first_page": "11"
+    },
+    {
+     "authors": [
+      "Monique Morris"
+     ],
+     "title": "Countering the Adultification of Black Girls",
+     "journal_title": "Educational Leadership",
+     "publisher": null,
+     "year": "2019",
+     "volume": "76",
+     "issue": "7",
+     "first_page": "44"
+    },
+    {
+     "authors": [
+      "Ayanna De'Vante Spencer"
+     ],
+     "title": "Epistemic Adultification: Clarifying the Pernicious Work of Black Girls as 'Prematurely Knowing,'",
+     "journal_title": "Women, Gender, and Families of Color",
+     "publisher": null,
+     "year": "2023",
+     "volume": "11",
+     "issue": "1",
+     "first_page": "96"
+    },
+    {
+     "authors": [
+      "Farrell Evans"
+     ],
+     "title": "How Jim Crow-Era Laws Suppressed the African American Vote for Generations",
+     "journal_title": "History",
+     "publisher": null,
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Yarden Katz"
+     ],
+     "title": "Intelligence Under Racial Capitalism: From Eugenics to Standardized Testing and Online Learning",
+     "journal_title": "Monthly Review",
+     "publisher": null,
+     "year": "2022",
+     "volume": "74",
+     "issue": "4",
+     "first_page": "32"
+    },
+    {
+     "authors": [
+      "Christina V Cedillo"
+     ],
+     "title": "What Does It Mean to Move?: Race, Disability, and Critical Embodiment Pedagogy",
+     "journal_title": "Composition Forum",
+     "publisher": null,
+     "year": "2018",
+     "volume": "39",
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Neisha Green"
+     ],
+     "title": "Moving beyond Alright: And the Emotional Toll of This, My Life Matters Too, in the Writing Center Work",
+     "journal_title": "Writing Center Journal",
+     "publisher": null,
+     "year": "2018",
+     "volume": "37",
+     "issue": "1",
+     "first_page": "15"
+    },
+    {
+     "authors": [
+      "Brian V Street"
+     ],
+     "title": "At Last: Recent Applications of New Literacy Studies in Educational Contexts",
+     "journal_title": "Research in the Teaching of English",
+     "publisher": null,
+     "year": "2005",
+     "volume": "39",
+     "issue": "4",
+     "first_page": "417"
+    },
+    {
+     "authors": [
+      "Brian V Street"
+     ],
+     "title": "Literacy Inequalities in Theory and Practice: The Power to Name and Define",
+     "journal_title": "International Journal of Educational Development",
+     "publisher": null,
+     "year": "2011",
+     "volume": "31",
+     "issue": "6",
+     "first_page": "580"
+    },
+    {
+     "authors": [
+      "Antonio Byrd"
+     ],
+     "title": "Against Autonomous Literacies: Extending the Work of Brian V. Street: Introduction to the Special Issue",
+     "journal_title": "Literacy in Composition Studies",
+     "publisher": null,
+     "year": "2021",
+     "volume": "8",
+     "issue": "2",
+     "first_page": "V"
+    },
+    {
+     "authors": [
+      "Amy Wan"
+     ],
+     "title": "Making Sense of Researcher Positionality in Foundational Literacy Studies Research",
+     "journal_title": "Literacy in Composition Studies",
+     "publisher": null,
+     "year": "2021",
+     "volume": "8",
+     "issue": "2",
+     "first_page": "109"
+    },
+    {
+     "authors": [
+      "Sylvia Wynter"
+     ],
+     "title": "No Humans Involved: An Open Letter to My Colleagues",
+     "journal_title": "Forum N. H. I.: Knowledge for the 21st Century",
+     "publisher": null,
+     "year": "2022",
+     "volume": "1",
+     "issue": "1",
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Michael Dumas"
+     ],
+     "title": "'Losing an Arm': Schooling as a Site of Black Suffering",
+     "journal_title": "Race Ethnicity and Education",
+     "publisher": null,
+     "year": "2014",
+     "volume": "17",
+     "issue": "1",
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "Sylvia Wynter"
+     ],
+     "title": "Unsettling the Coloniality of Being/Power/Truth/Freedom: Towards the Human, After Man, Its Overrepresentation— An Argument",
+     "journal_title": "CR: The New Centennial Review",
+     "publisher": null,
+     "year": "2003",
+     "volume": "3",
+     "issue": "3",
+     "first_page": "257"
+    },
+    {
+     "authors": [
+      "Sara Ahmed"
+     ],
+     "title": "On Being Included: Racism and Diversity in Institutional Life",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Roderick Ferguson"
+     ],
+     "title": "The Reorder of Things: The University and its Pedagogies of Minority Difference",
+     "journal_title": null,
+     "publisher": "University of Minnesota Press",
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Sylvia Wynter"
+     ],
+     "title": "Do Not Call Us Negros: How 'Multicultural' Textbooks Perpetuate Racism",
+     "journal_title": null,
+     "publisher": "Aspire",
+     "year": "1992",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Stephen Steinberg"
+     ],
+     "title": "Turning Back: The Retreat from Racial Justice in American Thought and Policy",
+     "journal_title": null,
+     "publisher": "Beacon Press",
+     "year": "1995",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Penny Von Eschen"
+     ],
+     "title": "Race Against Empire: Black Americans and Anticolonialism, 1937–1957",
+     "journal_title": null,
+     "publisher": "Cornell University Press",
+     "year": "1997",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Joy Ann Williamson"
+     ],
+     "title": "Black Power on Campus: The University of Illinois, 1965–1975",
+     "journal_title": null,
+     "publisher": "University of Illinois Press",
+     "year": "2003",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Carmen Kynard"
+     ],
+     "title": "Vernacular Insurrections: Race, Black Protest, and the New Century in Composition-Literacies Studies",
+     "journal_title": null,
+     "publisher": "SUNY Press",
+     "year": "2013",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Sylvia Wynter",
+      "Joyce E King"
+     ],
+     "title": "Black Education: A Transformative Research and Action Agenda for the New Century",
+     "journal_title": null,
+     "publisher": "Lawrence Erlbaum",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": "357"
+    }
+   ]
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001296",
+   "title": "Anti-Wokeness and the Fear of Breakdown",
+   "authors": [
+    "Casey Ryan Kelly"
+   ],
+   "pages": "37-45",
+   "references": [
+    {
+     "authors": [
+      "Frank Cerabino"
+     ],
+     "title": "Woke or Joke: DeSantis Cribs from Churchill Speech While Campaigning in Iowa",
+     "journal_title": "Palm Beach Post",
+     "publisher": null,
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Meredith Neville-Shepard",
+      "Ryan Neville-Shepard"
+     ],
+     "title": "Outfitting the Conservative Civil Rights Movement: Rehearsed White Victimhood and the MAGA Hat",
+     "journal_title": "Rhetoric and Public Affairs",
+     "publisher": null,
+     "year": "2022",
+     "volume": "25",
+     "issue": "4",
+     "first_page": "35"
+    },
+    {
+     "authors": [
+      "Courtney J Dreyer",
+      "Casey Ryan Kelly"
+     ],
+     "title": "The Reliant (2019) and the Rhetoric of Necropolitical Christianity",
+     "journal_title": "Quarterly Journal of Speech",
+     "publisher": null,
+     "year": "2024",
+     "volume": "111",
+     "issue": "1",
+     "first_page": "87"
+    },
+    {
+     "authors": [
+      "Lawrence Grossberg"
+     ],
+     "title": "Under the Cover of Chaos: Trump and the Battle for the American Right",
+     "journal_title": null,
+     "publisher": "Pluto Press",
+     "year": "2018",
+     "volume": null,
+     "issue": null,
+     "first_page": "116118119"
+    },
+    {
+     "authors": [
+      "Paul Elliott Johnson"
+     ],
+     "title": "I, the People: The Rhetoric of Conservative Populism in the United States",
+     "journal_title": null,
+     "publisher": "University of Alabama Press",
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Alexandra Minna Stern"
+     ],
+     "title": "Proud Boys and the White Ethnostate: How the Alt-Right Is Warping the American Imagination",
+     "journal_title": null,
+     "publisher": "Beacon Press",
+     "year": "2019",
+     "volume": null,
+     "issue": null,
+     "first_page": "23"
+    },
+    {
+     "authors": [
+      "Frida Beckman"
+     ],
+     "title": "Paranoid Masculinity, Or, Toward A New Identity Politics",
+     "journal_title": "Symploke",
+     "publisher": null,
+     "year": "2021",
+     "volume": "29",
+     "issue": "1–2",
+     "first_page": "235"
+    },
+    {
+     "authors": [
+      "Alan Finlayson"
+     ],
+     "title": "Neoliberalism, the Alt-Right and the Intellectual Dark Web",
+     "journal_title": "Theory, Culture & Society",
+     "publisher": null,
+     "year": "2021",
+     "volume": "38",
+     "issue": "6",
+     "first_page": "167"
+    },
+    {
+     "authors": [
+      "Kevin D Roberts",
+      "Paul Dans",
+      "Steven Groves"
+     ],
+     "title": "Mandate for Leadership: The Conservative Promise 2025",
+     "journal_title": null,
+     "publisher": "The Heritage Foundation",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": "4"
+    },
+    {
+     "authors": [
+      "Eric King Watts"
+     ],
+     "title": "'Zombies Are Real': Fantasies, Conspiracies, and the Post-Truth Wars",
+     "journal_title": "Philosophy & Rhetoric",
+     "publisher": null,
+     "year": "2018",
+     "volume": "51",
+     "issue": "4",
+     "first_page": "441"
+    },
+    {
+     "authors": [
+      "Michael Lechuga"
+     ],
+     "title": "Visions of Invasion: Alien Affects, Cinema, and Citizenship in Settler Colonies",
+     "journal_title": null,
+     "publisher": "University Press of Mississippi",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Eric King Watts"
+     ],
+     "title": "Postracial Fantasies and Zombies: On the Racist Apocalyptic Politics Devouring the World",
+     "journal_title": null,
+     "publisher": "University of California Press",
+     "year": "2024",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Herbert Marcuse"
+     ],
+     "title": "Counterrevolution and Revolt",
+     "journal_title": null,
+     "publisher": "Beacon Press",
+     "year": "1989",
+     "volume": null,
+     "issue": null,
+     "first_page": "28"
+    },
+    {
+     "authors": [
+      "Angela Y Davis",
+      "Herbert Marcuse"
+     ],
+     "title": "The New Left and the 1960s: Collected Papers of Herbert Marcuse, Volume 3",
+     "journal_title": null,
+     "publisher": "Routledge",
+     "year": "2004",
+     "volume": null,
+     "issue": null,
+     "first_page": "43"
+    },
+    {
+     "authors": [
+      "George Jackson"
+     ],
+     "title": "Blood in My Eye",
+     "journal_title": null,
+     "publisher": "Black Classic Press",
+     "year": "1990",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Mikkel Bolt Rasmussen"
+     ],
+     "title": "Late Capitalist Fascism",
+     "journal_title": null,
+     "publisher": "Polity",
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Alberto Toscano"
+     ],
+     "title": "Late Fascism: Race, Capitalism and the Politics of Crisis",
+     "journal_title": null,
+     "publisher": "Verso",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": "43"
+    },
+    {
+     "authors": [
+      "Paul Dans",
+      "Steven Groves"
+     ],
+     "title": "Mandate for Leadership: The Conservative Promise 2025",
+     "journal_title": null,
+     "publisher": "The Heritage Foundation",
+     "year": "2023",
+     "volume": null,
+     "issue": null,
+     "first_page": "16"
+    },
+    {
+     "authors": [
+      "Alexander Laban Hinton"
+     ],
+     "title": "It Can Happen Here: White Power and the Rising Threat of Genocide in the US",
+     "journal_title": null,
+     "publisher": "NYU Press",
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Noëlle McAfee"
+     ],
+     "title": "Fear of Breakdown: Politics and Psychoanalysis",
+     "journal_title": null,
+     "publisher": "Columbia University Press",
+     "year": "2019",
+     "volume": null,
+     "issue": null,
+     "first_page": "6"
+    },
+    {
+     "authors": [
+      "Ersula Ore"
+     ],
+     "title": "The Lost Cause, Trump Time, and the Necessity of Impatience",
+     "journal_title": "Rhetoric Society Quarterly",
+     "publisher": null,
+     "year": "2021",
+     "volume": "51",
+     "issue": "3",
+     "first_page": "238"
+    },
+    {
+     "authors": [
+      "Joshua Gunn"
+     ],
+     "title": "Political Perversion: Rhetorical Aberration in the Time of Trumpeteering",
+     "journal_title": null,
+     "publisher": "University of Chicago Press",
+     "year": "2020",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Vincent N Pham"
+     ],
+     "title": "Truth as White Property: Solidifying White Epistemology and Owning Racial Knowledge",
+     "journal_title": "Communication and Critical/Cultural Studies",
+     "publisher": null,
+     "year": "2023",
+     "volume": "20",
+     "issue": "2",
+     "first_page": "288"
+    },
+    {
+     "authors": [
+      "Michael J Lee",
+      "R Jarrod Atchison"
+     ],
+     "title": "We are Not One People: Secession and Separation in American Politics since 1776",
+     "journal_title": null,
+     "publisher": "Oxford University Press",
+     "year": "2022",
+     "volume": null,
+     "issue": null,
+     "first_page": "81"
+    },
+    {
+     "authors": [
+      "Michael G Lacy"
+     ],
+     "title": "White Innocence Heroes: Recovery, Reversals, Paternalism, and David Duke",
+     "journal_title": "Journal of International & Intercultural Communication",
+     "publisher": null,
+     "year": "2010",
+     "volume": "3",
+     "issue": "3",
+     "first_page": "206"
+    },
+    {
+     "authors": [
+      "Michael C McGee"
+     ],
+     "title": "In Search of 'the People': A Rhetorical Alternative",
+     "journal_title": "Quarterly Journal of Speech",
+     "publisher": null,
+     "year": "1975",
+     "volume": "61",
+     "issue": "3",
+     "first_page": "235"
+    },
+    {
+     "authors": [
+      "Dylan Rodríguez"
+     ],
+     "title": "White Reconstruction: Domestic Warfare and the Logics of Genocide",
+     "journal_title": null,
+     "publisher": "Fordham University Press",
+     "year": "2020",
+     "volume": null,
+     "issue": null,
+     "first_page": "5"
+    },
+    {
+     "authors": [
+      "Michael J Hyde"
+     ],
+     "title": "The Call of Conscience: Heidegger and Levinas, Rhetoric and the Euthanasia Debate",
+     "journal_title": null,
+     "publisher": "University of South Carolina Press",
+     "year": "2001",
+     "volume": null,
+     "issue": null,
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "Wendy Brown"
+     ],
+     "title": "In the Ruins of Neoliberalism: The Rise of Antidemocratic Politics in the West",
+     "journal_title": null,
+     "publisher": "Columbia University Press",
+     "year": "2019",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    }
+   ]
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001297",
+   "title": "Devouring: A Conversation Between Eric King Watts and Casey Ryan Kelly",
+   "authors": [
+    "Eric King Watts",
+    "Casey Ryan Kelly"
+   ],
+   "pages": "47-56",
+   "references": [
+    {
+     "authors": [
+      "Catherine Squires"
+     ],
+     "title": "What Is This 'Post-' in Postracial, Postfeminist . . . (Fill in the Blank)?",
+     "journal_title": "Journal of Communication Inquiry",
+     "publisher": null,
+     "year": "2010",
+     "volume": "34",
+     "issue": "3",
+     "first_page": "210"
+    },
+    {
+     "authors": [
+      "Charles W Mills"
+     ],
+     "title": "The Racial Contract",
+     "journal_title": null,
+     "publisher": "Cornell University Press",
+     "year": "1999",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jeff Tischauser",
+      "Kevin Musgrave"
+     ],
+     "title": "Far-Right Media as Imitated Counterpublicity: A Discourse Analysis on Racial Meaning and Identity on Vdare. Com",
+     "journal_title": "Howard Journal of Communications",
+     "publisher": null,
+     "year": "2020",
+     "volume": "31",
+     "issue": "1",
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "Andrew Curran"
+     ],
+     "title": "The Anatomy of Blackness: Science and Slavery in an Age of Enlightenment",
+     "journal_title": null,
+     "publisher": "John Hopkins University Press",
+     "year": "2011",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Calvin L Warren"
+     ],
+     "title": "Ontological Terror: Blackness, Nihilism, and Emancipation",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2018",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jenifer L Barclay"
+     ],
+     "title": "The Mark of Slavery: Disability, Race, and Gender in Antebellum America",
+     "journal_title": null,
+     "publisher": "University of Illinois Press",
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "E Chebrolu"
+     ],
+     "title": "The Racial Lens of Dylann Roof: Racial Anxiety and White Nationalist Rhetoric on New Media",
+     "journal_title": "Review of Communication",
+     "publisher": null,
+     "year": "2020",
+     "volume": "20",
+     "issue": "1",
+     "first_page": "47"
+    },
+    {
+     "authors": [
+      "Kalpana Seshadri-Crooks"
+     ],
+     "title": "Desiring Whiteness: A Lacanian Analysis of Race",
+     "journal_title": null,
+     "publisher": "Routledge",
+     "year": "2000",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Frantz Fanon",
+      "Richard Philcox"
+     ],
+     "title": "Black Skin, White Masks",
+     "journal_title": null,
+     "publisher": "Grove Press",
+     "year": "2008",
+     "volume": null,
+     "issue": null,
+     "first_page": "139"
+    },
+    {
+     "authors": [
+      "Calum Lister Matheson"
+     ],
+     "title": "Liberal Tears and the Rogue's Yarn of Sadistic Conservativism",
+     "journal_title": "Rhetoric Society Quarterly",
+     "publisher": null,
+     "year": "2022",
+     "volume": "52",
+     "issue": "4",
+     "first_page": "341"
+    },
+    {
+     "authors": [
+      "Joshua Gunn"
+     ],
+     "title": "Political Perversion: Rhetorical Aberration in the Time of Trumpeteering",
+     "journal_title": null,
+     "publisher": "University of Chicago Press",
+     "year": "2020",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    }
+   ]
+  },
+  {
+   "url": "https://muse.jhu.edu/pub/26/article/1001298",
+   "title": "Truong Tran's Multimodal Testimonial Praxis",
+   "authors": [
+    "A. Ikaika Gleisberg",
+    "Rebekah Edwards"
+   ],
+   "pages": "57-84",
+   "references": [
+    {
+     "authors": [
+      "Truong Tran"
+     ],
+     "title": "book of the other: small in comparison",
+     "journal_title": null,
+     "publisher": "Kaya Press",
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": "235"
+    },
+    {
+     "authors": [],
+     "title": "placing the accents",
+     "journal_title": null,
+     "publisher": "Apogee Press",
+     "year": "1999",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "The Book of Perceptions",
+     "journal_title": null,
+     "publisher": "Kearny Street Workshop",
+     "year": "1999",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "dust and conscience",
+     "journal_title": null,
+     "publisher": "Apogee Press",
+     "year": "2002",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "within the margin",
+     "journal_title": null,
+     "publisher": "Apogee Press",
+     "year": "2004",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "four letter words",
+     "journal_title": null,
+     "publisher": "Apogee Press",
+     "year": "2008",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "Going Home, Coming Home/Về Nhà, Thăm Quê Hương",
+     "journal_title": null,
+     "publisher": "Children's Book Press",
+     "year": "2003",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [],
+     "title": "100 Words",
+     "journal_title": null,
+     "publisher": "Omnidawn Publishing",
+     "year": "2021",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Paul A Prior",
+      "Julie A Hengst"
+     ],
+     "title": "Exploring Semiotic Remediation as Discourse Practice",
+     "journal_title": null,
+     "publisher": "Palgrave Macmillan",
+     "year": "2010",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jeff Bezemer",
+      "Gunther Kress"
+     ],
+     "title": "Multimodality, Learning and Communication: A Social Semiotic Frame",
+     "journal_title": null,
+     "publisher": "Routledge",
+     "year": "2016",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Miranda Fricker"
+     ],
+     "title": "Epistemic Injustice: Power and the Ethics of Knowing",
+     "journal_title": null,
+     "publisher": "Oxford University Press",
+     "year": "2007",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "José Medina"
+     ],
+     "title": "The Epistemology of Resistance: Gender and Racial Oppression, Epistemic Injustice, and Resistant Imaginations",
+     "journal_title": null,
+     "publisher": "Oxford University Press",
+     "year": "2013",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "José E Muñoz"
+     ],
+     "title": "Disidentifications: Queers of Color and the Performance of Politics",
+     "journal_title": null,
+     "publisher": "University of Minnesota Press",
+     "year": "1999",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Audre Lorde"
+     ],
+     "title": "The Cancer Journals",
+     "journal_title": null,
+     "publisher": "Spinster's Ink",
+     "year": "1980",
+     "volume": null,
+     "issue": null,
+     "first_page": "18"
+    },
+    {
+     "authors": [
+      "Tillie Olsen"
+     ],
+     "title": "Silences",
+     "journal_title": null,
+     "publisher": "Delacorte Press/Seymour Lawrence",
+     "year": "1978",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Adrienne Rich"
+     ],
+     "title": "Lies, Secrets, and Silence",
+     "journal_title": null,
+     "publisher": "W. W. Norton & Company",
+     "year": "1979",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "bell hooks"
+     ],
+     "title": "Feminist Theory from Margin to Center",
+     "journal_title": null,
+     "publisher": "South End Press",
+     "year": "1984",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Lester C Olson"
+     ],
+     "title": "On the Margins of Rhetoric: Audre Lorde Transforming Silence into Language and Action",
+     "journal_title": "Quarterly Journal of Speech",
+     "publisher": null,
+     "year": "1997",
+     "volume": "83",
+     "issue": "1",
+     "first_page": "49"
+    },
+    {
+     "authors": [
+      "Constance Coiner"
+     ],
+     "title": "'No One's Private Ground': A Bakhtinian Reading of Tillie Olsen's 'Tell Me a Riddle,'",
+     "journal_title": "Feminist Studies",
+     "publisher": null,
+     "year": "1992",
+     "volume": "18",
+     "issue": "2",
+     "first_page": "257"
+    },
+    {
+     "authors": [
+      "D Lynn O'Brien Hallstein"
+     ],
+     "title": "The Intriguing History and Silences of Of Woman Born: Rereading Adrienne Rich Rhetorically to Better Understand the Contemporary Context",
+     "journal_title": "Feminist Formations",
+     "publisher": null,
+     "year": "2010",
+     "volume": "22",
+     "issue": "2",
+     "first_page": "18"
+    },
+    {
+     "authors": [
+      "Tennille Allen"
+     ],
+     "title": "'I Didn't Let Everybody Come in My House': Exploring bell hooks' Notion of the Homeplace",
+     "journal_title": "The CLR James Journal",
+     "publisher": null,
+     "year": "2011",
+     "volume": "17",
+     "issue": "1",
+     "first_page": "75"
+    },
+    {
+     "authors": [
+      "Cheryl Glenn"
+     ],
+     "title": "Rhetoric Retold: Regendering the Tradition from Antiquity through the Renaissance",
+     "journal_title": null,
+     "publisher": "Southern Illinois University Press",
+     "year": "1997",
+     "volume": null,
+     "issue": null,
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "bell hooks"
+     ],
+     "title": "Choosing the Margin as a Space of Radical Openness",
+     "journal_title": "The Journal of Cinema and Media",
+     "publisher": null,
+     "year": "1989",
+     "volume": null,
+     "issue": "36",
+     "first_page": "15"
+    },
+    {
+     "authors": [
+      "Scott Haden Church"
+     ],
+     "title": "Turntables and Tropes: A Rhetoric of Remix",
+     "journal_title": null,
+     "publisher": "Michigan State University Press",
+     "year": "2022",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Dustin W Edwards"
+     ],
+     "title": "Framing Remix Rhetorically: Toward a Typology of Transformative Work",
+     "journal_title": "Computers and Composition",
+     "publisher": null,
+     "year": "2016",
+     "volume": "39",
+     "issue": null,
+     "first_page": "41"
+    },
+    {
+     "authors": [
+      "Virginia Kuhn"
+     ],
+     "title": "The Rhetoric of Remix",
+     "journal_title": "Transformative Works and Cultures",
+     "publisher": null,
+     "year": "2012",
+     "volume": "9",
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Kyle D Stedman"
+     ],
+     "title": "Remix Literacy and Fan Compositions",
+     "journal_title": "Computers and Composition",
+     "publisher": null,
+     "year": "2012",
+     "volume": "29",
+     "issue": "2",
+     "first_page": "107"
+    },
+    {
+     "authors": [
+      "Laurie E Gries"
+     ],
+     "title": "Still Life with Rhetoric: A New Materialist Approach for Visual Rhetorics",
+     "journal_title": null,
+     "publisher": "Utah State University Press",
+     "year": "2015",
+     "volume": null,
+     "issue": null,
+     "first_page": "20"
+    },
+    {
+     "authors": [
+      "Leigh Gruwell"
+     ],
+     "title": "Making Matters: Craft, Ethics, and New Materialist Rhetorics",
+     "journal_title": null,
+     "publisher": "Utah State University Press",
+     "year": "2022",
+     "volume": null,
+     "issue": null,
+     "first_page": "11"
+    },
+    {
+     "authors": [
+      "Priscilla Frank"
+     ],
+     "title": "These Butterflies May Look Innocent, but They Have an X-Rated Secret",
+     "journal_title": "Huffington Post",
+     "publisher": null,
+     "year": "2014",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Wei Ming Dariotis"
+     ],
+     "title": "On-ramp to the Apocalypse: An Interview with Truong Tran",
+     "journal_title": "Asian American Literature: Discourses & Pedagogies",
+     "publisher": null,
+     "year": "2013",
+     "volume": "4",
+     "issue": null,
+     "first_page": "3"
+    },
+    {
+     "authors": [
+      "Truong Tran"
+     ],
+     "title": "I Meant To Say Please Pass the Sugar",
+     "journal_title": null,
+     "publisher": "Telegraph Hill Gallery",
+     "year": "2014",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Ann Cvetkovich"
+     ],
+     "title": "An Archive of Feelings: Trauma, Sexuality, and Lesbian Public Cultures",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2013",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Rebekah Edwards"
+     ],
+     "title": "I Meant To Say Please Pass the Sugar: Mixed Media Works 2009-Present",
+     "journal_title": null,
+     "publisher": "Telegraph Hill Gallery",
+     "year": "2014",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Adela C Licona"
+     ],
+     "title": "Zines in Third Space: Radical Cooperation and Borderlands Rhetoric",
+     "journal_title": null,
+     "publisher": "SUNY Press",
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": "1"
+    },
+    {
+     "authors": [
+      "V Jo Hsu"
+     ],
+     "title": "Constellating Home: Trans and Queer Asian American Rhetorics",
+     "journal_title": null,
+     "publisher": "The Ohio State University Press",
+     "year": "2022",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Jian Neo Chen"
+     ],
+     "title": "Trans Exploits: Trans of Color Cultures and Technologies in Movement",
+     "journal_title": null,
+     "publisher": "Duke University Press",
+     "year": "2019",
+     "volume": null,
+     "issue": null,
+     "first_page": "4"
+    },
+    {
+     "authors": [
+      "B LeMaster"
+     ],
+     "title": "Unlearning the Violence of the Normative",
+     "journal_title": "QED: A Journal in GLBTQ Worldmaking",
+     "publisher": null,
+     "year": "2017",
+     "volume": "4",
+     "issue": "2",
+     "first_page": "123"
+    },
+    {
+     "authors": [
+      "Katherine Brooks"
+     ],
+     "title": "Damien Hirst Butterfly Fiasco: Artist Kills 9,000 in the Name of Art",
+     "journal_title": "Huffington Post",
+     "publisher": null,
+     "year": "2012",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Megan Eatman"
+     ],
+     "title": "Who Is Looking?: De-centering the Distant Spectator in Visual Rhetorics of Violence",
+     "journal_title": "Constellations: A Cultural Rhetorics Publishing Space",
+     "publisher": null,
+     "year": "2020",
+     "volume": null,
+     "issue": "3",
+     "first_page": "5"
+    },
+    {
+     "authors": [
+      "Theresa Hak Kyung Cha"
+     ],
+     "title": "Dictee",
+     "journal_title": null,
+     "publisher": "Tanam Press",
+     "year": "1982",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Myung Mi Kim"
+     ],
+     "title": "Penury",
+     "journal_title": null,
+     "publisher": "Omnidawn Press",
+     "year": "2009",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Harryette Mullen"
+     ],
+     "title": "Sleeping with the Dictionary",
+     "journal_title": null,
+     "publisher": "University of California Press",
+     "year": "2002",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "M NourbeSe Philip"
+     ],
+     "title": "Zong!",
+     "journal_title": null,
+     "publisher": "Wesleyan University Press",
+     "year": "2008",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "Claudia Rankine"
+     ],
+     "title": "Citizen: An American Lyric",
+     "journal_title": null,
+     "publisher": "Graywolf Press",
+     "year": "2014",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "José E Muñoz"
+     ],
+     "title": "Cruising Utopia: The Then and There of Queer Futurity",
+     "journal_title": null,
+     "publisher": "New York University Press",
+     "year": "2009",
+     "volume": null,
+     "issue": null,
+     "first_page": null
+    },
+    {
+     "authors": [
+      "J Halberstam"
+     ],
+     "title": "In a Queer Time & Place: Transgender Bodies, Subcultural Lives",
+     "journal_title": null,
+     "publisher": "New York University Press",
+     "year": "2005",
+     "volume": null,
+     "issue": null,
+     "first_page": "2"
+    }
+   ]
+  }
+ ]
+}
