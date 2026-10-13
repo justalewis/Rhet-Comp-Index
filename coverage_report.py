@@ -381,6 +381,76 @@ def write_markdown_summary(per_journal, totals, path):
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+# A journal "has reference lists in the index" when at least this share of its
+# articles carry an outbound reference list. Below it, but above zero, the
+# journal is partial (usually an era gap: publishers began depositing late).
+REFS_FULL_SHARE = 0.5
+
+
+def tier_journals(per_journal):
+    """Sort the registry's journals by what the index actually holds.
+
+    The coverage page used to carry hand-written lists of which journals had
+    "full CrossRef coverage". They drifted: they named journals that were not
+    indexed, omitted a dozen that were, and claimed reference lists for six
+    journals that had none. This derives the same lists from the per-journal
+    snapshot, so the prose cannot disagree with the table beneath it.
+
+    Returns {with_refs, partial_refs, metadata_only, web, manual, empty,
+    counts}. Each of the first five is a list of {name, articles, pct, kind}
+    sorted by name; `empty` is registry journals with no indexed articles.
+    Book presses (e.g. Computers and Composition Digital Press) are not in the
+    registry's journal list and are left out.
+    """
+    import journals as J
+
+    kind = {}
+    for j in J.CROSSREF_JOURNALS:
+        kind[j["name"]] = "crossref"
+    for j in J.RSS_JOURNALS:
+        kind[j["name"]] = "rss"
+    for j in J.SCRAPE_JOURNALS:
+        kind[j["name"]] = "scrape"
+    for j in J.MANUAL_JOURNALS:
+        kind[j["name"]] = "manual"
+
+    out = {"with_refs": [], "partial_refs": [], "metadata_only": [],
+           "web": [], "manual": [], "empty": []}
+    indexed = set()
+    for r in per_journal:
+        name = r["journal"]
+        n = r.get("article_count") or 0
+        k = kind.get(name)
+        if k is None or not n:
+            continue
+        indexed.add(name)
+        share = (r.get("articles_with_outbound") or 0) / n
+        entry = {"name": name, "articles": n, "pct": round(100 * share), "kind": k}
+        if k == "manual":
+            out["manual"].append(entry)
+        elif share >= REFS_FULL_SHARE:
+            out["with_refs"].append(entry)
+        elif share > 0:
+            out["partial_refs"].append(entry)
+        elif k == "crossref":
+            out["metadata_only"].append(entry)
+        else:
+            out["web"].append(entry)
+
+    def _key(e):
+        return e["name"].lower().removeprefix("the ")
+
+    for key in ("with_refs", "partial_refs", "metadata_only", "web", "manual"):
+        out[key].sort(key=_key)
+    out["empty"] = sorted(n for n in J.ALL_JOURNAL_NAMES if n not in indexed)
+    out["counts"] = {
+        "indexed": len(indexed),
+        "with_refs": len(out["with_refs"]),
+        "threshold_pct": int(REFS_FULL_SHARE * 100),
+    }
+    return out
+
+
 def build_snapshot(conn, year_min=None):
     """Compute the full coverage snapshot against an open sqlite connection.
     Returns a dict with keys: generated_at, totals, per_journal, per_era,

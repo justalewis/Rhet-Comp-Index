@@ -407,7 +407,7 @@ def get_author_citing_venues(author_name: str, top_journals: int = 10) -> dict:
 
     Aggregates the indexed articles whose CrossRef-deposited reference lists
     cite at least one article by `author_name`. Groups by citing journal and
-    rolls up to the seven-cluster sidebar scheme.
+    rolls up to the cluster sidebar scheme.
 
     Returns a dict with three keys:
       - top_journals: list of {journal, count} sorted desc, capped at top_n

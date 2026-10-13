@@ -6,7 +6,7 @@
 
 A discipline-specific bibliometric index for Rhetoric & Composition. Live at [pinakes.wacclearinghouse.org](https://pinakes.wacclearinghouse.org).
 
-The index covers 44+ journals and 50,000+ articles, drawn from CrossRef, OpenAlex, RSS feeds, and a handful of custom scrapers (each scraper is rate-limited and respects each site's `robots.txt`; [`scraper.py`](scraper.py) carries inline ethics annotations per source). Records are stored in SQLite, served by Flask, and visualised with D3.js.
+The index covers nearly 70 journals and more than 65,000 articles, drawn from CrossRef, OpenAlex, RSS feeds, and a handful of custom scrapers (each scraper is rate-limited and respects each site's `robots.txt`; [`scraper.py`](scraper.py) carries inline ethics annotations per source). Records are stored in SQLite, served by Flask, and visualised with D3.js.
 
 ## Architecture
 

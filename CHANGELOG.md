@@ -6,6 +6,23 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 
 ## [Unreleased]
 
+### Added (October 2026)
+
+- 12 journals from a field-coverage audit against CrossRef: Journal of Basic Writing, Language and Learning Across the Disciplines, Academic.Writing, RhetNet, Academic Labor: Research and Artistry, Journal of Second Language Writing, Quarterly Journal of Speech, Argumentation and Advocacy, Discourse and Writing / Rédactologie, Journal of Writing Assessment, Women's Studies in Communication, and Written Language & Literacy (about 12,600 articles). Held back for scope or coverage: Reading and Writing, English Education, Technical Communication (STC).
+- Sidebar and Atlas group "Writing Research & Assessment" (Assessing Writing, Journal of Writing Research, Journal of Academic Writing, Journal of Writing Assessment, Journal of Second Language Writing).
+- `journals.CROSSREF_SELECTORS`: select a journal by DOI prefix and container title when its CrossRef deposits carry no ISSN (RLEE, Academic Labor), with `exclude_dois` for mis-registered duplicates.
+- Publication-year range (`year_from` / `year_to`) on the timeline, tag co-occurrence, author network, institutions, and citation-trends endpoints, with From / To controls on the Explore panels.
+- `coverage_report.tier_journals`: the coverage page's journal lists are now generated from the live per-journal snapshot instead of kept by hand.
+- `tests/test_registry_surfaces.py`: fails when a registry journal lacks a chord-diagram abbreviation or a sidebar group lacks an Atlas orientation.
+
+### Fixed (October 2026)
+
+- Atlas silently skipped any sidebar group without a hand-written orientation, so its journals did not appear there. Added the missing group and a test.
+- Coverage page claimed reference lists for six journals that deposit none (Peitho, Poroi, Prompt, The WAC Journal, Community Literacy Journal, Rhetoric of Health and Medicine), listed English Journal as indexed, and named two journals as in the index that are not.
+- `Computers and Composition` (the journal) was unclassified in the datastories field breakdown and counted as "Other"; it is now Rhetoric & Composition.
+- Home page and README stated journal and article counts that were months out of date; the home page now reads them from the index.
+- Author names entity-encoded in some CrossRef deposits (`Ar&aacute;nguiz`) are decoded at ingestion.
+
 ### Changed (post-G1 emergency fix)
 
 - Removed `scheduler.py` and the `scheduler` Fly process group; replaced with a GitHub Actions cron at 03:00 UTC that hits `POST /fetch` and the new `POST /api/admin/run-backup` endpoint. The previous architecture (separate Fly machine running APScheduler) didn't work because Fly volumes are single-attach: the scheduler machine had no way to share `/data` with the app machine, and was silently writing to its own ephemeral container filesystem. See [`docs/refactor-notes/13-scheduler-architecture-fix.md`](docs/refactor-notes/13-scheduler-architecture-fix.md).

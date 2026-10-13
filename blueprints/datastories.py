@@ -7,7 +7,7 @@ Routes:
     GET  /api/datastories/<tool-slug>          JSON for each tool
 
 Every API route accepts the universal filter set:
-    cluster=<slug>           (one of the 7 sidebar clusters)
+    cluster=<slug>           (one of the sidebar clusters)
     journal=<name>           (repeatable; overrides cluster)
     year_from=<YYYY>         (inclusive)
     year_to=<YYYY>           (inclusive)

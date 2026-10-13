@@ -22,7 +22,7 @@
       <p style="margin:0 0 0.5rem;font-size:0.86rem;font-weight:600;color:var(--accent, #2C4A3A);letter-spacing:0.05em;text-transform:uppercase;">If you read nothing else on this page</p>
       <p style="margin:0 0 0.7rem;line-height:1.55;">Three things to keep in mind before you read anything on the <a href="/explore">Explore</a> page:</p>
       <ol style="margin:0;padding-left:1.4rem;line-height:1.6;">
-        <li style="margin-bottom:0.4rem;">Only about 29 of the 54 indexed journals are fully CrossRef-indexed with their reference lists. Citation networks, centrality scores, and coupling/co-citation views all underrepresent the others: they show what's been deposited, not what's been written.</li>
+        <li style="margin-bottom:0.4rem;">{% if tiers %}{{ tiers.counts.with_refs }} of the {{ tiers.counts.indexed }} indexed journals have reference lists in the index for at least half of their articles.{% else %}Only some of the indexed journals have their reference lists in the index.{% endif %} Citation networks, centrality scores, and coupling and co-citation views underrepresent the rest: they show what has been deposited, not what has been written.</li>
         <li style="margin-bottom:0.4rem;">Some journals can be cited but cannot cite. If a venue has no DOIs, its references aren't deposited anywhere Pinakes can read them. Older content, especially pre-2000 NCTE journals, has the same problem at scale: most NCTE volumes before 2000 have no machine-readable reference lists at all.</li>
         <li>Book chapters are partially indexed. This particularly affects writing-across-the-curriculum, writing-center, and edited-collection-heavy sub-areas, where a substantial share of the field's argumentative work lives in monographs rather than journals. The networks underweight that scholarship.</li>
       </ol>
@@ -67,58 +67,55 @@
 
     <h2>Coverage by sub-area</h2>
 
-    <p>The seven-cluster scheme used in the <a href="/atlas">Atlas of the Field</a> and the journal sidebar maps roughly onto distinct coverage profiles. Reading the index by sub-area rather than by individual journal helps locate where the citation networks overweight some scholarship and underweight others.</p>
+    <p>The cluster scheme used in the <a href="/atlas">Atlas of the Field</a> and the journal sidebar maps roughly onto distinct coverage profiles. Reading the index by sub-area rather than by individual journal helps locate where the citation networks overweight some scholarship and underweight others.</p>
 
     <ul class="coverage-list" style="line-height:1.65;">
-      <li><strong>Composition &amp; Writing Studies</strong> &mdash; Strong CrossRef coverage on the flagship NCTE journals (<em>CCC</em>, <em>College English</em>, <em>RTE</em>) for current content, with the well-known era gap before 2000 where back-catalog content lives in JSTOR without article-level DOIs. <em>Composition Studies</em> is partially CrossRef-registered. <em>TETYC</em> is CrossRef-deposited but produces less citation traffic per article than the flagship venues. <em>Basic Writing e-Journal</em> has partial CrossRef coverage. <em>Journal of Response to Writing</em> is OAI-PMH harvested from BYU's bepress repository &mdash; titles, authors, and abstracts are present, but no DOIs and no reference lists. Citation networks should read this cluster's pre-2000 scholarship as systematically underweighted.</li>
+      <li><strong>Composition &amp; Writing Studies</strong> &mdash; Strong CrossRef coverage on the flagship NCTE journals (<em>CCC</em>, <em>College English</em>, <em>RTE</em>) for current content, with the well-known era gap before 2000 where back-catalog content lives in JSTOR without article-level DOIs. <em>TETYC</em> is CrossRef-deposited, but only about one article in eight has a reference list. <em>Composition Studies</em> and <em>Basic Writing e-Journal</em> are scraped from their own sites. The <em>Journal of Basic Writing</em> has DOIs for its whole run (1975 to 2025) and no reference lists. <em>Journal of Response to Writing</em> is OAI-PMH harvested from BYU's bepress repository: titles, authors, and abstracts, with no DOIs and no reference lists. <em>Discourse and Writing / R&eacute;dactologie</em> (Canadian, open access) and <em>Academic Labor: Research and Artistry</em> have DOIs and no reference lists; <em>Written Language &amp; Literacy</em> has reference lists for fewer than half of its records. Citation networks should read this cluster's pre-2000 scholarship as systematically underweighted.</li>
 
-      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Rhetoric &amp; Public Affairs</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). The smaller specialized rhetoric venues are mixed: <em>Peitho</em> has full CrossRef coverage; <em>Pre/Text</em> is manually indexed (analog only); <em>JAC</em> is manually indexed from CompPile records (1980&ndash;2014; subscription journal that never deposited DOIs); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations. <em>Poroi</em> is fully indexed.</li>
+      <li><strong>Writing Research &amp; Assessment</strong> &mdash; <em>Assessing Writing</em> has reference lists for about four articles in five, and the <em>Journal of Second Language Writing</em> for about seven in ten of its CrossRef records. <em>Journal of Writing Research</em> and <em>Journal of Academic Writing</em> are CrossRef-indexed with no reference lists deposited. The <em>Journal of Writing Assessment</em> has DOIs from 2021 on, with abstracts and no reference lists; its earlier volumes have no DOIs and are not in the index.</li>
 
-      <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Rhetoric of Health and Medicine</em> all have full CrossRef coverage with complete reference lists. This is the cluster where citation-network analyses are most reliable; the in-progress <em>Datastories</em> project uses it as its primary corpus for that reason.</li>
+      <li><strong>Rhetoric</strong> &mdash; Strong coverage on the major venues (<em>Rhetoric Society Quarterly</em>, <em>Rhetoric Review</em>, <em>Philosophy &amp; Rhetoric</em>, <em>Advances in the History of Rhetoric</em>, <em>Written Communication</em>). <em>Rhetoric &amp; Public Affairs</em> and <em>Rhetorica</em> deposit reference lists for about one article in five and one in six. <em>Quarterly Journal of Speech</em> (1915 to the present) and <em>Argumentation and Advocacy</em> carry rhetorical studies as the communication discipline practices it; both have reference lists for part of their records, and the older <em>QJS</em> volumes have none. <em>Women's Studies in Communication</em> sits beside <em>Peitho</em>, and about half its records have reference lists. <em>Peitho</em>, <em>Poroi</em>, and <em>Res Rhetorica</em> are CrossRef-indexed with no reference lists. <em>RhetNet</em> (1994 to 1997) is an early online journal with 32 records and no reference lists. <em>Pre/Text</em> is manually indexed (analog only); <em>JAC</em> is manually indexed from CompPile records (1980&ndash;2014; a subscription journal that never deposited DOIs); <em>Enculturation</em>, <em>Present Tense</em>, and <em>KB Journal</em> are RSS-only and contribute no outbound citations.</li>
 
-      <li><strong>Writing Centers</strong> &mdash; Mixed. <em>WLN: A Journal of Writing Center Scholarship</em> has registered DOIs since 2015, but deposits them without an ISSN or reference lists, so Pinakes doesn't yet index its current run, and its earlier run as <em>Writing Lab Newsletter</em> is indexed only issue by issue; <em>Writing Center Journal</em> is partially CrossRef-registered with stronger recent coverage; <em>The Peer Review</em> (IWCA's open journal) has limited CrossRef compliance. Citation analyses underweight writing-center scholarship overall, and pre-2010 writing-center work is especially sparse.</li>
+      <li><strong>Technical Communication</strong> &mdash; The most densely indexed cluster in the corpus. <em>TCQ</em>, <em>JBTC</em>, <em>JTWC</em>, <em>BPCQ</em>, <em>CDQ</em>, and <em>Double Helix</em> all have reference lists for seventy percent or more of their articles. <em>IEEE Transactions on Professional Communication</em> has them for about a third, mostly recent volumes, and the <em>Communication Design Quarterly Review</em> for few. <em>Rhetoric of Health and Medicine</em> is CrossRef-indexed but deposits no reference lists. This is the cluster where citation-network analyses are most reliable; the in-progress <em>Datastories</em> project uses it as its primary corpus for that reason. <em>Technical Communication</em>, the STC journal, is not in the index; see the list of journals not yet indexed below.</li>
 
-      <li><strong>WAC / Writing Across the Curriculum</strong> &mdash; The two indexed journals (<em>Across the Disciplines</em>, <em>The WAC Journal</em>) are both hosted on the WAC Clearinghouse and have full CrossRef coverage. The bigger coverage limitation here is structural: a substantial share of WAC scholarship lives in monographs and edited collections from WAC Clearinghouse Press and other WAC-friendly publishers, and those books are only partially indexed. Citation networks systematically underweight WAC's monograph-based argumentative work.</li>
+      <li><strong>Writing Centers</strong> &mdash; Mixed. <em>WLN: A Journal of Writing Center Scholarship</em> has registered DOIs since 2015, but deposits them without an ISSN or reference lists, so Pinakes doesn't yet index its current run, and its earlier run as <em>Writing Lab Newsletter</em> is indexed only issue by issue. <em>Writing Center Journal</em> is scraped from Purdue's Digital Commons (titles and authors), <em>Praxis</em> from its own site, and <em>The Peer Review</em> (IWCA) from the IWCA site; none of the three contributes reference lists. Citation analyses underweight writing-center scholarship overall, and pre-2010 writing-center work is especially sparse.</li>
 
-      <li><strong>Digital &amp; Multimodal</strong> &mdash; Asymmetric. <em>Computers and Composition</em> has full CrossRef coverage, including reference lists. <em>Kairos</em> is born-digital and webtext-native, indexed via custom scraping; its articles appear as nodes but contribute no outbound citation edges, because their reference lists are not deposited. <em>Journal of Multimodal Rhetorics</em> has minimal CrossRef compliance. The cluster's central venue is well-indexed but the multimodal-webtext side is structurally invisible to citation-derived analyses.</li>
+      <li><strong>WAC / Writing Across the Curriculum</strong> &mdash; <em>Across the Disciplines</em> has full CrossRef coverage with reference lists. <em>The WAC Journal</em> is CrossRef-indexed with none. <em>Language and Learning Across the Disciplines</em> (1994 to 2003) and <em>Academic.Writing</em> (2000 to 2003), the WAC Clearinghouse's earlier journals, have DOIs and no reference lists. The bigger coverage limitation here is structural: a substantial share of WAC scholarship lives in monographs and edited collections from WAC Clearinghouse Press and other WAC-friendly publishers, and those books are only partially indexed. Citation networks systematically underweight WAC's monograph-based argumentative work.</li>
 
-      <li><strong>Community Literacy</strong> &mdash; <em>Community Literacy Journal</em> has full CrossRef coverage. <em>Reflections</em>, RSS-only until spring 2026, now has full CrossRef coverage: Penn State Libraries deposited its complete metadata and reference lists in May 2026, and the journal contributes citation edges. As with Writing Centers and WAC, much of the cluster's scholarly conversation lives in books and edited collections that are partially indexed.</li>
+      <li><strong>Digital &amp; Multimodal</strong> &mdash; Asymmetric. <em>Computers and Composition</em> is CrossRef-indexed, with reference lists for about two articles in three. <em>Kairos</em> is born-digital and webtext-native, indexed via custom scraping; its articles appear as nodes but contribute no outbound citation edges, because their reference lists are not deposited. <em>Journal of Multimodal Rhetorics</em> has minimal CrossRef compliance. The cluster's central venue is well-indexed but the multimodal-webtext side is structurally invisible to citation-derived analyses.</li>
+
+      <li><strong>Community Literacy</strong> &mdash; <em>Community Literacy Journal</em> is CrossRef-indexed (2001 to 2022) but deposits no reference lists. <em>Reflections</em>, RSS-only until spring 2026, now has full CrossRef coverage: Penn State Libraries deposited its complete metadata and reference lists in May 2026, and the journal contributes citation edges. As with Writing Centers and WAC, much of the cluster's scholarly conversation lives in books and edited collections that are partially indexed.</li>
     </ul>
 
-    <h2>Journals: full CrossRef coverage</h2>
+    {% if tiers %}
+    <h2>Journals by what the index holds</h2>
 
-    <p>The following journals contribute complete metadata including reference lists and, in most cases, author affiliations via OpenAlex:</p>
+    <p>These lists are generated from the live counts, so they change when the index does. A journal's tier depends on the share of its articles whose reference lists are in the index: {{ tiers.counts.threshold_pct }}% or more, some, or none. Web-sourced and manually indexed journals are described further down.</p>
 
+    <h3>Reference lists for at least half of the articles ({{ tiers.with_refs | length }})</h3>
     <ul class="coverage-list coverage-list--full">
-      <li><em>College Composition and Communication</em> (NCTE)</li>
-      <li><em>College English</em> (NCTE)</li>
-      <li><em>Teaching English in the Two-Year College</em> (NCTE)</li>
-      <li><em>Research in the Teaching of English</em> (NCTE)</li>
-      <li><em>English Journal</em> (NCTE) — full for current issues; pre-2000 content is JSTOR-only with no individual-article DOIs (see era gaps below)</li>
-      <li><em>Rhetoric Society Quarterly</em> (Taylor &amp; Francis)</li>
-      <li><em>Rhetoric Review</em> (Taylor &amp; Francis)</li>
-      <li><em>Technical Communication Quarterly</em> (Taylor &amp; Francis)</li>
-      <li><em>Advances in the History of Rhetoric</em> (Taylor &amp; Francis)</li>
-      <li><em>Pedagogy</em> (Duke University Press)</li>
-      <li><em>Written Communication</em> (SAGE)</li>
-      <li><em>Journal of Business and Technical Communication</em> (SAGE)</li>
-      <li><em>Journal of Technical Writing and Communication</em> (SAGE)</li>
-      <li><em>Business and Professional Communication Quarterly</em> (SAGE)</li>
-      <li><em>Computers and Composition</em> (Elsevier)</li>
-      <li><em>Assessing Writing</em> (Elsevier)</li>
-      <li><em>Philosophy &amp; Rhetoric</em> (Penn State University Press)</li>
-      <li><em>Rhetoric of Health &amp; Medicine</em> (University of Florida Press)</li>
-      <li><em>Communication Design Quarterly</em> (ACM SIGDOC)</li>
-      <li><em>Communication Design Quarterly Review</em> (ACM SIGDOC)</li>
-      <li><em>Across the Disciplines</em> (WAC Clearinghouse)</li>
-      <li><em>The WAC Journal</em> (WAC Clearinghouse)</li>
-      <li><em>Journal of Writing Analytics</em> (WAC Clearinghouse)</li>
-      <li><em>Prompt: A Journal of Academic Writing Assignments</em> (WAC Clearinghouse)</li>
-      <li><em>Peitho</em> (Coalition of Feminist Scholars in Communication, via WAC Clearinghouse)</li>
-      <li><em>Community Literacy Journal</em></li>
-      <li><em>Poroi</em></li>
-      <li><em>Reflections: A Journal of Community-Engaged Writing and Rhetoric</em> (Penn State Libraries; full metadata and reference lists deposited May 2026)</li>
+      {% for j in tiers.with_refs %}<li><em>{{ j.name }}</em> &mdash; {{ "{:,}".format(j.articles) }} articles, {{ j.pct }}% with reference lists</li>
+      {% endfor %}
     </ul>
+
+    <h3>Reference lists for some of the articles ({{ tiers.partial_refs | length }})</h3>
+    <p>Mostly era gaps: reference lists begin when the publisher began depositing them, and older volumes have none.</p>
+    <ul class="coverage-list coverage-list--partial">
+      {% for j in tiers.partial_refs %}<li><em>{{ j.name }}</em> &mdash; {{ "{:,}".format(j.articles) }} articles, {{ j.pct }}% with reference lists</li>
+      {% endfor %}
+    </ul>
+
+    <h3>CrossRef records without reference lists ({{ tiers.metadata_only | length }})</h3>
+    <p>The article records are in CrossRef, so these journals have DOIs, authors, and dates. Either the publisher deposits no reference lists, or the index has not fetched them yet. The "With outbound" column in the table below shows the current state.</p>
+    <ul class="coverage-list coverage-list--partial">
+      {% for j in tiers.metadata_only %}<li><em>{{ j.name }}</em> &mdash; {{ "{:,}".format(j.articles) }} articles</li>
+      {% endfor %}
+    </ul>
+
+    {% if tiers.empty %}
+    <p>Registered, with no articles in the index yet: {% for n in tiers.empty %}<em>{{ n }}</em>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+    {% endif %}
+    {% endif %}
 
     <h2>Journals: partial or limited coverage</h2>
 
@@ -144,28 +141,38 @@
       <li><em>Writing Lab Newsletter</em> — 354 issue-level records scraped from full-issue PDFs, running through 2013; no DOIs, abstracts, or reference lists. The journal's current run, <em>WLN: A Journal of Writing Center Scholarship</em> (volume 40 on, 2015–present), has DOIs from the WAC Clearinghouse, but they are deposited without an ISSN or reference lists, so Pinakes doesn't yet index it.</li>
     </ul>
 
-    <h3>OJS installations without CrossRef registration</h3>
-    <p>Many small society journals run Open Journal Systems but never completed CrossRef membership or DOI registration. The content is technically open access but invisible to APIs.</p>
+    <h3>Small journals without CrossRef registration</h3>
+    <p>These are in the index through scraping. Their publishers never completed CrossRef membership or registered DOIs, so the content is open access but invisible to APIs.</p>
     <ul class="coverage-list coverage-list--partial">
-      <li><em>Young Scholars in Writing</em> — undergraduate research journal; OJS, no CrossRef</li>
-      <li><em>Journal of Writing Assessment</em> — inconsistent CrossRef registration; some issues registered, some not</li>
-      <li><em>Xchanges</em> — technical communication OA journal; OJS but minimal CrossRef</li>
-      <li><em>Basic Writing e-Journal</em> — partial CrossRef; some volumes missing</li>
-      <li><em>The Peer Review</em> (IWCA) — writing center journal; limited metadata structure</li>
+      <li><em>Basic Writing e-Journal</em> &mdash; static HTML on the CUNY site; some volumes are missing</li>
+      <li><em>The Peer Review</em> (IWCA) &mdash; writing center journal; limited metadata structure</li>
     </ul>
 
     <h3>CrossRef registration incomplete by era</h3>
-    <p>These journals have CrossRef coverage for recent issues but significant gaps in their back catalogs, where content was digitized to JSTOR without individual-article DOI registration.</p>
+    <p>These journals have CrossRef records for part of their run. The rest is either on JSTOR without article-level DOIs or was never registered.</p>
     <ul class="coverage-list coverage-list--partial">
-      <li><em>College Composition and Communication</em> — anything before roughly 1999 has no machine-readable article-level metadata despite being in JSTOR</li>
-      <li><em>English Journal</em> (NCTE) — same pattern; decades of print content is accessible via JSTOR but not DOI-registered</li>
-      <li><em>Composition Studies</em> (Creighton University) — CrossRef registration exists but is spotty; some volumes unregistered</li>
+      <li><em>College Composition and Communication</em> &mdash; anything before roughly 1999 has no machine-readable article-level metadata despite being in JSTOR</li>
+      <li><em>Journal of Writing Assessment</em> &mdash; DOIs begin in 2021. Earlier volumes have none and are not in the index.</li>
     </ul>
 
     <h3>Hosted platforms without CrossRef</h3>
     <ul class="coverage-list coverage-list--partial">
       <li><em>Journal of Multimodal Rhetorics</em> — newer journal; minimal CrossRef compliance at time of indexing</li>
       <li><em>Literacy in Composition Studies</em> — OA; DOIs registered under prefix 10.21623 but ISSN linkage was incomplete until recently. Reference lists are scraped from HTML galleys rather than deposited with CrossRef.</li>
+    </ul>
+
+    <h2>Journals not in the index</h2>
+
+    <p>Journals the field reads that Pinakes does not yet carry, and why. Each is a separate piece of work.</p>
+
+    <ul class="coverage-list coverage-list--gap">
+      <li><em>English Journal</em> (NCTE) &mdash; registered with CrossRef, about 26,000 records, mostly K&ndash;12 teaching. Held back for scope; it would add that many records to the index.</li>
+      <li><em>Technical Communication</em> (Society for Technical Communication) &mdash; CrossRef holds only 57 of its records, 2022 to 2024. The back catalog would need a scraper.</li>
+      <li><em>Journal of Teaching Writing</em> and <em>Journal of Contemporary Rhetoric</em> &mdash; not in CrossRef. Each would need its own scraper.</li>
+      <li><em>Reading and Writing</em> and <em>English Education</em> &mdash; registered with CrossRef; held back for scope. The first leans toward cognitive psychology, the second toward teacher education.</li>
+      <li><em>Young Scholars in Writing</em> &mdash; undergraduate research journal; OJS, no CrossRef.</li>
+      <li><em>Xchanges</em> &mdash; technical communication open-access journal; OJS with minimal CrossRef registration.</li>
+      <li><em>Rhetor</em> (Canadian Society for the Study of Rhetoric) &mdash; its domain was taken over in early 2025 and now redirects to an unrelated site; the journal's status is unknown.</li>
     </ul>
 
     <h2>Books: university presses with gaps</h2>
@@ -204,6 +211,8 @@
       <li><strong>Citation network</strong> — Only journals that deposit reference lists with CrossRef contribute citation edges. See the coverage table on the <a href="/explore#citations">Citations tab</a> for per-journal detail. RSS-only journals contribute zero citation edges regardless of how frequently they cite or are cited.</li>
       <li><strong>Institutions</strong> — Affiliation data comes from OpenAlex, which requires a DOI to look up. Articles without DOIs have no institution data and don't appear in the institutions visualization.</li>
     </ul>
+
+    <p>The timeline, topic heatmap, author network, institutions, and citation-trends panels take a From / To publication-year range, as the citation views already did. Use it when one long-running venue would otherwise set the scale: <em>Quarterly Journal of Speech</em> alone reaches back to 1915.</p>
 
     {% if detailed %}
     <h2>Per-journal accounting</h2>

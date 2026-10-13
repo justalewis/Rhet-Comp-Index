@@ -12,7 +12,8 @@
 {% block title %}Pinakes &mdash; Rhetoric &amp; Composition{% endblock %}
 
 {% block head_extra %}
-<meta name="description" content="Pinakes is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication. Browse 50,000+ articles and about 800 books from major journals and presses.">
+{% set meta_total = all_journals | sum(attribute="count") %}
+<meta name="description" content="Pinakes is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication. Browse {{ "{:,}".format(meta_total) }} articles and about 800 books from major journals and presses.">
 {% if feed_slug %}
 <link rel="alternate" type="application/atom+xml" title="Pinakes &mdash; {{ feed_journal }}" href="/feed/{{ feed_slug }}.xml">
 {% else %}
@@ -78,7 +79,7 @@
 
 {% if not active_journals and not selected_source and not active_q and not active_year_from and not active_year_to and not active_tag and page == 1 %}
 <section class="orient">
-  <p><strong>Pinakes</strong> is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication: more than 50,000 articles from 54 journals, plus about 800 scholarly books from seven publishers.</p>
+  <p><strong>Pinakes</strong> is a free, searchable index of scholarship in rhetoric, composition, writing studies, and technical communication: {% set corpus_total = all_journals | sum(attribute="count") %}{% set corpus_journals = all_journals | selectattr("count") | list | length %}{{ "{:,}".format(corpus_total) }} articles from {{ corpus_journals }} journals, plus about 800 scholarly books from seven publishers.</p>
   <p>The <a href="/explore">Explore tools</a> turn that corpus into questions you can ask: who&rsquo;s citing whom, what conversations cluster together, what&rsquo;s been reread, and what&rsquo;s been forgotten. Search the full index below, or start here:</p>
   <ul class="orient-starts">
     <li><a href="/atlas">Atlas of the Field<span class="gloss">enter the index through your sub-area</span></a></li>

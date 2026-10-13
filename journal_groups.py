@@ -35,6 +35,7 @@ JOURNAL_GROUPS = {
     "Teaching English in the Two-Year College":                 "RHET_COMP",
     "Pedagogy":                                                 "RHET_COMP",
     "Kairos: A Journal of Rhetoric, Technology, and Pedagogy":  "RHET_COMP",
+    "Computers and Composition":                                "RHET_COMP",
     "Computers and Composition Digital Press":                  "RHET_COMP",
     "Enculturation":                                            "RHET_COMP",
     "Philosophy & Rhetoric":                                    "RHET_COMP",

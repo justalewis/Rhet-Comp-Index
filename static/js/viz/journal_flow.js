@@ -69,6 +69,34 @@ const JFLOW_ABBREV = {
   'Pre/Text': 'Pre/Text',
   'Prompt: A Journal of Academic Writing Assignments': 'Prompt',
   'Writing Lab Newsletter': 'WLN',
+  // Added 2026-10. Every registry journal needs an entry: without one the
+  // chord diagram labels it with its full title. 'AW' is Assessing Writing and
+  // 'JWA' is Journal of Writing Analytics, hence the longer forms below.
+  'Open Words: Access and English Studies': 'Open Words',
+  'Revista Latinoamericana de Estudios de la Escritura': 'RLEE',
+  'IEEE Transactions on Professional Communication': 'IEEE TPC',
+  'Rhetorica': 'Rhetorica',
+  'Argumentation': 'Argumentation',
+  'Res Rhetorica': 'Res Rhet.',
+  'Rhetoric, Politics & Culture': 'RPC',
+  'Journal of Writing Research': 'JWRes',
+  'Journal of Academic Writing': 'JAcadW',
+  'Journal of Response to Writing': 'JoRW',
+  'Writing and Pedagogy': 'W&P',
+  'WPA: Writing Program Administration': 'WPA',
+  'JAC: A Journal of Rhetoric, Culture, and Politics': 'JAC',
+  'Journal of Basic Writing': 'JBW',
+  'Language and Learning Across the Disciplines': 'LLAD',
+  'Academic.Writing': 'Acad.Writing',
+  'RhetNet': 'RhetNet',
+  'Academic Labor: Research and Artistry': 'ALRA',
+  'Journal of Second Language Writing': 'JSLW',
+  'Quarterly Journal of Speech': 'QJS',
+  'Argumentation and Advocacy': 'A&A',
+  'Discourse and Writing / Rédactologie': 'DWR',
+  'Journal of Writing Assessment': 'JWAsmt',
+  "Women's Studies in Communication": 'WSIC',
+  'Written Language & Literacy': 'WLL',
 };
 
 // Exported: half_life.js and main_path.js label their charts with the same

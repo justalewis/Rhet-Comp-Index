@@ -339,7 +339,7 @@ def glossary():
 
 @bp.route("/atlas")
 def atlas():
-    """Atlas of the Field — turns the seven-cluster sidebar scheme into a
+    """Atlas of the Field — turns the cluster sidebar scheme into a
     destination. For each cluster: orientation paragraph, journal list with
     live article counts, and named entry points into the index and Explore
     tools pre-filtered to that cluster.
@@ -367,9 +367,17 @@ def coverage():
     if since not in COVERAGE_SINCE_PRESETS:
         since = None
     detailed = get_detailed_coverage(year_min=since)
+    # The tier lists describe the whole index, so they are always built from
+    # the unfiltered snapshot even when the table below is scoped by ?since=.
+    full = detailed if since is None else get_detailed_coverage(year_min=None)
+    tiers = None
+    if full and full.get("per_journal"):
+        from coverage_report import tier_journals
+        tiers = tier_journals(full["per_journal"])
     return render_template(
         "coverage.html",
         detailed=detailed,
+        tiers=tiers,
         since=since,
         since_presets=COVERAGE_SINCE_PRESETS,
     )
