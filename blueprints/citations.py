@@ -33,9 +33,13 @@ def api_ego_network():
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_citation_trends():
-    """JSON: avg internal citations per article per year, filtered by optional journal."""
+    """JSON: avg internal citations per article per year, filtered by optional
+    journal and by an optional ?year_from= / ?year_to= range."""
+    from web_helpers import parse_year_range
     journal = request.args.get("journal", "").strip()
-    return jsonify(get_citation_trends(journal=journal or None))
+    yf, yt = parse_year_range(request.args)
+    return jsonify(get_citation_trends(journal=journal or None,
+                                       year_from=yf, year_to=yt))
 
 
 @bp.route("/api/citations/network")

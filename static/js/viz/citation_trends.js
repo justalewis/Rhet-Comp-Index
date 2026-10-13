@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -26,6 +27,7 @@ async function loadCitTrends() {
   const journal = document.getElementById('cittrends-journal').value;
   const params  = new URLSearchParams();
   if (journal) params.set('journal', journal);
+  for (const [k, v] of yearRangeQuery('ct')) params.set(k, v);
 
   let rows;
   try {

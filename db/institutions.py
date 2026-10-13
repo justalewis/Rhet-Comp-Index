@@ -6,30 +6,35 @@ import sqlite3
 import logging
 from itertools import combinations
 
-from .core import get_conn
+from .core import get_conn, year_range_sql
 
 log = logging.getLogger(__name__)
 
 
-def get_top_institutions(limit=25):
+def get_top_institutions(limit=25, year_from=None, year_to=None):
     """
     Return [(institution_name, article_count)] for the top institutions
     by number of distinct articles they are affiliated with.
-    Uses author_article_affiliations for article-level counting.
+    Uses author_article_affiliations for article-level counting. With
+    year_from / year_to, ranks over articles published in that range only.
     """
+    yc, yp = year_range_sql("a.pub_date", year_from, year_to)
+    join = "JOIN articles a ON a.id = author_article_affiliations.article_id" if yc else ""
+    extra = "".join(f" AND {c}" for c in yc)
     with get_conn() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT institution_name, COUNT(DISTINCT article_id) AS article_count
             FROM author_article_affiliations
-            WHERE institution_name IS NOT NULL AND institution_name != ''
+            {join}
+            WHERE institution_name IS NOT NULL AND institution_name != ''{extra}
             GROUP BY institution_name
             ORDER BY article_count DESC
             LIMIT ?
-        """, (limit,)).fetchall()
+        """, yp + [limit]).fetchall()
     return [(r["institution_name"], r["article_count"]) for r in rows]
 
 
-def get_institution_timeline(top_n=10):
+def get_institution_timeline(top_n=10, year_from=None, year_to=None):
     """
     Return data for an institutions-over-time chart.
 
@@ -40,14 +45,16 @@ def get_institution_timeline(top_n=10):
     Only covers the top_n institutions by total article count.
     """
     # Get top institutions
-    top = get_top_institutions(limit=top_n)
+    top = get_top_institutions(limit=top_n, year_from=year_from, year_to=year_to)
     if not top:
         return {"years": [], "series": []}
 
     top_names = [name for name, _ in top]
 
+    yc, yp = year_range_sql("a.pub_date", year_from, year_to)
+    extra = "".join(f" AND {c}" for c in yc)
     with get_conn() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT
                 aaa.institution_name,
                 SUBSTR(a.pub_date, 1, 4) AS year,
@@ -57,10 +64,10 @@ def get_institution_timeline(top_n=10):
             WHERE aaa.institution_name IS NOT NULL
               AND aaa.institution_name != ''
               AND a.pub_date IS NOT NULL
-              AND SUBSTR(a.pub_date, 1, 4) >= '1990'
+              AND SUBSTR(a.pub_date, 1, 4) >= '1990'{extra}
             GROUP BY aaa.institution_name, year
             ORDER BY year
-        """).fetchall()
+        """, yp).fetchall()
 
     # Build year set and per-institution year→count maps
     year_set: set[str] = set()
@@ -222,7 +229,7 @@ def _normalized_institutions_fresh():
     return int(max_year) >= datetime.datetime.now().year - 5
 
 
-def get_top_institutions_v2(limit=25):
+def get_top_institutions_v2(limit=25, year_from=None, year_to=None):
     """
     Return list of dicts: {id, display_name, article_count, country_code, type}
     from the normalized institutions table.
@@ -230,27 +237,34 @@ def get_top_institutions_v2(limit=25):
     empty or stale (data doesn't extend to recent years).
     """
     if not _normalized_institutions_fresh():
-        old = get_top_institutions(limit=limit)
+        old = get_top_institutions(limit=limit, year_from=year_from, year_to=year_to)
         return [
             {"id": None, "display_name": name, "article_count": count,
              "country_code": None, "type": None}
             for name, count in old
         ]
 
+    # The articles join is only added when a range is active, so the unfiltered
+    # ranking is exactly what it was (orphaned affiliation rows included).
+    yc, yp = year_range_sql("a.pub_date", year_from, year_to)
+    join = "JOIN articles a ON a.id = aai.article_id" if yc else ""
+    where = ("WHERE " + " AND ".join(yc)) if yc else ""
     with get_conn() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT i.id, i.display_name, i.country_code, i.type,
                    COUNT(DISTINCT aai.article_id) AS article_count
             FROM institutions i
             JOIN article_author_institutions aai ON aai.institution_id = i.id
+            {join}
+            {where}
             GROUP BY i.id
             ORDER BY article_count DESC
             LIMIT ?
-        """, (limit,)).fetchall()
+        """, yp + [limit]).fetchall()
     if rows:
         return [dict(r) for r in rows]
     # Fallback: use old flat table
-    old = get_top_institutions(limit=limit)
+    old = get_top_institutions(limit=limit, year_from=year_from, year_to=year_to)
     return [
         {"id": None, "display_name": name, "article_count": count,
          "country_code": None, "type": None}
@@ -258,25 +272,27 @@ def get_top_institutions_v2(limit=25):
     ]
 
 
-def get_institution_timeline_v2(top_n=10):
+def get_institution_timeline_v2(top_n=10, year_from=None, year_to=None):
     """
     Timeline for top institutions. Uses normalized tables when populated
     and current; falls back to get_institution_timeline() otherwise.
     """
     if not _normalized_institutions_fresh():
-        return get_institution_timeline(top_n=top_n)
+        return get_institution_timeline(top_n=top_n, year_from=year_from, year_to=year_to)
 
-    top = get_top_institutions_v2(limit=top_n)
+    top = get_top_institutions_v2(limit=top_n, year_from=year_from, year_to=year_to)
     if not top:
         return {"years": [], "series": []}
 
     top_ids = [r["id"] for r in top if r.get("id")]
     if not top_ids:
-        return get_institution_timeline(top_n=top_n)
+        return get_institution_timeline(top_n=top_n, year_from=year_from, year_to=year_to)
 
     top_names = {r["id"]: r["display_name"] for r in top if r.get("id")}
 
     placeholders = ",".join("?" * len(top_ids))
+    yc, yp = year_range_sql("a.pub_date", year_from, year_to)
+    extra = "".join(f" AND {c}" for c in yc)
     with get_conn() as conn:
         rows = conn.execute(f"""
             SELECT
@@ -287,10 +303,10 @@ def get_institution_timeline_v2(top_n=10):
             JOIN articles a ON a.id = aai.article_id
             WHERE aai.institution_id IN ({placeholders})
               AND a.pub_date IS NOT NULL
-              AND SUBSTR(a.pub_date, 1, 4) >= '1990'
+              AND SUBSTR(a.pub_date, 1, 4) >= '1990'{extra}
             GROUP BY aai.institution_id, year
             ORDER BY year
-        """, top_ids).fetchall()
+        """, top_ids + yp).fetchall()
 
     year_set: set[str] = set()
     inst_year: dict[int, dict[str, int]] = {iid: {} for iid in top_ids}

@@ -153,6 +153,27 @@ def set_security_headers(response):
     return response
 
 
+def parse_year_range(args):
+    """(year_from, year_to) from a request's query args, as ints or None.
+
+    Same tolerance as the datastories filters: blank, non-numeric or
+    out-of-range values are dropped instead of raising, and a reversed range
+    is swapped. Visualisation endpoints splat the result straight into their
+    db call, so a bad query string degrades to "no cutoff", never a 400.
+    """
+    def _y(v):
+        try:
+            n = int(str(v or "").strip())
+        except (TypeError, ValueError):
+            return None
+        return n if 1000 <= n <= 2999 else None
+
+    yf, yt = _y(args.get("year_from")), _y(args.get("year_to"))
+    if yf and yt and yf > yt:
+        yf, yt = yt, yf
+    return yf, yt
+
+
 def cache_response(seconds=300):
     """Add Cache-Control: private, max-age=N to a route's response.
 

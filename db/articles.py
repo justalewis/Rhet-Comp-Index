@@ -7,7 +7,7 @@ import logging
 from collections import Counter, defaultdict
 from itertools import combinations
 
-from .core import get_conn
+from .core import get_conn, year_range_sql
 
 log = logging.getLogger(__name__)
 from .core import _build_where, _sanitize_fts
@@ -463,34 +463,40 @@ def get_related_articles(article_id, limit=5):
         return ranked[:limit]
 
 
-def get_timeline_data():
+def get_timeline_data(year_from=None, year_to=None):
     """Return list of {year, journal, count} dicts for the timeline chart.
+    Optional year_from / year_to restrict the range (inclusive).
 
     Full history: the corpus reaches back to the 1930s and the timeline
     should show it. (A 1990 floor here used to hide ~17,000 pre-1990
     articles — 31% of the corpus — with no indication in the UI.) The
     sanity floor of 1900 only drops obviously malformed dates.
     """
+    yc, yp = year_range_sql("pub_date", year_from, year_to)
+    extra = "".join(f" AND {c}" for c in yc)
     with get_conn() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT SUBSTR(pub_date,1,4) AS year, journal, COUNT(*) AS count
             FROM articles
-            WHERE pub_date IS NOT NULL AND SUBSTR(pub_date,1,4) >= '1900'
+            WHERE pub_date IS NOT NULL AND SUBSTR(pub_date,1,4) >= '1900'{extra}
             GROUP BY year, journal
             ORDER BY year, journal
-        """).fetchall()
+        """, yp).fetchall()
         return [dict(r) for r in rows]
 
 
-def get_tag_cooccurrence():
+def get_tag_cooccurrence(year_from=None, year_to=None):
     """
-    Compute tag co-occurrence counts across all tagged articles.
+    Compute tag co-occurrence counts across all tagged articles (optionally
+    only those published within year_from..year_to).
     Returns {"tags": [...], "matrix": [[...]]} where matrix[i][j] = count of
     articles having both tag[i] and tag[j].
     """
+    yc, yp = year_range_sql("pub_date", year_from, year_to)
+    where = "tags IS NOT NULL AND tags != ''" + "".join(f" AND {c}" for c in yc)
     with get_conn() as conn:
         rows = conn.execute(
-            "SELECT tags FROM articles WHERE tags IS NOT NULL AND tags != ''"
+            f"SELECT tags FROM articles WHERE {where}", yp
         ).fetchall()
 
     # Collect all tags and co-occurrence pairs

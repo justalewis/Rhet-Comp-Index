@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { yearRangeQuery } from "../shared/year_range.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { PALETTE, journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -51,7 +52,7 @@ async function loadNetwork(minPapers, topN) {
   container.innerHTML = '<div class="loading-msg">Loading author data…</div>';
   clearNetInfobar();
 
-  const resp = await fetch(`/api/stats/author-network?min_papers=${minPapers}&top_n=${topN}`);
+  const resp = await fetch(`/api/stats/author-network?min_papers=${minPapers}&top_n=${topN}&${yearRangeQuery('net')}`);
   const data = await resp.json();
   window.__expAuthorNetwork = data;
 

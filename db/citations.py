@@ -6,7 +6,7 @@ import sqlite3
 import logging
 from itertools import combinations
 
-from .core import get_conn
+from .core import get_conn, year_range_sql
 from datastories_cache import cached
 
 log = logging.getLogger(__name__)
@@ -382,7 +382,7 @@ def get_citation_network(min_citations=5, journals=None,
         }
 
 
-def get_citation_trends(journal=None):
+def get_citation_trends(journal=None, year_from=None, year_to=None):
     """
     Return per-year citation behaviour for articles whose references have been fetched.
 
@@ -406,6 +406,10 @@ def get_citation_trends(journal=None):
     if journal:
         where.append("journal = ?")
         params.append(journal)
+
+    yc, yp = year_range_sql("pub_date", year_from, year_to)
+    where.extend(yc)
+    params.extend(yp)
 
     clause = "WHERE " + " AND ".join(where)
 

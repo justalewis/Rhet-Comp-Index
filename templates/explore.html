@@ -7,6 +7,24 @@
 {% endblock %}
 
 {% block content %}
+{#- From / To publication-year pair. `prefix` must match what the panel's JS
+    passes to yearRangeQuery(); `handler` is the inline onchange (empty when
+    the panel has its own Reload button). min_year / max_year come from the
+    /explore view. -#}
+{% macro year_range(prefix, handler="", label_class="filter-label", select_class="filter-select") %}
+<span class="year-range-ctl" style="display:inline-flex;align-items:center;gap:0.4rem;margin-left:1rem;">
+  <label class="{{ label_class }}" for="{{ prefix }}-year-from">From</label>
+  <select id="{{ prefix }}-year-from" class="{{ select_class }}"{% if handler %} onchange="{{ handler }}"{% endif %}>
+    <option value="">Any year</option>
+    {% if min_year and max_year %}{% for y in range(max_year, min_year - 1, -1) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}{% endif %}
+  </select>
+  <label class="{{ label_class }}" for="{{ prefix }}-year-to">To</label>
+  <select id="{{ prefix }}-year-to" class="{{ select_class }}"{% if handler %} onchange="{{ handler }}"{% endif %}>
+    <option value="">Any year</option>
+    {% if min_year and max_year %}{% for y in range(max_year, min_year - 1, -1) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}{% endif %}
+  </select>
+</span>
+{% endmacro %}
     {% from "_network_legend.html" import network_legend %}
     {% from "_network_trio_compare.html" import network_trio_compare %}
     {% from "_how_to_read.html" import how_to_read %}
@@ -252,6 +270,7 @@
           Show top 8 journals only
         </button>
         <span class="filter-label" style="margin-left:1rem;">Publications per year by journal</span>
+        {{ year_range('tl', 'loadTimeline()') }}
       </div>
       <div class="chart-container">
         <canvas id="timeline-chart"></canvas>
@@ -288,7 +307,7 @@
         <p>The heatmap is descriptive rather than inferential. Co-occurrence on its own does not measure association strength; it conflates genuine thematic overlap with the joint base rate of two common terms.<sup>1</sup> A topic with high base rate (rhetorical criticism, in this corpus) will appear in heavy pairs across many rows simply because it is common, which is why rhetorical criticism turns up in heavy pairs with topics as different as book reviews, classical rhetoric, and argument, without that pattern necessarily indexing a single coherent thematic cluster. To control for base rate, divide each cell by the marginal counts and inspect the residual; the heatmap as displayed is the unnormalized signal, which is more legible at a glance but requires this interpretive caveat.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>The heatmap is rendered without user-tunable parameters. The vocabulary, the keyword patterns, and the article corpus are all fixed at the time the page loads. Hover any cell to read the article count for that topic pair; the matrix is symmetric, so cell (<em>i</em>,&nbsp;<em>j</em>) reports the same count as cell (<em>j</em>,&nbsp;<em>i</em>).</p>
+        <p>The vocabulary and the keyword patterns are fixed. The <strong>From / To year filters</strong> restrict the heatmap to articles published in that range, which is useful when a long-running venue would otherwise dominate the matrix; with no range set, the whole indexed corpus is used. Hover any cell to read the article count for that topic pair; the matrix is symmetric, so cell (<em>i</em>,&nbsp;<em>j</em>) reports the same count as cell (<em>j</em>,&nbsp;<em>i</em>).</p>
 
         <p>The 61-term vocabulary was designed for rhetoric and composition specifically and will systematically under-tag interdisciplinary work that uses adjacent-field terminology (information science, applied linguistics, education theory). Articles indexed via RSS or web scraping rarely carry abstracts and are therefore tagged on title text alone, which makes those venues appear thinner in the heatmap than their actual thematic footprint warrants; the Coverage Notes page at <a href="/coverage">/coverage</a> documents which journals fall in this category.</p>
 
@@ -300,6 +319,10 @@
         </div>
       </details>
 
+      <div class="chart-toolbar">
+        <span class="filter-label">Published</span>
+        {{ year_range('tags', 'loadHeatmap()') }}
+      </div>
       <p class="explore-hint">Tag co-occurrence — how often topic pairs appear together. Hover cells for counts.</p>
       <div class="heatmap-container" id="heatmap-container">
         <div class="loading-msg">Loading tag data…</div>
@@ -386,6 +409,10 @@
             <option value="300">300</option>
             <option value="500">500</option>
           </select>
+        </div>
+        <div class="net-control-group">
+          <span class="net-label">Published</span>
+          {{ year_range('net', '', 'net-label', 'net-select') }}
         </div>
         <div class="net-control-group net-search-group">
           <label for="net-search" class="net-label">Search author</label>
@@ -767,6 +794,7 @@
           <option value="{{ j.name }}">{{ j.name }}</option>
           {% endfor %}
         </select>
+        {{ year_range('ct', 'loadCitTrends()') }}
         <span id="cittrends-note"
               style="margin-left:1.2rem;font-family:var(--f-ui);font-size:0.78rem;color:var(--dilute);"></span>
       </div>
@@ -2200,6 +2228,11 @@
 
         </div>
       </details>
+
+      <div class="chart-toolbar">
+        <span class="filter-label">Published</span>
+        {{ year_range('inst', 'loadInstitutions()') }}
+      </div>
 
       <h4 class="chart-section-head">Top 25 institutions by article count</h4>
       <div class="chart-container chart-container--horiz" id="inst-bar-container">

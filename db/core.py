@@ -37,6 +37,35 @@ def get_conn():
     return conn
 
 
+def year_range_sql(col, year_from=None, year_to=None):
+    """(clauses, params) limiting SUBSTR(col, 1, 4) to [year_from, year_to].
+
+    Blank, non-numeric or out-of-range (outside 1000-2999) bounds are ignored
+    rather than rejected, and a reversed range is swapped, so a stray query
+    string can never turn into an error or an empty chart. A row with a NULL
+    date is excluded once either bound is active, which is the behaviour the
+    existing citation filters already have.
+    """
+    def _y(v):
+        try:
+            n = int(v)
+        except (TypeError, ValueError):
+            return None
+        return n if 1000 <= n <= 2999 else None
+
+    yf, yt = _y(year_from), _y(year_to)
+    if yf and yt and yf > yt:
+        yf, yt = yt, yf
+    clauses, params = [], []
+    if yf:
+        clauses.append(f"SUBSTR({col}, 1, 4) >= ?")
+        params.append(f"{yf:04d}")
+    if yt:
+        clauses.append(f"SUBSTR({col}, 1, 4) <= ?")
+        params.append(f"{yt:04d}")
+    return clauses, params
+
+
 def _create_tables(conn):
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS articles (

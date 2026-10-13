@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome, CATEGORICAL_LIMIT } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -23,7 +24,7 @@ async function loadTimeline() {
     renderExportToolbar('tab-timeline', { svgSelector: '#timeline-chart', dataProvider: () => (window.__expTimeline && window.__expTimeline.years || []).map((y, i) => Object.assign({year: y}, ...(window.__expTimeline.series||[]).map(s => ({[s.journal]: s.counts[i]})))) });
     _exportWired_loadTimeline = true;
   }
-  const resp = await fetch('/api/stats/timeline');
+  const resp = await fetch('/api/stats/timeline?' + yearRangeQuery('tl'));
   const data = await resp.json();
   window.__expTimeline = data;
   allYears  = data.years;

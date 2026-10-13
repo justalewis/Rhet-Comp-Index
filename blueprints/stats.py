@@ -12,7 +12,7 @@ from db import (
 )
 from journals import UNAVAILABLE_JOURNALS
 from rate_limit import limiter, LIMITS
-from web_helpers import _safe_int, cache_response
+from web_helpers import _safe_int, cache_response, parse_year_range
 
 log = logging.getLogger(__name__)
 
@@ -28,8 +28,11 @@ def _get_sidebar():
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_timeline():
-    """JSON: article counts per year per journal, full history (1900 sanity floor)."""
-    raw = get_timeline_data()
+    """JSON: article counts per year per journal, full history (1900 sanity floor).
+    Accepts: ?year_from=1990&year_to=2025 (either or both)
+    """
+    yf, yt = parse_year_range(request.args)
+    raw = get_timeline_data(year_from=yf, year_to=yt)
 
     # Collect all years and journals
     years_set = set()
@@ -56,8 +59,11 @@ def api_timeline():
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_tag_cooccurrence():
-    """JSON: tag co-occurrence matrix."""
-    return jsonify(get_tag_cooccurrence())
+    """JSON: tag co-occurrence matrix.
+    Accepts: ?year_from=&year_to= to restrict to articles in that range.
+    """
+    yf, yt = parse_year_range(request.args)
+    return jsonify(get_tag_cooccurrence(year_from=yf, year_to=yt))
 
 
 @bp.route("/api/stats/author-network")
@@ -65,11 +71,13 @@ def api_tag_cooccurrence():
 @cache_response(seconds=600)
 def api_author_network():
     """JSON: author co-authorship network nodes and links.
-    Accepts: ?min_papers=3&top_n=150
+    Accepts: ?min_papers=3&top_n=150&year_from=&year_to=
     """
     min_papers = _safe_int(request.args.get("min_papers", 3), 3, lo=2, hi=25)
     top_n      = _safe_int(request.args.get("top_n",      150), 150, lo=25, hi=500)
-    return jsonify(get_author_network(min_papers=min_papers, top_n=top_n))
+    yf, yt = parse_year_range(request.args)
+    return jsonify(get_author_network(min_papers=min_papers, top_n=top_n,
+                                      year_from=yf, year_to=yt))
 
 
 @bp.route("/api/stats/most-cited")
@@ -96,8 +104,11 @@ def api_most_cited():
 @limiter.limit(LIMITS["stats"])
 @cache_response(seconds=3600)
 def api_institutions():
-    """JSON: top institutions by article count + top-10 timeline."""
-    top = get_top_institutions_v2(limit=25)
+    """JSON: top institutions by article count + top-10 timeline.
+    Accepts: ?year_from=&year_to= (ranking is computed inside the range).
+    """
+    yf, yt = parse_year_range(request.args)
+    top = get_top_institutions_v2(limit=25, year_from=yf, year_to=yt)
     institutions = [
         {
             "id":      r.get("id"),
@@ -108,7 +119,7 @@ def api_institutions():
         }
         for r in top
     ]
-    timeline = get_institution_timeline_v2(top_n=10)
+    timeline = get_institution_timeline_v2(top_n=10, year_from=yf, year_to=yt)
     return jsonify({"institutions": institutions, "top10_timeline": timeline})
 
 

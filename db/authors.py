@@ -6,22 +6,25 @@ import sqlite3
 import logging
 from itertools import combinations
 
-from .core import get_conn
+from .core import get_conn, year_range_sql
 
 log = logging.getLogger(__name__)
 
 
-def get_author_network(min_papers=3, top_n=150):
+def get_author_network(min_papers=3, top_n=150, year_from=None, year_to=None):
     """
-    Compute author co-authorship network.
+    Compute author co-authorship network (optionally restricted to articles
+    published within year_from..year_to; min_papers then applies inside it).
     Returns {"nodes": [...], "links": [...]} where:
       nodes: [{"id": name, "count": paper_count}, ...]
       links: [{"source": name, "target": name, "value": coauth_count}, ...]
     Only includes authors with >= min_papers AND in top top_n by count.
     """
+    yc, yp = year_range_sql("pub_date", year_from, year_to)
+    where = "authors IS NOT NULL AND authors != ''" + "".join(f" AND {c}" for c in yc)
     with get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, authors FROM articles WHERE authors IS NOT NULL AND authors != ''"
+            f"SELECT id, authors FROM articles WHERE {where}", yp
         ).fetchall()
 
     author_counts: dict[str, int] = {}

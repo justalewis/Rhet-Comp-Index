@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { PALETTE, journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -26,7 +27,7 @@ async function loadInstitutions() {
 
   let data;
   try {
-    const resp = await fetch('/api/stats/institutions', { cache: 'no-cache' });
+    const resp = await fetch('/api/stats/institutions?' + yearRangeQuery('inst'), { cache: 'no-cache' });
     data = await resp.json();
     window.__expInstitutions = data;
   } catch (e) {
