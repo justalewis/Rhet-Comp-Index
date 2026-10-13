@@ -40,6 +40,21 @@ CROSSREF_JOURNALS = [
     # but the deposits carry NO ISSN, so filter=issn:2998-7016 returns 0. The ISSN here is
     # only the journal's identity key; the real selector is in CROSSREF_SELECTORS below.
     {"name": "Revista Latinoamericana de Estudios de la Escritura", "issn": "2998-7016"},  # WAC Clearinghouse / ALES — multilingual (es/pt/en), semi-annual, OA
+    # Added 2026-10 (field-coverage audit). Remaining WAC Clearinghouse titles:
+    {"name": "Journal of Basic Writing",                       "issn": "0147-1635"},  # WAC Clearinghouse — 609 DOIs, 1975–present; no references deposited
+    {"name": "Language and Learning Across the Disciplines",   "issn": "1091-7098"},  # WAC Clearinghouse — 131 DOIs, 1994–2003 (historical)
+    {"name": "Academic.Writing",                               "issn": "1552-325X"},  # WAC Clearinghouse — 75 DOIs, 2000–2003 (historical); full title "Academic.Writing: Interdisciplinary Perspectives on Communication Across the Curriculum"
+    {"name": "RhetNet",                                        "issn": "2768-251X"},  # WAC Clearinghouse — 32 DOIs, 1994–1997 (historical); "RhetNet: A Dialogic Publishing (Ad)Venture"
+    # Academic Labor has no ISSN in its CrossRef deposits; selected by DOI stem via CROSSREF_SELECTORS.
+    {"name": "Academic Labor: Research and Artistry",          "issn": "no-issn:alr-j"},  # WAC Clearinghouse — 81 DOIs, 2017–present
+    # Field journals missing from the index (writing studies, rhetorical studies):
+    {"name": "Journal of Second Language Writing",             "issn": "1060-3743"},  # Elsevier — 1,441 DOIs, 1992–present; no abstracts deposited
+    {"name": "Quarterly Journal of Speech",                    "issn": "0033-5630"},  # Taylor & Francis — 6,580 DOIs, 1915–present (print ISSN; online 1479-5779 = 6,567)
+    {"name": "Argumentation and Advocacy",                     "issn": "1051-1431"},  # Taylor & Francis — 1,256 DOIs, 1970–present (print; online 2576-8476 = 811)
+    {"name": "Discourse and Writing / Rédactologie",           "issn": "2563-7320"},  # Canadian Journal for Studies in Discourse and Writing — 628 DOIs, OA
+    {"name": "Journal of Writing Assessment",                  "issn": "2169-9232"},  # eScholarship — 51 DOIs, 2021–present, OA
+    {"name": "Women's Studies in Communication",               "issn": "1930-6458"},  # Taylor & Francis — 1,252 DOIs (online ISSN; print 0749-1409 returns 1,065)
+    {"name": "Written Language & Literacy",                    "issn": "1387-6732"},  # John Benjamins — 442 DOIs, 1998–present
     # Other CrossRef-indexed journals
     {"name": "Advances in the History of Rhetoric",            "issn": "1936-0835"},  # Penn State UP — 312 DOIs, 1998–2019
     {"name": "Assessing Writing",                              "issn": "1075-2935"},  # Elsevier — 1000 DOIs, 1994–present
@@ -81,6 +96,12 @@ CROSSREF_SELECTORS = {
         # wac.colostate.edu landing URL) is the same article as 2025.2.4.02.
         # Drop this entry once the Clearinghouse corrects the CrossRef record.
         "exclude_dois": {"10.37514/rle-j.2025.4.2.02"},
+    },
+    # Academic Labor: no ISSN in the deposits (81 works, all under this stem).
+    "no-issn:alr-j": {
+        "registrant": "10.37514",
+        "container_title": "Academic Labor: Research and Artistry",
+        "doi_prefix": "10.37514/alr-j.",
     },
 }
 
@@ -320,6 +341,14 @@ GOLD_OA_JOURNALS = {
     "Double Helix",
     "Open Words: Access and English Studies",
     "Revista Latinoamericana de Estudios de la Escritura",
+    "Journal of Basic Writing",
+    "Language and Learning Across the Disciplines",
+    "Academic.Writing",
+    "RhetNet",
+    "Academic Labor: Research and Artistry",
+    # Other fully OA
+    "Discourse and Writing / Rédactologie",
+    "Journal of Writing Assessment",
     # Independent OA journals
     "Kairos: A Journal of Rhetoric, Technology, and Pedagogy",
     "Enculturation",
@@ -370,9 +399,6 @@ JOURNAL_GROUPS = [
         "Research in the Teaching of English",
         "Pedagogy",
         "Teaching English in the Two-Year College",
-        "Assessing Writing",
-        "Journal of Writing Research",
-        "Journal of Academic Writing",
         "Writing and Pedagogy",
         "Journal of Writing Analytics",
         "Prompt: A Journal of Academic Writing Assignments",
@@ -383,6 +409,17 @@ JOURNAL_GROUPS = [
         "Journal of Response to Writing",
         "WPA: Writing Program Administration",
         "Revista Latinoamericana de Estudios de la Escritura",
+        "Journal of Basic Writing",
+        "Discourse and Writing / Rédactologie",
+        "Written Language & Literacy",
+        "Academic Labor: Research and Artistry",
+    ]),
+    ("Writing Research & Assessment", [
+        "Assessing Writing",
+        "Journal of Writing Assessment",
+        "Journal of Writing Research",
+        "Journal of Second Language Writing",
+        "Journal of Academic Writing",
     ]),
     ("Rhetoric", [
         "Rhetoric Society Quarterly",
@@ -402,6 +439,10 @@ JOURNAL_GROUPS = [
         "KB Journal: The Journal of the Kenneth Burke Society",
         "Enculturation",
         "Written Communication",
+        "Quarterly Journal of Speech",
+        "Argumentation and Advocacy",
+        "Women's Studies in Communication",
+        "RhetNet",
     ]),
     ("Technical Communication", [
         "Technical Communication Quarterly",
@@ -423,6 +464,8 @@ JOURNAL_GROUPS = [
     ("WAC / Writing Across the Curriculum", [
         "Across the Disciplines",
         "The WAC Journal",
+        "Language and Learning Across the Disciplines",
+        "Academic.Writing",
     ]),
     ("Digital & Multimodal", [
         "Computers and Composition",

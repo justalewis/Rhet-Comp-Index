@@ -51,6 +51,9 @@ JOURNAL_GROUPS = {
     "JAC: A Journal of Rhetoric, Culture, and Politics":        "RHET_COMP",
     "Journal of Response to Writing":                           "RHET_COMP",
     "WPA: Writing Program Administration":                      "RHET_COMP",
+    "Journal of Basic Writing":                                 "RHET_COMP",
+    "Journal of Writing Assessment":                            "RHET_COMP",
+    "RhetNet":                                                  "RHET_COMP",
 
     # ── OTHER ──
     "Writing Center Journal":                                   "OTHER",
@@ -72,6 +75,19 @@ JOURNAL_GROUPS = {
     "Res Rhetorica":                                            "OTHER",
     "Rhetorica":                                                "OTHER",
     "Argumentation":                                            "OTHER",
+    # Added 2026-10. Communication-discipline rhetoric, L2/applied-linguistics
+    # writing research and historical WAC titles sit in OTHER, consistent with
+    # Rhetorica / Argumentation / Journal of Writing Research above. QJS in
+    # particular is 6,580 articles from 1915; in RHET_COMP it would swamp the bucket.
+    "Quarterly Journal of Speech":                              "OTHER",
+    "Argumentation and Advocacy":                               "OTHER",
+    "Women's Studies in Communication":                         "OTHER",
+    "Journal of Second Language Writing":                       "OTHER",
+    "Discourse and Writing / Rédactologie":                     "OTHER",
+    "Written Language & Literacy":                              "OTHER",
+    "Language and Learning Across the Disciplines":             "OTHER",
+    "Academic.Writing":                                         "OTHER",
+    "Academic Labor: Research and Artistry":                    "OTHER",
 }
 
 
