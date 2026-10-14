@@ -157,7 +157,7 @@ function renderCentrality(container, data) {
     .attr('width', W)
     .attr('height', H);
 
-  const gRoot = enableZoomPan(centSvgEl, { scaleExtent: [0.1, 8] });
+  const gRoot = enableZoomPan(centSvgEl, { scaleExtent: [0.1, 8], fitWidth: true });
   centZoomBehavior = centSvgEl.node().__dsZoomBehavior;
   addArrowMarker(centSvgEl, 'cent-arrow');
 

@@ -151,7 +151,7 @@ function renderAuthorCocitation(container, data) {
     .attr('width', W)
     .attr('height', H);
 
-  const gRoot = enableZoomPan(acocitSvgEl, { scaleExtent: [0.1, 8] });
+  const gRoot = enableZoomPan(acocitSvgEl, { scaleExtent: [0.1, 8], fitWidth: true });
   acocitZoomBehavior = acocitSvgEl.node().__dsZoomBehavior;
 
   // Links

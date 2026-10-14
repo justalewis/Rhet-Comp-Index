@@ -332,7 +332,7 @@ function rpRenderGraph() {
     .style('font-family', 'system-ui, sans-serif');
   rpSvg = svg;
 
-  const g = enableZoomPan(svg, { scaleExtent: [0.2, 5] });
+  const g = enableZoomPan(svg, { scaleExtent: [0.2, 5], fitWidth: true });
 
   // Determine node color based on primary relationship type
   function nodeColor(d) {
