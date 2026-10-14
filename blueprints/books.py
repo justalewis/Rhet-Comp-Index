@@ -27,7 +27,7 @@ def _get_sidebar():
 def books():
     """Monograph and edited-collection index with publisher/type/year filters."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count   = get_new_article_count(days=7)
+    new_count   = get_new_article_count(days=7, back_catalog=False)
     publishers  = get_book_publishers()
 
     # Filter params
@@ -87,7 +87,7 @@ def book_detail(book_id):
         return "Book not found", 404
 
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
     chapters  = []
     if book.get("book_type") == "edited-collection":
         chapters = get_book_chapters(book_id)

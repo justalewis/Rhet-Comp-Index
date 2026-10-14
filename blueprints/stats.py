@@ -128,7 +128,7 @@ def api_institutions():
 def most_cited_page():
     """Most-cited articles page with filter controls and grouped views."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
     all_tags  = get_all_tags()
     min_year, max_year = get_year_range()
     coverage  = get_coverage_stats()

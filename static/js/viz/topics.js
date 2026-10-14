@@ -15,9 +15,21 @@ import { applyHighlight, clearHighlight } from "../utils/highlight.js";
 
 let _exportWired_loadHeatmap = false;
 
+// CSV rows: a `tag` column, then one column per tag holding the count of
+// articles that carry both.
+function topicsCsvRows() {
+  const d = window.__expTopics;
+  if (!d || !d.tags) return [];
+  return d.tags.map((tag, i) => {
+    const row = { tag };
+    d.tags.forEach((other, j) => { row[other] = d.matrix[i][j]; });
+    return row;
+  });
+}
+
 async function loadHeatmap() {
   if (!_exportWired_loadHeatmap) {
-    renderExportToolbar('tab-topics', { svgSelector: '#heatmap-container svg', dataProvider: () => (window.__expTopics && window.__expTopics.matrix || []) });
+    renderExportToolbar('tab-topics', { svgSelector: '#heatmap-container svg', dataProvider: topicsCsvRows });
     _exportWired_loadHeatmap = true;
   }
   const container = document.getElementById('heatmap-container');

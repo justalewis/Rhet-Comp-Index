@@ -185,7 +185,7 @@ def _landing(**ctx):
         all_journals=all_journals,
         journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
-        new_count=get_new_article_count(days=7),
+        new_count=get_new_article_count(days=7, back_catalog=False),
         active_nav="feeds",
         **ctx,
     )
@@ -414,6 +414,6 @@ def feeds_index():
         all_journals=all_journals,
         journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
-        new_count=get_new_article_count(days=7),
+        new_count=get_new_article_count(days=7, back_catalog=False),
         active_nav="feeds",
     )

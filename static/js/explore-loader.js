@@ -118,7 +118,9 @@ function showTab(name, btn) {
   }
   if (name === 'authorcocit' && !authorcocitLoaded) {
     authorcocitLoaded = true;
+    // Auto-loads like the tools below; init only wires the listeners.
     window.initAuthorCocitation();
+    window.loadAuthorCocitation();
   }
   if (name === 'citations' && !citationsLoaded) {
     citationsLoaded = true;
@@ -320,7 +322,7 @@ const REDRAW = {
   timeline:     'loadTimeline',
   topics:       'loadHeatmap',
   network:      'loadNetwork',
-  authorcocit:  'initAuthorCocitation',
+  authorcocit:  'loadAuthorCocitation',
   citations:    'loadCitations',
   cittrends:    'loadCitTrends',
   citnet:       'loadCitationNetwork',

@@ -144,7 +144,7 @@ def datastories_logout():
 def datastories_page():
     """The full tool surface — accordion of chapters and panels. Auth-gated."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
     min_year, max_year = get_year_range()
     clusters, cluster_order = get_clusters()
     cluster_options = [

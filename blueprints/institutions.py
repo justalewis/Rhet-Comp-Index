@@ -31,7 +31,7 @@ def institution_detail(institution_id):
         return "Institution not found", 404
 
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count    = get_new_article_count(days=7)
+    new_count    = get_new_article_count(days=7, back_catalog=False)
     article_count = get_institution_article_count(institution_id)
     articles     = get_institution_articles(institution_id, limit=200)
     top_authors  = get_institution_top_authors(institution_id, limit=10)
