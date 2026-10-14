@@ -106,7 +106,7 @@ async function loadNetwork(minPapers, topN) {
     .attr('height', H);
 
   netSvgEl = svgSel.node();
-  const g = enableZoomPan(svgSel, { scaleExtent: [0.2, 6] });
+  const g = enableZoomPan(svgSel, { scaleExtent: [0.2, 6], fitWidth: true });
   netZoomBehavior = svgSel.node().__dsZoomBehavior;
 
   const simulation = d3.forceSimulation(nodes)

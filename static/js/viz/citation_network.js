@@ -22,6 +22,7 @@ let citnetLinkSel      = null;   // d3 selection of <line> link elements
 let citnetNodes        = [];
 let citnetLinks        = [];
 let citnetDebounce     = null;
+let citnetSceneW       = 820;    // width the layout was drawn at (the <svg> may since have been refitted)
 
 function onCitnetSliderChange(val) {
   document.getElementById('citnet-min-val').textContent = val;
@@ -171,6 +172,7 @@ function renderCitationNetwork(container, data) {
 
   const W = container.clientWidth  || 820;
   const H = 580;
+  citnetSceneW = W;
 
   const maxCit = d3.max(citnetNodes, d => d.internal_cited_by_count) || 1;
   const rScale = d3.scaleSqrt().domain([0, maxCit]).range([3, 18]);
@@ -181,7 +183,7 @@ function renderCitationNetwork(container, data) {
     .attr('width',  W)
     .attr('height', H);
 
-  const gRoot = enableZoomPan(citnetSvgEl, { scaleExtent: [0.1, 8] });
+  const gRoot = enableZoomPan(citnetSvgEl, { scaleExtent: [0.1, 8], fitWidth: true });
   citnetZoomBehavior = citnetSvgEl.node().__dsZoomBehavior;
   addArrowMarker(citnetSvgEl, 'citnet-arrow');
 
@@ -342,7 +344,7 @@ function searchCitationNetwork(query) {
   if (count >= 1) {
     const first = citnetNodes.find(d => matchIds.has(d.id));
     if (first && first.x != null && citnetSvgEl && citnetZoomBehavior) {
-      const W     = document.getElementById('citnet-container').clientWidth || 820;
+      const W     = citnetSceneW;
       const H     = 580;
       const scale = 2;
       citnetSvgEl.transition().duration(500).call(

@@ -109,7 +109,7 @@ function renderCommunities(container, data) {
   const rScale = d3.scaleSqrt().domain([0, citExtent[1] || 1]).range([3, 18]);
 
   const svg = d3.select(container).append('svg').attr('width', W).attr('height', H);
-  const g = enableZoomPan(svg, { scaleExtent: [0.2, 5] });
+  const g = enableZoomPan(svg, { scaleExtent: [0.2, 5], fitWidth: true });
 
   const linkSel = g.append('g').selectAll('line')
     .data(links).enter().append('line')

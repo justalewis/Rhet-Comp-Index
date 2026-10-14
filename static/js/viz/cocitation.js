@@ -137,7 +137,7 @@ function renderCocitation(container, data) {
     .attr('width', W)
     .attr('height', H);
 
-  const gRoot = enableZoomPan(cocitSvgEl, { scaleExtent: [0.1, 8] });
+  const gRoot = enableZoomPan(cocitSvgEl, { scaleExtent: [0.1, 8], fitWidth: true });
   cocitZoomBehavior = cocitSvgEl.node().__dsZoomBehavior;
 
   // Links (undirected, weighted)
