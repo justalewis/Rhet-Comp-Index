@@ -123,7 +123,7 @@ def index():
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     all_tags = get_all_tags(journal=journals[0] if len(journals)==1 else None, source=source or None)
     min_year, max_year = get_year_range()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
 
     # Offer the journal's own feed only when the view is exactly one journal.
     # There is no feed for an arbitrary filter combination (see
@@ -215,7 +215,7 @@ def export():
 def explore():
     """Data exploration page: timeline, tag co-occurrence, author network, citations."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
     all_tags = get_all_tags()
     min_year, max_year = get_year_range()
     coverage = get_coverage_stats()
@@ -239,7 +239,7 @@ def explore():
 def tools():
     """Browse all tools page — flat grid of every analytical tool."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
 
     return render_template(
         "tools.html",
@@ -281,7 +281,7 @@ def citation_network_page():
         return "Article not found", 404
 
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
 
     return render_template(
         "citations.html",
@@ -307,9 +307,7 @@ def new_articles():
     unpaged page reached 15.8 MB.
     """
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
-
-    total = get_new_article_count(days=7, back_catalog=False)
+    total = new_count = get_new_article_count(days=7, back_catalog=False)
     total_pages = max(1, (total + NEW_PER_PAGE - 1) // NEW_PER_PAGE)
     page = min(_safe_int(request.args.get("page", 1), 1, lo=1), total_pages)
     articles = get_new_articles(days=7, limit=NEW_PER_PAGE,

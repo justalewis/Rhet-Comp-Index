@@ -250,7 +250,7 @@ def create_app() -> Flask:
         get_total_count()
         get_article_counts()
         get_all_tags()
-        get_new_article_count()
+        get_new_article_count(days=7, back_catalog=False)
         log.info("DB page cache warmed in %.2f s", time.time() - _t0)
     except Exception as _e:
         log.warning("DB warmup failed (non-fatal): %s", _e)

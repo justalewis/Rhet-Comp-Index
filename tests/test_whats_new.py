@@ -99,6 +99,18 @@ def test_new_page_pages(empty_client, new_db, monkeypatch):
     assert "page 2 of 2" in past
 
 
+@pytest.mark.parametrize("path", [
+    "/", "/new", "/explore", "/tools", "/article/1", "/authors", "/books",
+    "/feeds", "/most-cited", "/alerts/new",
+])
+def test_nav_badge_leaves_out_back_catalog(empty_client, new_db, monkeypatch, path):
+    """The sidebar badge counts what /new lists: 4, not the 8 fetched."""
+    monkeypatch.setenv("PINAKES_ALERTS_ENABLED", "1")
+    resp = empty_client.get(path)
+    assert resp.status_code == 200
+    assert '<span class="nav-count">4</span>' in resp.get_data(as_text=True)
+
+
 def test_new_page_empty_state(empty_client):
     body = empty_client.get("/new").get_data(as_text=True)
     assert "Nothing new in the last 7 days." in body
