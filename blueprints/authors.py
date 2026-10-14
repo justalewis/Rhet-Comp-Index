@@ -32,7 +32,7 @@ def _get_sidebar():
 def authors_list():
     """Browse all authors by last-name initial."""
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
 
     selected_letter = request.args.get("letter", "").upper()
     if selected_letter and len(selected_letter) == 1 and selected_letter.isalpha():
@@ -74,7 +74,7 @@ def author_detail(name):
         abort(404)
 
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
     articles = get_author_articles(name)
     author_record = get_author_by_name(name)
     affiliations_by_article = get_author_affiliations_per_article(name)

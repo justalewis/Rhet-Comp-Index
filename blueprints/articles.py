@@ -75,7 +75,7 @@ def article_detail(article_id):
     author_affiliations = get_article_affiliations(article_id)
     approved_user_tags  = get_approved_user_tags(article_id)
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
-    new_count = get_new_article_count(days=7)
+    new_count = get_new_article_count(days=7, back_catalog=False)
     coverage_stats = get_coverage_stats()
     journal_coverage = next(
         (c for c in coverage_stats if c["journal"] == article.get("journal")), None

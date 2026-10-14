@@ -60,7 +60,7 @@ def _page(template, **ctx):
         all_journals=all_journals,
         journal_groups=journal_groups,
         unavailable=UNAVAILABLE_JOURNALS,
-        new_count=get_new_article_count(days=7),
+        new_count=get_new_article_count(days=7, back_catalog=False),
         **ctx,
     )
 

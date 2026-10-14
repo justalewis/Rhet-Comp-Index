@@ -23,8 +23,12 @@ let acocitLinkSel = null;
 let acocitNodeSel = null;
 let acocitDebounce = null;
 let acocitPairsData = [];
+let acocitWired = false;   // listeners attached (init is safe to call twice)
 
 function initAuthorCocitation() {
+  if (acocitWired) return;
+  acocitWired = true;
+
   document.getElementById('acocit-infobar-close').addEventListener('click', clearAcocitInfobar);
 
   // Search filter
@@ -159,7 +163,8 @@ function renderAuthorCocitation(container, data) {
     .style('stroke-opacity', d => 0.15 + 0.4 * (d.weight / maxWeight))
     .style('stroke-width',   d => edgeScale(d.weight));
 
-  // Tooltip
+  // Tooltip (drop the one a previous draw left on <body>)
+  d3.selectAll('.acocit-tip').remove();
   const tip = d3.select('body').append('div')
     .attr('class', 'heatmap-tooltip acocit-tip')
     .style('display',    'none')
