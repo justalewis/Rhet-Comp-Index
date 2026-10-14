@@ -135,17 +135,19 @@ def update_article_references_fetched(conn, article_id: int):
 
 
 def refresh_citation_counts(conn):
-    """Recalculate internal_cited_by_count and internal_cites_count for all articles."""
+    """Recalculate internal_cited_by_count and internal_cites_count for all
+    articles, counting distinct articles as db.update_citation_counts does."""
     conn.execute("""
         UPDATE articles
         SET internal_cited_by_count = (
-            SELECT COUNT(*) FROM citations WHERE target_article_id = articles.id
+            SELECT COUNT(DISTINCT source_article_id) FROM citations
+            WHERE target_article_id = articles.id
         )
     """)
     conn.execute("""
         UPDATE articles
         SET internal_cites_count = (
-            SELECT COUNT(*) FROM citations
+            SELECT COUNT(DISTINCT target_article_id) FROM citations
             WHERE source_article_id = articles.id
               AND target_article_id IS NOT NULL
         )

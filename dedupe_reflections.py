@@ -154,12 +154,15 @@ def build_matches(rows):
 def apply_merge(conn, canonical, dupe, cols):
     cid, did = canonical["id"], dupe["id"]
 
-    # Repoint dependents. citations has no uniqueness constraint on pairs;
-    # the UNIQUE-constrained tables get UPDATE OR IGNORE + sweep.
-    conn.execute("UPDATE citations SET source_article_id=? WHERE source_article_id=?",
+    # Repoint dependents with UPDATE OR IGNORE + sweep. citations carries
+    # uniqueness guards since v17: a reference the canonical row already has
+    # (or a citer that cited both copies) is a duplicate, so the leftover goes.
+    conn.execute("UPDATE OR IGNORE citations SET source_article_id=? WHERE source_article_id=?",
                  (cid, did))
-    conn.execute("UPDATE citations SET target_article_id=? WHERE target_article_id=?",
+    conn.execute("DELETE FROM citations WHERE source_article_id=?", (did,))
+    conn.execute("UPDATE OR IGNORE citations SET target_article_id=? WHERE target_article_id=?",
                  (cid, did))
+    conn.execute("DELETE FROM citations WHERE target_article_id=?", (did,))
     for table in ("author_article_affiliations",
                   "article_author_institutions",
                   "openalex_fetch_log"):
