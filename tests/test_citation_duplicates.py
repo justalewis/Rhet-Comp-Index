@@ -553,3 +553,47 @@ def test_reflections_merge_repoints_without_duplicating(fixture_db):
         pairs = conn.execute("SELECT source_article_id, target_article_id "
                              "FROM citations ORDER BY 1, 2").fetchall()
     assert [tuple(p) for p in pairs] == [(c_id, x_id), (x_id, c_id)]
+
+
+# ── Query plans with the guards in place ─────────────────────────────────────
+#
+# The (source, target) guard index tempts SQLite into matching both IN-lists of
+# a "both endpoints in our set" query against it, probing every source x target
+# combination. On a production-size table that took the uncapped Temporal
+# Evolution query from ~2 s to ~100 s. The queries write the target test as
+# `+c.target_article_id IN (...)`; this checks every such query still seeks on
+# the source alone.
+
+def test_both_endpoint_link_queries_do_not_probe_the_guard_on_target(seeded_db, monkeypatch):
+    from db import citations as dc
+
+    real_connect = sqlite3.connect
+    with closing(real_connect(seeded_db)) as conn:
+        assert _guards_present(conn)
+        aid = conn.execute("SELECT target_article_id FROM citations "
+                           "WHERE target_article_id IS NOT NULL LIMIT 1").fetchone()[0]
+
+    seen = []
+
+    def tracing_connect(*args, **kwargs):
+        conn = real_connect(*args, **kwargs)
+        conn.set_trace_callback(seen.append)
+        return conn
+
+    monkeypatch.setattr(sqlite3, "connect", tracing_connect)
+    unwrap = lambda f: getattr(f, "__wrapped__", f)  # noqa: E731
+    dc.get_ego_network(aid)
+    dc.get_citation_network(min_citations=1)
+    dc.get_citation_centrality(min_citations=1)
+    dc.get_community_detection(min_citations=1)
+    dc.get_main_path(min_citations=1)
+    unwrap(dc.get_temporal_network_evolution)(min_citations=1)
+    monkeypatch.undo()
+
+    link_queries = [s for s in seen
+                    if "target_article_id" in s and ("FROM filtered)" in s or "FROM neighbors)" in s)]
+    assert len(link_queries) >= 6
+    with closing(real_connect(seeded_db)) as conn:
+        for sql in link_queries:
+            plan = [row[3] for row in conn.execute("EXPLAIN QUERY PLAN " + sql)]
+            assert not any("source_article_id=? AND target_article_id=?" in step for step in plan), (sql, plan)
