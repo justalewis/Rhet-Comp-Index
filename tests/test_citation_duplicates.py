@@ -19,6 +19,7 @@ import citation_duplicates_report
 import db
 import dedupe_citations
 import scrape_lics_refs
+from db import datastories as ds
 from db.core import CITATION_UNIQUE_INDEXES
 
 GUARDS = [name for name, _ in CITATION_UNIQUE_INDEXES]
@@ -185,6 +186,72 @@ def test_analytics_unchanged_by_duplicate_rows(seeded_db, name):
     _inject_duplicates(seeded_db)
     db.update_citation_counts()
     assert ANALYTICS[name]() == clean
+
+
+# Datastories (the @cached ones again via __wrapped__) and the author page.
+# Jane Smith is first author of every hub (1, 14, 27, 39).
+ROW_ORDER_ANALYTICS = {
+    "ds_braided_path": lambda: ds.ds_braided_path.__wrapped__(),
+    "ds_braided_path_filtered": lambda: ds.ds_braided_path.__wrapped__(
+        journals=["College English", "Pre/Text"]),
+    "ds_speed_of_influence": lambda: ds.ds_speed_of_influence(),
+    "ds_communities_time": lambda: ds.ds_communities_time.__wrapped__(),
+    "ds_long_tail": lambda: ds.ds_long_tail(),
+    "ds_shifting_canons": lambda: ds.ds_shifting_canons(),
+    "ds_shifting_canons_filtered": lambda: ds.ds_shifting_canons(year_from=2000),
+    "ds_reach_of_citation": lambda: ds.ds_reach_of_citation(),
+    "author_citing_venues": lambda: db.get_author_citing_venues("Jane Smith"),
+}
+
+
+def _drop_guards(db_file):
+    with closing(sqlite3.connect(db_file)) as conn:
+        for name in GUARDS:
+            conn.execute(f"DROP INDEX IF EXISTS {name}")
+        conn.commit()
+
+
+@pytest.mark.parametrize("name", sorted(ROW_ORDER_ANALYTICS))
+def test_row_order_analytics_unchanged_by_duplicate_rows(seeded_db, name):
+    # These tools break ties (top-N cuts, community labels, link order) in the
+    # order SQLite returns rows, and dropping the guards changes that order:
+    # the covering index reads by (source, target), a table scan by id. Drop
+    # them before the clean run too, so the repeated rows are the only change.
+    _drop_guards(seeded_db)
+    clean = ROW_ORDER_ANALYTICS[name]()
+    _inject_duplicates(seeded_db)
+    db.update_citation_counts()
+    assert ROW_ORDER_ANALYTICS[name]() == clean
+
+
+def test_prince_network_lists_each_citer_once(seeded_db, monkeypatch):
+    # The seed has no article with the 10 citations ds_prince_network asks
+    # for, so stand in for get_sleeping_beauties with the hub, awake in 2021.
+    import db.citations
+    beauty = {"id": 1, "title": "Hub", "journal": "College English",
+              "authors": "Jane Smith", "pub_date": "2020-01-15",
+              "awakening_year": 2021, "beauty_coefficient": 1.0, "sleep_years": 1}
+    monkeypatch.setattr(db.citations, "get_sleeping_beauties",
+                        lambda **kw: {"articles": [beauty]})
+    _drop_guards(seeded_db)
+    clean = ds.ds_prince_network.__wrapped__()
+    _inject_duplicates(seeded_db)
+    after = ds.ds_prince_network.__wrapped__()
+    assert after == clean
+    princes = [p["id"] for p in after["beauties"][0]["princes"]]
+    # Citers of article 1 from 2020 on (40 is from 1992). 5 and 8 carry 4 and
+    # 2 extra rows and used to be listed 5 and 3 times.
+    assert sorted(princes) == [5, 8, 12, 16, 22, 27, 33]
+
+
+def test_author_citing_venues_count_each_link_once(seeded_db):
+    clean = db.get_author_citing_venues("Jane Smith")
+    _inject_duplicates(seeded_db)
+    after = db.get_author_citing_venues("Jane Smith")
+    assert after == clean
+    # Seed edges into her four articles: 8 + 7 + 6 + 5. The injected copies
+    # used to add 17 more.
+    assert after["total"] == 26
 
 
 # ── dedupe_citations.py ──────────────────────────────────────────────────────

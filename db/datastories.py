@@ -115,6 +115,24 @@ def _gini(values):
     return (2.0 * s) / (n * cum) - (n + 1.0) / n
 
 
+def _distinct_edges(rows, src="src", tgt="tgt"):
+    """Yield each citing→cited pair once: the first row for it, in query order.
+
+    The tools below count citation links, never citation rows: before the v17
+    uniqueness guards (db.core.CITATION_UNIQUE_INDEXES) the weekly LiCS scrape
+    could store one pair dozens of times. Filtering here rather than with
+    SELECT DISTINCT leaves each query, and so the row order that list outputs
+    and tie-breaks follow, as it was: a clean table gives the same result.
+    """
+    seen = set()
+    for r in rows:
+        key = (r[src], r[tgt])
+        if key in seen:
+            continue
+        seen.add(key)
+        yield r
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # Chapter 3 — The Citation Backbone
 # ═════════════════════════════════════════════════════════════════════════════
@@ -159,6 +177,7 @@ def ds_braided_path(cluster=None, journals=None, year_from=None, year_to=None):
     if cited_clause:  where.append(cited_clause);  params.extend(cited_params)
     sql = f"""
         SELECT
+            c.source_article_id AS src, c.target_article_id AS tgt,
             CAST(SUBSTR(citing.pub_date, 1, 4) AS INTEGER) AS citing_year,
             citing.journal AS from_journal,
             cited.journal  AS to_journal
@@ -169,7 +188,7 @@ def ds_braided_path(cluster=None, journals=None, year_from=None, year_to=None):
     """
     rows = []
     with get_conn() as conn:
-        rows = conn.execute(sql, params).fetchall()
+        rows = list(_distinct_edges(conn.execute(sql, params)))
 
     decade_flow = {label: defaultdict(int) for label, _, _ in _DECADE_BUCKETS}
     aggregate_flow = defaultdict(int)
@@ -502,7 +521,7 @@ def _fetch_classified_edges(cluster=None, journals=None,
 
     out = []
     with get_conn() as conn:
-        for r in conn.execute(sql, params):
+        for r in _distinct_edges(conn.execute(sql, params), "citing_id", "cited_id"):
             out.append({
                 "citing_id":    r["citing_id"],
                 "cited_id":     r["cited_id"],
@@ -1088,12 +1107,13 @@ def ds_long_tail(top_n=50, cluster=None, journals=None,
             return {"articles": [], "categories": {}, "n": 0}
         ids = [a["id"] for a in top]
         marks = ",".join("?" * len(ids))
-        cite_rows = list(conn.execute(f"""
-            SELECT c.target_article_id AS tgt, citing.journal AS j, citing.authors AS a
+        cite_rows = list(_distinct_edges(conn.execute(f"""
+            SELECT c.source_article_id AS src, c.target_article_id AS tgt,
+                   citing.journal AS j, citing.authors AS a
               FROM citations c
               JOIN articles citing ON citing.id = c.source_article_id
              WHERE c.target_article_id IN ({marks})
-        """, ids))
+        """, ids)))
 
     by_target = defaultdict(list)
     for r in cite_rows:
@@ -1255,14 +1275,14 @@ def ds_shifting_canons(top_n=25, cluster=None, journals=None,
 
     with get_conn() as conn:
         # All resolved citations with citing pub_date and target metadata
-        edges = list(conn.execute(f"""
-            SELECT c.target_article_id AS tgt,
+        edges = list(_distinct_edges(conn.execute(f"""
+            SELECT c.source_article_id AS src, c.target_article_id AS tgt,
                    CAST(SUBSTR(citing.pub_date, 1, 4) AS INTEGER) AS cy
               FROM citations c
               JOIN articles citing ON citing.id = c.source_article_id
               JOIN articles cited  ON cited.id  = c.target_article_id
              WHERE {" AND ".join(where)}
-        """, params))
+        """, params)))
         article_ids_seen = set(e["tgt"] for e in edges)
         if not article_ids_seen:
             return {"generations": [], "comparison": [], "summary": {}}
@@ -1355,13 +1375,13 @@ def ds_reach_of_citation(top_n=100, cluster=None, journals=None,
             return {"articles": [], "patterns": {}}
         ids = [r["id"] for r in top]
         marks = ",".join("?" * len(ids))
-        edges = list(conn.execute(f"""
-            SELECT c.target_article_id AS tgt,
+        edges = list(_distinct_edges(conn.execute(f"""
+            SELECT c.source_article_id AS src, c.target_article_id AS tgt,
                    CAST(SUBSTR(citing.pub_date, 1, 4) AS INTEGER) AS cy
               FROM citations c
               JOIN articles citing ON citing.id = c.source_article_id
              WHERE c.target_article_id IN ({marks}) AND citing.pub_date IS NOT NULL
-        """, ids))
+        """, ids)))
 
     import datetime
     current_year = datetime.datetime.now().year
@@ -2572,13 +2592,14 @@ def ds_prince_network(cluster=None, journals=None,
         bid = b["id"]
         awake_year = b.get("awakening_year")
         with get_conn() as conn:
-            citing_rows = list(conn.execute("""
-                SELECT citing.id AS cid, citing.title AS title, citing.authors AS authors,
+            citing_rows = list(_distinct_edges(conn.execute("""
+                SELECT citing.id AS cid, c.target_article_id AS tgt,
+                       citing.title AS title, citing.authors AS authors,
                        citing.journal AS journal, citing.pub_date AS pub_date
                   FROM citations c
                   JOIN articles citing ON citing.id = c.source_article_id
                  WHERE c.target_article_id = ?
-            """, (bid,)))
+            """, (bid,)), src="cid"))
         princes = []
         for r in citing_rows:
             yr = _year_of(r["pub_date"])
