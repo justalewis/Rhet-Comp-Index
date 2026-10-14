@@ -288,7 +288,7 @@ function renderTeForceGraph(container, snapshot) {
   const svg = d3.select(container).append('svg')
     .attr('width', W).attr('height', H)
     .style('background', '#faf8f5');
-  const g = enableZoomPan(svg, { scaleExtent: [0.15, 6] });
+  const g = enableZoomPan(svg, { scaleExtent: [0.15, 6], fitWidth: true });
 
   const linkSel = g.append('g').selectAll('line')
     .data(links).enter().append('line')

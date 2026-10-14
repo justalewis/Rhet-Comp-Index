@@ -133,12 +133,14 @@ export function showStub(containerId, toolName) {
  * @param {object} [opts]
  * @param {[number, number]} [opts.scaleExtent=[0.2, 8]] - min/max zoom
  * @param {boolean} [opts.addResetButton=true] - draw a small "Reset view" button in the corner
+ * @param {boolean} [opts.fitWidth=false] - keep the <svg> as wide as its container (see fitWidthToContainer)
  * @returns {d3.Selection} the inner <g> selection
  */
 export function enableZoomPan(svg, opts) {
   opts = opts || {};
   const scaleExtent = opts.scaleExtent || [0.2, 8];
   const wantReset = opts.addResetButton !== false;
+  let chip = null;
 
   const gRoot = svg.append('g').attr('class', 'ds-zoom-root');
   const zoomBehavior = d3.zoom()
@@ -162,7 +164,7 @@ export function enableZoomPan(svg, opts) {
     const w = +svg.attr('width') || svg.node().clientWidth || 0;
     // Floating reset chip in the top-right of the SVG. Drawn outside the
     // zoom-root so it stays fixed during zoom/pan.
-    const chip = svg.append('g').attr('class', 'ds-zoom-reset')
+    chip = svg.append('g').attr('class', 'ds-zoom-reset')
       .attr('transform', 'translate(' + (w - 78) + ', 8)')
       .style('cursor', 'pointer')
       .on('click', (event) => {
@@ -177,10 +179,40 @@ export function enableZoomPan(svg, opts) {
       .attr('font-size', 11).attr('fill', '#5a3e28').text('Reset view');
   }
 
+  if (opts.fitWidth) fitWidthToContainer(svg, chip);
+
   // Stash zoom behavior on the SVG node so callers can manipulate it later.
   svg.node().__dsZoomBehavior = zoomBehavior;
 
   return gRoot;
+}
+
+
+// A force layout is drawn once, at the width its container had then. When
+// the container later widens or narrows (a window resize, the figure toggle
+// redrawing while the pane was narrow), resize the <svg> to match and let a
+// viewBox keep the original W x H scene centred at 1:1: a wider container
+// shows more of the layout around it, a narrower one crops both sides evenly.
+// Nothing is redrawn or refetched. A hidden container (width 0) is skipped
+// until it is shown again, and the observer lets go once the <svg> is replaced.
+function fitWidthToContainer(svg, chip) {
+  const node = svg.node();
+  const container = node.parentNode;
+  const W = +svg.attr('width'), H = +svg.attr('height');
+  if (!container || !W || !H || typeof ResizeObserver === 'undefined') return;
+  // Without this the fixed width holds the page open on a narrower screen
+  // (it counts toward the layout column's minimum width), so the container
+  // never shrinks and the observer never sees a change.
+  svg.style('max-width', '100%');
+  const ro = new ResizeObserver(() => {
+    if (!node.isConnected) { ro.disconnect(); return; }
+    const w = container.clientWidth;
+    if (!w) return;
+    const x0 = (W - w) / 2;
+    svg.attr('width', w).attr('viewBox', `${x0} 0 ${w} ${H}`);
+    if (chip) chip.attr('transform', `translate(${x0 + w - 78}, 8)`);
+  });
+  ro.observe(container);
 }
 
 
