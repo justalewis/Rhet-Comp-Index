@@ -134,7 +134,7 @@ def _run_maintenance_in_background():
     enrichment half of weekly_maintenance (the cron's daily /fetch already
     covers article ingest, steps 1-3): citation harvesting, OpenAlex
     enrichment, LiCS reference scrape, retag + FTS rebuild, OA backfill,
-    OpenAlex citation counts. cite_fetcher resyncs the denormalized
+    OpenAlex citation counts, and the book harvest (step 12). cite_fetcher resyncs the denormalized
     internal_cited_by_count / internal_cites_count columns at the end of
     its run, so rankings stay consistent with the citations table.
 
@@ -151,7 +151,7 @@ def _run_maintenance_in_background():
         return
     try:
         from weekly_maintenance import run_pipeline
-        rc = run_pipeline(steps=(4, 5, 6, 7, 8, 9))
+        rc = run_pipeline(steps=(4, 5, 6, 7, 8, 9, 12))
         log.info("Maintenance pipeline finished (exit status %s).", rc)
     except Exception:  # noqa: BLE001
         log.exception("Maintenance pipeline raised unhandled exception")

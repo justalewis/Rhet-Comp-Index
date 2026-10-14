@@ -21,10 +21,12 @@ Usage:
     python book_fetcher.py osu                # Ohio State University Press only
     python book_fetcher.py pitt               # Pitt Press curated list
     python book_fetcher.py routledge          # Routledge curated list
+    python book_fetcher.py curated            # hand-verified list in data/curated_books.tsv
     python book_fetcher.py --full             # ignore last-fetch dates (full re-fetch)
     python book_fetcher.py osu --full         # OSU full re-fetch
 """
 
+import os
 import re
 import sys
 import time
@@ -40,6 +42,7 @@ from db import (
     get_book_by_doi,
 )
 from tagger import auto_tag
+from book_title_repair import clean_title
 
 logging.basicConfig(
     level=logging.INFO,
@@ -82,6 +85,29 @@ RHET_COMP_RE = re.compile("|".join(_RHET_COMP_TERMS), re.IGNORECASE)
 
 def _is_rhet_comp(title: str) -> bool:
     return bool(RHET_COMP_RE.search(title or ""))
+
+
+# Utah State's writing-studies list uses vocabulary the generic filter misses
+# ("Wiring the Writing Center", "Situating Portfolios", "Hidden Inequities in
+# Labor-Based Contract Grading"); its folklore list shares some of it.
+_USU_EXTRA_RE = re.compile(
+    r"\bteach|\btutor|\bcenter\b|\bgenre|\bportfolio|\bgrading|\bassess"
+    r"|\bstudent|\bclassroom|\bcurricul|\bfaculty|\bstyle\b|\bcollege"
+    r"|\buniversit|\bmentor|\bdiscipl|\bcommunicat|\bresponse|\bfeedback"
+    r"|\bplacement|\btransfer\b", re.IGNORECASE)
+_USU_EXCLUDE_RE = re.compile(r"\bfolk|\bfairy|\blegend|\bmormon", re.IGNORECASE)
+
+
+def _is_usu_writing_studies(work) -> bool:
+    """UP Colorado (member 3910) publishes archaeology, Alaska, folklore and
+    nature titles under the same member ID. Keep only the Utah State imprint
+    (10.7330) and only writing-studies titles, judged on title + subtitle."""
+    if not (work.get("DOI") or "").lower().startswith("10.7330/"):
+        return False
+    full = " ".join((work.get("title") or []) + (work.get("subtitle") or []))
+    if _USU_EXCLUDE_RE.search(full):
+        return False
+    return bool(RHET_COMP_RE.search(full) or _USU_EXTRA_RE.search(full))
 
 
 # ── Publisher configs ───────────────────────────────────────────────────────────
@@ -173,12 +199,16 @@ def _fetch_member_works(member_id, work_type, rows=100, cursor="*", since_date=N
         "rows":   rows,
         # NB: CrossRef rejects sort-by-date combined with cursor paging
         # ("sort-criteria-incompatible-with-cursor"), so results arrive
-        # unordered; from-pub-date filtering bounds incremental fetches.
+        # unordered; from-update-date filtering bounds incremental fetches.
         "cursor": cursor,
         "mailto": MAILTO,
     }
     if since_date:
-        params["filter"] += f",from-pub-date:{since_date}"
+        # fetch_log holds "YYYY-MM-DD HH:MM:SS"; CrossRef 400s on anything but
+        # a date, which _get() swallowed — every incremental run came back
+        # empty. Update-date (not pub-date) also catches books deposited after
+        # their nominal publication date.
+        params["filter"] += f",from-update-date:{str(since_date)[:10]}"
 
     url = f"{CROSSREF_BASE}/members/{member_id}/works"
     data = _get(url, params=params)
@@ -195,7 +225,9 @@ def _fetch_member_works(member_id, work_type, rows=100, cursor="*", since_date=N
 
 def _title(work):
     t = work.get("title") or []
-    return t[0].strip() if t else (work.get("display_name") or "").strip()
+    raw = t[0] if t else (work.get("display_name") or "")
+    # WAC deposits double-escape entities ("&amp;#x3a;"); see book_title_repair.py.
+    return clean_title(raw) or ""
 
 
 def _people(work, field):
@@ -481,7 +513,8 @@ def _fetch_upc_chapters_by_isbn(isbn, publisher):
 
 
 def fetch_upc(full=False):
-    """Harvest all UP Colorado / Utah State University Press books and chapters."""
+    """Harvest Utah State University Press writing-studies books and chapters
+    (filtered — see _is_usu_writing_studies)."""
     pub   = PUBLISHERS["upc"]
     label = pub["label"]
     mid   = pub["member_id"]
@@ -491,6 +524,14 @@ def fetch_upc(full=False):
 
     total_books = 0
     total_ch    = 0
+
+    # UPC registers print and ebook editions under separate DOIs, so DOI
+    # dedup alone lets the second format in as a duplicate book.
+    from db.core import get_conn
+    with get_conn() as conn:
+        have = {(r["doi"] or "").lower(): _norm_title(r["title"]) for r in conn.execute(
+            "SELECT doi, title FROM books WHERE record_type = 'book'")}
+    have_titles = set(have.values())
 
     for cr_type in BOOK_TYPES_TO_FETCH:
         cursor = "*"
@@ -507,8 +548,11 @@ def fetch_upc(full=False):
             for work in items:
                 doi  = work.get("DOI") or ""
                 t    = _title(work)
-                if not t:
+                if not t or not _is_usu_writing_studies(work):
                     continue
+                if doi.lower() not in have and _norm_title(t) in have_titles:
+                    continue
+                have_titles.add(_norm_title(t))
 
                 book_type = _crossref_type_to_book_type(cr_type, work)
                 editors   = _people(work, "editor")
@@ -758,7 +802,120 @@ def fetch_curated(key, full=False):
     return total_books, total_ch
 
 
+CURATED_BOOKS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "data", "curated_books.tsv")
+_EDS_RE = re.compile(r"\s*\(eds?\.\)\s*$", re.I)
+
+
+def _norm_title(t):
+    """Dedup key: main title only, alphanumerics, lowercased."""
+    return re.sub(r"\W", "", (t or "").split(":")[0].lower())[:40]
+
+
+def fetch_curated_list(path=CURATED_BOOKS_PATH):
+    """
+    Ingest the hand-verified book list in data/curated_books.tsv.
+
+    Covers presses that register few or no book DOIs (Pitt, Alabama, Parlor,
+    NCTE's SWR series …) alongside DOI'd titles a member sweep would bury in
+    off-topic results. The TSV's title/people/year/publisher win over CrossRef
+    (they were checked against publisher pages); a DOI, when present, supplies
+    the citation count and the chapter lookup for edited collections.
+
+    Idempotent: rows already present by DOI, ISBN, or main title are skipped,
+    so this runs safely every week on every deployment.
+    """
+    import csv
+    from db.core import get_conn
+
+    with open(path, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+
+    with get_conn() as conn:
+        existing = conn.execute(
+            "SELECT doi, isbn, title FROM books WHERE record_type = 'book'"
+        ).fetchall()
+    have_doi   = {(r["doi"] or "").lower() for r in existing if r["doi"]}
+    have_isbn  = {i for r in existing
+                  for i in re.findall(r"\d{13}", (r["isbn"] or "").replace("-", ""))}
+    have_title = {_norm_title(r["title"]) for r in existing}
+
+    added = chapters = 0
+    for row in rows:
+        doi   = (row.get("doi") or "").strip() or None
+        isbn  = (row.get("isbn") or "").replace("-", "").strip() or None
+        title = clean_title(row["title"])
+        if ((doi and doi.lower() in have_doi) or (isbn and isbn in have_isbn)
+                or _norm_title(title) in have_title):
+            continue
+
+        book_type = row.get("type") or "monograph"
+        people    = _EDS_RE.sub("", row.get("people") or "") or None
+        editors, authors = (people, None) if book_type == "edited-collection" else (None, people)
+
+        work = _fetch_doi(doi) if doi else None
+        book_id, is_new = upsert_book(
+            doi        = doi,
+            isbn       = isbn,
+            title      = title,
+            record_type= "book",
+            book_type  = book_type,
+            editors    = editors,
+            authors    = authors,
+            publisher  = row["publisher"],
+            year       = int(row["year"]) if (row.get("year") or "").isdigit() else None,
+            subjects   = auto_tag(title, None),
+            cited_by   = (work or {}).get("is-referenced-by-count", 0),
+            source     = "curated",
+        )
+        if not is_new:
+            continue
+        added += 1
+        have_title.add(_norm_title(title))
+        log.info("  + %s [%s] %s", title[:60], row.get("year"), row["publisher"])
+
+        cr_isbn = _isbn(work) if work else None
+        if book_id and cr_isbn and book_type == "edited-collection":
+            chapters += _fetch_chapters_by_isbn_generic(cr_isbn, book_id, row["publisher"])
+
+    log.info("Curated list complete — %d new books, %d new chapters", added, chapters)
+    return added, chapters
+
+
 # ── Main ────────────────────────────────────────────────────────────────────────
+
+ALL_TARGETS = ["wac", "upc", "osu", "pitt", "routledge", "curated"]
+
+
+def run_targets(targets=None, full=False):
+    """Harvest the given publisher targets (default: all). Each target is
+    isolated so one publisher's failure doesn't stop the rest; returns the
+    list of targets that raised."""
+    failed = []
+    for target in targets or ALL_TARGETS:
+        try:
+            if target == "wac":
+                fetch_wac(full=full)
+            elif target in ("upc", "usc", "utah"):
+                fetch_upc(full=full)
+            elif target == "osu":
+                fetch_member_filtered("osu", full=full)
+            elif target in ("pitt", "pittsburgh"):
+                fetch_curated("pitt", full=full)
+            elif target in ("routledge", "tf", "taylor"):
+                fetch_curated("routledge", full=full)
+            elif target == "curated":
+                fetch_curated_list()
+            else:
+                log.error(
+                    "Unknown publisher target: %s  "
+                    "(use wac, upc, osu, pitt, routledge, curated)", target
+                )
+        except Exception:  # noqa: BLE001
+            log.exception("Book harvest target %s failed", target)
+            failed.append(target)
+    return failed
+
 
 def main():
     init_db()
@@ -766,27 +923,7 @@ def main():
     args = [a.lower() for a in sys.argv[1:]]
     full = "--full" in args
     targets = [a for a in args if not a.startswith("--")]
-
-    # Default: fetch all publishers
-    if not targets:
-        targets = ["wac", "upc", "osu", "pitt", "routledge"]
-
-    for target in targets:
-        if target == "wac":
-            fetch_wac(full=full)
-        elif target in ("upc", "usc", "utah"):
-            fetch_upc(full=full)
-        elif target == "osu":
-            fetch_member_filtered("osu", full=full)
-        elif target in ("pitt", "pittsburgh"):
-            fetch_curated("pitt", full=full)
-        elif target in ("routledge", "tf", "taylor"):
-            fetch_curated("routledge", full=full)
-        else:
-            log.error(
-                "Unknown publisher target: %s  "
-                "(use wac, upc, osu, pitt, routledge)", target
-            )
+    run_targets(targets, full=full)
 
     # Print summary
     from db import get_book_publishers

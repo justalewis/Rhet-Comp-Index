@@ -18,7 +18,7 @@ block the rest. Logs to stdout (captured by cron to /tmp/weekly.log).
 
 Usage:
     python weekly_maintenance.py          # run full pipeline
-    python weekly_maintenance.py --step N # run only step N (1-8)
+    python weekly_maintenance.py --step N # run only step N (1-12)
 """
 
 import argparse
@@ -117,6 +117,22 @@ def step_9_openalex_citations():
     return stats
 
 
+def step_12_books():
+    """Incremental book harvest (book_fetcher: WAC, UP Colorado/Utah State,
+    Ohio State, curated DOI lists, data/curated_books.tsv), then the title
+    repair pass for any deposit-mangled titles the harvest brought in.
+
+    book_fetcher was never scheduled before 2026-10, so /books silently went
+    stale for seven months. Runs before the redaction resweeps (10, 11) so a
+    newly ingested book author is covered by them."""
+    from book_fetcher import run_targets
+    failed = run_targets()
+    from book_title_repair import repair_all
+    log.info("Book title repair: %s", repair_all())
+    if failed:
+        raise RuntimeError(f"book harvest failed for: {', '.join(failed)}")
+
+
 def step_10_redaction_resweep():
     """Re-apply the author-redaction ledger across every table.
 
@@ -155,6 +171,7 @@ STEPS = [
     (7, "Retag + FTS rebuild",            step_7_retag),
     (8, "OA status backfill",             step_8_oa_backfill),
     (9, "OpenAlex citation counts",       step_9_openalex_citations),
+    (12, "Book harvest + title repair",   step_12_books),
     (10, "Author-redaction resweep",      step_10_redaction_resweep),
     (11, "Article-suppression resweep",   step_11_article_suppression_resweep),
 ]
@@ -209,7 +226,7 @@ def run_pipeline(only_step=None, steps=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Weekly data maintenance pipeline for Pinakes.")
     parser.add_argument("--step", type=int, default=None,
-                        help="Run only step N (1-8). Omit to run all steps.")
+                        help="Run only step N (1-12). Omit to run all steps.")
     args = parser.parse_args()
 
     sys.exit(run_pipeline(only_step=args.step))

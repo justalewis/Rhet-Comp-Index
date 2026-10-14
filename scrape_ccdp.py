@@ -484,7 +484,7 @@ def ingest(books: list[dict]):
       - source = "scrape", oa_status = "gold"
 
     Books table (for /books monograph UI):
-      - Each book → record_type='book', book_type='edited collection' or 'monograph'
+      - Each book → record_type='book', book_type='edited-collection' or 'monograph'
       - Each chapter → record_type='chapter' with parent_id linking to book
     """
     from db import init_db, upsert_article, upsert_book
@@ -535,7 +535,7 @@ def ingest(books: list[dict]):
         # ── Books table ──────────────────────────────────────────
         # Determine book type: if chapters exist, it's an edited collection
         has_chapters = len(book.get("chapters", [])) > 0
-        book_type = "edited collection" if has_chapters else "monograph"
+        book_type = "edited-collection" if has_chapters else "monograph"
 
         # Extract year from date string (YYYY-MM-DD → YYYY)
         year = None
