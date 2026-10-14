@@ -1,6 +1,6 @@
-"""Duplicate citation rows: the v17 uniqueness guards, the analytics' immunity
-to repeated rows, dedupe_citations.py, citation_duplicates_report.py, and the
-LiCS scraper's per-run replacement.
+"""Duplicate citation rows: the v17 uniqueness guards, the analytics' and the
+coverage report's immunity to repeated rows, dedupe_citations.py,
+citation_duplicates_report.py, and the LiCS scraper's per-run replacement.
 
 Production picked up duplicates because the weekly LiCS galley scrape
 re-inserted every DOI-bearing reference on each run (one pair reached 38
@@ -252,6 +252,76 @@ def test_author_citing_venues_count_each_link_once(seeded_db):
     # Seed edges into her four articles: 8 + 7 + 6 + 5. The injected copies
     # used to add 17 more.
     assert after["total"] == 26
+
+
+# ── coverage_report.py (the /coverage page and methodology exports) ──────────
+
+# References the seed lacks, so raw and resolved differ: an outside DOI, a
+# scraped ref: key, and two DOI-less books with the same text. Nothing marks
+# those two as repeats, so they count as two references before and after.
+BOOK = json.dumps({"unstructured": "Smith, J. Some Book. Press, 1990."})
+OUTSIDE_REFS = [(5, "10.9/out", None), (40, "ref:lics-1", None),
+                (5, None, BOOK), (5, None, BOOK)]
+OUTSIDE_REPEATS = [(5, "10.9/out", 2), (40, "ref:lics-1", 3)]
+
+
+@pytest.fixture
+def coverage_db(seeded_db):
+    with closing(sqlite3.connect(seeded_db)) as conn:
+        # build_snapshot reads this column. openalex_citations.py adds it;
+        # init_db does not, so the seeded schema lacks it.
+        conn.execute("ALTER TABLE articles ADD COLUMN openalex_cited_by_count INTEGER")
+        conn.execute("UPDATE articles SET openalex_cited_by_count = id % 7")
+        conn.executemany("INSERT INTO citations (source_article_id, target_doi, raw_reference) "
+                         "VALUES (?, ?, ?)", OUTSIDE_REFS)
+        conn.commit()
+    return seeded_db
+
+
+def _inject_outside_repeats(db_file):
+    with closing(sqlite3.connect(db_file)) as conn:
+        for src, doi, extra in OUTSIDE_REPEATS:
+            conn.executemany("INSERT INTO citations (source_article_id, target_doi) "
+                             "VALUES (?, ?)", [(src, doi)] * extra)
+        conn.commit()
+
+
+def _coverage(year_min=None):
+    # build_snapshot directly: db.get_detailed_coverage falls back to the
+    # committed snapshot file on any error, which would make both sides equal.
+    import coverage_report
+    with db.get_conn() as conn:
+        snap = coverage_report.build_snapshot(conn, year_min=year_min)
+    snap.pop("generated_at")
+    return snap
+
+
+@pytest.mark.parametrize("year_min", [None, 2021])
+def test_coverage_report_unchanged_by_duplicate_rows(coverage_db, year_min):
+    clean = _coverage(year_min)
+    _inject_duplicates(coverage_db)
+    _inject_outside_repeats(coverage_db)
+    with db.get_conn() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM citations").fetchone()[0] == 34 + EXTRA_ROWS + 5
+    assert _coverage(year_min) == clean
+
+
+def test_coverage_report_counts_each_reference_once(coverage_db):
+    _inject_duplicates(coverage_db)
+    _inject_outside_repeats(coverage_db)
+    snap = _coverage()
+    ce = next(r for r in snap["per_journal"] if r["journal"] == "College English")
+    # Seed: 11 links out of College English (6 of them to College English)
+    # and 12 in (8 to article 1, 3 to article 2, 1 to article 6). Article 5
+    # adds one outside DOI and the two books. Counting rows made these
+    # 33, 28, 12 and 21.
+    assert (ce["raw_outbound_edges"], ce["resolved_outbound_edges"],
+            ce["intra_journal_edges"], ce["internal_inbound_edges"]) == (14, 11, 6, 12)
+    assert ce["outbound_resolution_pct"] == 78.6
+    pt = next(r for r in snap["per_journal"] if r["journal"] == "Pre/Text")
+    assert (pt["raw_outbound_edges"], pt["resolved_outbound_edges"]) == (8, 7)
+    assert snap["totals"]["citations_total"] == 34
+    assert snap["totals"]["citations_resolved_total"] == 30
 
 
 # ── dedupe_citations.py ──────────────────────────────────────────────────────
