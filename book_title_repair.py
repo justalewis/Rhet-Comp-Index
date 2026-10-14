@@ -231,12 +231,55 @@ def _apply(fixes):
     return n
 
 
+def norm_full_title(t):
+    """Whole-title match key: 'Literate Action, Volume 2' == 'Literate Action Volume 2'."""
+    return re.sub(r"\W", "", clean_title(t or "").lower())
+
+
+def merge_copublished():
+    """Fold Parlor Press scrape rows into their WAC Clearinghouse twins.
+
+    WAC and Parlor co-publish (Perspectives on Writing, International
+    Exchanges …), so fetch_parlor.py and the WAC Crossref harvest each
+    created a record for the same book. The WAC row keeps the DOI and
+    chapters; the Parlor row contributes its abstract/subjects/ISBN where
+    the WAC row lacks them, then is removed."""
+    from db.core import get_conn
+    merged = 0
+    with get_conn() as conn:
+        books = conn.execute(
+            "SELECT id, title, publisher, source, abstract, subjects, isbn "
+            "FROM books WHERE record_type = 'book'").fetchall()
+        wac = {}
+        for b in books:
+            if b["publisher"] == "WAC Clearinghouse":
+                wac.setdefault(norm_full_title(b["title"]), b)
+        for b in books:
+            if b["source"] != "parlor":
+                continue
+            twin = wac.get(norm_full_title(b["title"]))
+            if twin is None:
+                continue
+            conn.execute(
+                "UPDATE books SET abstract = COALESCE(abstract, ?), "
+                "subjects = COALESCE(subjects, ?), isbn = COALESCE(isbn, ?) "
+                "WHERE id = ?",
+                (b["abstract"], b["subjects"], b["isbn"], twin["id"]))
+            conn.execute("UPDATE books SET parent_id = ? WHERE parent_id = ?",
+                         (twin["id"], b["id"]))
+            conn.execute("DELETE FROM books WHERE id = ?", (b["id"],))
+            merged += 1
+        conn.commit()
+    return merged
+
+
 def repair_all():
     """Apply every resolvable fix (no scraping). Called by weekly_maintenance
     step 12 so each deployment self-heals; a no-op once clean."""
     fixes = plan_fixes(_load_rows(), load_overrides())
     n = _apply(fixes)
-    return {"titles_fixed": len(fixes), "book_types_normalised": n}
+    return {"titles_fixed": len(fixes), "book_types_normalised": n,
+            "copublished_merged": merge_copublished()}
 
 
 def main():
@@ -269,7 +312,9 @@ def main():
 
     if args.apply:
         n = _apply(fixes)
-        print(f"applied {len(fixes)} title fixes, normalised {n} book_type values")
+        m = merge_copublished()
+        print(f"applied {len(fixes)} title fixes, normalised {n} book_type values, "
+              f"merged {m} WAC/Parlor co-published duplicates")
 
 
 if __name__ == "__main__":

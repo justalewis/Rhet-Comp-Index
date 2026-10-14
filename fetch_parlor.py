@@ -235,6 +235,18 @@ def upsert_book(conn, *, title, authors, editors, isbn, year,
         if row:
             existing_id = row["id"]
 
+    if existing_id is None:
+        # WAC/Parlor co-publications already exist as the WAC Crossref record
+        # (DOI + chapters); a second Parlor row would duplicate it on /books.
+        # book_title_repair.merge_copublished() folds any that slip through.
+        from book_title_repair import norm_full_title
+        key = norm_full_title(title)
+        for (wac_title,) in conn.execute(
+                "SELECT title FROM books WHERE record_type = 'book' "
+                "AND publisher = 'WAC Clearinghouse'"):
+            if norm_full_title(wac_title) == key:
+                return "skipped"
+
     if existing_id is not None:
         conn.execute("""
             UPDATE books

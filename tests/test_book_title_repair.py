@@ -61,3 +61,21 @@ def test_plausible_rejects_mismatched_scrape():
 def test_match_numbering_follows_the_deposit():
     assert btr._match_numbering("3. Opciones Teóricas", "pciones Te�ricas") == "Opciones Teóricas"
     assert btr._match_numbering("8. Creating", "8. Creating") == "8. Creating"
+
+
+def test_merge_copublished_folds_parlor_row_into_wac_twin(seeded_db):
+    from db.core import get_conn
+    with get_conn() as conn:
+        conn.execute("INSERT INTO books (doi, title, record_type, publisher, year, source) "
+                     "VALUES ('10.37514/x', 'A Theory of Literate Action: Literate Action Volume 2', "
+                     "'book', 'WAC Clearinghouse', 2013, 'crossref')")
+        conn.execute("INSERT INTO books (title, record_type, publisher, year, source, abstract) "
+                     "VALUES ('A Theory of Literate Action: Literate Action, Volume 2', "
+                     "'book', 'Parlor Press', 2014, 'parlor', 'An abstract.')")
+        conn.commit()
+    assert btr.merge_copublished() == 1
+    assert btr.merge_copublished() == 0
+    with get_conn() as conn:
+        rows = conn.execute("SELECT publisher, abstract FROM books WHERE title LIKE "
+                            "'A Theory of Literate Action%'").fetchall()
+    assert [(r["publisher"], r["abstract"]) for r in rows] == [("WAC Clearinghouse", "An abstract.")]
