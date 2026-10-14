@@ -422,15 +422,18 @@ def get_author_citing_venues(author_name: str, top_journals: int = 10) -> dict:
     """
     from journals import JOURNAL_GROUPS
 
+    # One row per (citing article, cited article) pair, so a reference stored
+    # twice (possible before the v17 uniqueness guards) still counts once.
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT citing.journal AS citing_journal,
                    COUNT(*)       AS citation_count
-            FROM citations c
-            JOIN articles cited  ON cited.id  = c.target_article_id
-            JOIN articles citing ON citing.id = c.source_article_id
-            WHERE cited.authors LIKE ?
-              AND citing.journal IS NOT NULL AND citing.journal != ''
+            FROM (SELECT DISTINCT c.source_article_id, c.target_article_id
+                    FROM citations c
+                    JOIN articles cited ON cited.id = c.target_article_id
+                   WHERE cited.authors LIKE ?) e
+            JOIN articles citing ON citing.id = e.source_article_id
+            WHERE citing.journal IS NOT NULL AND citing.journal != ''
             GROUP BY citing.journal
             ORDER BY citation_count DESC
         """, (f"%{author_name}%",)).fetchall()
