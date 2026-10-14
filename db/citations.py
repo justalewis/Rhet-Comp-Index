@@ -18,6 +18,13 @@ log = logging.getLogger(__name__)
 _EDGES = ("(SELECT DISTINCT source_article_id, target_article_id "
           "FROM citations WHERE target_article_id IS NOT NULL)")
 
+# Queries that keep links "where both endpoints are in our set" write the
+# target test as `+c.target_article_id IN (...)`. The unary plus stops SQLite
+# from matching both IN-lists against the (source, target) guard index, which
+# probes every source x target combination: on a production-size table the
+# uncapped Temporal Evolution query took ~100 s that way, and 0.15 s with the
+# plus (it seeks on source and filters target instead).
+
 
 def get_articles_needing_citation_fetch(limit=None):
     """Articles with DOIs where references_fetched_at IS NULL, newest-first."""
@@ -195,7 +202,7 @@ def get_ego_network(article_id):
                    c.target_article_id AS target
             FROM   citations c
             WHERE  c.source_article_id IN (SELECT id FROM neighbors)
-              AND  c.target_article_id  IN (SELECT id FROM neighbors)
+              AND +c.target_article_id  IN (SELECT id FROM neighbors)
         """, (article_id, article_id, article_id)).fetchall()
 
     nodes = [dict(r) for r in node_rows]
@@ -399,7 +406,7 @@ def get_citation_network(min_citations=5, journals=None,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
-              AND c.target_article_id IN (SELECT id FROM filtered)
+              AND +c.target_article_id IN (SELECT id FROM filtered)
         """, params + [max_nodes]).fetchall()
 
         nodes = [dict(r) for r in node_rows]
@@ -1066,7 +1073,7 @@ def get_citation_centrality(min_citations=1, journals=None,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
-              AND c.target_article_id IN (SELECT id FROM filtered)
+              AND +c.target_article_id IN (SELECT id FROM filtered)
         """, params + [max_nodes]).fetchall()
 
     # ── Build NetworkX directed graph ──────────────────────────────────────
@@ -1506,7 +1513,7 @@ def get_community_detection(min_citations=2, journals=None,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
-              AND c.target_article_id IN (SELECT id FROM filtered)
+              AND +c.target_article_id IN (SELECT id FROM filtered)
         """, params + [max_nodes]).fetchall()
 
     # ── Build undirected weighted graph ──
@@ -1709,7 +1716,7 @@ def get_main_path(min_citations=1, journals=None,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
-              AND c.target_article_id IN (SELECT id FROM filtered)
+              AND +c.target_article_id IN (SELECT id FROM filtered)
         """, params + [max_nodes]).fetchall()
 
     # ── Build directed graph (source→target = citer→cited) ──
@@ -1926,7 +1933,7 @@ def get_temporal_network_evolution(min_citations=1, journals=None,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
-              AND c.target_article_id IN (SELECT id FROM filtered)
+              AND +c.target_article_id IN (SELECT id FROM filtered)
         """, params).fetchall()
 
     # ── Build lookup structures ──
