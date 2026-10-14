@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorMessage } from "../shared/load.js";
 import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -18,7 +19,7 @@ let _exportWired_loadCitTrends = false;
 
 async function loadCitTrends() {
   if (!_exportWired_loadCitTrends) {
-    renderExportToolbar('tab-cittrends', { svgSelector: '#cittrends-chart', dataProvider: () => (window.__expCitTrends || []) });
+    renderExportToolbar('tab-cittrends', { svgSelector: '#cittrends-chart', svg: false, dataProvider: () => (window.__expCitTrends || []) });
     _exportWired_loadCitTrends = true;
   }
   const noteEl = document.getElementById('cittrends-note');
@@ -31,11 +32,10 @@ async function loadCitTrends() {
 
   let rows;
   try {
-    const resp = await fetch('/api/stats/citation-trends?' + params.toString());
-    rows = await resp.json();
+    rows = await getJson('/api/stats/citation-trends?' + params.toString());
     window.__expCitTrends = rows;
   } catch (e) {
-    noteEl.textContent = 'Failed to load data.';
+    noteEl.textContent = loadErrorMessage(e, 'Failed to load data.');
     return;
   }
 

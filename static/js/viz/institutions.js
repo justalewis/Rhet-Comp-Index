@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { PALETTE, journalColor, citnetJournalColor } from "../utils/colors.js";
@@ -19,7 +20,7 @@ let _exportWired_loadInstitutions = false;
 
 async function loadInstitutions() {
   if (!_exportWired_loadInstitutions) {
-    renderExportToolbar('tab-institutions', { svgSelector: '#institutions-container svg', dataProvider: () => (window.__expInstitutions && window.__expInstitutions.institutions || []) });
+    renderExportToolbar('tab-institutions', { svgSelector: '#inst-bar-chart', svg: false, dataProvider: () => (window.__expInstitutions && window.__expInstitutions.institutions || []) });
     _exportWired_loadInstitutions = true;
   }
   const barContainer = document.getElementById('inst-bar-container');
@@ -27,11 +28,10 @@ async function loadInstitutions() {
 
   let data;
   try {
-    const resp = await fetch('/api/stats/institutions?' + yearRangeQuery('inst'), { cache: 'no-cache' });
-    data = await resp.json();
+    data = await getJson('/api/stats/institutions?' + yearRangeQuery('inst'), { cache: 'no-cache' });
     window.__expInstitutions = data;
   } catch (e) {
-    barContainer.innerHTML = '<p class="explore-hint">Failed to load institution data.</p>';
+    barContainer.innerHTML = loadErrorHtml(e, 'Failed to load institution data.');
     return;
   }
 
@@ -41,7 +41,7 @@ async function loadInstitutions() {
   // ── Bar chart: top 25 institutions ──────────────────────────────────────────
   if (institutions.length === 0) {
     barContainer.innerHTML =
-      '<p class="explore-hint">No institution data yet — run <code>python enrich_openalex.py</code> to populate.</p>';
+      '<p class="explore-hint">No institution data for this year range.</p>';
   } else {
     barContainer.innerHTML = '<canvas id="inst-bar-chart" style="cursor:pointer"></canvas>';
     const barCtx = document.getElementById('inst-bar-chart').getContext('2d');
@@ -114,6 +114,8 @@ async function loadInstitutions() {
   if (!timeline.years || timeline.years.length === 0 || !timeline.series || timeline.series.length === 0) {
     lineContainer.innerHTML = '<p class="explore-hint">No timeline data available yet.</p>';
   } else {
+    // An earlier empty result replaced the canvas with a hint; put it back.
+    if (!document.getElementById('inst-line-chart')) lineContainer.innerHTML = '<canvas id="inst-line-chart"></canvas>';
     const lineCtx = document.getElementById('inst-line-chart').getContext('2d');
     if (instLineChart) instLineChart.destroy();
 

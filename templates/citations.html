@@ -69,7 +69,10 @@
 
 {% block body_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script>
+<script type="module">
+import { escapeHtml } from "/static/js/utils/tooltips.js";
+import { getJson, loadErrorMessage } from "/static/js/shared/load.js";
+
 const FOCAL_ID   = {{ article.id }};
 const ALL_JOURNALS = {{ all_journals | tojson | safe }};
 
@@ -95,16 +98,14 @@ const tip = d3.select('body').append('div')
 async function loadGraph() {
   const statsEl = document.getElementById('ego-stats-text');
   try {
-    const resp = await fetch('/api/citations/ego?article=' + FOCAL_ID);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
+    const data = await getJson('/api/citations/ego?article=' + FOCAL_ID);
     if (!data.nodes || data.nodes.length === 0) {
       statsEl.textContent = 'No citation data available for this article yet.';
       return;
     }
     renderGraph(data);
   } catch (err) {
-    statsEl.textContent = 'Failed to load graph: ' + err.message;
+    statsEl.textContent = loadErrorMessage(err, 'Failed to load graph.');
   }
 }
 
@@ -124,7 +125,7 @@ function renderGraph(data) {
   const legendEl = document.getElementById('ego-legend');
   legendEl.innerHTML = journalSet.map(j =>
     `<span class="citnet-legend-item">
-       <span class="citnet-legend-dot" style="background:${journalColor(j)}"></span>${j}
+       <span class="citnet-legend-dot" style="background:${journalColor(j)}"></span>${escapeHtml(j)}
      </span>`
   ).join('');
 
@@ -202,9 +203,9 @@ function renderGraph(data) {
           : '';
         tip.style('opacity', 1)
            .html(
-             `<strong>${d.title}</strong><br>` +
-             `${authors}${year ? ' (' + year + ')' : ''}<br>` +
-             `<em>${d.journal || ''}</em><br>` +
+             `<strong>${escapeHtml(d.title)}</strong><br>` +
+             `${escapeHtml(authors)}${year ? ' (' + year + ')' : ''}<br>` +
+             `<em>${escapeHtml(d.journal || '')}</em><br>` +
              `Cited by ${d.internal_cited_by_count || 0} in index`
            );
       })

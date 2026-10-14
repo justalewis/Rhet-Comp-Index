@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorMessage } from "../shared/load.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
@@ -17,6 +18,7 @@ let rpSeedId = null;     // selected seed article id
 let rpSvg = null;        // D3 svg selection
 let rpSimulation = null; // D3 force simulation
 let rpDebounce = null;   // search debounce timer
+let rpWired = false;     // listeners attached (initReadingPath runs again on a figure change)
 
 const RP_COLORS = {
   seed:     '#e74c3c',
@@ -28,6 +30,14 @@ const RP_COLORS = {
 
 
 function initReadingPath() {
+  // The figure toggle calls this again to redraw the visible tool. Wiring
+  // twice would double every listener, so later calls only redraw.
+  if (rpWired) {
+    if (rpData && document.getElementById('rp-graph-container').offsetParent !== null) rpRenderGraph();
+    return;
+  }
+  rpWired = true;
+
   // Wire the shared SVG/PNG/CSV export toolbar. CSV flattens the four
   // relationship buckets (cites, cited_by, cocited, coupled) plus the
   // seed into a single rows array, so the export reflects the assembled
@@ -96,8 +106,7 @@ function initReadingPath() {
 async function rpSearch(q) {
   const acBox = document.getElementById('rp-autocomplete');
   try {
-    const resp = await fetch('/api/articles/search?q=' + encodeURIComponent(q) + '&limit=8');
-    const results = await resp.json();
+    const results = await getJson('/api/articles/search?q=' + encodeURIComponent(q) + '&limit=8');
     if (!results.length) {
       acBox.innerHTML = '<div style="padding:0.6rem 0.8rem;color:#8b6045;font-size:0.85rem;">No results found</div>';
       acBox.style.display = 'block';
@@ -124,6 +133,9 @@ async function rpSearch(q) {
     });
   } catch (e) {
     console.error('Reading path search error:', e);
+    acBox.innerHTML = '<div style="padding:0.6rem 0.8rem;color:#8b6045;font-size:0.85rem;">' +
+      escHtml(loadErrorMessage(e, 'Search failed. Try again in a moment.')) + '</div>';
+    acBox.style.display = 'block';
   }
 }
 
@@ -196,9 +208,28 @@ function rpSelectSeed(article) {
   document.getElementById('rp-results').style.display = 'none';
 }
 
+// Keep ?seed= in the address bar in step with the path on screen, so the
+// URL can be copied or bookmarked and reopens the same path.
+function rpSyncUrl(id) {
+  const params = new URLSearchParams(location.search);
+  if (id) params.set('seed', id); else params.delete('seed');
+  const qs = params.toString();
+  history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+}
+
+// Failed builds: the API's own reason for a missing article, the rate-limit
+// sentence on a 429, a plain failure otherwise.
+function rpBuildFailed(e) {
+  const fallback = e && e.status === 404 && e.detail
+    ? 'Error: ' + e.detail
+    : 'Could not build a reading path. Try again in a moment.';
+  alert(loadErrorMessage(e, fallback));
+}
+
 function rpClearSeed() {
   rpSeedId = null;
   rpData = null;
+  rpSyncUrl(null);
   document.getElementById('rp-seed-card').style.display = 'none';
   document.getElementById('rp-results').style.display = 'none';
   document.getElementById('rp-search').value = '';
@@ -214,15 +245,10 @@ async function rpBuildFromId(articleId) {
   document.getElementById('rp-seed-card').style.display = 'none';
 
   try {
-    const resp = await fetch('/api/citations/reading-path?article=' + articleId);
-    rpData = await resp.json();
+    rpData = await getJson('/api/citations/reading-path?article=' + articleId);
     window.__expReadingPath = rpData;
-    if (rpData.error) {
-      document.getElementById('rp-loading').style.display = 'none';
-      alert('Error: ' + rpData.error);
-      return;
-    }
     rpRecentSave(rpData.seed);
+    rpSyncUrl(articleId);
     // Show seed card
     rpSelectSeed(rpData.seed);
     document.getElementById('rp-loading').style.display = 'none';
@@ -230,6 +256,7 @@ async function rpBuildFromId(articleId) {
   } catch (e) {
     document.getElementById('rp-loading').style.display = 'none';
     console.error('Reading path build error:', e);
+    rpBuildFailed(e);
   }
 }
 
@@ -240,16 +267,10 @@ async function rpBuild() {
   document.getElementById('rp-build-btn').disabled = true;
 
   try {
-    const resp = await fetch('/api/citations/reading-path?article=' + rpSeedId);
-    rpData = await resp.json();
+    rpData = await getJson('/api/citations/reading-path?article=' + rpSeedId);
     window.__expReadingPath = rpData;
-    if (rpData.error) {
-      document.getElementById('rp-loading').style.display = 'none';
-      document.getElementById('rp-build-btn').disabled = false;
-      alert('Error: ' + rpData.error);
-      return;
-    }
     rpRecentSave(rpData.seed);
+    rpSyncUrl(rpSeedId);
     document.getElementById('rp-loading').style.display = 'none';
     document.getElementById('rp-build-btn').disabled = false;
     rpRenderResults();
@@ -257,6 +278,7 @@ async function rpBuild() {
     document.getElementById('rp-loading').style.display = 'none';
     document.getElementById('rp-build-btn').disabled = false;
     console.error('Reading path build error:', e);
+    rpBuildFailed(e);
   }
 }
 
@@ -277,15 +299,15 @@ function rpRenderResults() {
   document.getElementById('rp-results').style.display = 'block';
 
   // Show graph by default
-  rpShowView('graph', document.querySelector('#rp-results .explore-tab.active'));
+  rpShowView('graph', document.querySelector('#rp-results .rp-view-btn[data-view="graph"]'));
   rpRenderGraph();
-  rpRenderList(rpData.reading_list);
+  rpFilterList('all', document.querySelector('.rp-filter-btn[data-filter="all"]'));
 }
 
 function rpShowView(view, btn) {
   // Toggle view between graph and list
   const parent = document.getElementById('rp-results');
-  parent.querySelectorAll('.explore-tab').forEach(b => b.classList.remove('active'));
+  parent.querySelectorAll('.rp-view-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.getElementById('rp-graph-view').style.display = view === 'graph' ? 'block' : 'none';
   document.getElementById('rp-list-view').style.display  = view === 'list'  ? 'block' : 'none';
@@ -450,6 +472,7 @@ function rpRenderGraph() {
       );
       const tx = width / 2 - (bounds.x + bounds.width / 2) * scale;
       const ty = height / 2 - (bounds.y + bounds.height / 2) * scale;
+      const zoom = svg.node().__dsZoomBehavior;   // set by enableZoomPan
       svg.transition().duration(600)
         .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
     }

@@ -228,8 +228,8 @@
 
       {{ how_to_read(
           "How indexed-output volume is distributed across years and journals, and where individual venues sit in the field's overall scholarly throughput.",
-          "A claim about &lsquo;how much the field publishes.&rsquo; The timeline reflects indexed output, not total publishing. Journals added to the index more recently show data only from their indexing date forward, which produces sharp leading edges that look like surges but are recovery artifacts.",
-          "Toggle &lsquo;Show top 8 journals only&rsquo; to read the field's high-volume venues separately from the long tail. The shape of the long tail (steady or staircased) often reveals when small journals were added to the index versus when they actually published."
+          "A claim about ‘how much the field publishes.’ The timeline reflects indexed output, not total publishing. Journals added to the index more recently show data only from their indexing date forward, which produces sharp leading edges that look like surges but are recovery artifacts.",
+          "Toggle ‘Show top 8 journals only’ to read the field's high-volume venues separately from the long tail. The shape of the long tail (steady or staircased) often reveals when small journals were added to the index versus when they actually published."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -272,6 +272,7 @@
         <span class="filter-label" style="margin-left:1rem;">Publications per year by journal</span>
         {{ year_range('tl', 'loadTimeline()') }}
       </div>
+      <p id="timeline-note" class="explore-hint" style="display:none;"></p>
       <div class="chart-container">
         <canvas id="timeline-chart"></canvas>
       </div>
@@ -284,7 +285,7 @@
 
       {{ how_to_read(
           "Which thematic tags appear together on the same articles. Useful for spotting tightly intertwined research threads and recognized sub-fields at the intersection of two terms.",
-          "A claim about which topics are &lsquo;more important&rsquo; or which research threads are most central. Frequent tags will co-occur with everything by base-rate inflation: the heatmap shows volume of overlap, not strength of association.",
+          "A claim about which topics are ‘more important’ or which research threads are most central. Frequent tags will co-occur with everything by base-rate inflation: the heatmap shows volume of overlap, not strength of association.",
           "Look for surprising pairs, where you didn't expect a heavy overlap. To control for base rate, divide each cell by the marginal counts and inspect the residual; the heatmap is the unnormalized signal."
       ) }}
 
@@ -339,7 +340,7 @@
         <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: authors who publish primarily in journals without CrossRef DOIs appear less connected than their actual collaborative record →</a></p>
         {{ network_legend(
             "author's total indexed publications",
-            "uniform (highlighted on click)",
+            "first letter of the author's surname (only to tell nodes apart)",
             "undirected; weight = number of co-authored articles"
         ) }}
         {{ how_to_read(
@@ -447,14 +448,14 @@
 
       {{ network_legend(
           "total co-citation strength (sum of edge weights)",
-          "uniform (cluster position emerges from layout)",
+          "the journal the author has published in most (hue = sub-field)",
           "undirected; weight = number of citing articles co-citing the pair"
       ) }}
 
       {{ how_to_read(
           "Which scholars the citing community has come to treat as part of the same intellectual conversation. Useful for identifying recognized schools of thought and the bridge figures between them.",
           "A claim about who has actually collaborated, or about whether any two scholars agree intellectually. Co-citation reflects what later authors do with a pair, not whether either has ever cited the other.",
-          "Restrict the citing-articles year range to a recent decade (e.g., 2018&ndash;present) and watch how the cluster structure shifts; the shifts mark moments when the field's perception of who-belongs-with-whom moved."
+          "Restrict the citing-articles year range to a recent decade (e.g., 2018–present) and watch how the cluster structure shifts; the shifts mark moments when the field's perception of who-belongs-with-whom moved."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -820,7 +821,7 @@
       {{ how_to_read(
           "Who cites whom inside the indexed corpus. Useful for locating landmark articles by visual centrality and tracing chains of intellectual debt between specific texts.",
           "A claim about which articles are most influential overall. The graph counts only edges where both endpoints are indexed; an article cited heavily in books or unindexed venues will look smaller than its actual influence.",
-          "Restrict the year range to a 10&ndash;15 year window (e.g., 2010&ndash;2025) to see which articles are at the center of recent conversation, then compare to the all-time view. The articles that lose centrality under the recent filter are the ones the field is no longer reaching back for."
+          "Restrict the year range to a 10–15 year window (e.g., 2010–2025) to see which articles are at the center of recent conversation, then compare to the all-time view. The articles that lose centrality under the recent filter are the ones the field is no longer reaching back for."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -961,7 +962,7 @@
 
       {{ how_to_read(
           "Which articles sit at the structural center of the citation graph (eigenvector) versus which articles bridge between sub-areas (betweenness). The two metrics ask different questions and often disagree.",
-          "A claim about which articles are most &lsquo;important&rsquo;. Both metrics tilt toward older articles with more accumulated citation paths, and the rankings depend on which sub-areas have the densest internal citation chains in this corpus.",
+          "A claim about which articles are most ‘important’. Both metrics tilt toward older articles with more accumulated citation paths, and the rankings depend on which sub-areas have the densest internal citation chains in this corpus.",
           "Read the eigenvector top 25 and the betweenness top 25 side by side. Articles that appear on only one list are doing different structural work than articles that appear on both."
       ) }}
 
@@ -1258,7 +1259,7 @@
 
       {{ network_legend(
           "total co-citation strength (sum of edge weights)",
-          "uniform (cluster position emerges from layout)",
+          "source journal (hue = sub-field)",
           "undirected; weight = number of citing articles co-citing the pair"
       ) }}
 
@@ -1398,14 +1399,14 @@
 
       {{ network_legend(
           "total coupling strength (sum of edge weights)",
-          "uniform (cluster position emerges from layout)",
+          "source journal (hue = sub-field)",
           "undirected; weight = number of references the two articles share"
       ) }}
 
       {{ how_to_read(
           "Which articles read the same prior work and share intellectual foundations. Useful for finding methodological siblings, locating clusters working from the same theoretical sources, and identifying review articles by their distinctive coupling pattern.",
-          "A claim about which articles are about the same topic. Coupling-strength tilts toward articles whose reference lists are long and stay inside the indexed corpus &mdash; literature reviews and methodological surveys, especially. An article that engages prior work seriously but cites mostly external sources will look less coupled than its actual position warrants.",
-          "Compare the cluster structure here to the Article Co-Citation cluster structure. Articles that cluster differently in the two views drew on one body of work (<em>input</em>, coupling) but were received alongside another (<em>reception</em>, co-citation)."
+          "A claim about which articles are about the same topic. Coupling-strength tilts toward articles whose reference lists are long and stay inside the indexed corpus — literature reviews and methodological surveys, especially. An article that engages prior work seriously but cites mostly external sources will look less coupled than its actual position warrants.",
+          "Compare the cluster structure here to the Article Co-Citation cluster structure. Articles that cluster differently in the two views drew on one body of work (input, coupling) but were received alongside another (reception, co-citation)."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -1537,9 +1538,9 @@
       <p class="tab-coverage-link"><a href="/coverage" class="coverage-note-link">Coverage notes: citation data depends on journals that deposit reference lists with CrossRef &rarr;</a></p>
 
       {{ how_to_read(
-          "Articles that went years with little citation before experiencing a surge of recognition. The Beauty Coefficient quantifies how dormant and how sharp the awakening was &mdash; useful for spotting articles whose late uptake may mark a disciplinary turn.",
-          "A claim about <em>why</em> an article was overlooked, or about whether it deserved to be. The metric registers temporal patterns, not reasons. Some sleepers wake because of a new theoretical turn, others because a single high-profile prince article reaches back, others because the corpus's coverage of citing work has improved.",
-          "After identifying a sleeping beauty, run the article through the Reading Path tool to see what recent articles are reaching back to it. Those are the &lsquo;princes&rsquo; that woke it up, and they often signal where the field's interests have shifted."
+          "Articles that went years with little citation before experiencing a surge of recognition. The Beauty Coefficient quantifies how dormant and how sharp the awakening was — useful for spotting articles whose late uptake may mark a disciplinary turn.",
+          "A claim about why an article was overlooked, or about whether it deserved to be. The metric registers temporal patterns, not reasons. Some sleepers wake because of a new theoretical turn, others because a single high-profile prince article reaches back, others because the corpus's coverage of citing work has improved.",
+          "After identifying a sleeping beauty, run the article through the Reading Path tool to see what recent articles are reaching back to it. Those are the ‘princes’ that woke it up, and they often signal where the field's interests have shifted."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -1659,7 +1660,7 @@
 
       {{ how_to_read(
           "Asymmetric citation flow between journals: who cites whom and who gets cited back, plus the size of the loop that marks within-venue self-reference.",
-          "A measure of which journal is more &lsquo;important&rsquo;. Asymmetries reflect coverage as much as field structure: a journal can't cite if it has no DOIs, so RSS-only venues will appear to be net recipients of citation when they're really just structurally invisible as citers.",
+          "A measure of which journal is more ‘important’. Asymmetries reflect coverage as much as field structure: a journal can't cite if it has no DOIs, so RSS-only venues will appear to be net recipients of citation when they're really just structurally invisible as citers.",
           "Look for chords that are thick on one end and thin on the other. Those asymmetries often reveal sub-areas where one journal is the destination and another is the producer of citations toward it."
       ) }}
 
@@ -1786,8 +1787,8 @@
 
       {{ how_to_read(
           "How far back a journal's citations reach (citing half-life) and how long its own articles keep being cited (cited half-life).",
-          "A measure of a journal's &lsquo;age&rsquo; or &lsquo;currency.&rsquo; A long cited half-life can mean either that its older work keeps being cited or that its corpus is small enough to be dominated by a few old works.",
-          "Compare a journal's citing half-life to its cited half-life. When authors keep returning to old work but new work keeps citing the journal, that's a different pattern than a journal whose authors and citers all live in the recent literature &mdash; the first looks like a tradition, the second looks like a research front."
+          "A measure of a journal's ‘age’ or ‘currency.’ A long cited half-life can mean either that its older work keeps being cited or that its corpus is small enough to be dominated by a few old works.",
+          "Compare a journal's citing half-life to its cited half-life. When authors keep returning to old work but new work keeps citing the journal, that's a different pattern than a journal whose authors and citers all live in the recent literature — the first looks like a tradition, the second looks like a research front."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -1915,7 +1916,7 @@
 
       {{ how_to_read(
           "The most-traveled chain through the citation graph: a backbone of how ideas flow from frontier articles toward foundational ones. Useful for identifying landmark articles in a citation lineage.",
-          "A claim that this is <em>the</em> main path of the field. There are typically several high-traffic paths through a citation DAG; this tool surfaces the single chain with the highest aggregate flow, not all of them. Articles missing from the main path are not necessarily peripheral &mdash; they may sit on a parallel high-traffic route.",
+          "A claim that this is the main path of the field. There are typically several high-traffic paths through a citation DAG; this tool surfaces the single chain with the highest aggregate flow, not all of them. Articles missing from the main path are not necessarily peripheral — they may sit on a parallel high-traffic route.",
           "Restrict the corpus by year range or journal cluster and re-run. Watching how the main path shifts when you scope the field to a different slice is more informative than the headline result on the all-time view."
       ) }}
 
@@ -2021,7 +2022,7 @@
 
       {{ how_to_read(
           "How aggregate properties of the citation graph (density, clustering coefficient, modularity, growth rate) change year by year. Useful for spotting structural shifts in the field's citation behavior.",
-          "A claim about <em>why</em> the numbers move. A rising clustering coefficient could reflect tighter sub-area cohesion, or coverage gaps that drop the bridge edges between sub-areas. The metric describes structural shape, not its causes.",
+          "A claim about why the numbers move. A rising clustering coefficient could reflect tighter sub-area cohesion, or coverage gaps that drop the bridge edges between sub-areas. The metric describes structural shape, not its causes.",
           "Compare the modularity track against the Community Detection cluster count for the same year. When modularity rises but the cluster count holds steady, the existing fronts are tightening; when cluster count rises, the field is fracturing into more specialized sub-areas."
       ) }}
 
@@ -2189,7 +2190,7 @@
 
       {{ how_to_read(
           "Which universities OpenAlex has parsed as primary affiliations for the indexed articles, and how that distribution moves over time. Useful for spotting institutional clusters and tracking output trends.",
-          "A measure of &lsquo;where the field is happening&rsquo;. OpenAlex's affiliation parsing has known gaps: it gives priority to first-author institutions, misses adjuncts and irregular employees, and is sparse for articles without DOIs. Two-year colleges and small institutions are especially underrepresented.",
+          "A measure of ‘where the field is happening’. OpenAlex's affiliation parsing has known gaps: it gives priority to first-author institutions, misses adjuncts and irregular employees, and is sparse for articles without DOIs. Two-year colleges and small institutions are especially underrepresented.",
           "Compare the rolled-up totals against the year-by-year line chart. Institutions that show up in the totals but as a flat line on the time chart are recent arrivals; long horizontal traces mark sustained programs."
       ) }}
 
@@ -2262,8 +2263,8 @@
 
       {{ how_to_read(
           "The bibliographic neighborhood of a seed article: its backward citations, forward citations, co-citation neighbors, and bibliographic-coupling neighbors.",
-          "A claim that the top results are the &lsquo;best&rsquo; related articles. Relevance ranks combine four heterogeneous signals (citing, cited, co-cited, coupled); the ranking surfaces a productive starting set, not a definitive read.",
-          "Pick a seed article whose intellectual neighborhood you already know, and check whether the tool reproduces it. The places where it surprises you &mdash; surfacing articles you didn't expect, or missing articles you did &mdash; are the places worth following."
+          "A claim that the top results are the ‘best’ related articles. Relevance ranks combine four heterogeneous signals (citing, cited, co-cited, coupled); the ranking surfaces a productive starting set, not a definitive read.",
+          "Pick a seed article whose intellectual neighborhood you already know, and check whether the tool reproduces it. The places where it surprises you — surfacing articles you didn't expect, or missing articles you did — are the places worth following."
       ) }}
 
       <details class="abstract-toggle methodology-section">
@@ -2327,7 +2328,7 @@
           </div>
           <button id="rp-clear-btn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#8b6045;padding:0.2rem;" title="Clear seed">&times;</button>
         </div>
-        <button id="rp-build-btn" class="explore-tab" style="margin-top:0.8rem;padding:0.45rem 1.2rem;font-size:0.9rem;">Build Reading Path</button>
+        <button id="rp-build-btn" type="button" class="btn" style="margin-top:0.8rem;">Build Reading Path</button>
       </div>
 
       <!-- Loading indicator -->
@@ -2343,8 +2344,8 @@
 
         <!-- View toggle -->
         <div style="margin-bottom:1rem;display:flex;gap:0.5rem;">
-          <button class="explore-tab active" onclick="rpShowView('graph', this)">Network Graph</button>
-          <button class="explore-tab" onclick="rpShowView('list', this)">Reading List</button>
+          <button type="button" class="rp-btn rp-view-btn active" data-view="graph" onclick="rpShowView('graph', this)">Network Graph</button>
+          <button type="button" class="rp-btn rp-view-btn" data-view="list" onclick="rpShowView('list', this)">Reading List</button>
         </div>
 
         <!-- Graph view -->
@@ -2373,10 +2374,10 @@
           </div>
           <div id="rp-list-container"></div>
           <!-- Export buttons -->
-          <div style="margin-top:1.2rem;display:flex;gap:0.6rem;">
-            <button id="rp-export-bibtex" class="explore-tab" style="padding:0.35rem 0.9rem;font-size:0.85rem;">Export BibTeX</button>
-            <button id="rp-export-text" class="explore-tab" style="padding:0.35rem 0.9rem;font-size:0.85rem;">Export Plain Text</button>
-            <button id="rp-export-md" class="explore-tab" style="padding:0.35rem 0.9rem;font-size:0.85rem;">Export Annotated (Markdown)</button>
+          <div style="margin-top:1.2rem;display:flex;gap:0.6rem;flex-wrap:wrap;">
+            <button id="rp-export-bibtex" type="button" class="rp-btn">Export BibTeX</button>
+            <button id="rp-export-text" type="button" class="rp-btn">Export Plain Text</button>
+            <button id="rp-export-md" type="button" class="rp-btn">Export Annotated (Markdown)</button>
           </div>
         </div>
 

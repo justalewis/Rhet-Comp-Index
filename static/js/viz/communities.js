@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -38,7 +39,7 @@ let _exportWired_loadCommunities = false;
 
 async function loadCommunities() {
   if (!_exportWired_loadCommunities) {
-    renderExportToolbar('tab-communities', { svgSelector: '#communities-container svg', dataProvider: () => (window.__expCommunities && window.__expCommunities.communities || []) });
+    renderExportToolbar('tab-communities', { svgSelector: '#comm-container svg', dataProvider: () => (window.__expCommunities && window.__expCommunities.communities || []) });
     _exportWired_loadCommunities = true;
   }
   const container = document.getElementById('comm-container');
@@ -65,11 +66,10 @@ async function loadCommunities() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/communities?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/communities?' + params.toString());
     window.__expCommunities = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load community data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load community data.');
     return;
   }
 
@@ -97,7 +97,7 @@ function renderCommunities(container, data) {
     const label = c.topics.length ? c.topics.slice(0,2).join(', ') : `Community ${c.id}`;
     return `<span class="citnet-legend-item" data-comm="${c.id}" style="cursor:pointer;">` +
       `<span class="citnet-legend-dot" style="background:${commColor(c.id)}"></span>` +
-      `${label} (${c.size})</span>`;
+      `${escapeHtml(label)} (${c.size})</span>`;
   }).join('');
 
   const W = container.clientWidth || 820;
@@ -129,11 +129,11 @@ function renderCommunities(container, data) {
       const comm = data.communities.find(c => c.id === d.community);
       const commLabel = comm && comm.topics.length ? comm.topics.slice(0,3).join(', ') : `Community ${d.community}`;
       tip.html(
-        `<strong>${d.title || 'Untitled'}</strong><br>` +
-        `${d.authors || ''} (${yr})<br>` +
-        `<em>${d.journal || ''}</em><br>` +
+        `<strong>${escapeHtml(d.title || 'Untitled')}</strong><br>` +
+        `${escapeHtml(d.authors || '')} (${yr})<br>` +
+        `<em>${escapeHtml(d.journal || '')}</em><br>` +
         `Cited ${d.internal_cited_by_count}\u00d7 internally<br>` +
-        `<span style="color:${commColor(d.community)};">\u25CF</span> ${commLabel}`
+        `<span style="color:${commColor(d.community)};">\u25CF</span> ${escapeHtml(commLabel)}`
       ).style('opacity', 1);
       positionTooltip(tip, event);
     })
@@ -223,12 +223,12 @@ function renderCommunityTables(data) {
   let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">';
   for (const c of data.communities) {
     const topics = c.topics.map(t =>
-      `<span style="display:inline-block;padding:0.1rem 0.45rem;font-size:0.72rem;background:#f5f0e8;border-radius:3px;color:#5a3e28;margin:0.1rem 0.15rem;">${t}</span>`
+      `<span style="display:inline-block;padding:0.1rem 0.45rem;font-size:0.72rem;background:#f5f0e8;border-radius:3px;color:#5a3e28;margin:0.1rem 0.15rem;">${escapeHtml(t)}</span>`
     ).join('');
-    const journals = c.top_journals.map(j => `${j.name} (${j.count})`).join(', ');
+    const journals = c.top_journals.map(j => `${escapeHtml(j.name)} (${j.count})`).join(', ');
     const articles = c.top_articles.map(a => {
       const yr = (a.pub_date || '').substring(0, 4);
-      return `<li style="margin-bottom:0.3rem;"><a href="/article/${a.id}" style="color:#5a3e28;">${a.title || 'Untitled'}</a> <span style="color:#999;">${yr} &middot; cited ${a.internal_cited_by_count}&times;</span></li>`;
+      return `<li style="margin-bottom:0.3rem;"><a href="/article/${a.id}" style="color:#5a3e28;">${escapeHtml(a.title || 'Untitled')}</a> <span style="color:#999;">${yr} &middot; cited ${a.internal_cited_by_count}&times;</span></li>`;
     }).join('');
 
     const ins = insularity[c.id] || { internal: 0, external: 0 };

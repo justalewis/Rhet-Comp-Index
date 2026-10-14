@@ -629,7 +629,7 @@ main:focus { outline: none; }
 
 .btn {
   font-family: var(--f-ui); font-size: var(--text-sm); font-weight: 700;
-  padding: 0.44rem 1.1rem;
+  padding: 0.44rem 1.1rem; cursor: pointer;
   color: var(--added-white); background: var(--terracotta);
   border: 1px solid var(--terracotta); border-radius: var(--radius-sm);
   text-decoration: none; display: inline-block;
@@ -1288,6 +1288,7 @@ main:focus { outline: none; }
 
 .filter-apply-btn,
 .net-btn,
+.rp-btn,
 .rp-filter-btn,
 .soi-compare-control,
 .ds-zoom-reset {
@@ -1299,10 +1300,12 @@ main:focus { outline: none; }
 }
 .filter-apply-btn:hover,
 .net-btn:hover,
+.rp-btn:hover,
 .rp-filter-btn:hover,
 .soi-compare-control:hover,
 .ds-zoom-reset:hover { background: var(--terracotta-wash); }
 
+.rp-btn.active,
 .rp-filter-btn.active,
 .net-btn.active {
   color: var(--added-white); background: var(--terracotta);

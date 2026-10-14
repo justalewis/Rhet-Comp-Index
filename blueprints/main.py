@@ -11,7 +11,7 @@ from db import (
     get_all_tags, get_year_range,
     get_article_by_id, get_related_articles,
     get_article_citations, get_article_all_references,
-    get_new_articles, get_new_article_count,
+    get_new_articles, get_new_article_count, get_new_back_catalog,
     get_detailed_coverage, get_coverage_stats,
 )
 from journals import UNAVAILABLE_JOURNALS, JOURNAL_TO_SLUG
@@ -295,12 +295,27 @@ def citation_network_page():
     )
 
 
+NEW_PER_PAGE = 200
+
+
 @bp.route("/new")
 def new_articles():
-    """Articles fetched within the last 7 days."""
+    """Articles fetched within the last 7 days, NEW_PER_PAGE at a time.
+
+    Back-catalog records (old issues a harvester filled in) are counted per
+    journal instead of listed: one load added 12,684 of them and the
+    unpaged page reached 15.8 MB.
+    """
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
-    articles = get_new_articles(days=7)
+
+    total = get_new_article_count(days=7, back_catalog=False)
+    total_pages = max(1, (total + NEW_PER_PAGE - 1) // NEW_PER_PAGE)
+    page = min(_safe_int(request.args.get("page", 1), 1, lo=1), total_pages)
+    articles = get_new_articles(days=7, limit=NEW_PER_PAGE,
+                                offset=(page - 1) * NEW_PER_PAGE,
+                                back_catalog=False)
+    back_catalog = get_new_back_catalog(days=7) if page == 1 else []
 
     # Group by journal for display on this page
     new_by_journal: dict[str, list] = {}
@@ -313,7 +328,10 @@ def new_articles():
     return render_template(
         "new.html",
         new_by_journal=new_by_journal,
-        total=len(articles),
+        total=total,
+        page=page,
+        total_pages=total_pages,
+        back_catalog=back_catalog,
         print_journals=print_journals,
         web_journals=web_journals,
         all_journals=all_journals,

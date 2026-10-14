@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -47,7 +48,7 @@ let _exportWired_loadBibcoupling = false;
 
 async function loadBibcoupling() {
   if (!_exportWired_loadBibcoupling) {
-    renderExportToolbar('tab-bibcoupling', { svgSelector: '#bibcoupling-container svg', dataProvider: () => (window.__expBibcoupling && window.__expBibcoupling.nodes || []) });
+    renderExportToolbar('tab-bibcoupling', { svgSelector: '#bibcoup-container svg', dataProvider: () => (window.__expBibcoupling && window.__expBibcoupling.nodes || []) });
     _exportWired_loadBibcoupling = true;
   }
   clearTimeout(bibcoupDebounce);
@@ -78,11 +79,10 @@ async function loadBibcoupling() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/bibcoupling?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/bibcoupling?' + params.toString());
     window.__expBibcoupling = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load bibliographic coupling data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load bibliographic coupling data.');
     return;
   }
 

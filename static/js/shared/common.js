@@ -185,6 +185,38 @@ export function enableZoomPan(svg, opts) {
 
 
 /**
+ * Arrowhead marker for a directed network (citing -> cited). Call once per
+ * <svg>, then give each line .attr('marker-end', 'url(#' + id + ')') and end
+ * it at the target's rim (lineEndAtRim) so the head isn't hidden under the
+ * node.
+ *
+ * @param {d3.Selection} svg - the d3 SVG selection
+ * @param {string} id - marker id, unique on the page
+ */
+export function addArrowMarker(svg, id) {
+  svg.append('defs').append('marker')
+    .attr('id', id)
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 10).attr('refY', 0)
+    .attr('markerUnits', 'userSpaceOnUse')
+    .attr('markerWidth', 6).attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path')
+    .attr('d', 'M0,-5L10,0L0,5')
+    .attr('fill', chrome().muted)
+    .attr('fill-opacity', 0.6);
+}
+
+/** [x, y] where a source->target link meets a target node of radius r. */
+export function lineEndAtRim(d, r) {
+  const dx = d.target.x - d.source.x;
+  const dy = d.target.y - d.source.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return [d.target.x - dx / len * r, d.target.y - dy / len * r];
+}
+
+
+/**
  * Standard drag behavior for force-graph nodes. Pin (fx/fy) on drag, release
  * on drag-end so the simulation can re-settle. Pass the d3.forceSimulation
  * the nodes belong to so we can wake it on drag start.

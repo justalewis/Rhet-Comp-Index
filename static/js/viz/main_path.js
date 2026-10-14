@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -29,7 +30,7 @@ let _exportWired_loadMainPath = false;
 
 async function loadMainPath() {
   if (!_exportWired_loadMainPath) {
-    renderExportToolbar('tab-mainpath', { svgSelector: '#mainpath-container svg', dataProvider: () => (window.__expMainPath && window.__expMainPath.path || []) });
+    renderExportToolbar('tab-mainpath', { image: false, dataProvider: () => (window.__expMainPath && window.__expMainPath.path || []) });
     _exportWired_loadMainPath = true;
   }
   const container = document.getElementById('mp-container');
@@ -51,11 +52,10 @@ async function loadMainPath() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/main-path?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/main-path?' + params.toString());
     window.__expMainPath = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load main path data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load main path data.');
     return;
   }
 
@@ -122,12 +122,12 @@ function renderMainPath(container, data) {
 
     card.innerHTML =
       `<div style="display:flex;justify-content:space-between;align-items:baseline;">` +
-        `<div style="font-weight:600;font-size:0.92rem;line-height:1.35;flex:1;">${posLabel}${title}</div>` +
+        `<div style="font-weight:600;font-size:0.92rem;line-height:1.35;flex:1;">${posLabel}${escapeHtml(title)}</div>` +
         `<span style="font-size:0.78rem;color:#999;white-space:nowrap;margin-left:0.8rem;">cited ${node.internal_cited_by_count}\u00d7</span>` +
       `</div>` +
       `<div style="font-size:0.8rem;color:#777;margin-top:0.25rem;">` +
-        `${firstAuthor}${authors.includes(',') || authors.includes(';') ? ' et al.' : ''} \u00b7 ${yr} \u00b7 ` +
-        `<span style="color:${jColor};">${jflowAbbrev(node.journal)}</span>` +
+        `${escapeHtml(firstAuthor)}${authors.includes(',') || authors.includes(';') ? ' et al.' : ''} \u00b7 ${yr} \u00b7 ` +
+        `<span style="color:${jColor};">${escapeHtml(jflowAbbrev(node.journal))}</span>` +
       `</div>`;
 
     el.appendChild(card);

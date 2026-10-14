@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorMessage } from "../shared/load.js";
 import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome, CATEGORICAL_LIMIT } from "../utils/colors.js";
@@ -21,11 +22,19 @@ let _exportWired_loadTimeline = false;
 
 async function loadTimeline() {
   if (!_exportWired_loadTimeline) {
-    renderExportToolbar('tab-timeline', { svgSelector: '#timeline-chart', dataProvider: () => (window.__expTimeline && window.__expTimeline.years || []).map((y, i) => Object.assign({year: y}, ...(window.__expTimeline.series||[]).map(s => ({[s.journal]: s.counts[i]})))) });
+    renderExportToolbar('tab-timeline', { svgSelector: '#timeline-chart', svg: false, dataProvider: () => (window.__expTimeline && window.__expTimeline.years || []).map((y, i) => Object.assign({year: y}, ...(window.__expTimeline.series||[]).map(s => ({[s.journal]: s.counts[i]})))) });
     _exportWired_loadTimeline = true;
   }
-  const resp = await fetch('/api/stats/timeline?' + yearRangeQuery('tl'));
-  const data = await resp.json();
+  const note = document.getElementById('timeline-note');
+  let data;
+  try {
+    data = await getJson('/api/stats/timeline?' + yearRangeQuery('tl'));
+  } catch (e) {
+    note.textContent = loadErrorMessage(e, 'Failed to load timeline data.');
+    note.style.display = '';
+    return;
+  }
+  note.style.display = 'none';
   window.__expTimeline = data;
   allYears  = data.years;
   allSeries = data.series;

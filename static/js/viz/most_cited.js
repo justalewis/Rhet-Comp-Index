@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -15,7 +16,7 @@ let _exportWired_loadCitations = false;
 
 async function loadCitations() {
   if (!_exportWired_loadCitations) {
-    renderExportToolbar('tab-citations', { dataProvider: () => (window.__expMostCited || []) });
+    renderExportToolbar('tab-citations', { image: false, dataProvider: () => (window.__expMostCited || []) });
     _exportWired_loadCitations = true;
   }
   const container = document.getElementById('citations-list-container');
@@ -34,11 +35,10 @@ async function loadCitations() {
 
   let data;
   try {
-    const resp = await fetch('/api/stats/most-cited?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/stats/most-cited?' + params.toString());
     window.__expMostCited = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load citation data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load citation data.');
     return;
   }
 
@@ -112,12 +112,12 @@ async function loadCitations() {
 
   container.innerHTML = html;
 
-  // Wire breakdown segments — clicking one sets the citations-journal
+  // Wire breakdown segments — clicking one sets the cite-journal
   // selector (if present) and re-fetches via loadCitations.
   container.querySelectorAll('.most-cited-breakdown [data-journal]').forEach(seg => {
     seg.addEventListener('click', () => {
       const j = seg.getAttribute('data-journal');
-      const sel = document.getElementById('citations-journal');
+      const sel = document.getElementById('cite-journal');
       if (sel) {
         // If the journal is already selected, clicking clears the filter.
         sel.value = (sel.value === j) ? '' : j;

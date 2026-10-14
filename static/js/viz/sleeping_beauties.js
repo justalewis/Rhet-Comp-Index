@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -40,7 +41,7 @@ let _exportWired_loadSleepingBeauties = false;
 
 async function loadSleepingBeauties() {
   if (!_exportWired_loadSleepingBeauties) {
-    renderExportToolbar('tab-sleepers', { svgSelector: '#sb-detail-chart', dataProvider: () => (window.__expSleepingBeauties && window.__expSleepingBeauties.articles || []) });
+    renderExportToolbar('tab-sleepers', { svgSelector: '#sb-detail-chart', svg: false, dataProvider: () => (window.__expSleepingBeauties && window.__expSleepingBeauties.articles || []) });
     _exportWired_loadSleepingBeauties = true;
   }
   const container = document.getElementById('sb-list-container');
@@ -66,11 +67,10 @@ async function loadSleepingBeauties() {
   if (journal)  params.append('journal', journal);
 
   try {
-    const resp = await fetch('/api/citations/sleeping-beauties?' + params.toString());
-    sbData = await resp.json();
+    sbData = await getJson('/api/citations/sleeping-beauties?' + params.toString());
   window.__expSleepingBeauties = sbData;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load Sleeping Beauties data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load Sleeping Beauties data.');
     return;
   }
 
@@ -171,14 +171,13 @@ function showSleepingBeautyDetail(art) {
   const byline = last + (auth.includes(';') ? ' et al.' : '');
 
   document.getElementById('sb-detail-title').textContent = art.title;
-  // Cross-link into the Datastories Prince Network tool with this SB
-  // pre-selected via URL param. Hidden when Datastories isn't enabled
-  // (the link 404s in production, so don't render it there).
-  const princeLink = (window.DATASTORIES_ENABLED !== false)
-    ? ` \u2002\u00b7\u2002 <a href="/datastories?seed=${art.id}#ch9-prince-network" ` +
-      `style="color:#b38a6a;" title="Open the Prince Network tool with this Sleeping Beauty pre-selected">` +
-      `Show princes \u2192</a>`
-    : '';
+  // Cross-link into Reading Path with this article as the seed; its forward
+  // citations include the papers that woke it. (This used to open the
+  // Datastories Prince Network, which is password-gated for the public.)
+  const princeLink =
+    ` \u2002\u00b7\u2002 <a href="/explore?seed=${art.id}#reading-path" ` +
+    `style="color:#b38a6a;" title="Open Reading Path with this article as the seed">` +
+    `Reading path \u2192</a>`;
   document.getElementById('sb-detail-meta').innerHTML =
     `${escapeHtml(byline)}${year ? ' (' + year + ')' : ''} \u2014 ` +
     `<em>${escapeHtml(art.journal)}</em> \u2002\u00b7\u2002 ` +

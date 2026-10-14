@@ -5,14 +5,19 @@
 //
 //   SVG  — serialize the panel's <svg> element and download as .svg
 //   PNG  — rasterize that <svg> into a <canvas>, download as .png at 2x scale
+//          (a Chart.js <canvas> target is saved as-is)
 //   CSV  — call a panel-supplied dataProvider() for rows, download as .csv
 //          (Excel opens .csv natively, which covers the "xls" request)
 //
 // API:
 //   renderExportToolbar(panelId, options)
 //     panelId      — id of the tab-panel <div>
-//     options.svgSelector? — CSS selector for the <svg> to export, scoped
-//                            to the panel. Defaults to first <svg>.
+//     options.svgSelector? — CSS selector for the <svg> (or Chart.js
+//                            <canvas>) to export, scoped to the panel.
+//                            Defaults to first <svg>. A comma list is fine:
+//                            the first match that is on screen wins.
+//     options.svg?         — false hides the SVG button (canvas charts).
+//     options.image?       — false hides SVG and PNG (panels with no graphic).
 //     options.filenameStem? — basename for downloaded files. Default is the
 //                             panel id with the "tab-" prefix stripped.
 //     options.dataProvider? — () => Array<Object>. The first object's keys
@@ -47,13 +52,14 @@ export function renderExportToolbar(panelId, options) {
   label.textContent = 'Export';
   bar.appendChild(label);
 
-  // SVG button
-  const svgBtn = _btn('SVG', () => exportSvg(panel, svgSelector, stem));
-  bar.appendChild(svgBtn);
-
-  // PNG button
-  const pngBtn = _btn('PNG', () => exportPng(panel, svgSelector, stem));
-  bar.appendChild(pngBtn);
+  if (options.image !== false) {
+    // SVG button
+    if (options.svg !== false) {
+      bar.appendChild(_btn('SVG', () => exportSvg(panel, svgSelector, stem)));
+    }
+    // PNG button
+    bar.appendChild(_btn('PNG', () => exportPng(panel, svgSelector, stem)));
+  }
 
   // CSV button (only if a data provider is supplied)
   if (typeof dataProvider === 'function') {
@@ -109,9 +115,21 @@ function _btn(label, onclick) {
 
 // ── SVG export ─────────────────────────────────────────────────────────────
 
+// The first element matching `selector` that is on screen, else the first
+// match at all. Panels with two views (Temporal Evolution's chart and
+// snapshot) list both and export whichever is showing.
+function findTarget(panel, selector) {
+  const all = Array.from(panel.querySelectorAll(selector));
+  return all.find(el => el.getClientRects().length > 0) || all[0] || null;
+}
+
 export function exportSvg(panel, svgSelector, stem) {
-  const svg = panel.querySelector(svgSelector);
+  const svg = findTarget(panel, svgSelector);
   if (!svg) { alert('No SVG to export.'); return; }
+  if (svg.tagName.toLowerCase() === 'canvas') {
+    alert('This chart is drawn on a canvas, so it exports as PNG only.');
+    return;
+  }
   const xml = serialiseSvg(svg);
   const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
   triggerDownload(blob, stem + '.svg');
@@ -121,8 +139,9 @@ export function exportSvg(panel, svgSelector, stem) {
 // ── PNG export (SVG → canvas → blob) ───────────────────────────────────────
 
 export function exportPng(panel, svgSelector, stem) {
-  const svg = panel.querySelector(svgSelector);
-  if (!svg) { alert('No SVG to export.'); return; }
+  const svg = findTarget(panel, svgSelector);
+  if (!svg) { alert('Nothing to export yet.'); return; }
+  if (svg.tagName.toLowerCase() === 'canvas') { exportCanvasPng(svg, stem); return; }
 
   const xml = serialiseSvg(svg);
   const w = parseInt(svg.getAttribute('width')  || svg.clientWidth  || 800);
@@ -146,6 +165,24 @@ export function exportPng(panel, svgSelector, stem) {
   img.onerror = () => alert('PNG export failed: could not rasterise SVG. Try the SVG export instead.');
   // data: URL — works without CORS for inline SVG
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+}
+
+
+// Chart.js draws on a transparent canvas at device-pixel resolution. Flatten
+// it onto the page background so the PNG isn't see-through.
+function exportCanvasPng(canvas, stem) {
+  // A hidden canvas (Sleeping Beauties before an article is picked) is blank.
+  if (!canvas.getClientRects().length) { alert('Nothing to export yet.'); return; }
+  const out = document.createElement('canvas');
+  out.width  = canvas.width;
+  out.height = canvas.height;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = chrome().halo;
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(canvas, 0, 0);
+  out.toBlob(blob => {
+    if (blob) triggerDownload(blob, stem + '.png');
+  }, 'image/png');
 }
 
 

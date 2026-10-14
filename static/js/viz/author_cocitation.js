@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -63,7 +64,7 @@ let _exportWired_loadAuthorCocitation = false;
 
 async function loadAuthorCocitation() {
   if (!_exportWired_loadAuthorCocitation) {
-    renderExportToolbar('tab-authorcocit', { svgSelector: '#authorcocit-container svg', dataProvider: () => (window.__expAuthorCocitation && window.__expAuthorCocitation.nodes || []) });
+    renderExportToolbar('tab-authorcocit', { svgSelector: '#acocit-container svg', dataProvider: () => (window.__expAuthorCocitation && window.__expAuthorCocitation.nodes || []) });
     _exportWired_loadAuthorCocitation = true;
   }
   const container = document.getElementById('acocit-container');
@@ -94,11 +95,10 @@ async function loadAuthorCocitation() {
 
   let data;
   try {
-    const resp = await fetch('/api/author-cocitation?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/author-cocitation?' + params.toString());
     window.__expAuthorCocitation = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load author co-citation data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load author co-citation data.');
     return;
   }
 

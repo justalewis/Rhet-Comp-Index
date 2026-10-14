@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -105,11 +106,23 @@ const JFLOW_ABBREV = {
 // silently broke both tools' charts — found in the June 2026 audit.)
 export function jflowAbbrev(name) { return JFLOW_ABBREV[name] || name; }
 
+// CSV rows for the export: one row per citing/cited journal pair with a
+// non-zero flow, read off the N x N matrix the API returns.
+function jflowPairs() {
+  const d = window.__expJournalFlow;
+  if (!d || !d.matrix) return [];
+  const rows = [];
+  d.matrix.forEach((row, i) => row.forEach((n, j) => {
+    if (n > 0) rows.push({ citing_journal: d.journals[i], cited_journal: d.journals[j], citations: n });
+  }));
+  return rows.sort((a, b) => b.citations - a.citations);
+}
+
 let _exportWired_loadJournalFlow = false;
 
 async function loadJournalFlow() {
   if (!_exportWired_loadJournalFlow) {
-    renderExportToolbar('tab-journalflow', { svgSelector: '#journalflow-container svg', dataProvider: () => (window.__expJournalFlow && window.__expJournalFlow.flow_pairs || []) });
+    renderExportToolbar('tab-journalflow', { svgSelector: '#jflow-container svg', dataProvider: jflowPairs });
     _exportWired_loadJournalFlow = true;
   }
   const container = document.getElementById('jflow-container');
@@ -136,11 +149,10 @@ async function loadJournalFlow() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/journal-flow?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/journal-flow?' + params.toString());
     window.__expJournalFlow = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load journal citation flow data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load journal citation flow data.');
     return;
   }
 

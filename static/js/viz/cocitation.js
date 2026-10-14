@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -79,11 +80,10 @@ async function loadCocitation() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/cocitation?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/cocitation?' + params.toString());
     window.__expCocitation = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load co-citation data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load co-citation data.');
     return;
   }
 

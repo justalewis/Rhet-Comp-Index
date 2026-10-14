@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml, loadErrorMessage } from "../shared/load.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
@@ -34,7 +35,7 @@ let _exportWired_loadTemporalEvolution = false;
 
 async function loadTemporalEvolution() {
   if (!_exportWired_loadTemporalEvolution) {
-    renderExportToolbar('tab-temporal', { svgSelector: '#temporal-container svg', dataProvider: () => (window.__expTemporal && window.__expTemporal.snapshots || []) });
+    renderExportToolbar('tab-temporal', { svgSelector: '#te-graph-container svg, #te-chart', dataProvider: () => (window.__expTemporal && window.__expTemporal.windows || []) });
     _exportWired_loadTemporalEvolution = true;
   }
   // Clean up
@@ -70,11 +71,10 @@ async function loadTemporalEvolution() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/temporal-evolution?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/temporal-evolution?' + params.toString());
     window.__expTemporal = data;
   } catch (e) {
-    statsEl.textContent = 'Failed to load temporal data.';
+    statsEl.textContent = loadErrorMessage(e, 'Failed to load temporal data.');
     return;
   }
 
@@ -255,10 +255,9 @@ async function loadTeSnapshot(year) {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/temporal-evolution?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/temporal-evolution?' + params.toString());
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load snapshot.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load snapshot.');
     return;
   }
 
@@ -307,9 +306,9 @@ function renderTeForceGraph(container, snapshot) {
     .on('mouseover', (event, d) => {
       const yr = (d.pub_date || '').substring(0, 4);
       tip.html(
-        `<strong>${d.title || 'Untitled'}</strong><br>` +
-        `${(d.authors || '').split(',')[0].split(';')[0]}${(d.authors || '').includes(',') || (d.authors || '').includes(';') ? ' et al.' : ''} (${yr})<br>` +
-        `<em>${d.journal || ''}</em><br>` +
+        `<strong>${escapeHtml(d.title || 'Untitled')}</strong><br>` +
+        `${escapeHtml((d.authors || '').split(',')[0].split(';')[0])}${(d.authors || '').includes(',') || (d.authors || '').includes(';') ? ' et al.' : ''} (${yr})<br>` +
+        `<em>${escapeHtml(d.journal || '')}</em><br>` +
         `Cited ${d.internal_cited_by_count}\u00d7 \u00b7 degree ${d.degree}`
       ).style('opacity', 1);
       positionTooltip(tip, event);
