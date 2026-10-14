@@ -527,13 +527,45 @@ def get_tag_cooccurrence(year_from=None, year_to=None):
     return {"tags": tags, "matrix": matrix}
 
 
-def get_new_articles(days=7):
-    """Return articles fetched within the last `days` days, sorted by pub_date DESC."""
+# What's New counts a record as back catalog when its pub_date is more than a
+# year older than its fetched_at: a harvester filling in old issues, not a new
+# publication. One such load added 12,684 rows in a week. Plain string
+# comparison is right for YYYY, YYYY-MM and YYYY-MM-DD dates alike.
+_BACK_CATALOG = ("(pub_date IS NOT NULL AND pub_date != '' "
+                 "AND pub_date < date(fetched_at, '-1 year'))")
+
+
+def get_new_articles(days=7, limit=None, offset=0, back_catalog=True):
+    """Return articles fetched within the last `days` days, sorted by pub_date DESC.
+
+    back_catalog=False leaves out back-catalog records (see _BACK_CATALOG).
+    limit/offset page the result; id DESC keeps the order stable across pages.
+    """
+    sql = "SELECT * FROM articles WHERE fetched_at >= datetime('now', ?)"
+    params = [f"-{days} days"]
+    if not back_catalog:
+        sql += f" AND NOT {_BACK_CATALOG}"
+    sql += " ORDER BY pub_date DESC, fetched_at DESC, id DESC"
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        params += [limit, offset]
     with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT * FROM articles
-            WHERE fetched_at >= datetime('now', ?)
-            ORDER BY pub_date DESC, fetched_at DESC
+        return [dict(r) for r in conn.execute(sql, params).fetchall()]
+
+
+def get_new_back_catalog(days=7):
+    """Back-catalog records fetched within the last `days` days, one row per
+    journal: {journal, count, first_year, last_year}, largest first."""
+    with get_conn() as conn:
+        rows = conn.execute(f"""
+            SELECT journal,
+                   COUNT(*)                   AS count,
+                   substr(MIN(pub_date), 1, 4) AS first_year,
+                   substr(MAX(pub_date), 1, 4) AS last_year
+            FROM articles
+            WHERE fetched_at >= datetime('now', ?) AND {_BACK_CATALOG}
+            GROUP BY journal
+            ORDER BY count DESC, journal
         """, (f"-{days} days",)).fetchall()
         return [dict(r) for r in rows]
 
@@ -570,13 +602,14 @@ def get_feed_articles(journal=None, limit=50):
         return [dict(r) for r in conn.execute(sql, params).fetchall()]
 
 
-def get_new_article_count(days=7):
-    """Return count of articles fetched within the last `days` days."""
+def get_new_article_count(days=7, back_catalog=True):
+    """Return count of articles fetched within the last `days` days.
+    back_catalog=False leaves out back-catalog records."""
+    sql = "SELECT COUNT(*) FROM articles WHERE fetched_at >= datetime('now', ?)"
+    if not back_catalog:
+        sql += f" AND NOT {_BACK_CATALOG}"
     with get_conn() as conn:
-        return conn.execute("""
-            SELECT COUNT(*) FROM articles
-            WHERE fetched_at >= datetime('now', ?)
-        """, (f"-{days} days",)).fetchone()[0]
+        return conn.execute(sql, (f"-{days} days",)).fetchone()[0]
 
 
 def search_articles_autocomplete(q, limit=10):

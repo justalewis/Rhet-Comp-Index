@@ -6,7 +6,8 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
-import { enableZoomPan } from "../shared/common.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
+import { enableZoomPan, addArrowMarker, lineEndAtRim } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { renderJournalLegend } from "../utils/legend.js";
@@ -76,11 +77,10 @@ async function loadCitationNetwork() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/network?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/network?' + params.toString());
     window.__expCitnet = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load network data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load network data.');
     return;
   }
 
@@ -183,6 +183,7 @@ function renderCitationNetwork(container, data) {
 
   const gRoot = enableZoomPan(citnetSvgEl, { scaleExtent: [0.1, 8] });
   citnetZoomBehavior = citnetSvgEl.node().__dsZoomBehavior;
+  addArrowMarker(citnetSvgEl, 'citnet-arrow');
 
   // Links
   citnetLinkSel = gRoot.append('g').attr('class', 'citnet-links')
@@ -191,7 +192,8 @@ function renderCitationNetwork(container, data) {
     .enter().append('line')
     .style('stroke',         chrome().grid)
     .style('stroke-opacity', 0.35)
-    .style('stroke-width',   0.7);
+    .style('stroke-width',   0.7)
+    .attr('marker-end', 'url(#citnet-arrow)');
 
   // Tooltip (one per render; removed at top of loadCitationNetwork on re-render)
   const tip = d3.select('body').append('div')
@@ -289,7 +291,8 @@ function renderCitationNetwork(container, data) {
     .on('tick', () => {
       citnetLinkSel
         .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        .attr('x2', d => lineEndAtRim(d, rScale(d.target.internal_cited_by_count) + 1)[0])
+        .attr('y2', d => lineEndAtRim(d, rScale(d.target.internal_cited_by_count) + 1)[1]);
       nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 }

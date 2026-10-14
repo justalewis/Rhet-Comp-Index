@@ -6,7 +6,8 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
-import { enableZoomPan } from "../shared/common.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
+import { enableZoomPan, addArrowMarker, lineEndAtRim } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor, chrome } from "../utils/colors.js";
 import { renderJournalLegend } from "../utils/legend.js";
@@ -51,7 +52,7 @@ let _exportWired_loadCentrality = false;
 
 async function loadCentrality() {
   if (!_exportWired_loadCentrality) {
-    renderExportToolbar('tab-centrality', { svgSelector: '#centrality-container svg', dataProvider: () => (window.__expCentrality && window.__expCentrality.nodes || []) });
+    renderExportToolbar('tab-centrality', { svgSelector: '#cent-container svg', dataProvider: () => (window.__expCentrality && window.__expCentrality.nodes || []) });
     _exportWired_loadCentrality = true;
   }
   clearTimeout(centDebounce);
@@ -81,11 +82,10 @@ async function loadCentrality() {
   if (checked.length < total) checked.forEach(j => params.append('journal', j));
 
   try {
-    const resp = await fetch('/api/citations/centrality?' + params.toString());
-    centData = await resp.json();
+    centData = await getJson('/api/citations/centrality?' + params.toString());
   window.__expCentrality = centData;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load centrality data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load centrality data.');
     return;
   }
 
@@ -159,6 +159,7 @@ function renderCentrality(container, data) {
 
   const gRoot = enableZoomPan(centSvgEl, { scaleExtent: [0.1, 8] });
   centZoomBehavior = centSvgEl.node().__dsZoomBehavior;
+  addArrowMarker(centSvgEl, 'cent-arrow');
 
   // Links
   centLinkSel = gRoot.append('g').attr('class', 'cent-links')
@@ -167,7 +168,8 @@ function renderCentrality(container, data) {
     .enter().append('line')
     .style('stroke',         chrome().grid)
     .style('stroke-opacity', 0.25)
-    .style('stroke-width',   0.6);
+    .style('stroke-width',   0.6)
+    .attr('marker-end', 'url(#cent-arrow)');
 
   // Tooltip
   const tip = d3.select('body').append('div')
@@ -285,7 +287,8 @@ function renderCentrality(container, data) {
     .on('tick', () => {
       centLinkSel
         .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        .attr('x2', d => lineEndAtRim(d, nodeR(d.target) + 1)[0])
+        .attr('y2', d => lineEndAtRim(d, nodeR(d.target) + 1)[1]);
       nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 }

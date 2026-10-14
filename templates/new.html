@@ -11,7 +11,7 @@
     <div class="content-header new-page-header">
       <h2>What's New</h2>
       <span class="result-count">
-        {% if total %}{{ total }} article{% if total != 1 %}s{% endif %} added in the last 7 days{% else %}Nothing new{% endif %}
+        {% if total %}{{ "{:,}".format(total) }} article{% if total != 1 %}s{% endif %} added in the last 7 days{% if total_pages > 1 %} · page {{ page }} of {{ total_pages }}{% endif %}{% else %}Nothing new{% endif %}
       </span>
     </div>
 
@@ -92,11 +92,40 @@
       </section>
       {% endfor %}
 
+      {% if total_pages > 1 %}
+      <nav class="pagination" aria-label="Page navigation">
+        {% if page > 1 %}
+        <a class="page-btn" href="/new?page={{ page - 1 }}">← Prev</a>
+        {% endif %}
+        {% for p in range([1, page - 2]|max, [total_pages + 1, page + 3]|min) %}
+        <a class="page-btn {% if p == page %}page-btn--active{% endif %}" href="/new?page={{ p }}">{{ p }}</a>
+        {% endfor %}
+        {% if page < total_pages %}
+        <a class="page-btn" href="/new?page={{ page + 1 }}">Next →</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+
     {% else %}
     <div class="empty-state">
       <p>Nothing new in the last 7 days.</p>
-      <p>Click <strong>Refresh all sources</strong> on the <a href="/">main page</a> to fetch recent publications.</p>
+      <p><a href="/">Browse the full index</a>.</p>
     </div>
+    {% endif %}
+
+    {% if back_catalog %}
+    <section class="journal-new-section period-section">
+      <h3 class="period-heading">Back catalog</h3>
+      <ul class="back-catalog-list">
+        {% for b in back_catalog %}
+        <li>
+          <a href="/?journal={{ b.journal | urlencode }}">{{ b.journal }}</a>:
+          {{ "{:,}".format(b.count) }} back-catalog record{% if b.count != 1 %}s{% endif %} added
+          {% if b.first_year %}({{ b.first_year }}{% if b.last_year != b.first_year %}–{{ b.last_year }}{% endif %}){% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
     {% endif %}
 
 {% endblock %}

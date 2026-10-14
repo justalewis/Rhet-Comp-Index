@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { yearRangeQuery } from "../shared/year_range.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
@@ -19,11 +20,16 @@ async function loadHeatmap() {
     renderExportToolbar('tab-topics', { svgSelector: '#heatmap-container svg', dataProvider: () => (window.__expTopics && window.__expTopics.matrix || []) });
     _exportWired_loadHeatmap = true;
   }
-  const resp = await fetch('/api/stats/tag-cooccurrence?' + yearRangeQuery('tags'), { cache: 'no-cache' });
-  const data = await resp.json();
+  const container = document.getElementById('heatmap-container');
+  let data;
+  try {
+    data = await getJson('/api/stats/tag-cooccurrence?' + yearRangeQuery('tags'), { cache: 'no-cache' });
+  } catch (e) {
+    container.innerHTML = loadErrorHtml(e, 'Failed to load topic data.');
+    return;
+  }
   window.__expTopics = data;
 
-  const container = document.getElementById('heatmap-container');
   container.innerHTML = '';
 
   const tags   = data.tags;

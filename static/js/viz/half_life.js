@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
 import { journalColor, citnetJournalColor } from "../utils/colors.js";
 import { applyHighlight, clearHighlight } from "../utils/highlight.js";
@@ -32,7 +33,7 @@ let _exportWired_loadHalfLife = false;
 
 async function loadHalfLife() {
   if (!_exportWired_loadHalfLife) {
-    renderExportToolbar('tab-halflife', { svgSelector: '#halflife-container svg', dataProvider: () => (window.__expHalfLife && window.__expHalfLife.journals || []) });
+    renderExportToolbar('tab-halflife', { svgSelector: '#hl-container canvas', svg: false, dataProvider: () => (window.__expHalfLife && window.__expHalfLife.journals || []) });
     _exportWired_loadHalfLife = true;
   }
   const container = document.getElementById('hl-container');
@@ -58,11 +59,10 @@ async function loadHalfLife() {
 
   let data;
   try {
-    const resp = await fetch('/api/citations/half-life?' + params.toString());
-    data = await resp.json();
+    data = await getJson('/api/citations/half-life?' + params.toString());
     window.__expHalfLife = data;
   } catch (e) {
-    container.innerHTML = '<p class="explore-hint">Failed to load half-life data.</p>';
+    container.innerHTML = loadErrorHtml(e, 'Failed to load half-life data.');
     return;
   }
 

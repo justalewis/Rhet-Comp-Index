@@ -6,6 +6,7 @@
 // attributes in explore.html and inside HTML-string fragments resolve.
 
 import { renderExportToolbar } from "../shared/export.js";
+import { getJson, loadErrorHtml } from "../shared/load.js";
 import { yearRangeQuery } from "../shared/year_range.js";
 import { enableZoomPan } from "../shared/common.js";
 import { escapeHtml, positionTooltip, showNetInfobar, clearNetInfobar } from "../utils/tooltips.js";
@@ -52,8 +53,13 @@ async function loadNetwork(minPapers, topN) {
   container.innerHTML = '<div class="loading-msg">Loading author data…</div>';
   clearNetInfobar();
 
-  const resp = await fetch(`/api/stats/author-network?min_papers=${minPapers}&top_n=${topN}&${yearRangeQuery('net')}`);
-  const data = await resp.json();
+  let data;
+  try {
+    data = await getJson(`/api/stats/author-network?min_papers=${minPapers}&top_n=${topN}&${yearRangeQuery('net')}`);
+  } catch (e) {
+    container.innerHTML = loadErrorHtml(e, 'Failed to load author data.');
+    return;
+  }
   window.__expAuthorNetwork = data;
 
   container.innerHTML = '';
@@ -193,7 +199,7 @@ async function loadNetwork(minPapers, topN) {
     .on('mouseover', function(event, d) {
       const nb = neighbors[d.id] ? neighbors[d.id].size : 0;
       tooltip.style('display', 'block')
-        .html(`<strong>${d.id}</strong><br>${d.count} article${d.count !== 1 ? 's' : ''} · ${nb} co-author${nb !== 1 ? 's' : ''}<br><em style="font-size:0.8em;opacity:0.7">Click to highlight · Click again to open profile</em>`);
+        .html(`<strong>${escapeHtml(d.id)}</strong><br>${d.count} article${d.count !== 1 ? 's' : ''} · ${nb} co-author${nb !== 1 ? 's' : ''}<br><em style="font-size:0.8em;opacity:0.7">Click to highlight · Click again to open profile</em>`);
     })
     .on('mousemove', function(event) {
       positionTooltip(tooltip, event, { pad: 12, vPad: -28 });
