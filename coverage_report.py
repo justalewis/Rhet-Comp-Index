@@ -45,6 +45,30 @@ ERA_BUCKETS = [
     ("2020+", 2020, 9999),
 ]
 
+# Each citing→cited link once, however many rows store it (the same subquery
+# as _EDGES in db/citations.py). The weekly LiCS scrape used to re-insert
+# DOI-bearing references, and a row count multiplied every repeat.
+_EDGES = ("(SELECT DISTINCT source_article_id, target_article_id "
+          "FROM citations WHERE target_article_id IS NOT NULL)")
+
+# One row per citing article, its references counted once each: resolved ones
+# by cited article (the pairs in _EDGES), outside ones by DOI or the scraper's
+# synthetic ref: key, and DOI-less entries (books, web pages) row by row,
+# since nothing marks a repeat among those. These are the keys the v17 guards
+# (db.core.CITATION_UNIQUE_INDEXES) hold unique, so on a guarded table the sums
+# equal the row counts. Grouping by citing article reads idx_citations_source
+# in order; a DISTINCT over the whole table took three times as long.
+_REFS_BY_SOURCE = """(
+    SELECT
+        source_article_id,
+        COUNT(DISTINCT target_article_id)                        AS resolved,
+        COUNT(DISTINCT CASE WHEN target_article_id IS NULL THEN target_doi END)
+          + SUM(CASE WHEN target_article_id IS NULL AND target_doi IS NULL
+                     THEN 1 ELSE 0 END)                          AS unresolved
+    FROM citations
+    GROUP BY source_article_id
+)"""
+
 
 def connect():
     conn = sqlite3.connect(str(DB_PATH))
@@ -97,17 +121,21 @@ def fetch_per_journal_base(conn, year_min=None):
 def fetch_outbound_by_journal(conn, year_min=None):
     """For each journal (as source), count articles that actually returned
     any citation data and the raw/resolved edge totals. Filtered by source
-    article pub year if year_min is set."""
+    article pub year if year_min is set.
+
+    "Raw" means before resolution: every reference in the journal's reference
+    lists, resolved or not. It is the denominator of outbound_resolution_pct,
+    so it counts references the way the resolved figure does, once each
+    (_REFS_BY_SOURCE), not stored rows."""
     where, params = _year_clause(year_min, "s")
     sql = f"""
         SELECT
             s.journal                                             AS journal,
-            COUNT(DISTINCT c.source_article_id)                   AS articles_with_outbound,
-            COUNT(*)                                              AS raw_outbound_edges,
-            SUM(CASE WHEN c.target_article_id IS NOT NULL THEN 1 ELSE 0 END)
-                                                                  AS resolved_outbound_edges
-        FROM citations c
-        JOIN articles s ON c.source_article_id = s.id
+            COUNT(*)                                              AS articles_with_outbound,
+            SUM(r.resolved + r.unresolved)                        AS raw_outbound_edges,
+            SUM(r.resolved)                                       AS resolved_outbound_edges
+        FROM {_REFS_BY_SOURCE} r
+        JOIN articles s ON r.source_article_id = s.id
         WHERE 1=1 {where}
         GROUP BY s.journal
     """
@@ -119,15 +147,22 @@ def fetch_inbound_by_journal(conn, year_min=None):
     """For each journal (as target), count articles that are cited from
     inside the corpus and total internal inbound edges. Filtered by target
     article pub year if year_min is set — so each row describes the
-    inbound footprint of articles in that journal published in [range]."""
+    inbound footprint of articles in that journal published in [range].
+    An edge is a distinct citing→cited pair, so each cited article adds its
+    number of distinct citing articles."""
     where, params = _year_clause(year_min, "t")
     sql = f"""
         SELECT
             t.journal                                             AS journal,
-            COUNT(DISTINCT c.target_article_id)                   AS articles_with_inbound,
-            COUNT(*)                                              AS internal_inbound_edges
-        FROM citations c
-        JOIN articles t ON c.target_article_id = t.id
+            COUNT(*)                                              AS articles_with_inbound,
+            SUM(r.citers)                                         AS internal_inbound_edges
+        FROM (
+            SELECT target_article_id, COUNT(DISTINCT source_article_id) AS citers
+            FROM citations
+            WHERE target_article_id IS NOT NULL
+            GROUP BY target_article_id
+        ) r
+        JOIN articles t ON r.target_article_id = t.id
         WHERE 1=1 {where}
         GROUP BY t.journal
     """
@@ -137,13 +172,14 @@ def fetch_inbound_by_journal(conn, year_min=None):
 
 def fetch_self_citation_by_journal(conn, year_min=None):
     """Intra-journal edges where the source is in the year range — matches
-    the outbound denominator so intra_journal_pct stays interpretable."""
+    the outbound denominator so intra_journal_pct stays interpretable. Like
+    resolved_outbound_edges, it counts distinct citing→cited pairs."""
     where, params = _year_clause(year_min, "s")
     sql = f"""
         SELECT
             s.journal                                             AS journal,
             COUNT(*)                                              AS intra_journal_edges
-        FROM citations c
+        FROM {_EDGES} c
         JOIN articles s ON c.source_article_id = s.id
         JOIN articles t ON c.target_article_id = t.id
         WHERE s.journal = t.journal {where}
@@ -157,29 +193,29 @@ def fetch_topology_by_journal(conn, year_min=None):
     """Per-article network topology counted by journal. Uses the full
     citations table (not just intra-journal). When year_min is set, only
     articles in that range are classified — but their edges can connect
-    anywhere in the corpus."""
+    anywhere in the corpus. Only whether an article has outbound or inbound
+    citations matters, so each side lists article ids once rather than
+    counting rows."""
     where, params = _year_clause(year_min, "a")
     sql = f"""
-        WITH out_counts AS (
-            SELECT source_article_id AS aid, COUNT(*) AS n
+        WITH has_out AS (
+            SELECT DISTINCT source_article_id AS aid
             FROM citations
-            GROUP BY source_article_id
         ),
-        in_counts AS (
-            SELECT target_article_id AS aid, COUNT(*) AS n
+        has_in AS (
+            SELECT DISTINCT target_article_id AS aid
             FROM citations
             WHERE target_article_id IS NOT NULL
-            GROUP BY target_article_id
         )
         SELECT
             a.journal,
-            SUM(CASE WHEN o.n IS NULL     AND i.n IS NULL     THEN 1 ELSE 0 END) AS isolates,
-            SUM(CASE WHEN o.n IS NOT NULL AND i.n IS NULL     THEN 1 ELSE 0 END) AS pure_sources,
-            SUM(CASE WHEN o.n IS NULL     AND i.n IS NOT NULL THEN 1 ELSE 0 END) AS pure_sinks,
-            SUM(CASE WHEN o.n IS NOT NULL AND i.n IS NOT NULL THEN 1 ELSE 0 END) AS hubs
+            SUM(CASE WHEN o.aid IS NULL     AND i.aid IS NULL     THEN 1 ELSE 0 END) AS isolates,
+            SUM(CASE WHEN o.aid IS NOT NULL AND i.aid IS NULL     THEN 1 ELSE 0 END) AS pure_sources,
+            SUM(CASE WHEN o.aid IS NULL     AND i.aid IS NOT NULL THEN 1 ELSE 0 END) AS pure_sinks,
+            SUM(CASE WHEN o.aid IS NOT NULL AND i.aid IS NOT NULL THEN 1 ELSE 0 END) AS hubs
         FROM articles a
-        LEFT JOIN out_counts o ON o.aid = a.id
-        LEFT JOIN in_counts  i ON i.aid = a.id
+        LEFT JOIN has_out o ON o.aid = a.id
+        LEFT JOIN has_in  i ON i.aid = a.id
         WHERE 1=1 {where}
         GROUP BY a.journal
     """
@@ -189,12 +225,12 @@ def fetch_topology_by_journal(conn, year_min=None):
 
 def fetch_era_breakdown(conn):
     """Journal x era: article count, outbound-fetch-attempted count,
-    articles-with-returned-cites count."""
+    articles-with-returned-cites count. with_outbound only asks whether an
+    article has citation rows, so the citations side lists each id once."""
     rows = conn.execute("""
-        WITH out_counts AS (
-            SELECT source_article_id AS aid, COUNT(*) AS n
+        WITH has_out AS (
+            SELECT DISTINCT source_article_id AS aid
             FROM citations
-            GROUP BY source_article_id
         )
         SELECT
             a.journal                                             AS journal,
@@ -202,9 +238,9 @@ def fetch_era_breakdown(conn):
             COUNT(*)                                              AS articles,
             SUM(CASE WHEN a.references_fetched_at IS NOT NULL THEN 1 ELSE 0 END)
                                                                   AS refs_attempted,
-            SUM(CASE WHEN o.n IS NOT NULL THEN 1 ELSE 0 END)      AS with_outbound
+            SUM(CASE WHEN o.aid IS NOT NULL THEN 1 ELSE 0 END)    AS with_outbound
         FROM articles a
-        LEFT JOIN out_counts o ON o.aid = a.id
+        LEFT JOIN has_out o ON o.aid = a.id
         WHERE a.pub_date IS NOT NULL AND a.pub_date != ''
         GROUP BY a.journal, year
     """).fetchall()
@@ -308,12 +344,14 @@ def build_era_rows(era_map):
 
 
 def corpus_totals(conn, per_journal):
+    """Corpus-wide figures. The citation totals count references the way the
+    per-journal raw and resolved columns do, once each."""
     c = conn.cursor()
     articles_total       = c.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
-    citations_total      = c.execute("SELECT COUNT(*) FROM citations").fetchone()[0]
-    resolved_total       = c.execute(
-        "SELECT COUNT(*) FROM citations WHERE target_article_id IS NOT NULL"
-    ).fetchone()[0]
+    citations_total, resolved_total = c.execute(
+        f"SELECT COALESCE(SUM(resolved + unresolved), 0), COALESCE(SUM(resolved), 0) "
+        f"FROM {_REFS_BY_SOURCE}"
+    ).fetchone()
     books_total          = c.execute("SELECT COUNT(*) FROM books").fetchone()[0]
     journals_total       = c.execute("SELECT COUNT(DISTINCT journal) FROM articles").fetchone()[0]
     oa_enriched          = c.execute(
