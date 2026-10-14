@@ -479,7 +479,7 @@
         <p>The graph is corpus-bounded: a scholar whose work is heavily cited in books, edited collections, or journals outside the indexed set will appear less central than their wider record warrants. Author-name disambiguation is the standard bibliometric limitation &mdash; common names may merge distinct scholars and name-form variants may split a single scholar across nodes.<sup>3</sup> The measure is retrospective: scholars early in their careers may not yet appear prominently because their work has had less time to be co-cited.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the aggregation against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button re-runs the aggregation against the current filter state.</p>
 
         <p>The <strong>minimum-co-citations slider</strong> filters which edges enter the graph. At the default of three co-citations a pair must appear together in at least three indexed reference lists to be drawn. Lowering to one admits speculative ties that often reflect a single citing author's idiosyncratic juxtaposition; raising to ten or twenty isolates the most established perceived kinships at the cost of pruning emerging conversations.</p>
 
@@ -843,7 +843,7 @@
         <p>The network shows only <em>internal</em> citation relationships; an article heavily cited outside the indexed corpus appears small or, if its in-graph degree falls below the slider threshold, absent.<sup>1</sup> Journals that do not deposit reference lists with CrossRef contribute no outbound edges, which means their citation behavior is structurally invisible even when their articles do receive citations from other indexed work. The 500-node cap also constrains the graph: at low minimum-citation thresholds the cap binds tightly and excludes peripheral articles whose connectivity to the core is real but lightly weighted. Raising the slider tightens the visible core; lowering it admits more peripheral work but is constrained by the node cap.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the query against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Load Graph button re-runs the query against the current filter state.</p>
 
         <p>The <strong>minimum-citations slider</strong> filters which articles are eligible to appear. At the default of five internal citations, the graph carves to articles cited by at least five other indexed articles. Lowering to one or two admits a long tail of single-cited work and tends to fill the periphery with isolates and small components. Raising to ten or fifteen produces a sparser, more legible graph dominated by the field's most heavily-cited landmark texts.</p>
 
@@ -989,7 +989,7 @@
         <p>The metrics reflect structural position within the indexed corpus only: an article that is foundational to the broader field but rarely cited inside the indexed journals will not score highly, and the rankings tilt toward whichever sub-areas have the densest internal citation chains in this corpus. The metrics are also sensitive to the time-accumulation effect: older articles have had more years to accumulate citation paths, and they therefore dominate both rankings. The year-range filters are the standard way to control for this effect; restricting the corpus to a 1995&ndash;2010 window, for example, surfaces a substantively different set of bridge articles than the all-time view.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button is required because betweenness centrality is the slow operation in the pipeline and must run against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button is required because betweenness centrality is the slow operation in the pipeline and must run against the current filter state.</p>
 
         <p>The <strong>minimum-citations slider</strong> sets the eligibility floor. At the default of two internal citations the graph admits 600 articles and surfaces a layered ranking in which the centrality leaders are landmark texts but the second tier surfaces less-canonical bridge articles. Lowering to one admits a long tail and inflates the betweenness scores of articles that sit on otherwise sparse paths. Raising to five or ten carves the graph to the most heavily-cited core and tightens both rankings around the field's most-canonical work.</p>
 
@@ -1103,7 +1103,7 @@
       </div>
 
       <div class="citnet-container" id="cent-container">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the centrality graph.</div>
+        <div class="loading-msg">Loading the centrality graph&hellip;</div>
       </div>
 
       <p class="explore-hint" style="margin-top:0.5rem;">
@@ -1172,7 +1172,7 @@
         <p>The communities are corpus-bounded: a research front whose citation chains run primarily through unindexed venues will not appear as a coherent cluster here, and the visible structure tilts toward whichever sub-areas have the densest internal citation chains. The partition is also unstable at the boundary: a peripheral article that sits in roughly equal proximity to two communities may be assigned to either one across runs, which is why the per-community tables list the high-citation core articles rather than every member.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button is required because Louvain runs several seconds against a multi-thousand-node graph.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button is required because Louvain runs several seconds against a multi-thousand-node graph.</p>
 
         <p>The <strong>minimum-citations slider</strong> sets the eligibility floor for inclusion in the network. At the default of two internal citations, peripheral articles enter the graph and the algorithm finds finer-grained communities at the cost of some boundary noise. Raising to five or ten produces fewer, larger communities anchored by the field's most-cited landmark articles.</p>
 
@@ -1240,7 +1240,7 @@
       </div>
 
       <div class="citnet-container" id="comm-container">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to detect communities.</div>
+        <div class="loading-msg">Detecting communities&hellip;</div>
       </div>
 
       <p class="explore-hint" style="margin-top:0.5rem;">
@@ -1290,7 +1290,7 @@
         <p>The graph reflects only co-citations from indexed articles whose reference lists have been deposited with CrossRef; journals without reference deposit contribute no co-citation signal. The network is also corpus-bounded: a pair of articles routinely co-cited in books, dissertations, or unindexed journals will appear less central here than their broader perception warrants. For the author-level equivalent &mdash; which <em>scholars</em> the field treats as intellectually paired regardless of which specific articles are cited &mdash; see the Author Co-Citation tool.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the aggregation against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button re-runs the aggregation against the current filter state.</p>
 
         <p>The <strong>minimum-co-citations slider</strong> filters which edges enter the graph. At the default of three co-citations the graph admits a wide neighborhood; raising to ten or fifteen isolates only the most established perceived kinships, which can collapse the visible structure to a small core dominated by social-justice TC and a separate genre/activity cluster.</p>
 
@@ -1380,7 +1380,7 @@
       </div>
 
       <div class="citnet-container" id="cocit-container">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the co-citation graph.</div>
+        <div class="loading-msg">Loading the co-citation graph&hellip;</div>
       </div>
 
       <p class="explore-hint" style="margin-top:0.5rem;">
@@ -1430,7 +1430,7 @@
         <p>Coupling strength is influenced by reference-list length, which biases the ranking toward articles whose references are long and stay inside the indexed corpus &mdash; literature reviews, methodological surveys, and articles with extensive citation engagement. Articles that engage seriously with prior work but cite mostly external sources will register as less central than they should. A second limitation is bibliometric scope: bibliographic coupling produces visible clusters that correspond to "what's being read" rather than "what's been written about," which can diverge from a field's perceived structure when the citing community has not yet reached consensus on what counts as canonical.<sup>2</sup></p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the aggregation against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button re-runs the aggregation against the current filter state.</p>
 
         <p>The <strong>minimum-shared-refs slider</strong> filters which edges enter the graph. At the default of three shared references the graph admits a wide neighborhood; raising to ten produces a sparse graph dominated by literature-review and survey articles, and ten is the setting to use when the question is "which articles are reading nearly the same source corpus?"</p>
 
@@ -1520,7 +1520,7 @@
       </div>
 
       <div class="citnet-container" id="bibcoup-container">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the bibliographic coupling graph.</div>
+        <div class="loading-msg">Loading the bibliographic coupling graph&hellip;</div>
       </div>
 
       <p class="explore-hint" style="margin-top:0.5rem;">
@@ -1564,7 +1564,7 @@
         <p>The metric requires citation history to compute, which means articles published in the last five to ten years rarely appear &mdash; they have not had time to either sleep or wake. The false-positive correction depends on CrossRef's global citation count, which is itself incomplete for older articles, especially work published before reference deposit became standard practice. A high B score here therefore means delayed recognition <em>within the indexed corpus</em>; the per-row display of both internal and global citation counts is the user's hook for assessing whether any given case is a genuine sleeper or a borderline coverage artifact.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button is required because the per-article timeline reconstruction is the slow operation in the pipeline.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button is required because the per-article timeline reconstruction is the slow operation in the pipeline.</p>
 
         <p>The <strong>minimum total citations slider</strong> filters which articles are eligible for ranking. At the default of five citations, an article must have accumulated at least five lifetime citations (internal plus global) to be considered. Lowering the threshold admits articles with very thin citation histories whose Beauty Coefficient is statistically unstable; raising to ten or fifteen tightens the ranking to articles whose late surge is well-documented enough to interpret confidently.</p>
 
@@ -1647,7 +1647,7 @@
 
       <!-- Ranked list -->
       <div id="sb-list-container">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to find Sleeping Beauties.</div>
+        <div class="loading-msg">Finding Sleeping Beauties&hellip;</div>
       </div>
 
     </div><!-- /tab-sleepers -->
@@ -1683,7 +1683,7 @@
         <p>The raw counts are not normalized for journal output volume.<sup>1</sup> A large journal that publishes 200 articles per year generates more citing flows simply because its articles have more reference list entries; comparing raw flows across journals of different sizes can misrepresent the relative intensity of inter-journal engagement. Normalization by article count or by total reference-list length would correct for this but is not currently exposed in the UI. A second limitation is bibliometric scope: journals that do not deposit reference lists with CrossRef appear as invisible citing sources, though they may still appear as cited targets when other journals cite their articles. The Coverage Notes page at <a href="/coverage">/coverage</a> documents which journals contribute citing signal and which do not.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the aggregation against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button re-runs the aggregation against the current filter state.</p>
 
         <p>The <strong>minimum-citations slider</strong> filters which chords are drawn. At the default of one, every nonzero flow is rendered; raising to 25 or 50 strips out the long tail of light flows and produces a visualization dominated by the major axes &mdash; useful when the question is "where does citation traffic concentrate?" rather than "what is the full topology?"</p>
 
@@ -1770,7 +1770,7 @@
       </div>
 
       <div class="citnet-container" id="jflow-container">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to generate the journal citation flow diagram.</div>
+        <div class="loading-msg">Loading the journal citation flow diagram&hellip;</div>
       </div>
 
       <p class="explore-hint" style="margin-top:0.5rem;">
@@ -1812,7 +1812,7 @@
         <p>The metric counts only <em>internal</em> citations within the indexed corpus, which biases the citing half-life shorter than its true value &mdash; references to older foundational books and to journals outside the index are not visible, and those references are precisely the older end of the typical reference list. Journals with few resolved citations produce unstable medians, which is why the rendering shows the per-journal sample size and dims the bar for venues below the reliability threshold. Journals indexed via RSS or web scraping deposit no reference lists, so they contribute no citing-side data and appear only on the cited side.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the aggregation against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button re-runs the aggregation against the current filter state.</p>
 
         <p>The <strong>From / To year filters</strong> restrict the citation set by the <em>citing</em> article's publication year. Restricting to 2015&ndash;2025 reads the half-lives off recent citation behavior only; this often shortens both metrics across the board because recent citation traffic skews toward recent work, and shortens the citing half-life of journals whose authors have shifted toward newer source material.</p>
 
@@ -1899,7 +1899,7 @@
       </div>
 
       <div class="citnet-container" id="hl-container" style="min-height:400px;">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to analyze citation half-life.</div>
+        <div class="loading-msg">Analyzing citation half-life&hellip;</div>
       </div>
 
       <p class="explore-hint" style="margin-top:0.5rem;">
@@ -1941,7 +1941,7 @@
         <p>The path is corpus-bounded: an article that is foundational in the wider scholarly world but rarely cited inside the indexed journals will not appear, and the foundational end of the path tilts toward whichever sub-area happens to have deeper internal citation chains in the corpus. The greedy extraction also returns a single backbone rather than the family of high-traffic routes; the Datastories <em>First Spark</em> tool addresses this gap by extracting the top-K SPC routes and reporting their convergence points.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>The controls sit above the chart area and require an explicit <strong>Compute</strong> click to run.</p>
+        <p>The controls sit above the chart area. The tool runs once with the defaults when it opens; after changing a control, click <strong>Recompute</strong>.</p>
 
         <p>The <strong>minimum-citations slider</strong> filters which articles enter the graph at all. At the default of two internal citations, an article must be cited by at least two other articles inside the indexed journals to be considered. A lower setting (one) admits more peripheral work and tends to lengthen the path. A higher setting (five or above) carves the network down to the heavily-cited core, producing a shorter and steeper path through the field's most central nodes.</p>
 
@@ -1949,7 +1949,7 @@
 
         <p>The <strong>journals picker</strong> narrows the corpus to a chosen subset. Restricting to a cluster (the technical-communication venues, for instance, or the rhetoric-journal cluster) reframes the question from "what is the field's backbone?" to "what is this sub-area's backbone, computed from citations that stay inside the cluster?" Cross-cluster citations are dropped along with their endpoints; the resulting path may be shorter and less interconnected than the full-corpus version.</p>
 
-        <p>Filter changes do not auto-recompute. The Compute click is required because main path analysis on the full DAG takes several seconds and would otherwise re-fire on every checkbox toggle.</p>
+        <p>Filter changes do not auto-recompute. The Recompute click is required because main path analysis on the full DAG takes several seconds and would otherwise re-fire on every checkbox toggle.</p>
 
         <h4 class="methodology-heading">References</h4>
         <ol class="methodology-refs">
@@ -2000,7 +2000,7 @@
       </div>
 
       <div id="mp-container" style="min-height:200px;">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to trace the main path.</div>
+        <div class="loading-msg">Tracing the main path&hellip;</div>
       </div>
 
     </div><!-- /tab-mainpath -->
@@ -2047,7 +2047,7 @@
         <p>The metrics are sensitive to window size: annual windows produce maximum temporal resolution but very noisy metrics for years with few articles, while five-year windows smooth the signal at the cost of hiding short-lived structural changes. The most recent window in any computation is partial &mdash; the 2024&ndash;2028 window currently contains only 127 articles because most of its years have not yet been indexed &mdash; and its metrics should be read as in-progress rather than as a stable terminal value. The metrics are also corpus-bounded: a structural phenomenon visible in citation networks that include external scholarship may not be visible here.</p>
 
         <h4 class="methodology-heading">Controls</h4>
-        <p>Filter changes do not auto-recompute; the Compute button re-runs the per-window metric computation against the current filter state.</p>
+        <p>Filter changes do not auto-recompute; the Recompute button re-runs the per-window metric computation against the current filter state.</p>
 
         <p>The <strong>minimum-citations slider</strong> filters which articles are eligible to enter the per-window graph. At the default of one citation the tool admits any article that has at least one incident citation; raising the threshold tightens each window's graph to its more-cited core, which usually shortens average path length and inflates giant-component fraction.</p>
 
@@ -2177,7 +2177,7 @@
       </div>
 
       <div id="te-placeholder" style="min-height:200px;">
-        <div class="loading-msg">Set filters and click <strong>Compute</strong> to analyze temporal evolution.</div>
+        <div class="loading-msg">Analyzing temporal evolution&hellip;</div>
       </div>
 
     </div><!-- /tab-temporal -->
