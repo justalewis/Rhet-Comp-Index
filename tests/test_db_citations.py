@@ -4,8 +4,6 @@ ego networks, sleeping beauties, journal half-life, main-path, and community
 detection. Most are smoke tests; the simpler ones get hand-verified expected
 counts."""
 
-import pytest
-
 import db
 from tests._seed import J_CROSSREF, J_RSS
 
@@ -52,9 +50,10 @@ def test_get_most_cited_tag_filter(seeded_db):
 
 
 def test_upsert_citation_then_wipe(fixture_db):
-    # As of v9, upsert_citation always inserts (no UNIQUE constraint). Dedup is
-    # the caller's responsibility — cite_fetcher.py calls delete_citations_for_article
-    # before re-inserting an article's references.
+    # Since v17 the citations uniqueness guards refuse a second row for the
+    # same (citing article, cited article); upsert_citation reports 0 for it.
+    # cite_fetcher.py still calls delete_citations_for_article before
+    # re-inserting an article's references.
     db.upsert_article("https://ex.org/a", "10.x/a", "A", None, None,
                        "2024-01-01", "College English", "crossref")
     db.upsert_article("https://ex.org/b", "10.x/b", "B", None, None,
@@ -64,7 +63,7 @@ def test_upsert_citation_then_wipe(fixture_db):
     tgt_id = next(r["id"] for r in rows_a if r["doi"] == "10.x/b")
 
     assert db.upsert_citation(src_id, "10.x/b", tgt_id, None, ord=0) == 1
-    assert db.upsert_citation(src_id, "10.x/b", tgt_id, None, ord=0) == 1
+    assert db.upsert_citation(src_id, "10.x/b", tgt_id, None, ord=0) == 0
 
     # delete-then-reinsert is the supported re-fetch pattern
     db.delete_citations_for_article(src_id)
@@ -138,24 +137,20 @@ def test_get_ego_network_unknown_article(seeded_db):
 
 
 def test_get_sleeping_beauties_smoke(seeded_db):
-    # min_total_citations=2 skips article 6, which has a single citation
-    # from a "future-citing-past" edge in the seed that triggers the bug
-    # documented in test_get_sleeping_beauties_crashes_on_invalid_timeline.
     res = db.get_sleeping_beauties(min_total_citations=2)
     assert "articles" in res
     assert isinstance(res["articles"], list)
 
 
-def test_get_sleeping_beauties_crashes_on_invalid_timeline(seeded_db):
-    """XXX: db.py:2558 — get_sleeping_beauties crashes with
-    ValueError('max() iterable argument is empty') when an article's
-    publication year is later than the latest year of any citing article
-    (e.g. seed edge (45, 6): article 6 published 2022, only citer 45
-    published 2005). The full_timeline range(t0, max_year+1) is empty
-    and max() has no default. Suspected fix: skip article when t0 >
-    max_year, or pass default=t0 to max()."""
-    with pytest.raises(ValueError):
-        db.get_sleeping_beauties(min_total_citations=1)
+def test_get_sleeping_beauties_skips_article_cited_only_before_publication(seeded_db):
+    """Regression: seed edge (45, 6) has article 6 (published 2022) cited only
+    by article 45 (published 2005), so there is no post-publication timeline.
+    get_sleeping_beauties used to raise ValueError('max() iterable argument
+    is empty') on such an article; it now skips it and scores the rest."""
+    res = db.get_sleeping_beauties(min_total_citations=1)
+    ids = {a["id"] for a in res["articles"]}
+    assert 6 not in ids
+    assert res["count"] == len(res["articles"])
 
 
 def test_get_journal_half_life_smoke(seeded_db):

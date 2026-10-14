@@ -14,8 +14,15 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 - Publication-year range (`year_from` / `year_to`) on the timeline, tag co-occurrence, author network, institutions, and citation-trends endpoints, with From / To controls on the Explore panels.
 - `coverage_report.tier_journals`: the coverage page's journal lists are now generated from the live per-journal snapshot instead of kept by hand.
 - `tests/test_registry_surfaces.py`: fails when a registry journal lacks a chord-diagram abbreviation or a sidebar group lacks an Atlas orientation.
+- Schema v17: two partial unique indexes on `citations` (one row per citing article and indexed article; one per citing article and DOI or synthetic key). References with neither stay unconstrained. `init_db` builds them on a clean table and only warns while duplicates remain.
+- `citation_duplicates_report.py`: read-only report on duplicate citation rows (totals, by citing journal, most inflated articles, when the surplus rows were written).
+- `dedupe_citations.py`: dry run by default; `--yes` backs up the database, deletes duplicate rows (keeping the lowest id), builds the v17 indexes, recomputes the internal counts and clears the Datastories cache.
 
 ### Fixed (October 2026)
+
+- Duplicate citation rows inflated Most Cited, co-citation, bibliographic coupling, communities, Sleeping Beauties and the article pages. The weekly LiCS reference scrape deleted only its DOI-less rows before re-inserting, so every Sunday added another copy of each reference that carried a DOI (one pair reached 38 copies; "Composing a Further Life" showed 75 citations from 4 citing articles). The scraper now replaces all of its own rows, skips articles whose references came from CrossRef, and removes any copy it had stacked on a CrossRef list. Internal counts and every citation-network query now count distinct articles, not rows.
+- Sleeping Beauties raised `ValueError` when every citing article predated the cited one; such articles are now skipped.
+- `dedupe_reflections.py` repoints citations with `UPDATE OR IGNORE`, so merging two copies of an article no longer leaves a citing article citing it twice.
 
 - Atlas silently skipped any sidebar group without a hand-written orientation, so its journals did not appear there. Added the missing group and a test.
 - Coverage page claimed reference lists for six journals that deposit none (Peitho, Poroi, Prompt, The WAC Journal, Community Literacy Journal, Rhetoric of Health and Medicine), listed English Journal as indexed, and named two journals as in the index that are not.

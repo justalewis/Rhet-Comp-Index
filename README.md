@@ -165,13 +165,15 @@ Rhet-Comp-Index/
 ├── fetch_institutions.py        Institution affiliation enrichment
 │
 ├── coverage_report.py           Coverage snapshot generator (used by /coverage)
+├── citation_duplicates_report.py  Read-only report on duplicate citation rows
 ├── crossref_book_probe.py       Probe for which publishers index in CrossRef
 ├── cull_upc.py                  One-off: prune unwanted UP-only chapters
+├── dedupe_citations.py          Delete duplicate citation rows (backup, --yes)
 ├── ingest_peer_review_1_1.py    One-off: load Peer Review 1.1 references
 ├── probe_new_publishers.py      Exploratory: find new publishers to add
 ├── retag.py                     Re-run the auto-tagger on existing rows
 ├── scrape_ccdp.py               One-off: scrape CCDP catalogue
-├── scrape_lics_refs.py          One-off: scrape LiCS reference lists
+├── scrape_lics_refs.py          LiCS reference lists (weekly, step 6)
 ├── seed_usu_rhet_comp.py        One-off: seed USU Press records
 ├── weekly_maintenance.py        Wrapper invoked weekly on Fly
 │

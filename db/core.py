@@ -785,6 +785,64 @@ def _migrate_v15_to_v16(conn):
     log.info("v15→v16 migration complete (saved-search email alerts ready).")
 
 
+# Uniqueness guards on citations (v17). Two partial indexes rather than one
+# index over COALESCE(target_article_id, target_doi, raw_reference):
+#   - a reference resolved to an indexed article may appear once per citing
+#     article, whatever DOI or text it arrived with;
+#   - an unresolved reference with a DOI (or a scraper's synthetic "ref:" key)
+#     may appear once per citing article.
+# References with neither (books, web pages, older journals in a CrossRef
+# deposit) stay unconstrained, so two DOI-less entries in one bibliography are
+# never refused, and raw_reference stays out of the index: it is long, and
+# redaction.py rewrites it in place.
+CITATION_UNIQUE_INDEXES = (
+    ("idx_citations_unique_target",
+     "CREATE UNIQUE INDEX IF NOT EXISTS idx_citations_unique_target "
+     "ON citations(source_article_id, target_article_id) "
+     "WHERE target_article_id IS NOT NULL"),
+    ("idx_citations_unique_doi",
+     "CREATE UNIQUE INDEX IF NOT EXISTS idx_citations_unique_doi "
+     "ON citations(source_article_id, target_doi) "
+     "WHERE target_article_id IS NULL AND target_doi IS NOT NULL"),
+)
+
+
+def ensure_citation_unique_indexes(conn):
+    """Create the citations uniqueness guards. Returns the names of any guard
+    that could not be built because the table already holds duplicate rows
+    (dedupe_citations.py clears those); an empty list means both are in place."""
+    missing = []
+    for name, ddl in CITATION_UNIQUE_INDEXES:
+        try:
+            conn.execute(ddl)
+        except sqlite3.IntegrityError:
+            missing.append(name)
+    return missing
+
+
+def _migrate_v16_to_v17(conn):
+    """Stop duplicate citation rows at the schema (v16 → v17).
+
+    From v9 to v16 the citations table had no uniqueness constraint, and the
+    weekly LiCS galley scrape re-inserted every DOI-bearing reference on each
+    run. Every internal metric counts rows, so a pair stored 38 times counted
+    as 38 citations.
+
+    The guards cannot be built over existing duplicates, and deleting rows is
+    not something a startup migration should do unattended. On a database
+    that still holds duplicates this logs a warning and leaves the table as it
+    is; dedupe_citations.py --yes removes them (after a backup) and builds the
+    indexes. Fresh databases get the guards immediately. Idempotent.
+    """
+    missing = ensure_citation_unique_indexes(conn)
+    if missing:
+        log.warning(
+            "citations holds duplicate rows, so %s could not be created. "
+            "Run `python dedupe_citations.py` to review, then `--yes` to fix.",
+            ", ".join(missing),
+        )
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -838,6 +896,10 @@ def init_db():
 
         # Always run v16 migration — idempotent via IF NOT EXISTS.
         _migrate_v15_to_v16(conn)
+
+        # Always run v17 migration — idempotent via IF NOT EXISTS; a no-op
+        # with a warning while duplicate citation rows remain.
+        _migrate_v16_to_v17(conn)
 
         conn.commit()
 

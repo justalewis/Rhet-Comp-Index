@@ -11,6 +11,13 @@ from datastories_cache import cached
 
 log = logging.getLogger(__name__)
 
+# One row per citing→cited pair inside the index. The analytics below count
+# citation links, never citation rows: before the v17 uniqueness guards the
+# weekly LiCS scrape could store the same pair dozens of times, and every
+# row-counting query multiplied it. Use as `FROM {_EDGES} c`.
+_EDGES = ("(SELECT DISTINCT source_article_id, target_article_id "
+          "FROM citations WHERE target_article_id IS NOT NULL)")
+
 
 def get_articles_needing_citation_fetch(limit=None):
     """Articles with DOIs where references_fetched_at IS NULL, newest-first."""
@@ -39,8 +46,8 @@ def get_article_citations(article_id):
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT a.* FROM articles a
-            JOIN citations c ON c.source_article_id = a.id
-            WHERE c.target_article_id = ?
+            WHERE a.id IN (SELECT source_article_id FROM citations
+                           WHERE target_article_id = ?)
             ORDER BY a.pub_date DESC
         """, (article_id,)).fetchall()
         return [dict(r) for r in rows]
@@ -51,8 +58,8 @@ def get_article_references(article_id):
     with get_conn() as conn:
         rows = conn.execute("""
             SELECT a.* FROM articles a
-            JOIN citations c ON c.target_article_id = a.id
-            WHERE c.source_article_id = ?
+            WHERE a.id IN (SELECT target_article_id FROM citations
+                           WHERE source_article_id = ?)
             ORDER BY a.pub_date DESC
         """, (article_id,)).fetchall()
         return [dict(r) for r in rows]
@@ -91,7 +98,17 @@ def get_article_all_references(article_id):
         """, (article_id,)).fetchall()
 
     results = []
+    seen = set()
     for row in rows:
+        # A repeated row (same indexed article, else same DOI / key, else same
+        # text) is the same reference stored twice; show it once. Matches the
+        # key dedupe_citations.py collapses on.
+        key = (row["target_article_id"] if row["target_article_id"] is not None
+               else row["target_doi"] or row["raw_reference"])
+        if key is not None:
+            if key in seen:
+                continue
+            seen.add(key)
         if row["target_article_id"] is not None:
             results.append({
                 "in_index": True,
@@ -173,7 +190,8 @@ def get_ego_network(article_id):
                 WHERE  source_article_id = ?
                   AND  target_article_id IS NOT NULL
             )
-            SELECT c.source_article_id AS source,
+            SELECT DISTINCT
+                   c.source_article_id AS source,
                    c.target_article_id AS target
             FROM   citations c
             WHERE  c.source_article_id IN (SELECT id FROM neighbors)
@@ -196,7 +214,8 @@ def get_outside_citation_count(article_id):
     """Count of references from this article that point to DOIs outside our index."""
     with get_conn() as conn:
         return conn.execute(
-            "SELECT COUNT(*) FROM citations "
+            "SELECT COUNT(DISTINCT COALESCE(target_doi, raw_reference, id)) "
+            "FROM citations "
             "WHERE source_article_id = ? AND target_article_id IS NULL",
             (article_id,)
         ).fetchone()[0]
@@ -204,16 +223,20 @@ def get_outside_citation_count(article_id):
 
 def upsert_citation(source_article_id, target_doi, target_article_id, raw_reference, ord=None):
     """
-    Insert a citation record. Always inserts (no UNIQUE constraint as of v9 —
-    callers wipe per-article rows before re-inserting). Returns 1.
+    Insert a citation record. Returns 1 if a row was written, 0 if the v17
+    uniqueness guards (db.core.CITATION_UNIQUE_INDEXES) refused it as a repeat:
+    the citing article already has a row for that indexed article, or for that
+    DOI / synthetic key. Callers still wipe their own per-article rows before
+    re-inserting; the guard is what keeps a missed wipe from doubling a pair.
 
     `target_doi` may be None for references without a DOI (books, web pages,
-    older journals). `ord` is the reference's 0-indexed position in CrossRef's
-    reference array, used to preserve original ordering on display.
+    older journals); those are never refused. `ord` is the reference's
+    0-indexed position in CrossRef's reference array, used to preserve
+    original ordering on display.
     """
     with get_conn() as conn:
-        conn.execute("""
-            INSERT INTO citations
+        cur = conn.execute("""
+            INSERT OR IGNORE INTO citations
                 (source_article_id, target_doi, target_article_id, raw_reference, ord)
             VALUES (?, ?, ?, ?, ?)
         """, (
@@ -224,7 +247,7 @@ def upsert_citation(source_article_id, target_doi, target_article_id, raw_refere
             ord,
         ))
         conn.commit()
-        return 1
+        return cur.rowcount
 
 
 def delete_citations_for_article(source_article_id):
@@ -252,28 +275,35 @@ def mark_references_fetched(article_id, crossref_cited_by_count=None):
         conn.commit()
 
 
-def update_citation_counts():
+def update_citation_counts(conn=None):
     """
     Recompute internal_cited_by_count and internal_cites_count for every article.
     Safe to call repeatedly — always overwrites with fresh counts.
+
+    Counts distinct citing / cited articles, not rows, so a pair stored twice
+    still counts once. Pass `conn` to run inside a caller's transaction
+    (dedupe_citations.py does); the caller then owns the commit.
     """
-    with get_conn() as conn:
-        conn.execute("""
-            UPDATE articles
-            SET internal_cited_by_count = (
-                SELECT COUNT(*) FROM citations
-                WHERE target_article_id = articles.id
-            )
-        """)
-        conn.execute("""
-            UPDATE articles
-            SET internal_cites_count = (
-                SELECT COUNT(*) FROM citations
-                WHERE source_article_id = articles.id
-                  AND target_article_id IS NOT NULL
-            )
-        """)
-        conn.commit()
+    if conn is None:
+        with get_conn() as own:
+            update_citation_counts(own)
+            own.commit()
+        return
+    conn.execute("""
+        UPDATE articles
+        SET internal_cited_by_count = (
+            SELECT COUNT(DISTINCT source_article_id) FROM citations
+            WHERE target_article_id = articles.id
+        )
+    """)
+    conn.execute("""
+        UPDATE articles
+        SET internal_cites_count = (
+            SELECT COUNT(DISTINCT target_article_id) FROM citations
+            WHERE source_article_id = articles.id
+              AND target_article_id IS NOT NULL
+        )
+    """)
 
 
 def get_most_cited(year_from=None, year_to=None, journal=None, tag=None, limit=50):
@@ -364,7 +394,8 @@ def get_citation_network(min_citations=5, journals=None,
                 SELECT id FROM articles {clause}
                 ORDER BY internal_cited_by_count DESC LIMIT ?
             )
-            SELECT c.source_article_id AS source,
+            SELECT DISTINCT
+                   c.source_article_id AS source,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
@@ -487,7 +518,7 @@ def get_cocitation_network(min_cocitations=3, journals=None,
                 )
                 SELECT c1.target_article_id AS article_a,
                        c2.target_article_id AS article_b,
-                       COUNT(*)             AS weight
+                       COUNT(DISTINCT c1.source_article_id) AS weight
                 FROM citations c1
                 JOIN citations c2
                   ON c1.source_article_id = c2.source_article_id
@@ -495,14 +526,14 @@ def get_cocitation_network(min_cocitations=3, journals=None,
                 WHERE c1.target_article_id IN (SELECT id FROM eligible)
                   AND c2.target_article_id IN (SELECT id FROM eligible)
                 GROUP BY c1.target_article_id, c2.target_article_id
-                HAVING COUNT(*) >= ?
+                HAVING COUNT(DISTINCT c1.source_article_id) >= ?
                 ORDER BY weight DESC
             """, art_params + [min_cocitations]).fetchall()
         else:
             pair_rows = conn.execute("""
                 SELECT c1.target_article_id AS article_a,
                        c2.target_article_id AS article_b,
-                       COUNT(*)             AS weight
+                       COUNT(DISTINCT c1.source_article_id) AS weight
                 FROM citations c1
                 JOIN citations c2
                   ON c1.source_article_id = c2.source_article_id
@@ -510,7 +541,7 @@ def get_cocitation_network(min_cocitations=3, journals=None,
                 WHERE c1.target_article_id IS NOT NULL
                   AND c2.target_article_id IS NOT NULL
                 GROUP BY c1.target_article_id, c2.target_article_id
-                HAVING COUNT(*) >= ?
+                HAVING COUNT(DISTINCT c1.source_article_id) >= ?
                 ORDER BY weight DESC
             """, (min_cocitations,)).fetchall()
 
@@ -626,7 +657,7 @@ def get_bibcoupling_network(min_coupling=3, journals=None,
                 )
                 SELECT c1.source_article_id AS article_a,
                        c2.source_article_id AS article_b,
-                       COUNT(*)             AS weight
+                       COUNT(DISTINCT c1.target_article_id) AS weight
                 FROM citations c1
                 JOIN citations c2
                   ON c1.target_article_id = c2.target_article_id
@@ -635,14 +666,14 @@ def get_bibcoupling_network(min_coupling=3, journals=None,
                   AND c2.source_article_id IN (SELECT id FROM eligible)
                   AND c1.target_article_id IS NOT NULL
                 GROUP BY c1.source_article_id, c2.source_article_id
-                HAVING COUNT(*) >= ?
+                HAVING COUNT(DISTINCT c1.target_article_id) >= ?
                 ORDER BY weight DESC
             """, art_params + [min_coupling]).fetchall()
         else:
             pair_rows = conn.execute("""
                 SELECT c1.source_article_id AS article_a,
                        c2.source_article_id AS article_b,
-                       COUNT(*)             AS weight
+                       COUNT(DISTINCT c1.target_article_id) AS weight
                 FROM citations c1
                 JOIN citations c2
                   ON c1.target_article_id = c2.target_article_id
@@ -650,7 +681,7 @@ def get_bibcoupling_network(min_coupling=3, journals=None,
                 WHERE c1.target_article_id IS NOT NULL
                   AND c2.target_article_id IS NOT NULL
                 GROUP BY c1.source_article_id, c2.source_article_id
-                HAVING COUNT(*) >= ?
+                HAVING COUNT(DISTINCT c1.target_article_id) >= ?
                 ORDER BY weight DESC
             """, (min_coupling,)).fetchall()
 
@@ -794,7 +825,7 @@ def get_sleeping_beauties(min_total_citations=5, max_results=50,
         timeline_rows = conn.execute(f"""
             SELECT c.target_article_id AS article_id,
                    SUBSTR(s.pub_date, 1, 4) AS cite_year,
-                   COUNT(*) AS cnt
+                   COUNT(DISTINCT c.source_article_id) AS cnt
             FROM citations c
             JOIN articles s ON c.source_article_id = s.id
             WHERE c.target_article_id IN ({ph})
@@ -832,6 +863,11 @@ def get_sleeping_beauties(min_total_citations=5, max_results=50,
         full_timeline = {}
         for y in range(t0, max_year + 1):
             full_timeline[y] = years_with_cites.get(y, 0)
+
+        # Every citing article predates this one (an online-first or reprint
+        # date on either side): there is no post-publication curve to score.
+        if not full_timeline:
+            continue
 
         # Find peak year (year with most citations)
         tm = max(full_timeline, key=lambda y: full_timeline[y])
@@ -1025,7 +1061,8 @@ def get_citation_centrality(min_citations=1, journals=None,
                 SELECT id FROM articles {clause}
                 ORDER BY internal_cited_by_count DESC LIMIT ?
             )
-            SELECT c.source_article_id AS source,
+            SELECT DISTINCT
+                   c.source_article_id AS source,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
@@ -1138,7 +1175,7 @@ def get_journal_citation_flow(min_citations=1, journals=None,
             SELECT src.journal  AS source_journal,
                    tgt.journal  AS target_journal,
                    COUNT(*)     AS cnt
-            FROM citations c
+            FROM {_EDGES} c
             JOIN articles src ON c.source_article_id = src.id
             JOIN articles tgt ON c.target_article_id = tgt.id
             WHERE c.target_article_id IS NOT NULL
@@ -1274,7 +1311,7 @@ def get_journal_half_life(journals=None, year_from=None, year_to=None,
                    CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
                      - CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER) AS age,
                    COUNT(*) AS cnt
-            FROM citations c
+            FROM {_EDGES} c
             JOIN articles src ON c.source_article_id = src.id
             JOIN articles tgt ON c.target_article_id  = tgt.id
             {base_where}
@@ -1290,7 +1327,7 @@ def get_journal_half_life(journals=None, year_from=None, year_to=None,
                    CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
                      - CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER) AS age,
                    COUNT(*) AS cnt
-            FROM citations c
+            FROM {_EDGES} c
             JOIN articles src ON c.source_article_id = src.id
             JOIN articles tgt ON c.target_article_id  = tgt.id
             {base_where}
@@ -1309,7 +1346,7 @@ def get_journal_half_life(journals=None, year_from=None, year_to=None,
                        CAST(SUBSTR(src.pub_date,1,4) AS INTEGER)
                          - CAST(SUBSTR(tgt.pub_date,1,4) AS INTEGER) AS age,
                        COUNT(*) AS cnt
-                FROM citations c
+                FROM {_EDGES} c
                 JOIN articles src ON c.source_article_id = src.id
                 JOIN articles tgt ON c.target_article_id  = tgt.id
                 {base_where}
@@ -1464,7 +1501,8 @@ def get_community_detection(min_citations=2, journals=None,
                 SELECT id FROM articles {clause}
                 ORDER BY internal_cited_by_count DESC LIMIT ?
             )
-            SELECT c.source_article_id AS source,
+            SELECT DISTINCT
+                   c.source_article_id AS source,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
@@ -1666,7 +1704,8 @@ def get_main_path(min_citations=1, journals=None,
                 SELECT id FROM articles {clause}
                 ORDER BY internal_cited_by_count DESC LIMIT ?
             )
-            SELECT c.source_article_id AS source,
+            SELECT DISTINCT
+                   c.source_article_id AS source,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
@@ -1882,7 +1921,8 @@ def get_temporal_network_evolution(min_citations=1, journals=None,
             WITH filtered AS (
                 SELECT id FROM articles {clause}
             )
-            SELECT c.source_article_id AS source,
+            SELECT DISTINCT
+                   c.source_article_id AS source,
                    c.target_article_id AS target
             FROM citations c
             WHERE c.source_article_id IN (SELECT id FROM filtered)
@@ -2120,8 +2160,8 @@ def get_reading_path(article_id):
             SELECT a.id, a.title, a.authors, a.journal, a.pub_date,
                    a.doi, a.url, a.internal_cited_by_count, a.tags
             FROM articles a
-            JOIN citations c ON c.target_article_id = a.id
-            WHERE c.source_article_id = ?
+            WHERE a.id IN (SELECT target_article_id FROM citations
+                           WHERE source_article_id = ?)
             ORDER BY a.pub_date DESC
         """, (article_id,)).fetchall()
         cites = [dict(r) for r in cites_rows]
@@ -2131,8 +2171,8 @@ def get_reading_path(article_id):
             SELECT a.id, a.title, a.authors, a.journal, a.pub_date,
                    a.doi, a.url, a.internal_cited_by_count, a.tags
             FROM articles a
-            JOIN citations c ON c.source_article_id = a.id
-            WHERE c.target_article_id = ?
+            WHERE a.id IN (SELECT source_article_id FROM citations
+                           WHERE target_article_id = ?)
             ORDER BY a.internal_cited_by_count DESC
         """, (article_id,)).fetchall()
         cited_by = [dict(r) for r in cited_by_rows]
@@ -2392,7 +2432,8 @@ def get_author_cocitation_network(min_cocitations=3, max_authors=200,
         # Only include cited articles that have been cited at least 2 times
         # internally (pre-filter for performance) and have known authors.
         rows = conn.execute(f"""
-            SELECT c.source_article_id AS citing_id,
+            SELECT DISTINCT
+                   c.source_article_id AS citing_id,
                    c.target_article_id AS cited_id,
                    cited.authors       AS cited_authors
             FROM citations c

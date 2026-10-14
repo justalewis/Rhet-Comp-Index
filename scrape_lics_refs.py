@@ -7,8 +7,18 @@ this script:
   1. Visits the OJS landing page to find the HTML galley link
   2. Fetches the HTML galley content (via iframe src)
   3. Extracts the Works Cited / References section
-  4. Stores each reference as an unstructured citation record
-  5. Stamps references_fetched_at so the article isn't re-processed
+  4. Replaces the article's previously scraped rows with the fresh list,
+     one unstructured citation record per reference
+  5. Stamps references_fetched_at
+
+weekly_maintenance.py (step 6) runs this over every LiCS article each week so
+references can pick up title matches against articles indexed since the last
+pass. Every run therefore has to be a clean replacement. Until October 2026 it
+was not: step 4 deleted only the rows keyed "ref:<hash>" (references with no
+DOI), so each week added another copy of every reference that carried a DOI.
+One pair reached 38 copies. Now the scraper deletes every row it owns before
+re-inserting, and the citations uniqueness guards (db.core, v17) refuse a
+repeat if anything slips past.
 
 Usage:
     python scrape_lics_refs.py                # process all missing
@@ -18,6 +28,7 @@ Usage:
 
 import argparse
 import hashlib
+import json
 import logging
 import re
 import time
@@ -274,9 +285,9 @@ def _match_ref_to_article(ref_text: str, title_index: dict) -> int | None:
 
 def get_articles_to_process(article_id: int | None = None) -> list[dict]:
     """
-    Get LiCS articles that have a DOI, have references_fetched_at set
-    (from the prefix backfill), but have 0 citations stored — meaning
-    CrossRef had no references but we can try scraping them.
+    Get every LiCS article with a 10.21623 DOI. Articles whose references
+    already came from CrossRef are filtered out later, in process_article,
+    which skips any article holding citation rows this scraper did not write.
 
     If article_id is specified, return just that one.
     """
@@ -302,6 +313,84 @@ def get_articles_to_process(article_id: int | None = None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def _is_scraped_row(raw_reference: str | None) -> bool:
+    """True for a row this scraper wrote: raw_reference is exactly
+    {"unstructured": ...}. CrossRef reference objects always carry a "key",
+    and the manual ingests store richer objects, so neither matches."""
+    try:
+        raw = json.loads(raw_reference) if raw_reference else None
+    except (ValueError, TypeError):
+        return False
+    return isinstance(raw, dict) and set(raw) == {"unstructured"}
+
+
+def _citation_rows_by_owner(article_id: int) -> tuple[list[int], int]:
+    """(ids of rows this scraper owns, count of rows from anywhere else)
+    for one citing article."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, raw_reference FROM citations WHERE source_article_id = ?",
+            (article_id,),
+        ).fetchall()
+    owned = [r["id"] for r in rows if _is_scraped_row(r["raw_reference"])]
+    return owned, len(rows) - len(owned)
+
+
+def _delete_citation_rows(ids: list[int]) -> None:
+    if ids:
+        with get_conn() as conn:
+            conn.executemany("DELETE FROM citations WHERE id = ?",
+                             [(i,) for i in ids])
+            conn.commit()
+
+
+def store_references(article_id: int, refs: list[str], doi_map: dict,
+                     title_index: dict) -> tuple[int, int]:
+    """Replace the article's scraped citation rows with `refs`.
+
+    Deletes every row this scraper owns for the article (DOI-bearing or not),
+    then inserts one row per distinct reference. Running it twice with the
+    same list leaves the same rows. Returns (rows stored, internal matches).
+    """
+    owned, _ = _citation_rows_by_owner(article_id)
+    _delete_citation_rows(owned)
+
+    stored = 0
+    internal_matches = 0
+    seen_keys = set()
+    seen_targets = set()
+    for ref in refs:
+        ref_doi = _extract_doi_from_ref(ref)
+        # Use a hash-based key for refs without DOIs so each gets its own row
+        cite_doi = ref_doi or _make_ref_key(ref)
+        if cite_doi in seen_keys:
+            continue  # the same DOI or text listed twice in one bibliography
+        seen_keys.add(cite_doi)
+
+        target_id = None
+        # Try DOI-based match first
+        if ref_doi:
+            target_id = doi_map.get(ref_doi)
+        # Fall back to title-based match
+        if target_id is None:
+            target_id = _match_ref_to_article(ref, title_index)
+        # A second reference resolving to an article already matched is kept
+        # as text, not as a second citation of that article.
+        if target_id in seen_targets:
+            target_id = None
+        if target_id is not None:
+            seen_targets.add(target_id)
+            internal_matches += 1
+
+        stored += upsert_citation(
+            source_article_id=article_id,
+            target_doi=cite_doi,
+            target_article_id=target_id,
+            raw_reference={"unstructured": ref},
+        )
+    return stored, internal_matches
+
+
 def process_article(article: dict, doi_map: dict, title_index: dict, dry_run: bool = False) -> int:
     """
     Scrape references for one article. Returns count of references found.
@@ -316,6 +405,19 @@ def process_article(article: dict, doi_map: dict, title_index: dict, dry_run: bo
 
     log.info("Processing id=%d doi=%s", article_id, doi)
     log.info("  Title: %s", title[:80])
+
+    # CrossRef (cite_fetcher) or another ingest already supplied this
+    # article's references; a scraped copy would list each one twice. Earlier
+    # versions stacked one anyway, so clear any scraped rows left behind.
+    owned, foreign = _citation_rows_by_owner(article_id)
+    if foreign:
+        if owned and not dry_run:
+            _delete_citation_rows(owned)
+            log.info("  Removed %d scraped rows that duplicated CrossRef's list",
+                     len(owned))
+        log.info("  Skipping: %d reference rows already come from CrossRef "
+                 "or another ingest", foreign)
+        return 0
 
     # Step 1: Resolve DOI to OJS view URL
     view_url = _resolve_doi_to_view_url(doi)
@@ -350,41 +452,9 @@ def process_article(article: dict, doi_map: dict, title_index: dict, dry_run: bo
             log.info("    ... and %d more", len(refs) - 5)
         return len(refs)
 
-    # Step 5: Clear old scraped citations (ref:xxx keys) so we can re-insert with matches
-    with get_conn() as conn:
-        conn.execute(
-            "DELETE FROM citations WHERE source_article_id = ? AND target_doi LIKE 'ref:%'",
-            (article_id,),
-        )
-        conn.commit()
-
-    # Step 6: Store citations
-    citations_inserted = 0
-    internal_matches = 0
-    for ref in refs:
-        ref_doi = _extract_doi_from_ref(ref)
-        target_id = None
-
-        # Try DOI-based match first
-        if ref_doi:
-            target_id = doi_map.get(ref_doi)
-
-        # Fall back to title-based match
-        if target_id is None:
-            target_id = _match_ref_to_article(ref, title_index)
-
-        if target_id is not None:
-            internal_matches += 1
-
-        # Use a hash-based key for refs without DOIs so each gets its own row
-        cite_doi = ref_doi or _make_ref_key(ref)
-
-        citations_inserted += upsert_citation(
-            source_article_id=article_id,
-            target_doi=cite_doi,
-            target_article_id=target_id,
-            raw_reference={"unstructured": ref},
-        )
+    # Step 5: Replace this article's scraped rows (all of them, DOI or not)
+    citations_inserted, internal_matches = store_references(
+        article_id, refs, doi_map, title_index)
 
     log.info("  Internal matches: %d", internal_matches)
 
