@@ -6,8 +6,8 @@ is assumed.
 
 **What this covers:** the two things you do after the install is finished.
 
-- **[Part A](#part-a--bring-the-deployment-to-healthy)** — bring the deployment
-  to a healthy, populated state. Do this once.
+- **[Part A](#part-a--bring-the-deployment-to-healthy)** — bring an installed
+  deployment to a healthy, populated state. Do this once per server.
 - **[Part B](#part-b--push-an-update-from-github)** — deploy a new version from
   GitHub. Do this whenever there is a release.
 
@@ -15,7 +15,7 @@ For a first install on a new machine, use
 [WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md) instead.
 
 Everything here is scripted. The scripts live in the repository under
-`deploy/windows\`, so they arrive on the server with the code itself.
+`deploy\windows\`, so they arrive on the server with the code itself.
 
 ---
 
@@ -44,57 +44,74 @@ Everything here is scripted. The scripts live in the repository under
 
 - The application is one Windows service, **`Pinakes-Web`**, running the Flask
   app behind waitress on `127.0.0.1:8080`. IIS reverse-proxies the public
-  hostname to it.
+  hostname to it. The address waitress listens on is set in the service's
+  arguments, which `nssm get Pinakes-Web AppParameters` shows. It should be
+  `--host=127.0.0.1`; [Visitor IP addresses](#visitor-ip-addresses) says why.
+- Commands call the scripts by full path,
+  `& C:\Pinakes\app\deploy\windows\<script>.ps1`, so they work from any
+  directory. A path written `.\deploy\windows\…` is relative to
+  `C:\Pinakes\app`, or to the root of a clone on another machine.
 
 ---
 
 ## Part A — Bring the deployment to healthy
 
-As of 2026-08-27 the test deployment has three problems. Working through this
-part fixes all three. Each step says what it is for, so you can skip any that
-have already been done.
+This part was written on 2026-08-27 for the test deployment, which then had
+the three problems below. The steps are still the checklist for bringing any
+installed server to a healthy, populated state, whether it is a new install or
+one set up from an older version of the install guide. Each step says what it
+is for, so you can skip any that have already been done.
 
 <details>
-<summary><strong>What is actually wrong (read this first)</strong></summary>
+<summary><strong>What was wrong on 2026-08-27</strong></summary>
 
-1. **The server is running old code that cannot fetch articles.** `/health`
-   reports commit `e0f82ec`; `main` is four commits ahead. The missing fix is
-   commit `138f4cd`. CrossRef stopped accepting a sort order combined with
-   cursor paging and now returns `400
-   sort-criteria-incompatible-with-cursor` for the exact request the deployed
-   code sends. Every deep page fails, so the index stays empty. This is why
-   `/api/articles` returns `{"articles":[],"total":0}`.
+1. **The server was running old code that could not fetch articles.** `/health`
+   reported commit `e0f82ec`; `main` was four commits ahead. The missing fix
+   was commit `138f4cd`. CrossRef stopped accepting a sort order combined with
+   cursor paging and returns `400
+   sort-criteria-incompatible-with-cursor` for the exact request that code
+   sends. Every deep page failed, so the index stayed empty. This is why
+   `/api/articles` returned `{"articles":[],"total":0}`.
 
-2. **IIS/ARR is caching API responses for an hour, including empty ones.** The
+2. **IIS/ARR was caching API responses for an hour, including empty ones.** The
    app was sending `Cache-Control: public, max-age=3600`, which ARR honours by
    storing its own copy — so requests never reached the app at all. During the
-   initial seed that means the site keeps serving empty JSON out of the proxy
-   cache while the database behind it fills up, and the site looks broken when
-   it is not. Fixed in the app by sending `private` instead; deploying step A4
-   is what applies it.
+   initial seed that meant the site kept serving empty JSON out of the proxy
+   cache while the database behind it filled up, and the site looked broken
+   when it was not. Fixed in the app (commit `ddbf583`) by sending `private`
+   instead; deploying step A4 is what applies it.
 
-3. **Nothing is scheduled.** The install guide created a `Pinakes-Scheduler`
-   service pointed at `scheduler.py`, but that file was deleted from the
-   repository in commit `fa25cae`. That service cannot start. The equivalent
-   jobs on the Fly deployment run from GitHub Actions against `pinakes.xyz`,
-   which does nothing for this server. So there is currently no daily fetch, no
-   backup, and no maintenance. Step A6 registers them as scheduled tasks.
+3. **Nothing was scheduled.** Older versions of the install guide created a
+   `Pinakes-Scheduler` service pointed at `scheduler.py`, but that file was
+   deleted from the repository in commit `fa25cae`. That service cannot start.
+   The equivalent jobs on the Fly deployment ran from GitHub Actions against
+   `pinakes.xyz`, which did nothing for this server (those schedules have been
+   switched off since 2026-09-19). So there was no daily fetch, no backup, and
+   no maintenance. Step A6 registers them as scheduled tasks.
 
 </details>
 
 ### A1. Get the deployment tooling onto the server
 
-The update scripts ship inside the repository, so the very first update is the
-only one you do by hand. Everything after this uses the script.
+The update scripts ship inside the repository. On a server installed from the
+current guide they are already in `C:\Pinakes\app\deploy\windows\`; if so,
+skip to A2. Otherwise this first update is the only one you do by hand.
+Everything after it uses the script.
+
+Note the version the service is running now, then see what is about to be
+deployed:
 
 ```powershell
+Invoke-RestMethod http://127.0.0.1:8080/health    # .version: the commit to return to if A4 fails
 Set-Location C:\Pinakes\app
 git fetch origin
+git status
 git log --oneline HEAD..origin/main
 ```
 
-That last command lists what is about to be deployed. Expect four commits,
-ending with `138f4cd fix(fetch): drop sort+cursor combo rejected by CrossRef`.
+That last command lists the commits about to be deployed. (On 2026-08-27 there
+were four, ending with `138f4cd fix(fetch): drop sort+cursor combo rejected by
+CrossRef`.)
 
 If `git status` shows local modifications, stop and send them to Justin before
 continuing — the next step discards them.
@@ -103,7 +120,8 @@ continuing — the next step discards them.
 git reset --hard origin/main
 ```
 
-You now have `C:\Pinakes\app\deploy\windows\` with six scripts in it.
+You now have `C:\Pinakes\app\deploy\windows\` with the scripts listed under
+[The scripts](#the-scripts).
 
 ### A2. Check prerequisites
 
@@ -111,16 +129,24 @@ You now have `C:\Pinakes\app\deploy\windows\` with six scripts in it.
 & C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
 ```
 
-This prints PASS / FAIL / WARN for the service, the app, the database, the
-public URL, and whether the code matches GitHub. Nothing is changed.
+This prints PASS / FAIL / WARN for the service, the database file, the app,
+the admin token, and whether the code matches GitHub. Nothing is changed. By
+default every HTTP check goes straight to the app on `127.0.0.1:8080`, not
+through IIS; A8 shows how to test the public path as well.
 
-Two results are expected to be unhappy at this point and will be fixed below:
-`Index contains articles` (0 articles) and `Service running checked-out code`
-(the tree moved in A1 but the service has not restarted yet).
+Some results are expected to be unhappy at this point and will be fixed below:
 
-If it reports that the service `Pinakes-Web` does not exist, or that the venv
-Python is missing, this machine is not installed the way the guide assumes —
-go back to [WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md).
+- `Index contains articles` — WARN, 0 articles, until the fetch in A7.
+- `Service running checked-out code` — FAIL if A1 moved the tree, because the
+  service has not restarted yet.
+- `API responses not shared-cacheable` — FAIL while the service still runs
+  code from before the cache fix (`Cache-Control: public`).
+
+If it reports that the service `Pinakes-Web` does not exist, this machine is
+not installed the way the guide assumes — go back to
+[WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md). The same applies if
+`Update-Pinakes.ps1` or `Install-PinakesTasks.ps1` later stops because the
+venv Python or git is missing. Those two check for that; this script does not.
 
 ### A3. Confirm the admin token
 
@@ -145,11 +171,20 @@ Justin has the token. If nobody has it, generate a new one and set it — nothin
 depends on the old value:
 
 ```powershell
-$token = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+$token = [Convert]::ToBase64String($bytes)
 [Environment]::SetEnvironmentVariable("PINAKES_ADMIN_TOKEN", $token, "Machine")
 Write-Host "New token (send to Justin over a secure channel): $token"
 Restart-Service Pinakes-Web
 ```
+
+Either way, check that the service and the tasks now agree. If the service
+has its own copy of the token (`nssm get Pinakes-Web AppEnvironmentExtra`
+lists `PINAKES_ADMIN_TOKEN=…`), change it there as well, keeping the other
+lines, the way [Visitor IP addresses](#visitor-ip-addresses) shows for
+another variable. A `403` from `Invoke-PinakesAdmin.ps1` means the two still
+differ.
 
 ### A4. Deploy the current code
 
@@ -157,23 +192,27 @@ Restart-Service Pinakes-Web
 & C:\Pinakes\app\deploy\windows\Update-Pinakes.ps1
 ```
 
-The tree is already at `origin/main` from A1, so this mostly restarts the
-service onto it — but run it anyway rather than restarting by hand, because it
-takes a backup, verifies the result, and rolls back if the new code will not
-start.
+If you ran A1, the tree is already at `origin/main`, so this mostly restarts
+the service onto it — but run it anyway rather than restarting by hand,
+because it takes a backup, reinstalls dependencies, and verifies that the
+service comes up on the new commit.
 
 Expect roughly two minutes. The last lines should read:
 
 ```
 [...] == Update complete
-[...] OK    Version:    138f4cd
+[...] OK    Version:    <the new commit>
 [...]       Admin auth: configured
 [...]       Database:   reachable
 [...] OK    Public URL: https://pinakes.wacclearinghouse.org returned HTTP 200
+[...]       Transcript: C:\Pinakes\logs\update-<timestamp>.log
 ```
 
-If it fails, it rolls back on its own and tells you where the transcript is.
-See [When an update fails](#when-an-update-fails).
+If it fails, see [When an update fails](#when-an-update-fails). One caveat
+after A1: the script rolls back to the commit the tree was on when it started,
+and A1 already moved the tree, so a rollback here lands on the same new
+commit. To get back to the old code, use the manual recovery in that section
+with the version you noted in A1.
 
 ### A5. Remove the dead scheduler service
 
@@ -196,7 +235,8 @@ nssm remove Pinakes-Scheduler confirm
 & C:\Pinakes\app\deploy\windows\Install-PinakesTasks.ps1 -IncludeUpdateCheck
 ```
 
-This creates five scheduled tasks, all running as SYSTEM:
+This creates seven scheduled tasks, all running as SYSTEM. Times are the
+server's local time.
 
 | Task | When | What |
 |---|---|---|
@@ -204,16 +244,29 @@ This creates five scheduled tasks, all running as SYSTEM:
 | `Pinakes-DailyFetch` | 03:23 daily | Incremental CrossRef/RSS fetch |
 | `Pinakes-Prewarm` | 04:15 daily | Rebuild cached aggregates |
 | `Pinakes-WeeklyMaintenance` | 04:45 Sundays | Weekly maintenance pass |
-| `Pinakes-UpdateCheck` | 08:00 daily | Reports if the server falls behind GitHub. Reports only — never deploys. |
+| `Pinakes-UsageResolve` | 05:10 daily | Usage statistics: resolve recorded addresses, then delete them. Registered whether or not recording is on; see [Usage statistics](#usage-statistics). |
+| `Pinakes-UsageData` | 05:40 Sundays | Usage statistics: refresh the IP databases when stale. Skips its downloads while recording is off. |
+| `Pinakes-UpdateCheck` | 08:00 daily | Runs `Update-Pinakes.ps1 -Check`. Never deploys. Registered only with `-IncludeUpdateCheck`. |
 
 Backup runs before the fetch, so there is always a copy from before the day's
 writes. Prewarm runs after, so it warms new data rather than old.
+
+`Pinakes-UpdateCheck` does not report anywhere you can read. Its output goes
+to the console, which Task Scheduler discards; it writes no transcript and
+nothing to `admin-tasks.log`; and it exits 0 whether or not the server is
+behind, so its last result shows only whether the check ran without an
+error. To find out whether this server has fallen behind GitHub, run
+`Update-Pinakes.ps1 -Check` by hand, or look at `Code matches GitHub` in
+`Test-PinakesHealth.ps1`.
 
 Confirm:
 
 ```powershell
 & C:\Pinakes\app\deploy\windows\Install-PinakesTasks.ps1 -List
 ```
+
+The list names eight tasks. `Pinakes-WeeklyDigests` reads `not registered`
+unless you added `-IncludeDigests`.
 
 > The weekly saved-search email digest is **not** registered by default. Add
 > `-IncludeDigests` only once `PINAKES_ALERTS_ENABLED=1` and the sending domain
@@ -229,33 +282,57 @@ writes a few hundred MB.
 ```
 
 It returns immediately with `{"status":"fetch started"}` — the work happens in a
-background thread inside the web service. Watch it:
+background thread inside the web service. Expect **30 to 90 minutes** for the
+full corpus. Watch the article count climb (run it every few minutes; the
+fetch is done when the count stops moving and `last_fetched_at` stops
+advancing):
 
 ```powershell
-Get-Content C:\Pinakes\logs\web-stdout.log -Wait -Tail 30
+$h = @{ Authorization = 'Bearer ' + [Environment]::GetEnvironmentVariable('PINAKES_ADMIN_TOKEN', 'Machine') }
+(Invoke-RestMethod http://127.0.0.1:8080/health/deep -Headers $h) | Select-Object counts, last_fetched_at
 ```
 
-You will see a line per journal, like `[College English] +412 articles`. Expect
-**30 to 90 minutes** for the full corpus. Press Ctrl+C to stop watching; that
-does not stop the fetch.
+Errors and warnings go to the service's stderr log, `web-stderr.log` if the
+service was installed per the guide (`nssm get Pinakes-Web AppStderr` shows the
+file):
+
+```powershell
+Get-Content C:\Pinakes\logs\web-stderr.log -Wait -Tail 30
+```
+
+The fetchers also log a line per journal (`Done: College English — 412 new
+articles`) and a summary per pass (`CrossRef fetch complete. Total new: N`, then
+the RSS and `Scrape fetch complete` lines), but those are INFO-level, and under
+`waitress-serve` the app's INFO lines most likely never reach the log: Waitress
+sets up logging at WARNING before the fetcher's own INFO setting can take
+effect. Don't wait for them. Press Ctrl+C to stop watching the log; that does
+not stop the fetch.
 
 If you see `400` and `sort-criteria-incompatible-with-cursor`, the server is
 still on the old code — A4 did not take. Check `/health` and go back to A1.
 
 ### A8. Verify
 
-Once the log has gone quiet:
+Once the article count has stopped moving, run the check against the public
+hostname, so its HTTP checks go through Cloudflare and IIS instead of straight
+to the app:
 
 ```powershell
-& C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
+& C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1 -BaseUrl https://pinakes.wacclearinghouse.org
 ```
+
+(On the test host, use `https://testpinakes.wacclearinghouse.org`.) The
+service, database and git checks still run on the server as before.
 
 Everything should now be PASS. In particular:
 
 - `Index contains articles` — a real count, not 0.
 - `API responses not shared-cacheable` — `Cache-Control: private, max-age=3600`.
   If this still says `public`, the deploy did not land.
-- `Public and local versions agree` — the proxy is not serving a stale copy.
+- `Public and local versions agree` — the version the app reports on
+  127.0.0.1 matches the one served through the public hostname, so the proxy
+  is not serving a stale copy. Without `-BaseUrl`, both sides of this check are
+  127.0.0.1 and it proves nothing about the proxy.
 
 Then look at the site: <https://pinakes.wacclearinghouse.org/explore> — pick
 any tool from the accordion and confirm a chart draws.
@@ -271,7 +348,7 @@ any tool from the accordion and confirm a chart draws.
 Send him the output of:
 
 ```powershell
-& C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
+& C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1 -BaseUrl https://pinakes.wacclearinghouse.org
 ```
 
 He can also check from his own machine at any time, without server access —
@@ -312,15 +389,24 @@ If it says `Already up to date`, you are done.
 In order, the script:
 
 1. Fetches from GitHub and compares commits. Exits early if there is nothing to do.
-2. Takes a hot backup of the database to `C:\Pinakes\backups`.
-3. Stops `Pinakes-Web`.
-4. Moves the working tree to the target commit.
-5. Reinstalls Python dependencies.
-6. Smoke-tests that the new code imports, against a scratch database.
-7. Starts the service and polls `/health` until it reports the **new** commit.
-8. Rolls back automatically if any of 4–7 fails.
+2. Stops if the working tree has local modifications, untracked files
+   included, unless you pass `-Force` (see B4).
+3. Takes a hot backup of `articles.db` to `C:\Pinakes\backups`, unless you
+   pass `-SkipBackup`.
+4. Stops `Pinakes-Web`.
+5. Moves the working tree to the target commit (`git reset --hard`, then
+   `git clean -fd`).
+6. Reinstalls Python dependencies.
+7. Smoke-tests that the new code imports, against a scratch database.
+8. Starts the service and polls `/health` until it reports the **new** commit.
+9. Rolls back if pip fails (6), the import test fails (7), or `/health` does
+   not report the new commit in time (8): resets to the previous commit,
+   reinstalls its dependencies, and restarts the service. A failure anywhere
+   else — git in step 5, or the service refusing to stop or start — ends the
+   script with no rollback, and can leave the service stopped. See
+   [When an update fails](#when-an-update-fails).
 
-Step 7 is the point of the exercise. The app derives its version from
+Step 8 is the point of the exercise. The app derives its version from
 `git rev-parse --short HEAD` when the process starts, so `/health` reporting the
 new SHA is proof the service actually restarted onto the new code — not merely
 that it is still running.
@@ -328,61 +414,102 @@ that it is still running.
 ### B3. Verify
 
 ```powershell
-& C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
+& C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1 -BaseUrl https://pinakes.wacclearinghouse.org
 ```
 
 All PASS. Then load the site and click through one tool.
 
 ### B4. Useful variations
 
-Deploy a specific commit or tag, rather than the tip of `main`:
+Deploy a specific commit rather than the tip of `main`. The repository has no
+release tags, so give a commit SHA, short or full (from
+`git log --oneline origin/main`), or a branch written as `origin/<branch>`:
 
 ```powershell
-& .\Update-Pinakes.ps1 -Ref v1.4.0
+& C:\Pinakes\app\deploy\windows\Update-Pinakes.ps1 -Ref <sha>
 ```
+
+Until the server is back on `main`, `Test-PinakesHealth.ps1` shows
+`Code matches GitHub` as WARN.
 
 Deliberately step **back** to a known-good commit — this is the manual rollback,
 and it takes a backup and verifies just like a forward deploy:
 
 ```powershell
-& .\Update-Pinakes.ps1 -Ref e0f82ec
+& C:\Pinakes\app\deploy\windows\Update-Pinakes.ps1 -Ref <known-good-sha>
 ```
 
+The scripts move with the tree. Commits before `ece22a0` (2026-08-27) have no
+`deploy\windows\` folder at all, and `Test-PinakesClientIp.ps1` arrived in
+`6151a2a`, so stepping back that far removes scripts this runbook uses.
+Stepping back also does not undo schema migrations the newer code ran.
+
 Someone edited a file directly on the server and the script refuses to discard
-it. Review the diff first (`git diff`), send it to Justin so it can be committed
-properly, then:
+it. Review the changes first (`git diff`, and `git status` for new files), send
+them to Justin so they can be committed properly, then:
 
 ```powershell
-& .\Update-Pinakes.ps1 -Force
+& C:\Pinakes\app\deploy\windows\Update-Pinakes.ps1 -Force
+```
+
+`-Force` discards edits to tracked files and deletes untracked files in
+`C:\Pinakes\app` (`git clean -fd`). Files git ignores, such as `.env` and
+`*.db`, are left alone.
+
+You have just taken a backup by hand, or the database is still empty, and want
+to skip the pre-update one:
+
+```powershell
+& C:\Pinakes\app\deploy\windows\Update-Pinakes.ps1 -SkipBackup
 ```
 
 Slow server, or a very large database — startup runs schema migrations before it
-answers, so give it longer:
+answers, so give it longer (the default is 180 seconds):
 
 ```powershell
-& .\Update-Pinakes.ps1 -TimeoutSec 600
+& C:\Pinakes\app\deploy\windows\Update-Pinakes.ps1 -TimeoutSec 600
 ```
 
 ### When an update fails
 
-The script rolls back on its own and prints the last 40 lines of the service
-error log. The site should be back on the previous version before it exits. To
-confirm:
+What the script does depends on where it failed:
+
+- **pip install or the import smoke test failed.** It resets to the previous
+  commit, reinstalls its dependencies, restarts the service, and exits with
+  `… failed; rolled back to <sha>.` That last line is printed even when the
+  rollback did not work. Look above it for an `ERROR` line starting
+  `Rollback itself failed` or `Rollback restored the old code but the app is
+  STILL not healthy`.
+- **The app did not report the new version within `-TimeoutSec`.** It prints
+  the last 40 lines of `C:\Pinakes\logs\web-stderr.log`, rolls back the same
+  way, and says which way it went: `the site is back on <sha>`, or
+  `AND rollback failed. The site is DOWN.`
+- **Anything else** — git could not move the tree, or the service would not
+  stop or start. It prints the error and stops, with no rollback. The service
+  may be left stopped, and the tree may be on either commit.
+
+After any failure, check where things stand:
 
 ```powershell
+Get-Service Pinakes-Web                          # Running or Stopped?
+git -C C:\Pinakes\app rev-parse --short HEAD     # which commit the tree is on
+Invoke-RestMethod http://127.0.0.1:8080/health   # .version: what the service is running
 & C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
-Invoke-RestMethod http://127.0.0.1:8080/health
 ```
 
-A full transcript of every run is written to `C:\Pinakes\logs\update-<timestamp>.log`.
-Send that to Justin along with:
+If the service is stopped and the tree is still on the previous commit,
+`Start-Service Pinakes-Web` is enough. If the tree and the running version
+disagree, or nothing answers, recover by hand as below.
+
+Each run, except `-Check`, writes a full transcript to
+`C:\Pinakes\logs\update-<timestamp>.log`. Send that to Justin along with:
 
 ```powershell
 Get-Content C:\Pinakes\logs\web-stderr.log -Tail 60
 ```
 
-**If rollback also failed** — the script says so explicitly, and the site is
-down. Recover by hand:
+**If rollback also failed, or there was none** — the site is down. Recover by
+hand:
 
 ```powershell
 Set-Location C:\Pinakes\app
@@ -394,7 +521,9 @@ Invoke-RestMethod http://127.0.0.1:8080/health
 ```
 
 **If a schema migration corrupted the database** — restore the backup the script
-took before the deploy:
+took before the deploy. Put the code back on the previous version first (the
+manual recovery above, up to but not including `Start-Service`), or the
+migration runs again as soon as the service starts. Then:
 
 ```powershell
 Stop-Service Pinakes-Web
@@ -404,8 +533,23 @@ Remove-Item C:\Pinakes\data\articles.db-wal, C:\Pinakes\data\articles.db-shm -Er
 Start-Service Pinakes-Web
 ```
 
-Restore the code to the matching version too, or the migration will simply run
-again.
+In the file name, `<sha>` is the commit that was being deployed, not the one
+before it. Once the service is up, re-apply the author-redaction ledger: a
+copy older than a redaction brings the name back. See
+[Author name-removal requests](#author-name-removal-requests).
+
+What the backups folder holds:
+
+- Nightly, pre-deploy and manual (`Backup-Pinakes.ps1 -Label …`) backups of
+  `articles.db` share one set of `articles-*.db` files. Every backup prunes
+  that set to the newest `PINAKES_BACKUP_KEEP` (default 10), so a pre-deploy
+  backup is gone after about ten nights. Copy it elsewhere if you may need it
+  later.
+- The pre-deploy backup copies `articles.db` only. `Backup-Pinakes.ps1` (the
+  nightly task, or a manual run) also copies `usage.db` when it exists, as
+  `usage-*.db`, kept to the same count.
+- Every copy is on the same disk as the database. These backups cover a bad
+  deploy or migration, not the loss of the server.
 
 ---
 
@@ -434,20 +578,38 @@ minute for everyone, and 20 for the citation and stats tools.
 that arrives already carrying one (HTTP 403 at the edge). The only way to
 forge it is to skip Cloudflare and reach this server directly. Allowing only
 [Cloudflare's address ranges](https://www.cloudflare.com/ips/) through to IIS
-on 443 closes that gap. The app ignores the header on any request that did
-not come from a proxy on this machine, so reaching Waitress directly on port
-8080 does not work either.
-
-**Verify it from outside**, through the public hostname:
+on 443 closes that gap. The app believes the header only when the connection
+reaching Waitress comes from this machine or from a private-network address,
+so keep port 8080 closed to everything but loopback. Better, have Waitress
+listen on loopback only: `nssm get Pinakes-Web AppParameters` should show
+`--host=127.0.0.1`. If it shows `--host=0.0.0.0`, first confirm that IIS
+reaches the app over loopback (the `Socket peer` line from the check below
+reads `127.0.0.1`), then set it again with only the host changed, and
+restart:
 
 ```powershell
-$env:PINAKES_ADMIN_TOKEN = '<token>'     # optional; enables the last check
-& .\deploy\windows\Test-PinakesClientIp.ps1
+nssm get Pinakes-Web AppParameters
+nssm set Pinakes-Web AppParameters "<the same line, with --host=127.0.0.1>"
+Restart-Service Pinakes-Web
 ```
 
-`Separate visitors get separate budgets` needs no token. It FAILs while the
-setting is missing, and PASSes once it is in place. With the token, `App
-reports the visitor IP` compares the app's answer with what Cloudflare saw. It
+**Verify it from outside**, through the public hostname. On the server:
+
+```powershell
+& C:\Pinakes\app\deploy\windows\Test-PinakesClientIp.ps1
+```
+
+From another machine, run `.\deploy\windows\Test-PinakesClientIp.ps1` from the
+root of a clone, after `$env:PINAKES_ADMIN_TOKEN = '<token>'` if you want the
+last check. On the server it reads the Machine variable itself.
+
+`Separate visitors get separate budgets` needs no token, but it can only
+decide on a machine with IPv6, because it uses the IPv4 and IPv6 addresses as
+two different visitors. There it FAILs while the setting is missing, and
+PASSes once it is in place. Without IPv6 it reports INFO. A WARN means it
+could not tell (the rate-limit window reset, or other traffic arrived
+mid-test); rerun it. With the token, `App reports the visitor IP` compares
+the app's answer with what Cloudflare saw. It
 also prints the `PINAKES_TRUSTED_IP_HEADER` value the running service actually
 has. If that reads `(unset)` after the restart, the service did not pick up
 the machine variable. Set it on the service instead, keeping the variables
@@ -470,19 +632,29 @@ is built from `PINAKES_SITE_URL` instead. That is the variable the install
 guide (§6) already has you set, so nothing new is needed. The check PASSes
 once the running service has it.
 
-A WARN there means the service does not have `PINAKES_SITE_URL`, and emailed
-links would point at `127.0.0.1`. The endpoint's `site_url` field shows what
-the service has; `request_host_url` shows the request-built address, which
-reads `http://127.0.0.1:8080/` on this server and is expected to. Set the
-variable at Machine scope, or on the service the same way as
-`PINAKES_TRUSTED_IP_HEADER` above, and restart:
+A WARN there means the service does not have `PINAKES_SITE_URL`, and the
+confirmation links, the admin review notice and the ORCID callback would point
+at `127.0.0.1`. (The saved-search digest and the Atom feeds fall back to
+`https://pinakes.wacclearinghouse.org` instead, so on the test host they would
+point at production.) The script prints only the URL the app built. To see
+the variable itself, ask the endpoint directly:
+
+```powershell
+Invoke-RestMethod https://pinakes.wacclearinghouse.org/api/admin/client-ip -Headers @{ Authorization = "Bearer $env:PINAKES_ADMIN_TOKEN" }
+```
+
+`site_url` shows what the service has; `request_host_url` shows the
+request-built address, which reads `http://127.0.0.1:8080/` on this server and
+is expected to. Set the variable at Machine scope, or on the service the same
+way as `PINAKES_TRUSTED_IP_HEADER` above, and restart:
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_SITE_URL','https://pinakes.wacclearinghouse.org','Machine')
 Restart-Service Pinakes-Web
 ```
 
-Use `https://testpinakes.wacclearinghouse.org` on the test host.
+Use `https://testpinakes.wacclearinghouse.org` on the test host. The deploy
+scripts read the same Machine variable for the public URL they check.
 
 **Not `--trusted-proxy`.** Starting Waitress with `--trusted-proxy 127.0.0.1`
 and `--trusted-proxy-headers` would let the forwarding headers through, but
@@ -580,21 +752,53 @@ C:\Pinakes\venv\Scripts\python.exe redaction.py redact "Jane Q. Author" `
 ```
 
 Repeat `--variant` for every spelling the name appears under. `--by` is
-recorded in the audit trail.
+recorded in the audit trail. It prints the token that replaces the name, for
+example `Redacted 'Jane Q. Author' -> Redacted Author 7f3a2c`.
+
+`redaction.py` works on the database named by `DB_PATH`. Check that
+`$env:DB_PATH` prints `C:\Pinakes\data\articles.db` first; if it prints
+nothing, set it for the session (`$env:DB_PATH = 'C:\Pinakes\data\articles.db'`),
+or the tool opens `C:\Pinakes\app\articles.db` instead, creating it if need be.
 
 Check it took:
 
 ```powershell
-C:\Pinakes\venv\Scripts\python.exe redaction.py export C:\Pinakes\logs\ledger.json
+C:\Pinakes\venv\Scripts\python.exe redaction.py list
 ```
 
-To reverse one, `redaction.py unredact <token>` — the token is in that export.
+Each line reads `<token>  <-  <name>`. To reverse one, pass its token, in
+quotes because it contains spaces:
 
-**The ledger is the durable part, not the redacted rows.** Every refresh
-re-applies it, so a later fetch cannot quietly restore a name, and
-`restore_local.py` re-applies it to any database promoted from a backup. A
-redaction applied by hand directly to the `articles` table would be undone by
-the next fetch; always go through `redaction.py`.
+```powershell
+C:\Pinakes\venv\Scripts\python.exe redaction.py unredact "Redacted Author 7f3a2c"
+```
+
+After any change, keep a copy of the ledger off this server.
+`redaction.py export-ledger <file>` writes every redacted name in plain text,
+so write it outside `C:\Pinakes`, send it to Justin over a secure channel, and
+delete the local copy. That export is what puts a redaction back if the
+database is ever restored from a copy older than it.
+
+**The ledger is the durable part, not the redacted rows.** It lives in
+`articles.db`, and new rows pass through it as they are written: article and
+book inserts and OpenAlex enrichment swap a ledgered name for its token, so a
+later fetch cannot quietly restore a name. A full re-sweep of every table runs
+at the end of a deep refresh, or by hand with `redaction.py resweep`. The
+weekly maintenance task does not run it; the scheduled endpoint skips that
+step. A redaction applied by hand directly to the `articles` table would be
+undone by the next fetch; always go through `redaction.py`.
+
+Because the ledger is inside the database, restoring a backup puts back that
+backup's ledger. After restoring from `C:\Pinakes\backups` (see
+[When an update fails](#when-an-update-fails)), with the service running:
+
+- if the backup might be older than a redaction, run
+  `redaction.py import-ledger <export>` with the latest off-box export. It
+  merges the export, then re-sweeps;
+- otherwise run `redaction.py resweep`.
+
+`restore_local.py`, for the encrypted offsite backups, re-sweeps on its own;
+give it the same export with `--redaction-ledger <export>`.
 
 Turning the form back on, once a deployment has SMTP, is one machine variable
 plus a service restart:
@@ -603,6 +807,10 @@ plus a service restart:
 [Environment]::SetEnvironmentVariable('PINAKES_REDACTION_FORM_ENABLED','1','Machine')
 Restart-Service Pinakes-Web
 ```
+
+If `/redaction-request` still redirects to `/about` after the restart, the
+service did not pick up the variable; set it on the service as shown under
+[Visitor IP addresses](#visitor-ip-addresses).
 
 The verification link it emails is built from `PINAKES_SITE_URL`. Before
 turning the form on, run `Test-PinakesClientIp.ps1` with the admin token and
@@ -618,14 +826,15 @@ the ORCID developer console — on production,
 
 ### The scripts
 
-All in `C:\Pinakes\app\deploy\windows\`. Each supports `Get-Help <script> -Full`.
+All in `C:\Pinakes\app\deploy\windows\`. Every `.ps1` except
+`Pinakes.Common.ps1` supports `Get-Help <script> -Full`.
 
 | Script | Purpose |
 |---|---|
 | `Update-Pinakes.ps1` | Deploy from GitHub, with backup, verification, and rollback. **Part B.** |
-| `Test-PinakesHealth.ps1` | Full health check. Add `-Remote` to check over HTTPS from anywhere. |
+| `Test-PinakesHealth.ps1` | Health check, run on the server. Its HTTP checks go to 127.0.0.1 unless you give `-BaseUrl <public URL>`. `-Remote` runs only the HTTPS checks, from anywhere. |
 | `Test-PinakesClientIp.ps1` | Does the app see real visitor IPs? Run from anywhere. See [Visitor IP addresses](#visitor-ip-addresses). |
-| `Invoke-PinakesAdmin.ps1` | Trigger a fetch, prewarm, maintenance, or digest run. |
+| `Invoke-PinakesAdmin.ps1` | Call one admin endpoint: `Fetch`, `DeepFetch` (full revalidation, slow), `Prewarm`, `Maintenance`, `Digests`, `Backup` (offsite S3/B2; needs the `PINAKES_BACKUP_*` secrets), `UsageResolve`, `UsageData`. |
 | `Backup-Pinakes.ps1` | Take a database backup on demand. |
 | `Install-PinakesTasks.ps1` | Register, list, or remove the scheduled jobs. |
 | `Pinakes.Common.ps1` | Shared config and helpers. Dot-sourced by the others; not run directly. |
@@ -655,8 +864,8 @@ Restart-Service Pinakes-Web
 # Job history
 Get-Content C:\Pinakes\logs\admin-tasks.log -Tail 40
 
-# Live application log
-Get-Content C:\Pinakes\logs\web-stdout.log -Wait -Tail 30
+# Live application log (the service's stderr file)
+Get-Content C:\Pinakes\logs\web-stderr.log -Wait -Tail 30
 
 # Scheduled task status
 & C:\Pinakes\app\deploy\windows\Install-PinakesTasks.ps1 -List
@@ -666,10 +875,16 @@ Get-Content C:\Pinakes\logs\web-stdout.log -Wait -Tail 30
 
 | File | Contents |
 |---|---|
-| `C:\Pinakes\logs\web-stdout.log` | Application log — fetch progress, request errors |
-| `C:\Pinakes\logs\web-stderr.log` | Startup failures, tracebacks, migration errors |
-| `C:\Pinakes\logs\admin-tasks.log` | One line per scheduled job run |
-| `C:\Pinakes\logs\update-<timestamp>.log` | Full transcript of each deploy |
+| `C:\Pinakes\logs\web-stderr.log` | Application log: warnings, errors, tracebacks, startup and migration failures. INFO-level progress lines most likely don't appear under Waitress (see [A7](#a7-run-the-initial-fetch)) |
+| `C:\Pinakes\logs\web-stdout.log` | Anything the app prints rather than logs; usually little |
+| `C:\Pinakes\logs\admin-tasks.log` | Two or three lines per `Invoke-PinakesAdmin.ps1` call, scheduled or by hand, and one or two per `Backup-Pinakes.ps1` run. The update check writes nothing here. |
+| `C:\Pinakes\logs\update-<timestamp>.log` | Full transcript of each `Update-Pinakes.ps1` run, except `-Check` |
+
+The two `web-*` names are the ones the install guide gives the service. To see
+what this service actually writes to, run `nssm get Pinakes-Web AppStdout` and
+`nssm get Pinakes-Web AppStderr`. `Invoke-PinakesAdmin.ps1` says to check
+`web-stdout.log` for progress; look in `web-stderr.log` for errors, and at the
+article count in `/health/deep` for progress.
 
 ### What Justin can do without server access
 
@@ -691,7 +906,9 @@ Invoke-RestMethod -Uri https://pinakes.wacclearinghouse.org/fetch -Method POST -
 ```
 
 A `409` from that last one means a fetch is already running — that is the guard
-against two writers on one SQLite file, not an error.
+against two writers on one SQLite file, not an error. A `429` means the limit
+of six authenticated `/fetch` calls an hour from one address was reached; wait
+and try again.
 
 What still needs someone with server access: deploying code, restarting the
 service, reading logs, and anything to do with IIS.
@@ -703,21 +920,32 @@ the service did not restart. `Restart-Service Pinakes-Web`. The update script
 checks for exactly this and will not report success without it.
 
 **The site shows stale or empty data, but `Test-PinakesHealth.ps1` passes.**
-IIS/ARR is serving from its cache. The health script cache-busts every request,
-which is why it disagrees with a browser. Clear the ARR cache in IIS Manager, or
-wait out the hour. If the check reports `Cache-Control: public`, the server is
-running a build older than this fix — deploy.
+IIS/ARR is serving from its cache. The health script goes straight to the app
+on 127.0.0.1 by default, and adds a cache-buster to every request even with
+`-BaseUrl`, so it never sees ARR's copies; that is why it disagrees with a
+browser. Clear the ARR cache in IIS Manager, or wait out the hour. If the
+check reports `Cache-Control: public`, the server is running a build older
+than this fix — deploy.
 
 **`403` from `Invoke-PinakesAdmin.ps1`.** The machine-scope
 `PINAKES_ADMIN_TOKEN` does not match what the service is running with. Set them
-to the same value and `Restart-Service Pinakes-Web`.
+to the same value and `Restart-Service Pinakes-Web`. If the service has its own
+copy in `nssm get Pinakes-Web AppEnvironmentExtra`, change that one too.
+
+**`429` from `Invoke-PinakesAdmin.ps1 -Endpoint Fetch`.** More than six
+authenticated `/fetch` calls in an hour. Wait and run it again.
 
 **`503` from `Invoke-PinakesAdmin.ps1`.** The service has no token in its
 environment at all. See A3.
 
 **A scheduled task shows a non-zero last result.** Read
 `C:\Pinakes\logs\admin-tasks.log` for the reason, then run the same command by
-hand to see it fail in front of you.
+hand to see it fail in front of you. `Pinakes-UpdateCheck` logs nothing there;
+run `Update-Pinakes.ps1 -Check` by hand.
+
+**A scheduled job was accepted but did nothing useful.** A green task means
+the endpoint accepted the job; the work runs in the background inside the
+service. Its progress and errors are in `web-stderr.log`.
 
 **`database is locked`.** Confirm `DB_PATH` is on a local NTFS volume and not a
 network share, and that no leftover `Pinakes-Scheduler` process is running as a
@@ -729,5 +957,5 @@ fine; the reverse proxy is not. See the ARR section of the install guide.
 
 ---
 
-*Runbook version 2026-08-27. Companion to
+*Runbook version 2026-10-15. Companion to
 [WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md). Scripts in `deploy/windows/`.*
