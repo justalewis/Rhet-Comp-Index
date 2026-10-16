@@ -143,7 +143,7 @@ The application reads four environment variables:
 | `DB_PATH` | Absolute path to the SQLite file | `C:\Pinakes\data\articles.db` |
 | `PORT` | Port the web server binds on | `8080` |
 | `FLASK_ENV` | Set to `production` to disable debug mode | `production` |
-| `PINAKES_SITE_URL` | Public address this host answers on. Digest emails and the admin scripts build their links from it. | `https://pinakes.wacclearinghouse.org` on production, `https://testpinakes.wacclearinghouse.org` on the test host |
+| `PINAKES_SITE_URL` | Public address this host answers on. Digest emails, the confirmation links the app emails, the ORCID callback address and the admin scripts are all built from it. Waitress strips the forwarding headers, so the app cannot read this address from a request. | `https://pinakes.wacclearinghouse.org` on production, `https://testpinakes.wacclearinghouse.org` on the test host |
 
 Set them at the **Machine** scope so they are visible to the Windows Service account:
 

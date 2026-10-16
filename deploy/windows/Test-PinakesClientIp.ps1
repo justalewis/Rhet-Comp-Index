@@ -219,13 +219,14 @@ if ([string]::IsNullOrWhiteSpace($token)) {
             Test-Result ("  if set to {0}" -f $p.Name) 'INFO' $v
         }
 
-        # Emailed links (name-removal verification, alert digests) are built
-        # from the request host. Waitress strips X-Forwarded-Host as well.
+        # Emailed links (name-removal and alert confirmations) and the ORCID
+        # callback are built from PINAKES_SITE_URL, because Waitress strips
+        # X-Forwarded-Host as well and the request alone gives 127.0.0.1:8080.
         $ext = [string]$report.external_url
         if ($ext -match '^https://' -and $ext -notmatch '127\.0\.0\.1|localhost') {
             Test-Result "Absolute URLs use the public host" 'PASS' $ext
         } else {
-            Test-Result "Absolute URLs use the public host" 'WARN' "$ext - emailed links would point here; see WINDOWS-SERVER-RUNBOOK.md"
+            Test-Result "Absolute URLs use the public host" 'WARN' "$ext - emailed links would point here; set PINAKES_SITE_URL on the service (WINDOWS-SERVER-RUNBOOK.md, Links in emails)"
         }
     }
 }

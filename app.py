@@ -181,10 +181,13 @@ def create_app() -> Flask:
 
     flask_app = Flask(__name__)
     # Behind Fly.io's TLS-terminating proxy, honor X-Forwarded-Proto/Host so
-    # url_for(..., _external=True) builds https:// absolute URLs. This matters
-    # for the author-redaction email verification link, and is REQUIRED for the
-    # ORCID OAuth redirect_uri — ORCID rejects an http:// callback that doesn't
-    # match the registered https:// URI. x_for is left at Werkzeug's default
+    # request-built absolute URLs come out https://. This matters for the
+    # emailed verification links, and is REQUIRED for the ORCID OAuth
+    # redirect_uri — ORCID rejects an http:// callback that doesn't match the
+    # registered https:// URI. It only covers Fly: Waitress strips those
+    # headers before they get here, so on the Clearinghouse box those URLs
+    # come from PINAKES_SITE_URL instead (web_helpers.public_url_for).
+    # x_for is left at Werkzeug's default
     # of 1, so remote_addr is rewritten from the last X-Forwarded-For entry
     # when one arrives; nothing should treat remote_addr as the visitor.
     # rate_limit.resolve_client_ip reads the forwarding headers itself and the

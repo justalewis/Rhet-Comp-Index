@@ -141,7 +141,7 @@ Summarized here; the operational detail is in [the runbook](runbooks/author-reda
 | `PINAKES_ADMIN_TOKEN` | Gates the review queue/page (same token as the cron endpoints). |
 | `PINAKES_SECRET_KEY` | Signs the ORCID OAuth `state`. Required in production regardless. |
 
-Note: external URLs (the email verify link, the ORCID `redirect_uri`) are built with `url_for(..., _external=True)`. The app applies `ProxyFix` so these come out `https://` behind Fly's TLS-terminating proxy — required, or ORCID rejects an `http://` callback.
+Note: external URLs (the email verify link, the admin review notice, the ORCID `redirect_uri`) are built by `web_helpers.public_url_for`. With `PINAKES_SITE_URL` set they come from it, which the Clearinghouse box requires: Waitress strips `X-Forwarded-Host` and `-Proto`, so a request-built URL there reads `http://127.0.0.1:8080/...`. With it unset (Fly) they come from the request, and `ProxyFix` makes them `https://` behind Fly's TLS-terminating proxy. Either way they must come out `https://`, or ORCID rejects the callback.
 
 ## Code map
 

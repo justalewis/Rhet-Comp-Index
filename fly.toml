@@ -42,8 +42,10 @@
 #                          reachable either way — turning alerts off must never
 #                          strand someone already on the list.
 #   PINAKES_SITE_URL     — base URL used in digest links (default
-#                          https://pinakes.xyz). Only worth setting for a
-#                          staging host.
+#                          https://pinakes.wacclearinghouse.org). When set, the
+#                          emailed confirmation links and the ORCID redirect_uri
+#                          use it too; unset, those come from the request via
+#                          ProxyFix. Only worth setting for a staging host.
 #   PINAKES_DIGEST_DELAY — seconds between sends (default 0.4). One worker, one
 #                          SMTP connection; this is a courtesy pause, not a
 #                          throughput knob.

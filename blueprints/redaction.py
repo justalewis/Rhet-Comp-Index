@@ -19,7 +19,7 @@ real name and requester contact details are never exposed on a public surface.
 import logging
 
 from flask import (
-    Blueprint, request, render_template, jsonify, url_for, abort,
+    Blueprint, request, render_template, jsonify, abort,
     redirect as flask_redirect, current_app,
 )
 
@@ -28,6 +28,7 @@ import orcid_oauth
 from auth import require_admin_token, _client_ip
 from notifications import send_email
 from rate_limit import limiter, LIMITS
+from web_helpers import public_url_for
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ def _notify_admin_of_verified(rid):
     if not req:
         return
     try:
-        review_url = url_for("redaction.admin_redactions_page", _external=True)
+        review_url = public_url_for("redaction.admin_redactions_page")
     except Exception:  # noqa: BLE001 — url building shouldn't block the notice
         review_url = "https://pinakes.wacclearinghouse.org/admin/redactions"
     send_email(
@@ -149,7 +150,7 @@ def submit_request():
         )
         log.info("Redaction request #%s created via ORCID (ip=%s)", rid, _client_ip())
         state = _state_serializer().dumps(rid)
-        redirect_uri = url_for("redaction.orcid_callback", _external=True)
+        redirect_uri = public_url_for("redaction.orcid_callback")
         return flask_redirect(orcid_oauth.authorize_url(state, redirect_uri))
 
     # ── Email path (default) ──────────────────────────────────────────────
@@ -162,7 +163,7 @@ def submit_request():
     )
     log.info("Redaction request #%s created via email (ip=%s)", rid, _client_ip())
 
-    verify_url = url_for("redaction.verify", token=raw_token, _external=True)
+    verify_url = public_url_for("redaction.verify", token=raw_token)
     send_email(
         email,
         "Confirm your Pinakes removal request",
@@ -195,7 +196,7 @@ def orcid_callback():
     if not redaction.get_request(rid):
         abort(404)
 
-    redirect_uri = url_for("redaction.orcid_callback", _external=True)
+    redirect_uri = public_url_for("redaction.orcid_callback")
     try:
         result = orcid_oauth.exchange_code(code, redirect_uri)
     except Exception as exc:  # noqa: BLE001
