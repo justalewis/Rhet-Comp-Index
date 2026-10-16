@@ -9,6 +9,12 @@ articles.db-wal
 # Datastories disk cache (derived; regenerated on demand from articles.db)
 data/datastories_cache/
 
+# Usage statistics: the downloaded IP databases and institution lists
+# (usage/refresh.py). usage.db itself is covered by *.db above.
+usage-data/
+*.mmdb
+*.mmdb.tmp
+
 # Runtime-curated disciplinary events (admin-added via API; per-deployment)
 data/disciplinary_events.json
 

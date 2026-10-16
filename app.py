@@ -282,6 +282,11 @@ def create_app() -> Flask:
     flask_app.after_request(set_security_headers)
     flask_app.teardown_request(release_expensive_slot)
 
+    # Usage statistics (usage/). Records each request into usage.db when
+    # PINAKES_USAGE_TRACKING is set; otherwise the hooks return at once.
+    import usage
+    usage.init_app(flask_app)
+
     # Error handlers
     register_error_handlers(flask_app)
 
@@ -327,6 +332,10 @@ def create_app() -> Flask:
     # Gated JWA webtext companion at /jwa — Basic Auth (PINAKES_JWA_USER/PASSWORD),
     # serves the static bundle in jwa-webtext/ for the journal editors' review.
     flask_app.register_blueprint(jwa_bp)
+    # Usage statistics: the browser-event endpoint (/api/e) and the
+    # token-gated dashboard at /admin/usage.
+    from blueprints.usage import bp as usage_bp
+    flask_app.register_blueprint(usage_bp)
 
     # Datastories blueprint — always registered. The landing page at
     # /datastories is public; the tools at /datastories/tools and the

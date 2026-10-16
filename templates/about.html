@@ -47,6 +47,15 @@
 <br>
     <p>Removal has two limits. It covers your own bylines and author profile, but it can't reliably reach your name where it appears in the bibliography of someone else's article, because I only partly control those citation records. A removed name also stays in the site's backups. In the live index, every refresh re-applies the removal, so a later data pull won't put the name back.</p>
 <br><br>
+{% if usage_tracking %}
+    <h2 id="usage-statistics">Usage statistics</h2>
+    <p>Pinakes keeps its own count of how the site is used, so I can see which tools people use and describe that use in grant applications and reports. For each page or tool request it records the time, the page or tool, the referring site, the browser's language, and the browser and device type. It sets no cookies, records nothing you type into a form, and never stores the browser's full identification string.</p>
+<br>
+    <p>Your IP address is kept for at most {{ usage_raw_ip_hours }} hours. Overnight, a job looks up the network the address belongs to (its country, region and city, the organization that holds it, and whether that organization is a college or university) and then deletes the address. What remains is a visitor code that changes every day and can't be traced back to an address, so nobody, me included, can follow a visitor from one day to the next. If your browser sends Global Privacy Control or Do Not Track, only your country and the kind of network you're on are kept.</p>
+<br>
+    <p>The numbers are reported only in aggregate: visits by tool, by kind of institution, and by country. A named institution, search term, or referring site appears in a public report only when at least three visitor-days account for it. The site also uses <a href="https://www.goatcounter.com" target="_blank" rel="noopener noreferrer">GoatCounter</a> for basic page counts. Questions about any of this can go to <a href="mailto:jlewis2@olympic.edu">jlewis2@olympic.edu</a>.</p>
+<br><br>
+{% endif %}
     <h2>How Pinakes was built</h2>
     <p><em>Pinakes</em> draws on <a href="https://wacclearinghouse.org/comppile/" target="_blank" rel="noopener noreferrer">CompPile</a>, the bibliography of scholarship in composition, rhetoric, and technical communication that <a href="https://sites.google.com/view/rhhaswellhomepage/home" target="_blank" rel="noopener noreferrer">Rich Haswell</a> and Glenn Blalock built largely by hand. Its glossary is one source for the subject vocabulary Pinakes uses to tag articles, and its records supply the index's <em>JAC</em> back catalog.</p>
 <br>

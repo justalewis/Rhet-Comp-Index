@@ -18,6 +18,10 @@
       Pinakes-DailyFetch         03:23 daily     incremental CrossRef/RSS fetch
       Pinakes-Prewarm            04:15 daily     rebuild cached aggregates
       Pinakes-WeeklyMaintenance  04:45 Sundays   weekly maintenance
+      Pinakes-UsageResolve       05:10 daily     usage statistics: resolve
+                                                 addresses, delete raw IPs
+      Pinakes-UsageData          05:40 Sundays   usage statistics: refresh the
+                                                 IP databases when stale
       Pinakes-WeeklyDigests      14:17 Fridays   saved-search emails (opt-in)
       Pinakes-UpdateCheck        08:00 daily     report GitHub drift (opt-in)
 
@@ -71,6 +75,8 @@ $AllTaskNames = @(
     'Pinakes-DailyFetch',
     'Pinakes-Prewarm',
     'Pinakes-WeeklyMaintenance',
+    'Pinakes-UsageResolve',
+    'Pinakes-UsageData',
     'Pinakes-WeeklyDigests',
     'Pinakes-UpdateCheck'
 )
@@ -176,6 +182,23 @@ try {
         -ScriptPath $adminScript -ScriptArgs '-Endpoint Maintenance' `
         -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '04:45') `
         -Description 'Weekly maintenance pass (weekly_maintenance.py).'
+
+    # Usage statistics. The resolver is also what deletes raw IP addresses, so
+    # it is registered whether or not recording is on yet: the deletion is
+    # scheduled before the first address is ever stored. With nothing
+    # recorded it finishes in a moment, and the data refresh skips its
+    # downloads while recording is off.
+    Register-PinakesTask -Name 'Pinakes-UsageResolve' `
+        -ScriptPath $adminScript -ScriptArgs '-Endpoint UsageResolve' `
+        -Trigger (New-ScheduledTaskTrigger -Daily -At '05:10') `
+        -Description 'Usage statistics: resolve recorded addresses to networks and institutions, class visitors, delete raw IPs.' `
+        -TimeLimitHours 2
+
+    Register-PinakesTask -Name 'Pinakes-UsageData' `
+        -ScriptPath $adminScript -ScriptArgs '-Endpoint UsageData' `
+        -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '05:40') `
+        -Description 'Usage statistics: download the IP databases and institution lists when they are out of date.' `
+        -TimeLimitHours 1
 
     if ($IncludeDigests) {
         Register-PinakesTask -Name 'Pinakes-WeeklyDigests' `

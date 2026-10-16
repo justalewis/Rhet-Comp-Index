@@ -54,6 +54,14 @@ try {
     $sizeMb = [Math]::Round((Get-Item $path).Length / 1MB, 1)
     $line = "{0}  OK      backup      {1} ({2} MB)" -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'), $path, $sizeMb
     Add-Content -Path $logFile -Value $line -Encoding utf8
+
+    # usage.db, when usage statistics have been switched on.
+    $usagePath = Backup-PinakesUsageDatabase -Label $Label
+    if ($null -ne $usagePath) {
+        $usageMb = [Math]::Round((Get-Item $usagePath).Length / 1MB, 1)
+        $line = "{0}  OK      backup      {1} ({2} MB)" -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'), $usagePath, $usageMb
+        Add-Content -Path $logFile -Value $line -Encoding utf8
+    }
     exit 0
 
 } catch {

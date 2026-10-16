@@ -210,8 +210,12 @@ def test_route_count_matches_expected(client):
     #  +  1  GET /api/admin/client-ip (2026-10-15): token-gated report of the
     #        IP the app attributes to the caller and which rule produced it,
     #        for checking the proxy chain on the Clearinghouse box.
-    assert len(rules) == 159, (
-        f"Expected 159 routes, got {len(rules)}. "
+    #  +  7  usage statistics (2026-10-15): POST /api/e (browser events),
+    #        GET /admin/usage (dashboard shell), and the token-gated
+    #        /api/admin/usage/{summary,report,status} GETs plus the
+    #        /api/admin/usage/{resolve,refresh-data} POST jobs.
+    assert len(rules) == 166, (
+        f"Expected 166 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

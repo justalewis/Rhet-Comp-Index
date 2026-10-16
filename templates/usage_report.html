@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinakes usage, {{ s.period.start }} to {{ s.period.end }}</title>
+<style>
+  :root {
+    --surface: #fbf7ee; --card: #fffdf8; --ink: #1c1a17; --ink-2: #6a5f4e; --rule: #ddd3bf;
+    --s1: #2a78d6; --s2: #eb6834; --track: #ede4d2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface: #171512; --card: #1f1c18; --ink: #f0e9da; --ink-2: #ada18c; --rule: #3a352d;
+      --s1: #3987e5; --s2: #d95926; --track: #12100e;
+    }
+  }
+  @media print {
+    :root { --surface: #fff; --card: #fff; --ink: #000; --ink-2: #444; --rule: #ccc; --s1: #2a78d6; --s2: #eb6834; }
+    .panel { break-inside: avoid; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--ink);
+         font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5; }
+  main { max-width: 60rem; margin: 0 auto; padding: 2rem 16px 3rem; }
+  h1 { font-family: "GFS Didot", "EB Garamond", Georgia, serif; font-weight: 400; font-size: 2.2rem; margin: 0; }
+  h2 { font-size: 1.15rem; margin: 0 0 0.3rem; }
+  p { margin: 0.3rem 0 0.7rem; }
+  .meta { color: var(--ink-2); font-size: 0.9rem; }
+  .note { color: var(--ink-2); font-size: 0.875rem; max-width: 72ch; }
+  .panel { background: var(--card); border: 1px solid var(--rule); padding: 1rem 1.1rem; margin: 1rem 0; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.6rem; margin: 1.2rem 0; }
+  .tile { background: var(--card); border: 1px solid var(--rule); padding: 0.7rem 0.8rem; }
+  .tile .label { font-size: 0.75rem; color: var(--ink-2); }
+  .tile .value { font-size: 1.6rem; font-weight: 600; line-height: 1.2; }
+  .tile .sub { font-size: 0.75rem; color: var(--ink-2); }
+  .tile.hero { grid-column: span 2; }
+  .tile.hero .value { font-size: 3rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th { text-align: left; font-size: 0.75rem; color: var(--ink-2); font-weight: 600; border-bottom: 1px solid var(--rule); padding: 0.3rem 0.4rem; }
+  td { border-bottom: 1px solid var(--rule); padding: 0.3rem 0.4rem; vertical-align: top; }
+  .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .barcell { width: 30%; vertical-align: middle; }
+  .bar { height: 10px; background: var(--s1); border-radius: 0 4px 4px 0; min-width: 2px;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sub2 { color: var(--ink-2); font-size: 0.75rem; }
+  .tag { font-size: 0.7rem; color: var(--ink-2); border: 1px solid var(--rule); padding: 0 0.3rem; margin-left: 0.3rem; white-space: nowrap; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 0 1rem; }
+  .legend { display: flex; gap: 1rem; font-size: 0.85rem; margin: 0.2rem 0 0.4rem; }
+  .sw { display: inline-block; width: 10px; height: 10px; margin-right: 0.35rem; vertical-align: -1px;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { fill: var(--ink-2); font-size: 11px; font-family: inherit; }
+  svg .grid { stroke: var(--rule); stroke-width: 1; }
+  svg .s1 { fill: var(--s1); } svg .s2 { fill: var(--s2); }
+  svg rect.hit { fill: transparent; } svg rect.hit:hover { fill: var(--ink); fill-opacity: 0.05; }
+  .empty { color: var(--ink-2); font-size: 0.875rem; }
+  footer { color: var(--ink-2); font-size: 0.75rem; margin-top: 2rem; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+{% macro bars(rows, headers, empty="Nothing recorded in this period.") %}
+  {% if rows %}
+    {% set top = max(rows | map(attribute='value') | list + [1]) %}
+    <table>
+      <thead><tr>{% for h in headers %}<th{% if loop.last %} class="n"{% endif %}>{{ h }}</th>{% endfor %}<th aria-hidden="true"></th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ r.label }}{% if r.tag %}<span class="tag">{{ r.tag }}</span>{% endif %}{% if r.sub %}<div class="sub2">{{ r.sub }}</div>{% endif %}</td>
+          {% for c in r.cells or [] %}<td>{{ c }}</td>{% endfor %}
+          <td class="n">{{ r.value | num }}</td>
+          <td class="barcell" aria-hidden="true"><div class="bar" style="width: {{ '%.1f' | format([1, r.value / top * 100] | max) }}%"></div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">{{ empty }}</p>
+  {% endif %}
+{% endmacro %}
+
+{% set t = s.totals %}
+{% set bc = t.by_class %}
+  <h1>Pinakes usage</h1>
+  <p class="meta">{{ s.period.start }} to {{ s.period.end }} ({{ s.period.days }} days) · generated {{ s.generated_at[:10] }}
+    {% if s.public %} · public version: anything with fewer than {{ s.min_count }} visitor-days is left out{% endif %}</p>
+
+  <div class="tiles">
+    <div class="tile hero"><div class="label">People, visitor-days</div><div class="value">{{ t.people_visitor_days | num }}</div>
+      <div class="sub">{{ bc['human'] | num }} browser-confirmed{% if 'likely-human' in s.classes %} · {{ bc['likely-human'] | num }} likely{% endif %}</div></div>
+    <div class="tile"><div class="label">Page views</div><div class="value">{{ t.pageviews | num }}</div></div>
+    <div class="tile"><div class="label">Used a tool</div><div class="value">{{ t.tool_users | num }}</div><div class="sub">{{ t.tool_runs | num }} runs across {{ t.tools_used }} tools</div></div>
+    <div class="tile"><div class="label">Institutions identified</div><div class="value">{{ t.institutions | num }}</div><div class="sub">a minimum; see below</div></div>
+    <div class="tile"><div class="label">Countries</div><div class="value">{{ t.countries | num }}</div>{% if t.us_regions %}<div class="sub">{{ t.us_regions }} US states</div>{% endif %}</div>
+    <div class="tile"><div class="label">Sent to the article</div><div class="value">{{ t.doi_clicks | num }}</div><div class="sub">DOI click-throughs</div></div>
+  </div>
+
+  <section class="panel">
+    <h2>How to read these numbers</h2>
+    <p class="note">The unit is the visitor-day: one browser on one network on one day. Pinakes gives each visitor an id that changes every day and cannot be traced back to an address, so nobody can be followed from one day to the next, and someone who returns on three days counts three times.</p>
+    <p class="note">People are counted in two groups. Browser-confirmed visitor-days ran the page's script, which crawlers almost never do. Likely visitor-days used an ordinary browser on an ordinary network but never ran it, usually because JavaScript was blocked. Bots, scripts, feed readers and traffic from hosting companies are counted separately and appear only in the last section.</p>
+    <p class="note">Institutions are identified from the network a visit came from, using the address registries, reverse DNS, IPEDS, ROR and the world-universities list. Only on-campus connections can be identified. Faculty and students reading from home or a phone show up as their internet provider, so the institution count is a minimum, not a census. Raw IP addresses are deleted within {{ s.data.raw_ip_hours }} hours of the visit.</p>
+  </section>
+
+  <section class="panel">
+    <h2>People per day</h2>
+    <div class="legend"><span><span class="sw" style="background:var(--s1)"></span>{{ s.class_labels['human'] }}</span>
+      {% if 'likely-human' in s.classes %}<span><span class="sw" style="background:var(--s2)"></span>{{ s.class_labels['likely-human'] }}</span>{% endif %}</div>
+    {% set days = s.daily | length %}
+    {% set ns = namespace(top=1) %}
+    {% for d in s.daily %}{% set v = d['human'] + (d['likely-human'] if 'likely-human' in s.classes else 0) %}{% if v > ns.top %}{% set ns.top = v %}{% endif %}{% endfor %}
+    {% set W, H, L, R, T, B = 760, 200, 38, 8, 10, 26 %}
+    {% set bw = (W - L - R) / days %}
+    {% set cw = [24, [2, bw * 0.7] | max] | min %}
+    {% set y0 = H - B %}
+    {% set ph = H - T - B %}
+    <svg viewBox="0 0 {{ W }} {{ H }}" role="img" aria-label="People per day, {{ s.period.start }} to {{ s.period.end }}">
+      <line class="grid" x1="{{ L }}" x2="{{ W - R }}" y1="{{ y0 }}" y2="{{ y0 }}"/>
+      <line class="grid" x1="{{ L }}" x2="{{ W - R }}" y1="{{ T }}" y2="{{ T }}"/>
+      <text x="{{ L - 6 }}" y="{{ T + 4 }}" text-anchor="end">{{ ns.top | num }}</text>
+      <text x="{{ L - 6 }}" y="{{ y0 + 4 }}" text-anchor="end">0</text>
+      {% set every = ((days + 7) // 8) or 1 %}
+      {% for d in s.daily %}
+        {% set i = loop.index0 %}
+        {% set x = L + bw * i + (bw - cw) / 2 %}
+        {% set a = d['human'] %}
+        {% set b = d['likely-human'] if 'likely-human' in s.classes else 0 %}
+        {% set ha = ph * a / ns.top %}
+        {% set hb = ph * b / ns.top %}
+        {% if a > 0 %}<rect class="s1" x="{{ '%.1f' | format(x) }}" y="{{ '%.1f' | format(y0 - ha) }}" width="{{ '%.1f' | format(cw) }}" height="{{ '%.1f' | format(ha) }}"{% if b == 0 %} rx="{{ [2, cw / 4] | min }}"{% endif %}/>{% endif %}
+        {% if b > 0 %}{% set gap = 2 if a > 0 else 0 %}<rect class="s2" x="{{ '%.1f' | format(x) }}" y="{{ '%.1f' | format(y0 - ha - hb) }}" width="{{ '%.1f' | format(cw) }}" height="{{ '%.1f' | format([0, hb - gap] | max) }}" rx="{{ [2, cw / 4] | min }}"/>{% endif %}
+        <rect class="hit" x="{{ '%.1f' | format(L + bw * i) }}" y="{{ T }}" width="{{ '%.1f' | format(bw) }}" height="{{ ph }}"><title>{{ d.day }}: {{ a }} browser-confirmed{% if 'likely-human' in s.classes %}, {{ b }} likely{% endif %}</title></rect>
+        {% if i % every == 0 %}<text x="{{ '%.1f' | format(L + bw * i + bw / 2) }}" y="{{ H - 8 }}" text-anchor="middle">{{ d.day[5:] }}</text>{% endif %}
+      {% endfor %}
+    </svg>
+  </section>
+
+  <section class="panel">
+    <h2>Tools</h2>
+    <p class="note">Visitor-days that opened or ran each tool. Runs count every computation, including re-runs with new settings. A tool marked <em>opens by default</em> loads without the reader choosing it, so its count includes everyone who arrived on that page.</p>
+    {% set rows = [] %}
+    {% for x in s.tools %}{% set _ = rows.append({'label': x.label, 'tag': 'opens by default' if x.auto else '', 'cells': [x.runs | num], 'value': x.visitor_days}) %}{% endfor %}
+    {{ bars(rows, ['Tool', 'Runs', 'Visitor-days']) }}
+  </section>
+
+  <section class="panel">
+    <h2>Institutions</h2>
+    <p class="note">{{ t.institutions | num }} institutions identified, accounting for {{ t.identified_share | pct }} of people visitor-days.
+      {% if s.institutions_hidden %}{{ s.institutions_hidden | num }} of them had fewer than {{ s.min_count }} visitor-days and are not named here.{% endif %}
+      {% if s.institution_flags.in_corpus %}{{ s.institution_flags.in_corpus }} {{ 'is an institution' if s.institution_flags.in_corpus == 1 else 'are institutions' }} whose authors publish in the journals Pinakes indexes.{% endif %}</p>
+    {% set rows = [] %}
+    {% for i in s.institutions %}
+      {% set where = [i.city, i.region, i.country_name] | select | join(', ') %}
+      {% set detail = [i.kind, i.carnegie, 'HBCU' if i.hbcu else '', 'Tribal college' if i.tribal else '', where] | select | join(' · ') %}
+      {% set _ = rows.append({'label': i.name, 'tag': 'publishes in the index' if i.in_corpus else '', 'sub': detail, 'cells': [i.top_tools | join(', ') or '—'], 'value': i.visitor_days}) %}
+    {% endfor %}
+    {{ bars(rows, ['Institution', 'Most-used tools', 'Visitor-days'], 'No institution was identified in this period.') }}
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Institutions by type</h2>
+      {% set rows = [] %}{% for k, v in s.institution_breakdown.kind | dictsort(by='value', reverse=true) %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+      {{ bars(rows, ['Type', 'Institutions']) }}
+    </section>
+    <section class="panel">
+      <h2>By Carnegie classification</h2>
+      <p class="note">US institutions matched to IPEDS.{% set f = s.institution_flags %}{% if f.hbcu %} {{ f.hbcu }} HBCU{{ 's' if f.hbcu != 1 }}.{% endif %}{% if f.tribal %} {{ f.tribal }} tribal college{{ 's' if f.tribal != 1 }}.{% endif %}</p>
+      {% set rows = [] %}{% for k, v in s.institution_breakdown.carnegie | dictsort(by='value', reverse=true) %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+      {{ bars(rows, ['Classification', 'Institutions']) }}
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Countries</h2>
+      {% set rows = [] %}{% for c in s.countries[:25] %}{% set _ = rows.append({'label': c.name, 'value': c.visitor_days}) %}{% endfor %}
+      {{ bars(rows, ['Country', 'Visitor-days']) }}
+    </section>
+    <section class="panel">
+      <h2>US states</h2>
+      {% set rows = [] %}{% for c in s.us_regions[:25] %}{% set _ = rows.append({'label': c.region, 'value': c.visitor_days}) %}{% endfor %}
+      {{ bars(rows, ['State', 'Visitor-days']) }}
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>How people arrived</h2>
+      <p class="note">The first referring site of each visitor-day, grouped.</p>
+      {% set rows = [] %}{% for k, v in s.referrer_groups.items() %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+      {{ bars(rows, ['Source', 'Visitor-days']) }}
+    </section>
+    <section class="panel">
+      <h2>Networks</h2>
+      <p class="note">The kind of network each visitor-day came from.</p>
+      {% set rows = [] %}{% for k, v in s.networks.items() %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+      {{ bars(rows, ['Network', 'Visitor-days']) }}
+    </section>
+  </div>
+
+  {% set lms = s.referrers | selectattr('group', 'in', ['Learning management systems', 'Library guides and discovery']) | list %}
+  {% if lms %}
+  <section class="panel">
+    <h2>Course sites and library guides</h2>
+    <p class="note">Visits that arrived from a learning management system or a library guide, which usually names the institution in its address.</p>
+    {% set rows = [] %}{% for r in lms %}{% set _ = rows.append({'label': r.host, 'cells': [r.group], 'value': r.visitor_days}) %}{% endfor %}
+    {{ bars(rows, ['Site', 'Kind', 'Visitor-days']) }}
+  </section>
+  {% endif %}
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Most-viewed articles</h2>
+      <p class="note">{{ t.article_views | num }} article page views in all.</p>
+      {% set rows = [] %}{% for a in s.articles[:15] %}{% set _ = rows.append({'label': a.title, 'sub': [a.journal, a.year] | select | join(', '), 'value': a.visitor_days}) %}{% endfor %}
+      {{ bars(rows, ['Article', 'Visitor-days']) }}
+    </section>
+    <section class="panel">
+      <h2>Sent to the publisher</h2>
+      <p class="note">{{ s.outbound.doi_clicks | num }} DOI click-throughs to the published article.</p>
+      {% set rows = [] %}{% for d in s.outbound.top_dois %}{% set _ = rows.append({'label': d.title or d.doi, 'sub': d.doi if d.title else '', 'value': d.visitor_days}) %}{% endfor %}
+      {{ bars(rows, ['Article', 'Visitor-days']) }}
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Searches</h2>
+      <p class="note">{{ t.searches | num }} visitor-days searched the index. A term appears once at least {{ [s.min_count, 2] | max }} visitor-days used it.</p>
+      {% set rows = [] %}{% for q in s.searches[:25] %}{% set _ = rows.append({'label': q.query, 'value': q.visitor_days}) %}{% endfor %}
+      {{ bars(rows, ['Search', 'Visitor-days']) }}
+    </section>
+    <section class="panel">
+      <h2>Downloads and exports</h2>
+      <p class="note">Panel exports (CSV, PNG, SVG) and citation exports (BibTeX, RIS).</p>
+      {% set rows = [] %}{% for k, v in s.downloads | dictsort(by='value', reverse=true) %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+      {{ bars(rows, ['Format', 'Count']) }}
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2>Feed subscriptions</h2>
+      <p class="note">Feed readers report their own subscriber counts. Someone subscribed to two journal feeds counts twice.</p>
+      {% set rows = [] %}{% for f in s.feeds %}{% set _ = rows.append({'label': f.reader, 'cells': [f.feeds | num], 'value': f.subscriptions}) %}{% endfor %}
+      {{ bars(rows, ['Reader', 'Feeds', 'Subscriptions']) }}
+    </section>
+    <section class="panel">
+      <h2>Automated traffic</h2>
+      <p class="note">Not counted anywhere above: {{ bc['bot'] | num }} bot and script visitor-days, {{ bc['datacenter'] | num }} from hosting networks, {{ bc['feed-reader'] | num }} from feed readers.</p>
+      {% set rows = [] %}{% for b in s.bots[:12] %}{% set _ = rows.append({'label': b.bot, 'value': b.hits}) %}{% endfor %}
+      {{ bars(rows, ['Client', 'Requests']) }}
+    </section>
+  </div>
+
+  <footer>
+    <p>Pinakes, <a href="https://pinakes.wacclearinghouse.org">pinakes.wacclearinghouse.org</a>. Institution data from IPEDS (US Department of Education), ROR (ror.org) and the Hipo world-universities list.
+    {% for a in s.data.attribution_text %} {{ a }}.{% endfor %}</p>
+    {% if s.data.unresolved_hits %}<p>{{ s.data.unresolved_hits | num }} request{{ 's' if s.data.unresolved_hits != 1 }} in this period had not been resolved when the report was generated and {{ 'are' if s.data.unresolved_hits != 1 else 'is' }} not counted.</p>{% endif %}
+  </footer>
+</main>
+</body>
+</html>
