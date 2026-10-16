@@ -184,8 +184,11 @@ def create_app() -> Flask:
     # url_for(..., _external=True) builds https:// absolute URLs. This matters
     # for the author-redaction email verification link, and is REQUIRED for the
     # ORCID OAuth redirect_uri — ORCID rejects an http:// callback that doesn't
-    # match the registered https:// URI. (IP-based rate limiting reads
-    # Fly-Client-IP directly, so x_for is intentionally left untrusted.)
+    # match the registered https:// URI. x_for is left at Werkzeug's default
+    # of 1, so remote_addr is rewritten from the last X-Forwarded-For entry
+    # when one arrives; nothing should treat remote_addr as the visitor.
+    # rate_limit.resolve_client_ip reads the forwarding headers itself and the
+    # original socket peer that ProxyFix saves.
     from werkzeug.middleware.proxy_fix import ProxyFix
     flask_app.wsgi_app = ProxyFix(flask_app.wsgi_app, x_proto=1, x_host=1)
     Compress(flask_app)

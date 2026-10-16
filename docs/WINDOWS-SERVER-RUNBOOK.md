@@ -409,6 +409,62 @@ again.
 
 ---
 
+## Visitor IP addresses
+
+The app has to know which visitor sent each request. The rate limiter, the IP
+denylist, the one-vote-per-reader rule on community tags, and every IP in the
+logs depend on it. Requests reach the app from IIS on `127.0.0.1`, so the
+visitor's address has to come from a header. The setting that names that
+header is `PINAKES_TRUSTED_IP_HEADER`, and on this server it must be
+`CF-Connecting-IP`:
+
+```powershell
+[Environment]::SetEnvironmentVariable('PINAKES_TRUSTED_IP_HEADER','CF-Connecting-IP','Machine')
+Restart-Service Pinakes-Web
+```
+
+**Not `X-Forwarded-For`.** Waitress 3.x deletes `X-Forwarded-For`,
+`X-Forwarded-Host`, `X-Forwarded-Proto` and `Forwarded` before the app sees
+them unless it is started with `--trusted-proxy`, so a setting of
+`X-Forwarded-For` finds nothing. Until this was set, every visitor looked like
+`127.0.0.1` and the whole site shared one rate-limit budget: 60 requests a
+minute for everyone, and 20 for the citation and stats tools.
+
+`CF-Connecting-IP` is safe to trust because Cloudflare refuses any request
+that arrives already carrying one (HTTP 403 at the edge). The only way to
+forge it is to skip Cloudflare and reach this server directly. Allowing only
+[Cloudflare's address ranges](https://www.cloudflare.com/ips/) through to IIS
+on 443 closes that gap. The app ignores the header on any request that did
+not come from a proxy on this machine, so reaching Waitress directly on port
+8080 does not work either.
+
+**Verify it from outside**, through the public hostname:
+
+```powershell
+$env:PINAKES_ADMIN_TOKEN = '<token>'     # optional; enables the last check
+& .\deploy\windows\Test-PinakesClientIp.ps1
+```
+
+`Separate visitors get separate budgets` needs no token. It FAILs while the
+setting is missing, and PASSes once it is in place. With the token, `App
+reports the visitor IP` compares the app's answer with what Cloudflare saw. It
+also prints the `PINAKES_TRUSTED_IP_HEADER` value the running service actually
+has. If that reads `(unset)` after the restart, the service did not pick up
+the machine variable. Set it on the service instead, keeping the variables
+already there:
+
+```powershell
+nssm get Pinakes-Web AppEnvironmentExtra
+nssm set Pinakes-Web AppEnvironmentExtra <the existing lines> PINAKES_TRUSTED_IP_HEADER=CF-Connecting-IP
+Restart-Service Pinakes-Web
+```
+
+The same check reports `Absolute URLs use the public host`. A WARN there means
+`X-Forwarded-Host` is being stripped too, and links in emails (name-removal
+verification, alert digests) would point at `127.0.0.1`.
+
+---
+
 ## Author name-removal requests
 
 The public request form ships **off** (`PINAKES_REDACTION_FORM_ENABLED`). Its
@@ -470,6 +526,7 @@ All in `C:\Pinakes\app\deploy\windows\`. Each supports `Get-Help <script> -Full`
 |---|---|
 | `Update-Pinakes.ps1` | Deploy from GitHub, with backup, verification, and rollback. **Part B.** |
 | `Test-PinakesHealth.ps1` | Full health check. Add `-Remote` to check over HTTPS from anywhere. |
+| `Test-PinakesClientIp.ps1` | Does the app see real visitor IPs? Run from anywhere. See [Visitor IP addresses](#visitor-ip-addresses). |
 | `Invoke-PinakesAdmin.ps1` | Trigger a fetch, prewarm, maintenance, or digest run. |
 | `Backup-Pinakes.ps1` | Take a database backup on demand. |
 | `Install-PinakesTasks.ps1` | Register, list, or remove the scheduled jobs. |
@@ -526,6 +583,9 @@ Invoke-RestMethod https://pinakes.wacclearinghouse.org/health
 
 # Full external health check (clone the repo, then)
 & .\deploy\windows\Test-PinakesHealth.ps1 -Remote
+
+# Does the app see real visitor IPs?
+& .\deploy\windows\Test-PinakesClientIp.ps1
 
 # Trigger a fetch remotely
 $h = @{ Authorization = "Bearer <token>" }

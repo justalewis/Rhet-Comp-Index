@@ -207,8 +207,11 @@ def test_route_count_matches_expected(client):
     #  +  1  GET /design/icons (2026-09-19): reference sheet for the Alexandrian
     #        icon set, and the end-to-end check that tokens.css, the self-hosted
     #        faces and the CSP agree. Unlinked, noindex, Disallow: /design/.
-    assert len(rules) == 158, (
-        f"Expected 158 routes, got {len(rules)}. "
+    #  +  1  GET /api/admin/client-ip (2026-10-15): token-gated report of the
+    #        IP the app attributes to the caller and which rule produced it,
+    #        for checking the proxy chain on the Clearinghouse box.
+    assert len(rules) == 159, (
+        f"Expected 159 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

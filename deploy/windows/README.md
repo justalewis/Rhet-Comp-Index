@@ -13,6 +13,7 @@ is the step-by-step procedure. This file is just the inventory.
 |---|---|
 | `Update-Pinakes.ps1` | Deploy from GitHub. Backs up, deploys, verifies the running service reports the new commit, rolls back if not. |
 | `Test-PinakesHealth.ps1` | Health check. `-Remote` runs the HTTPS-only subset from any machine. |
+| `Test-PinakesClientIp.ps1` | Checks the app sees real visitor IPs through Cloudflare → IIS → Waitress. Run from any machine. |
 | `Invoke-PinakesAdmin.ps1` | POST to an admin endpoint (fetch, prewarm, maintenance, digests, backup) with the bearer token. |
 | `Backup-Pinakes.ps1` | On-demand database backup. |
 | `Install-PinakesTasks.ps1` | Register / list / remove the scheduled jobs. |

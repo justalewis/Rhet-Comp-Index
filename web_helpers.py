@@ -80,6 +80,12 @@ def server_error(e):
     return render_template("error.html", code=500, message="Internal server error"), 500
 
 
+def _log_ip():
+    """Client IP for log lines, by the rate limiter's rules."""
+    from rate_limit import client_ip_key
+    return client_ip_key()
+
+
 def rate_limit_exceeded(e):
     """Friendly 429 for rate-limit hits. JSON for /api/* and explicit
     JSON Accept; HTML otherwise."""
@@ -96,7 +102,7 @@ def rate_limit_exceeded(e):
 
     log.debug(
         "rate limit hit: ip=%s path=%s description=%s",
-        request.headers.get("Fly-Client-IP") or request.remote_addr,
+        _log_ip(),
         request.path, getattr(e, "description", ""),
     )
 
@@ -335,7 +341,7 @@ def shed_expensive_load():
     log.warning(
         "load-shed 503: path=%s ip=%s",
         request.path,
-        request.headers.get("Fly-Client-IP") or request.remote_addr,
+        _log_ip(),
     )
     resp = make_response(
         "<!doctype html><meta charset=utf-8><title>Busy</title>"

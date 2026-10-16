@@ -5,7 +5,7 @@ after each test, so counts never leak between tests."""
 
 import pytest
 
-from rate_limit import client_ip_key, LIMITS, limiter
+from rate_limit import client_ip_key, resolve_client_ip, LIMITS, limiter
 
 
 # ── client_ip_key ────────────────────────────────────────────────────────────
@@ -68,6 +68,134 @@ def test_client_ip_key_falls_back_to_localhost_when_remote_addr_none(app):
     with app.test_request_context() as ctx:
         ctx.request.environ["REMOTE_ADDR"] = None
         assert client_ip_key() == "127.0.0.1"
+
+
+# ── PINAKES_TRUSTED_IP_HEADER (reverse proxy on the same machine) ────────────
+# The WAC Clearinghouse chain is Cloudflare → IIS/ARR → Waitress, so every
+# request reaches Flask from 127.0.0.1 and the visitor is in a header.
+# Visitor IPs here are real public addresses: ipaddress counts the RFC 5737
+# documentation ranges as private, and private hops are skipped.
+
+_VIA_LOCAL_PROXY = {"REMOTE_ADDR": "127.0.0.1"}
+
+
+def test_trusted_cf_connecting_ip_from_local_proxy(app, monkeypatch):
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    with app.test_request_context(headers={"CF-Connecting-IP": "81.2.69.160"},
+                                  environ_base=_VIA_LOCAL_PROXY):
+        assert resolve_client_ip() == ("81.2.69.160", "CF-Connecting-IP")
+
+
+def test_trusted_header_ignored_when_peer_is_public(app, monkeypatch):
+    # Waitress is bound to 0.0.0.0 on the Windows box. A visitor who reaches
+    # it directly must not be able to name their own IP.
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    with app.test_request_context(headers={"CF-Connecting-IP": "8.8.8.8"},
+                                  environ_base={"REMOTE_ADDR": "9.9.9.9"}):
+        assert client_ip_key() == "9.9.9.9"
+
+
+def test_trusted_header_absent_uses_remote_addr_not_xff(app, monkeypatch):
+    # Once a trusted header is configured, the spoofable first-XFF fallback
+    # is off.
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    with app.test_request_context(headers={"X-Forwarded-For": "5.6.7.8"},
+                                  environ_base=_VIA_LOCAL_PROXY):
+        assert resolve_client_ip() == ("127.0.0.1", "remote_addr")
+
+
+def test_trusted_xff_is_read_from_the_right(app, monkeypatch):
+    # A client-invented entry on the left, then the visitor Cloudflare saw,
+    # then the Cloudflare edge that ARR appended with its port.
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "X-Forwarded-For")
+    headers = {"X-Forwarded-For": "6.6.6.6, 81.2.69.160, 162.158.1.2:51234"}
+    with app.test_request_context(headers=headers, environ_base=_VIA_LOCAL_PROXY):
+        assert client_ip_key() == "81.2.69.160"
+
+
+def test_trusted_xff_parses_bracketed_ipv6_with_port(app, monkeypatch):
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "X-Forwarded-For")
+    headers = {"X-Forwarded-For": "[2600:1700::7]:443"}
+    with app.test_request_context(headers=headers, environ_base=_VIA_LOCAL_PROXY):
+        assert client_ip_key() == "2600:1700::7"
+
+
+def test_trusted_xff_of_only_cloudflare_hops_uses_cf_connecting_ip(app, monkeypatch):
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "X-Forwarded-For")
+    headers = {"X-Forwarded-For": "162.158.1.2:51234",
+               "CF-Connecting-IP": "81.2.69.160"}
+    with app.test_request_context(headers=headers, environ_base=_VIA_LOCAL_PROXY):
+        assert client_ip_key() == "81.2.69.160"
+
+
+def test_trusted_xff_stops_at_an_unparseable_entry(app, monkeypatch):
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "X-Forwarded-For")
+    headers = {"X-Forwarded-For": "81.2.69.160, not-an-ip"}
+    with app.test_request_context(headers=headers, environ_base=_VIA_LOCAL_PROXY):
+        assert client_ip_key() == "127.0.0.1"
+
+
+def test_fly_header_still_wins_when_trusted_header_set(app, monkeypatch):
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    headers = {"Fly-Client-IP": "47.79.205.10", "CF-Connecting-IP": "8.8.8.8"}
+    with app.test_request_context(headers=headers):
+        assert client_ip_key() == "47.79.205.10"
+
+
+def test_forged_xff_cannot_pose_as_the_local_proxy(client, monkeypatch):
+    # ProxyFix rewrites remote_addr from X-Forwarded-For, so a direct visitor
+    # sending "X-Forwarded-For: 127.0.0.1" would look local if the check read
+    # remote_addr. It reads the socket peer ProxyFix saved instead.
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real-secret")
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    resp = client.get("/api/admin/client-ip",
+                      environ_base={"REMOTE_ADDR": "9.9.9.9"},
+                      headers={"Authorization": "Bearer real-secret",
+                               "X-Forwarded-For": "127.0.0.1",
+                               "CF-Connecting-IP": "81.2.69.160"})
+    body = resp.get_json()
+    assert body["remote_addr"] == "127.0.0.1"
+    assert body["socket_peer"] == "9.9.9.9"
+    assert body["ip"] == "9.9.9.9"
+
+
+def test_trusted_header_feeds_the_rate_limiter(client, monkeypatch):
+    # Two visitors behind the same local proxy get separate budgets.
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    for _ in range(60):
+        client.get("/api/articles", headers={"CF-Connecting-IP": "81.2.69.1"})
+    assert client.get("/api/articles",
+                      headers={"CF-Connecting-IP": "81.2.69.1"}).status_code == 429
+    assert client.get("/api/articles",
+                      headers={"CF-Connecting-IP": "81.2.69.2"}).status_code == 200
+
+
+# ── /api/admin/client-ip ─────────────────────────────────────────────────────
+
+
+def test_client_ip_check_requires_token(client, monkeypatch):
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real-secret")
+    assert client.get("/api/admin/client-ip").status_code == 401
+
+
+def test_client_ip_check_reports_resolution(client, monkeypatch):
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", "real-secret")
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    resp = client.get("/api/admin/client-ip", headers={
+        "Authorization": "Bearer real-secret",
+        "CF-Connecting-IP": "81.2.69.160",
+        "X-Forwarded-For": "6.6.6.6",
+    })
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ip"] == "81.2.69.160"
+    assert body["source"] == "CF-Connecting-IP"
+    assert body["trusted_ip_header"] == "CF-Connecting-IP"
+    assert body["socket_peer_is_local_proxy"] is True
+    assert body["headers"]["X-Forwarded-For"] == "6.6.6.6"
+    assert body["candidates"]["CF-Connecting-IP"] == "81.2.69.160"
+    assert body["candidates"]["X-Forwarded-For"] == "6.6.6.6"
+    assert body["external_url"].endswith("/health")
 
 
 # ── Default tier (60/minute) ────────────────────────────────────────────────

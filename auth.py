@@ -36,12 +36,11 @@ def admin_token_configured() -> bool:
 
 
 def _client_ip() -> str:
-    """Best-effort source IP for log lines. Prefers Fly's edge header."""
-    return (
-        request.headers.get("Fly-Client-IP")
-        or request.remote_addr
-        or "unknown"
-    )
+    """Best-effort source IP for log lines, by the same rules the rate
+    limiter uses. Imported here rather than at module level because
+    rate_limit imports this module."""
+    from rate_limit import client_ip_key
+    return client_ip_key() or "unknown"
 
 
 def _truncate(token: str, n: int = 4) -> str:

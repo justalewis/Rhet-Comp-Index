@@ -25,6 +25,7 @@ from db import get_year_range, get_new_article_count, get_coverage_stats
 from db import datastories as ds
 from journal_groups import get_clusters
 from journals import UNAVAILABLE_JOURNALS
+from auth import _client_ip
 from rate_limit import limiter, LIMITS
 from web_helpers import _safe_int, cache_response
 from auth_datastories import (
@@ -117,7 +118,7 @@ def datastories_login():
     if not verify_password(submitted):
         log.warning(
             "Datastories login failed: ip=%s",
-            request.headers.get("Fly-Client-IP") or request.remote_addr or "unknown",
+            _client_ip(),
         )
         return render_template(
             "datastories_landing.html",

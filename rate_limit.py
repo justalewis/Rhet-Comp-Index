@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import os
 
 from flask import request
 from flask_limiter import Limiter
@@ -82,9 +83,87 @@ LIMITS: dict[str, str] = {
 }
 
 
-def client_ip_key() -> str:
-    """Return a stable per-client identifier for rate-limit bucketing, the IP
-    denylist, and access attribution.
+# Behind a reverse proxy on the same machine (IIS/ARR → Waitress at the WAC
+# Clearinghouse) there is no Fly-Client-IP, and every request reaches Flask
+# from the proxy's loopback address. PINAKES_TRUSTED_IP_HEADER names the header
+# that carries the real visitor IP there. On the Clearinghouse box that has to
+# be CF-Connecting-IP, not X-Forwarded-For: Waitress 3.x deletes X-Forwarded-*
+# and Forwarded before the app sees them unless it is started with
+# --trusted-proxy, so an X-Forwarded-For setting finds nothing. Cloudflare
+# answers a client-supplied CF-Connecting-IP with a 403 at the edge, so the
+# header can only be forged by a request that skips Cloudflare and reaches the
+# origin directly; restricting the origin to Cloudflare's ranges closes that.
+TRUSTED_IP_HEADER_ENV = "PINAKES_TRUSTED_IP_HEADER"
+
+
+def _parse_hop(entry: str) -> str | None:
+    """One forwarding-header entry as a bare IP string, or None if it isn't
+    one. Proxies decorate entries: IIS ARR appends `ip:port`, and IPv6 can
+    arrive bracketed as `[2001:db8::1]:443`."""
+    v = entry.strip().strip('"')
+    if v.startswith("["):
+        v = v[1:].split("]", 1)[0]
+    elif v.count(":") == 1:
+        v = v.split(":", 1)[0]
+    try:
+        return str(ipaddress.ip_address(v))
+    except ValueError:
+        return None
+
+
+def _socket_peer() -> str | None:
+    """The address that actually connected to us. app.py's ProxyFix leaves
+    x_for at Werkzeug's default of 1, so request.remote_addr is rewritten from
+    the last X-Forwarded-For entry whenever one arrives; ProxyFix keeps the
+    original under werkzeug.proxy_fix.orig."""
+    orig = request.environ.get("werkzeug.proxy_fix.orig") or {}
+    return orig.get("REMOTE_ADDR") or request.remote_addr
+
+
+def _is_local_peer(addr: str | None) -> bool:
+    """True if `addr` is loopback or private, i.e. the request was handed to
+    us by a proxy on this machine or network rather than by a visitor. The
+    Windows install binds Waitress to 0.0.0.0, so a visitor who reaches port
+    8080 directly must not have their forwarding headers believed."""
+    try:
+        ip = ipaddress.ip_address(addr or "")
+    except ValueError:
+        return False
+    return ip.is_loopback or ip.is_private
+
+
+def _ip_from_header(name: str) -> str | None:
+    """The visitor IP carried in header `name`, read from the right.
+
+    Single-value headers (CF-Connecting-IP) yield their one entry. For a chain
+    like X-Forwarded-For, entries are appended left to right, so everything to
+    the right of the visitor was written by a proxy we trust and everything to
+    the left came from the client and may be invented. Walk from the right,
+    skipping Cloudflare edges and private hops; the first other address is the
+    visitor. If the chain holds nothing but Cloudflare edges, the request came
+    through Cloudflare and CF-Connecting-IP is the visitor.
+    """
+    raw = request.headers.get(name) or ""
+    saw_cloudflare = False
+    for entry in reversed(raw.split(",")):
+        if not entry.strip():
+            continue
+        hop = _parse_hop(entry)
+        if hop is None:
+            return None
+        if _is_cloudflare_peer(hop):
+            saw_cloudflare = True
+            continue
+        if _is_local_peer(hop):
+            continue
+        return hop
+    if saw_cloudflare:
+        return _parse_hop(request.headers.get("CF-Connecting-IP") or "")
+    return None
+
+
+def resolve_client_ip() -> tuple[str, str]:
+    """The client IP for this request, and which rule produced it.
 
     Order of preference:
         1. CF-Connecting-IP (the real visitor IP) — trusted ONLY when the
@@ -93,21 +172,41 @@ def client_ip_key() -> str:
            from spoofing the header.
         2. Fly-Client-IP — the TCP peer Fly saw (a direct visitor, or the
            Cloudflare edge IP when CF-Connecting-IP isn't trusted).
-        3. First comma-separated value of X-Forwarded-For.
-        4. request.remote_addr, else "127.0.0.1" (Flask test client).
+        3. The PINAKES_TRUSTED_IP_HEADER header, when that is set and the
+           request came from a local proxy. If it is set but yields nothing,
+           the answer is the socket peer; step 4 is skipped.
+        4. First comma-separated value of X-Forwarded-For.
+        5. request.remote_addr, else "127.0.0.1" (Flask test client).
+
+    The second element names the rule, for the /api/admin/client-ip check.
     """
     fly = (request.headers.get("Fly-Client-IP") or "").strip()
     cf = (request.headers.get("CF-Connecting-IP") or "").strip()
     if cf and fly and _is_cloudflare_peer(fly):
-        return cf
+        return cf, "CF-Connecting-IP via Fly"
     if fly:
-        return fly
+        return fly, "Fly-Client-IP"
+
+    trusted = (os.environ.get(TRUSTED_IP_HEADER_ENV) or "").strip()
+    if trusted:
+        peer = _socket_peer()
+        if _is_local_peer(peer):
+            ip = _ip_from_header(trusted)
+            if ip:
+                return ip, trusted
+        return peer or "127.0.0.1", "remote_addr"
 
     xff = request.headers.get("X-Forwarded-For")
     if xff:
-        return xff.split(",")[0].strip()
+        return xff.split(",")[0].strip(), "X-Forwarded-For (first entry, untrusted)"
 
-    return request.remote_addr or "127.0.0.1"
+    return request.remote_addr or "127.0.0.1", "remote_addr"
+
+
+def client_ip_key() -> str:
+    """Return a stable per-client identifier for rate-limit bucketing, the IP
+    denylist, and access attribution. See resolve_client_ip for the rules."""
+    return resolve_client_ip()[0]
 
 
 def _is_static_endpoint() -> bool:

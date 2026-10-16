@@ -5,7 +5,7 @@ import logging
 import os
 import threading
 
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, url_for
 
 from auth import require_admin_token, _client_ip
 from rate_limit import limiter, LIMITS, fetch_auth_failing
@@ -70,6 +70,48 @@ def health_deep():
     integrity check (cached for 6h), security-header configuration.
     Admin-protected because it exposes operational metadata."""
     return jsonify(_health.deep_diagnostic()), 200
+
+
+# Headers that carry, or say something about, the visitor's address.
+_CLIENT_IP_HEADERS = (
+    "Fly-Client-IP", "CF-Connecting-IP", "True-Client-IP", "X-Forwarded-For",
+    "X-Real-IP", "Forwarded", "CF-IPCountry", "X-Forwarded-Host",
+    "X-Forwarded-Proto",
+)
+_CANDIDATE_IP_HEADERS = ("CF-Connecting-IP", "X-Forwarded-For",
+                         "True-Client-IP", "X-Real-IP")
+
+
+@bp.route("/api/admin/client-ip")
+@require_admin_token
+def client_ip_check():
+    """Report the IP the app attributes to this request, and which rule
+    produced it.
+
+    Call it through the public hostname, not 127.0.0.1, and compare `ip` with
+    the `ip=` line of https://<host>/cdn-cgi/trace: they match when the proxy
+    chain delivers the real visitor address. `candidates` shows what each
+    PINAKES_TRUSTED_IP_HEADER value would produce on this request, so the
+    right setting can be read off before changing it. `external_url` shows
+    whether X-Forwarded-Host and -Proto survive the chain, which emailed links
+    depend on (Waitress strips them unless started with --trusted-proxy)."""
+    from rate_limit import (TRUSTED_IP_HEADER_ENV, _ip_from_header,
+                            _is_local_peer, _socket_peer, resolve_client_ip)
+    ip, source = resolve_client_ip()
+    peer = _socket_peer()
+    local = _is_local_peer(peer)
+    return jsonify({
+        "ip": ip,
+        "source": source,
+        "trusted_ip_header": os.environ.get(TRUSTED_IP_HEADER_ENV) or None,
+        "socket_peer": peer,
+        "socket_peer_is_local_proxy": local,
+        "remote_addr": request.remote_addr,
+        "headers": {h: request.headers.get(h) for h in _CLIENT_IP_HEADERS},
+        "candidates": {h: _ip_from_header(h) if local else None
+                       for h in _CANDIDATE_IP_HEADERS},
+        "external_url": url_for("admin.health", _external=True),
+    }), 200
 
 
 def _run_backup_in_background():
