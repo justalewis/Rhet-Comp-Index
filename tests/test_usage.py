@@ -288,6 +288,14 @@ def test_network_classes():
               rdap_org=None, institution_kind=None) == "mobile"
 
 
+def test_rdap_is_asked_about_the_network_not_the_visitor(tracking, data_dir):
+    visit(tracking, "/about", ip="81.2.70.10")
+    lookups = FakeLookups()
+    resolve.run(now=store.utc_now(), lookups=lookups, geo=FakeGeo(),
+                registry=institutions.Registry(store.data_dir()))
+    assert lookups.rdap_calls == ["81.2.70.0"]
+
+
 def test_prefixes():
     assert netinfo.prefix_of("81.2.69.160") == "81.2.69.0/24"
     assert netinfo.prefix_of("2600:1700:abcd:1::5") == "2600:1700:abcd::/48"
@@ -355,7 +363,7 @@ class FakeLookups(resolve.Lookups):
 
     def rdap(self, ip):
         self.rdap_calls.append(ip)
-        if ip == "81.2.70.10":
+        if ip == "81.2.70.0":
             return {"name": "OC-NET", "org": "Olympic College", "domains": [], "country": "US"}
         return {"name": "COMCAST", "org": "Comcast Cable Communications, LLC", "domains": [], "country": "US"}
 
