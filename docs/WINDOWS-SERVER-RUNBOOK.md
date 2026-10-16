@@ -608,7 +608,12 @@ decide on a machine with IPv6, because it uses the IPv4 and IPv6 addresses as
 two different visitors. There it FAILs while the setting is missing, and
 PASSes once it is in place. Without IPv6 it reports INFO. A WARN means it
 could not tell (the rate-limit window reset, or other traffic arrived
-mid-test); rerun it. With the token, `App reports the visitor IP` compares
+mid-test); rerun it. `Forged X-Forwarded-For is ignored` and `Forged
+Fly-Client-IP is ignored` each send a request carrying a made-up header and
+PASS when it is charged to the same budget as an honest one. A FAIL on the
+`Fly-Client-IP` check means the server is running code from before 7554ce5
+(2026-10-15), which believed that header everywhere, so any visitor could name
+their own address; update the server. With the token, `App reports the visitor IP` compares
 the app's answer with what Cloudflare saw. It
 also prints the `PINAKES_TRUSTED_IP_HEADER` value the running service actually
 has. If that reads `(unset)` after the restart, the service did not pick up
