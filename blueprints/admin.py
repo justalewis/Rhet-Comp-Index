@@ -5,10 +5,11 @@ import logging
 import os
 import threading
 
-from flask import Blueprint, jsonify, request, render_template, url_for
+from flask import Blueprint, jsonify, request, render_template
 
 from auth import require_admin_token, _client_ip
 from rate_limit import limiter, LIMITS, fetch_auth_failing
+from web_helpers import public_url_for
 import health as _health
 
 log = logging.getLogger(__name__)
@@ -92,9 +93,14 @@ def client_ip_check():
     the `ip=` line of https://<host>/cdn-cgi/trace: they match when the proxy
     chain delivers the real visitor address. `candidates` shows what each
     PINAKES_TRUSTED_IP_HEADER value would produce on this request, so the
-    right setting can be read off before changing it. `external_url` shows
-    whether X-Forwarded-Host and -Proto survive the chain, which emailed links
-    depend on (Waitress strips them unless started with --trusted-proxy)."""
+    right setting can be read off before changing it.
+
+    `external_url` is an absolute URL built the way emailed links and the
+    ORCID redirect_uri are (web_helpers.public_url_for): from PINAKES_SITE_URL
+    when the service has it, otherwise from the request. `request_host_url`
+    is what the request alone would give. Behind Waitress, which strips
+    X-Forwarded-Host and -Proto unless started with --trusted-proxy, that
+    reads http://127.0.0.1:8080/, so `site_url` has to be set there."""
     from rate_limit import (TRUSTED_IP_HEADER_ENV, _ip_from_header,
                             _is_local_peer, _socket_peer, resolve_client_ip)
     ip, source = resolve_client_ip()
@@ -110,7 +116,9 @@ def client_ip_check():
         "headers": {h: request.headers.get(h) for h in _CLIENT_IP_HEADERS},
         "candidates": {h: _ip_from_header(h) if local else None
                        for h in _CANDIDATE_IP_HEADERS},
-        "external_url": url_for("admin.health", _external=True),
+        "external_url": public_url_for("admin.health"),
+        "site_url": os.environ.get("PINAKES_SITE_URL") or None,
+        "request_host_url": request.host_url,
     }), 200
 
 

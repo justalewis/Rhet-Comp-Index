@@ -24,7 +24,7 @@ themselves — a malformed address, or a missing one.
 import logging
 
 from flask import (
-    Blueprint, request, render_template, url_for, abort, Response,
+    Blueprint, request, render_template, abort, Response,
 )
 
 import alerts as alerts_mod
@@ -33,6 +33,7 @@ from digest import alerts_enabled
 from journals import UNAVAILABLE_JOURNALS
 from notifications import send_email
 from rate_limit import limiter, LIMITS
+from web_helpers import public_url_for
 
 log = logging.getLogger(__name__)
 
@@ -140,7 +141,7 @@ def subscribe():
         return _page("alerts_sent.html", email=email)
 
     label = alerts_mod.describe_filters(filters)
-    verify_url = url_for("alerts.verify", token=raw_verify, _external=True)
+    verify_url = public_url_for("alerts.verify", token=raw_verify)
     send_email(
         email,
         "Confirm your Pinakes alert",

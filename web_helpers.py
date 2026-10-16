@@ -15,7 +15,7 @@ from functools import wraps
 import threading
 
 from flask import (
-    g, jsonify, make_response, redirect, render_template, request,
+    g, jsonify, make_response, redirect, render_template, request, url_for,
 )
 
 from health import APP_VERSION
@@ -290,6 +290,28 @@ def redirect_www():
     """Strip a leading www. from any host we serve (301 permanent)."""
     if request.host.startswith("www."):
         return redirect(request.url.replace("www.", "", 1), code=301)
+
+
+def public_url_for(endpoint, **values):
+    """Absolute URL for `endpoint`, for links that leave the site: emailed
+    verification links and the ORCID OAuth redirect_uri. Use this, not
+    url_for's _external flag, anywhere an absolute URL is needed.
+
+    With PINAKES_SITE_URL set, the scheme and host come from it and the
+    request's Host and forwarding headers are never read. The Clearinghouse
+    box needs that. Waitress 3.x deletes X-Forwarded-Host and
+    X-Forwarded-Proto before Flask sees them, so ProxyFix has nothing to read
+    and the request-built URL is http://127.0.0.1:8080/..., IIS's side of the
+    connection. It also means a forged X-Forwarded-Host can't put someone
+    else's domain into an emailed link.
+
+    Unset, which is how Fly runs, it falls back to the request-built URL,
+    which ProxyFix makes https:// behind Fly's proxy.
+    """
+    site = os.environ.get("PINAKES_SITE_URL", "").strip().rstrip("/")
+    if not site:
+        return url_for(endpoint, _external=True, **values)
+    return site + url_for(endpoint, **values)
 
 
 # ── Load-shedding for the expensive read endpoints ──────────────────────────

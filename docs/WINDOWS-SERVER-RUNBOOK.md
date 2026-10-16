@@ -459,9 +459,37 @@ nssm set Pinakes-Web AppEnvironmentExtra <the existing lines> PINAKES_TRUSTED_IP
 Restart-Service Pinakes-Web
 ```
 
-The same check reports `Absolute URLs use the public host`. A WARN there means
-`X-Forwarded-Host` is being stripped too, and links in emails (name-removal
-verification, alert digests) would point at `127.0.0.1`.
+### Links in emails
+
+The same check reports `Absolute URLs use the public host`. Waitress strips
+`X-Forwarded-Host` and `X-Forwarded-Proto` as well, so the app cannot learn its
+public address from the request: it sees IIS connecting to
+`http://127.0.0.1:8080`. Every link that leaves the site — the name-removal and
+alert confirmation links, the admin review notice, the ORCID callback address —
+is built from `PINAKES_SITE_URL` instead. That is the variable the install
+guide (§6) already has you set, so nothing new is needed. The check PASSes
+once the running service has it.
+
+A WARN there means the service does not have `PINAKES_SITE_URL`, and emailed
+links would point at `127.0.0.1`. The endpoint's `site_url` field shows what
+the service has; `request_host_url` shows the request-built address, which
+reads `http://127.0.0.1:8080/` on this server and is expected to. Set the
+variable at Machine scope, or on the service the same way as
+`PINAKES_TRUSTED_IP_HEADER` above, and restart:
+
+```powershell
+[Environment]::SetEnvironmentVariable('PINAKES_SITE_URL','https://pinakes.wacclearinghouse.org','Machine')
+Restart-Service Pinakes-Web
+```
+
+Use `https://testpinakes.wacclearinghouse.org` on the test host.
+
+**Not `--trusted-proxy`.** Starting Waitress with `--trusted-proxy 127.0.0.1`
+and `--trusted-proxy-headers` would let the forwarding headers through, but
+ARR writes the visitor as `ip:port` in `X-Forwarded-For`, which Waitress may
+reject as malformed. It would also make the links depend on every hop of the
+chain forwarding the headers. A fixed setting cannot be steered by a forged
+`X-Forwarded-Host`.
 
 ---
 
@@ -573,12 +601,16 @@ plus a service restart:
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_REDACTION_FORM_ENABLED','1','Machine')
-Restart-Service Pinakes
+Restart-Service Pinakes-Web
 ```
 
-That also needs `X-Forwarded-Host` reaching the app, or the verification link
-it emails will read `http://127.0.0.1:8080/...`. See the ARR notes in the
-install guide.
+The verification link it emails is built from `PINAKES_SITE_URL`. Before
+turning the form on, run `Test-PinakesClientIp.ps1` with the admin token and
+confirm `Absolute URLs use the public host` PASSes (see
+[Links in emails](#links-in-emails)). For the ORCID button, register
+`<PINAKES_SITE_URL>/redaction-request/orcid/callback` as the redirect URI in
+the ORCID developer console — on production,
+`https://pinakes.wacclearinghouse.org/redaction-request/orcid/callback`.
 
 ---
 
