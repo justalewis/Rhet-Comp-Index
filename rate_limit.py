@@ -169,26 +169,36 @@ def resolve_client_ip() -> tuple[str, str]:
     """The client IP for this request, and which rule produced it.
 
     Order of preference:
-        1. CF-Connecting-IP (the real visitor IP) — trusted ONLY when the
-           request actually arrived from a Cloudflare edge, i.e. Fly-Client-IP
-           is in Cloudflare's ranges. This prevents a direct-to-origin client
-           from spoofing the header.
-        2. Fly-Client-IP — the TCP peer Fly saw (a direct visitor, or the
-           Cloudflare edge IP when CF-Connecting-IP isn't trusted).
+        1. On Fly only: CF-Connecting-IP (the real visitor IP), trusted ONLY
+           when the request actually arrived from a Cloudflare edge, i.e.
+           Fly-Client-IP is in Cloudflare's ranges. This prevents a
+           direct-to-origin client from spoofing the header.
+        2. On Fly only: Fly-Client-IP, the TCP peer Fly saw (a direct
+           visitor, or the Cloudflare edge IP when CF-Connecting-IP isn't
+           trusted).
         3. The PINAKES_TRUSTED_IP_HEADER header, when that is set and the
            request came from a local proxy. If it is set but yields nothing,
            the answer is the socket peer; step 4 is skipped.
         4. First comma-separated value of X-Forwarded-For.
         5. request.remote_addr, else "127.0.0.1" (Flask test client).
 
+    "On Fly" means FLY_APP_NAME is set, which Fly does on every machine.
+    Fly's proxy overwrites any Fly-Client-IP a visitor sends; nothing on the
+    Clearinghouse chain does. Cloudflare, ARR and Waitress all pass a custom
+    header through untouched, so trusting it there let any visitor name their
+    own address: a fresh rate-limit budget per request, a way around the
+    denylist, and as many "readers" as they liked in the tag votes and the
+    usage statistics.
+
     The second element names the rule, for the /api/admin/client-ip check.
     """
-    fly = (request.headers.get("Fly-Client-IP") or "").strip()
-    cf = (request.headers.get("CF-Connecting-IP") or "").strip()
-    if cf and fly and _is_cloudflare_peer(fly):
-        return cf, "CF-Connecting-IP via Fly"
-    if fly:
-        return fly, "Fly-Client-IP"
+    if os.environ.get("FLY_APP_NAME"):
+        fly = (request.headers.get("Fly-Client-IP") or "").strip()
+        cf = (request.headers.get("CF-Connecting-IP") or "").strip()
+        if cf and fly and _is_cloudflare_peer(fly):
+            return cf, "CF-Connecting-IP via Fly"
+        if fly:
+            return fly, "Fly-Client-IP"
 
     trusted = (os.environ.get(TRUSTED_IP_HEADER_ENV) or "").strip()
     if trusted:

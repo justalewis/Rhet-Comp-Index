@@ -223,13 +223,23 @@ def test_route_count_matches_expected(client):
     )
 
 
-def test_blocked_ip_range_returns_403(client):
+def test_blocked_ip_range_returns_403(client, monkeypatch):
     """Clients in the default-denied Alibaba range are 403'd before routing
     (incident 2026-06-20); ordinary clients pass through."""
+    monkeypatch.setenv("FLY_APP_NAME", "rhet-comp-index")
     blocked = client.get("/", headers={"Fly-Client-IP": "47.79.205.10"})
     assert blocked.status_code == 403
     ok = client.get("/", headers={"Fly-Client-IP": "203.0.113.7"})
     assert ok.status_code == 200
+
+
+def test_denylist_cannot_be_dodged_with_a_forged_fly_header(client, monkeypatch):
+    """Off Fly, a denylisted visitor who adds their own Fly-Client-IP is still
+    refused: the address comes from CF-Connecting-IP, not the forged header."""
+    monkeypatch.delenv("FLY_APP_NAME", raising=False)
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    r = client.get("/", headers={"CF-Connecting-IP": "47.79.205.10", "Fly-Client-IP": "203.0.113.7"})
+    assert r.status_code == 403
 
 
 def test_cloudflare_only_off_by_default(client):

@@ -11,12 +11,19 @@ from rate_limit import client_ip_key, resolve_client_ip, LIMITS, limiter
 # ── client_ip_key ────────────────────────────────────────────────────────────
 
 
-def test_client_ip_key_prefers_fly_header(app):
+@pytest.fixture
+def on_fly(monkeypatch):
+    """Fly sets FLY_APP_NAME on every machine; only then is Fly-Client-IP
+    believed."""
+    monkeypatch.setenv("FLY_APP_NAME", "rhet-comp-index")
+
+
+def test_client_ip_key_prefers_fly_header(app, on_fly):
     with app.test_request_context(headers={"Fly-Client-IP": "1.2.3.4"}):
         assert client_ip_key() == "1.2.3.4"
 
 
-def test_client_ip_key_strips_fly_header_whitespace(app):
+def test_client_ip_key_strips_fly_header_whitespace(app, on_fly):
     with app.test_request_context(headers={"Fly-Client-IP": "  1.2.3.4  "}):
         assert client_ip_key() == "1.2.3.4"
 
@@ -33,13 +40,13 @@ def test_client_ip_key_xff_strips_whitespace(app):
         assert client_ip_key() == "5.6.7.8"
 
 
-def test_client_ip_key_fly_header_overrides_xff(app):
+def test_client_ip_key_fly_header_overrides_xff(app, on_fly):
     headers = {"Fly-Client-IP": "1.2.3.4", "X-Forwarded-For": "5.6.7.8"}
     with app.test_request_context(headers=headers):
         assert client_ip_key() == "1.2.3.4"
 
 
-def test_client_ip_key_trusts_cf_when_peer_is_cloudflare(app):
+def test_client_ip_key_trusts_cf_when_peer_is_cloudflare(app, on_fly):
     # Peer (Fly-Client-IP) is a Cloudflare edge IP → trust CF-Connecting-IP
     # as the real visitor.
     headers = {"Fly-Client-IP": "162.158.0.1",
@@ -48,7 +55,7 @@ def test_client_ip_key_trusts_cf_when_peer_is_cloudflare(app):
         assert client_ip_key() == "203.0.113.55"
 
 
-def test_client_ip_key_ignores_spoofed_cf_from_non_cloudflare_peer(app):
+def test_client_ip_key_ignores_spoofed_cf_from_non_cloudflare_peer(app, on_fly):
     # Peer is NOT Cloudflare → CF-Connecting-IP is untrusted (spoof attempt);
     # fall back to the actual peer so the block / rate limit can't be evaded.
     headers = {"Fly-Client-IP": "47.79.205.10",
@@ -135,7 +142,7 @@ def test_trusted_xff_stops_at_an_unparseable_entry(app, monkeypatch):
         assert client_ip_key() == "127.0.0.1"
 
 
-def test_fly_header_still_wins_when_trusted_header_set(app, monkeypatch):
+def test_fly_header_still_wins_when_trusted_header_set(app, monkeypatch, on_fly):
     monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
     headers = {"Fly-Client-IP": "47.79.205.10", "CF-Connecting-IP": "8.8.8.8"}
     with app.test_request_context(headers=headers):
@@ -157,6 +164,36 @@ def test_forged_xff_cannot_pose_as_the_local_proxy(client, monkeypatch):
     assert body["remote_addr"] == "127.0.0.1"
     assert body["socket_peer"] == "9.9.9.9"
     assert body["ip"] == "9.9.9.9"
+
+
+def test_forged_fly_header_is_ignored_off_fly(app, monkeypatch):
+    # The Clearinghouse chain passes custom headers straight through, so a
+    # visitor's own Fly-Client-IP must count for nothing there.
+    monkeypatch.delenv("FLY_APP_NAME", raising=False)
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    headers = {"Fly-Client-IP": "9.9.9.9", "CF-Connecting-IP": "81.2.69.160"}
+    with app.test_request_context(headers=headers, environ_base=_VIA_LOCAL_PROXY):
+        assert resolve_client_ip() == ("81.2.69.160", "CF-Connecting-IP")
+
+
+def test_forged_fly_and_cloudflare_pair_is_ignored_off_fly(app, monkeypatch):
+    # A Cloudflare-range Fly-Client-IP plus a CF-Connecting-IP of the
+    # visitor's choosing must not be read as "came through Cloudflare".
+    monkeypatch.delenv("FLY_APP_NAME", raising=False)
+    monkeypatch.delenv("PINAKES_TRUSTED_IP_HEADER", raising=False)
+    headers = {"Fly-Client-IP": "162.158.0.1", "CF-Connecting-IP": "8.8.8.8"}
+    with app.test_request_context(headers=headers, environ_base={"REMOTE_ADDR": "9.9.9.9"}):
+        assert client_ip_key() == "9.9.9.9"
+
+
+def test_forged_fly_header_gets_no_fresh_budget_off_fly(client, monkeypatch):
+    monkeypatch.delenv("FLY_APP_NAME", raising=False)
+    monkeypatch.setenv("PINAKES_TRUSTED_IP_HEADER", "CF-Connecting-IP")
+    for i in range(60):
+        client.get("/api/articles", headers={"CF-Connecting-IP": "81.2.69.1",
+                                             "Fly-Client-IP": f"9.9.9.{i % 250}"})
+    assert client.get("/api/articles", headers={"CF-Connecting-IP": "81.2.69.1",
+                                                "Fly-Client-IP": "9.9.9.251"}).status_code == 429
 
 
 def test_trusted_header_feeds_the_rate_limiter(client, monkeypatch):
