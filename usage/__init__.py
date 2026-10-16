@@ -27,4 +27,6 @@ def init_app(app) -> None:
     @app.context_processor
     def _usage_globals():
         from .resolve import raw_ip_hours
-        return {"usage_tracking": capture.enabled(), "usage_raw_ip_hours": raw_ip_hours()}
+        from .survey import enabled as survey_enabled
+        return {"usage_tracking": capture.enabled(), "usage_raw_ip_hours": raw_ip_hours(),
+                "usage_survey": survey_enabled()}

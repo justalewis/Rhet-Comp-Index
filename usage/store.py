@@ -171,6 +171,24 @@ CREATE TABLE IF NOT EXISTS org_lookups (
     checked_at TEXT NOT NULL
 );
 
+-- What readers chose to tell us on /tell-us. Every field is optional and
+-- volunteered; nothing here is linked to a visitor id or an address.
+CREATE TABLE IF NOT EXISTS responses (
+    id               INTEGER PRIMARY KEY,
+    ts               TEXT NOT NULL,
+    institution_text TEXT,
+    institution_id   INTEGER,
+    matched_at       TEXT,
+    role             TEXT,
+    uses             TEXT,
+    course           TEXT,
+    note             TEXT,
+    quote_ok         INTEGER NOT NULL DEFAULT 0,
+    contact_email    TEXT,
+    came_from        TEXT
+);
+CREATE INDEX IF NOT EXISTS responses_ts ON responses(ts);
+
 CREATE TABLE IF NOT EXISTS salts (
     day  TEXT PRIMARY KEY,
     salt BLOB NOT NULL

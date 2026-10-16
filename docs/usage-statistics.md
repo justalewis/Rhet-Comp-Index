@@ -109,6 +109,33 @@ institution count as a verified minimum. Referring sites help: course sites
 and library guides usually carry the institution's name in the address, and
 the report lists them separately.
 
+## The optional form
+
+Network data can only ever show a minimum. The form at `/tell-us` asks
+readers directly: institution, role, how they use Pinakes (teaching,
+research, a student assignment, library instruction, program work), a course
+or project, a note, and an optional email for someone willing to be asked
+about a letter of support. It is off until `PINAKES_USAGE_SURVEY=1`; once on,
+it is linked from the About menu and the contact section of `/about`.
+
+- Every field is optional; an empty submission is refused.
+- Responses are stored in `usage.db` (`responses`) and are not linked to a
+  visitor id or an address. The form's own requests are never recorded as
+  visits.
+- A note can be quoted only if the respondent ticks the box, and then with
+  role and institution, never name.
+- Spam handling follows the alerts form: a hidden honeypot field and
+  5 submissions an hour per address.
+- The nightly resolver matches each typed institution once, against the same
+  IPEDS, world-universities and ROR records the network lookup uses.
+
+On the dashboard, "What readers told us" shows counts by role and use, the
+institutions named, and the quotable notes; "All responses" shows everything,
+contact addresses included, with a CSV download and a delete button for
+anyone who asks. The downloaded report carries the counts, the institutions
+and the consented quotes only. Contact addresses, course names and
+unconsented notes never leave the dashboard.
+
 ## Data sources
 
 | File in `usage-data/` | Source | Licence | Refresh |
@@ -131,6 +158,7 @@ problem.
 | Variable | Default | Purpose |
 |---|---|---|
 | `PINAKES_USAGE_TRACKING` | off | `1` turns recording on |
+| `PINAKES_USAGE_SURVEY` | off | `1` turns on the optional form at `/tell-us` (independent of recording) |
 | `PINAKES_TRUSTED_IP_HEADER` | unset | Must be `CF-Connecting-IP` on the Clearinghouse box, or every visitor is the proxy |
 | `USAGE_DB_PATH` | `usage.db` beside `articles.db` | |
 | `USAGE_DATA_DIR` | `usage-data/` beside `articles.db` | IP databases and institution lists |

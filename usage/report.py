@@ -29,6 +29,7 @@ import zipfile
 from . import store
 from .geo import ATTRIBUTION
 from .names import country_name, language_name
+from .survey import summarise as summarise_responses
 from .resolve import raw_ip_hours
 from .tools import is_auto, label_for
 
@@ -347,6 +348,7 @@ def build_summary(start: str, end: str, *, classes: tuple[str, ...] = PEOPLE,
         unresolved = conn.execute(
             "SELECT COUNT(*) FROM hits WHERE resolved = 0 AND day BETWEEN ? AND ?",
             (start, end)).fetchone()[0]
+        responses = summarise_responses(conn, start, end, kind_labels=KIND_LABELS)
     finally:
         conn.close()
 
@@ -395,6 +397,7 @@ def build_summary(start: str, end: str, *, classes: tuple[str, ...] = PEOPLE,
         "downloads": downloads,
         "feeds": sorted(feeds.values(), key=lambda f: -f["subscriptions"]),
         "bots": bots,
+        "responses": responses,
         "data": {
             "last_resolve": dict(last_run) if last_run else None,
             "unresolved_hits": unresolved,
@@ -429,6 +432,9 @@ def to_zip(summary: dict) -> bytes:
         "referrers.csv": _csv(summary["referrers"], ["host", "group", "visitor_days"]),
         "searches.csv": _csv(summary["searches"], ["query", "visitor_days"]),
         "articles.csv": _csv(summary["articles"], ["id", "title", "journal", "year", "visitor_days"]),
+        "form_institutions.csv": _csv(summary["responses"]["institutions"],
+                                      ["name", "kind", "carnegie", "country", "responses", "matched"]),
+        "form_quotes.csv": _csv(summary["responses"]["quotes"], ["date", "role", "institution", "note"]),
         "summary.json": json.dumps(summary, indent=2, default=str),
     }
     buf = io.BytesIO()

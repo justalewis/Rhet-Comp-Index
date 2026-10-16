@@ -1,0 +1,142 @@
+{% extends "base-alexandrian.html" %}
+
+{% block title %}How you use Pinakes — Pinakes{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex">
+  <style>
+    .tell-wrap { max-width: 42rem; }
+    .tell-wrap p { margin: 0 0 0.9rem 0; }
+    .tell-field { margin-bottom: 1.1rem; }
+    .tell-field > label, .tell-field legend {
+      display: block;
+      font-family: var(--f-ui);
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      padding: 0;
+    }
+    .tell-field fieldset { border: 0; margin: 0; padding: 0; }
+    .tell-field .hint { font-family: var(--f-ui); font-size: 0.8rem; color: var(--dilute); margin: 0.25rem 0 0; }
+    .tell-field input[type=text],
+    .tell-field input[type=email],
+    .tell-field select,
+    .tell-field textarea {
+      width: 100%;
+      max-width: 30rem;
+      padding: 0.45rem 0.55rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 3px;
+      background: var(--paper);
+      color: inherit;
+    }
+    .tell-field textarea { min-height: 7rem; resize: vertical; }
+    .tell-checks label {
+      display: flex; gap: 0.5rem; align-items: baseline;
+      font-family: var(--f-ui); font-size: 0.92rem; margin: 0.25rem 0;
+    }
+    .tell-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .tell-error {
+      margin: 0 0 1rem 0;
+      padding: 0.6rem 0.8rem;
+      border-left: 3px solid var(--err-fg);
+      background: var(--err-bg);
+    }
+    .tell-send {
+      font-family: var(--f-ui); font-size: 0.95rem; padding: 0.5rem 1.2rem;
+      border: 1px solid var(--terracotta); background: var(--terracotta); color: var(--added-white); cursor: pointer;
+    }
+    .tell-fine {
+      margin-top: 1.6rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-size: 0.9rem;
+      color: var(--dilute);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="column-head">
+      <h2>How you use Pinakes</h2>
+      <span class="result-count">Optional, and read by a person.</span>
+    </div>
+
+    <div class="tell-wrap">
+    {% if sent %}
+      <p>Thank you. Your response is saved, and I'll read it.</p>
+      <p><a href="/">Back to the index</a></p>
+    {% else %}
+      <p>Pinakes is free, and keeping it that way means applying for grants that ask who uses it. The server can count visits, but it can't tell a course from a dissertation or say where a reader teaches when they connect from home. If you use Pinakes in a course, for your own research, or with students, a few lines here go further than any page count.</p>
+      <p>Every field is optional.</p>
+
+      {% if error %}<p class="tell-error" role="alert">{{ error }}</p>{% endif %}
+
+      <form method="post" action="/tell-us">
+        <input type="hidden" name="came_from" value="{{ came_from or '' }}">
+        <div class="tell-hp" aria-hidden="true">
+          <label for="tell-website">Leave this empty</label>
+          <input type="text" id="tell-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="tell-field">
+          <label for="tell-institution">Institution</label>
+          <input type="text" id="tell-institution" name="institution" maxlength="200"
+                 placeholder="e.g., Olympic College" value="{{ form.get('institution', '') }}" autocomplete="organization">
+        </div>
+
+        <div class="tell-field">
+          <label for="tell-role">Your role</label>
+          <select id="tell-role" name="role">
+            <option value="">Choose one</option>
+            {% for key, label in roles.items() %}
+            <option value="{{ key }}"{% if form.get('role') == key %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="tell-field">
+          <fieldset>
+            <legend>How you use it</legend>
+            <div class="tell-checks">
+              {% set chosen = form.getlist('uses') if form.getlist is defined else [] %}
+              {% for key, label in uses.items() %}
+              <label><input type="checkbox" name="uses" value="{{ key }}"{% if key in chosen %} checked{% endif %}> {{ label }}</label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="tell-field">
+          <label for="tell-course">Course or project</label>
+          <input type="text" id="tell-course" name="course" maxlength="200"
+                 placeholder="e.g., ENGL 235, Winter 2027" value="{{ form.get('course', '') }}">
+        </div>
+
+        <div class="tell-field">
+          <label for="tell-note">Anything you'd like to tell me</label>
+          <textarea id="tell-note" name="note" maxlength="1500"
+                    placeholder="What you used it for, what worked, what's missing">{{ form.get('note', '') }}</textarea>
+          <div class="tell-checks">
+            <label><input type="checkbox" name="quote_ok" value="1"{% if form.get('quote_ok') %} checked{% endif %}>
+              You may quote this in grant applications and reports, credited to my role and institution, not my name.</label>
+          </div>
+        </div>
+
+        <div class="tell-field">
+          <label for="tell-email">Email</label>
+          <input type="email" id="tell-email" name="email" maxlength="254" autocomplete="email"
+                 value="{{ form.get('email', '') }}">
+          <p class="hint">Only if you're willing to hear from me about a letter of support or a short follow-up.</p>
+        </div>
+
+        <button class="tell-send" type="submit">Send →</button>
+      </form>
+
+      <p class="tell-fine">Responses are stored on the Pinakes server and read only by me. They are not linked to your visits or your IP address. A note is quoted only if you tick the box, and then with your role and institution, never your name. An email address is used only for the follow-up described above. To have a response deleted, write to <a href="mailto:jlewis2@olympic.edu">jlewis2@olympic.edu</a>.</p>
+    {% endif %}
+    </div>
+
+{% endblock %}

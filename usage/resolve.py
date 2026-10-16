@@ -242,6 +242,50 @@ def _ror_cached(conn, lookups: Lookups, name: str, now_iso: str, ttl_cutoff: str
     return result
 
 
+def _from_ror(ror: dict | None, registry: Registry) -> dict | None:
+    """An institution record from a ROR match, joined to IPEDS when the
+    organisation is in the US so it carries Carnegie class and sector."""
+    if not ror or not ror.get("name") or not ror.get("ror_id"):
+        return None
+    domain = domain_of(ror.get("website")) or next(iter(ror.get("domains") or []), None)
+    ipeds = None
+    if ror.get("country") == "US":
+        ipeds = registry.by_domain(domain) or registry.by_name(ror["name"], "US")
+    if ipeds:
+        return dict(ipeds, ror_id=ror["ror_id"])
+    return {
+        "key": "ror:" + ror["ror_id"].rstrip("/").split("/")[-1],
+        "name": ror["name"], "kind": ror_kind(ror.get("types") or [], ror["name"]),
+        "country": ror.get("country"), "region": ror.get("region"),
+        "city": ror.get("city"), "domain": domain, "ror_id": ror["ror_id"],
+        "ipeds_unitid": None, "carnegie": None, "sector": None,
+        "hbcu": None, "tribal": None, "source": "ror",
+    }
+
+
+def match_responses(conn, *, registry: Registry, lookups: Lookups, corpus,
+                    now_iso: str, org_cutoff: str) -> int:
+    """Link the institutions readers typed into /tell-us to the same records
+    the network resolver uses. Each response is tried once; one that matches
+    nothing keeps its text and is still counted under that name."""
+    matched = 0
+    rows = conn.execute("SELECT id, institution_text FROM responses "
+                        "WHERE matched_at IS NULL AND institution_text IS NOT NULL").fetchall()
+    for r in rows:
+        text = r["institution_text"].strip()
+        rec = None
+        if "." in text and " " not in text:          # someone typed a domain
+            rec = registry.by_domain(text)
+        rec = rec or registry.by_name(text)
+        if not rec and looks_institutional(text):
+            rec = _from_ror(_ror_cached(conn, lookups, text, now_iso, org_cutoff), registry)
+        inst_id = upsert(conn, rec, corpus, now_iso) if rec else None
+        conn.execute("UPDATE responses SET institution_id = ?, matched_at = ? WHERE id = ?",
+                     (inst_id, now_iso, r["id"]))
+        matched += 1 if inst_id else 0
+    return matched
+
+
 def identify(conn, *, registry: Registry, lookups: Lookups, geo_info: dict,
              rdns: str | None, rdns_verified: bool, rdap: dict | None,
              now_iso: str, org_cutoff: str) -> tuple[dict | None, str | None]:
@@ -267,22 +311,9 @@ def identify(conn, *, registry: Registry, lookups: Lookups, geo_info: dict,
                 return rec, via
     for name in (rdap_org, geo_info.get("as_org")):
         if name and looks_institutional(name):
-            ror = _ror_cached(conn, lookups, name, now_iso, org_cutoff)
-            if ror and ror.get("name"):
-                domain = domain_of(ror.get("website")) or next(iter(ror.get("domains") or []), None)
-                ipeds = None
-                if ror.get("country") == "US":
-                    ipeds = registry.by_domain(domain) or registry.by_name(ror["name"], "US")
-                if ipeds:
-                    return dict(ipeds, ror_id=ror["ror_id"]), "ror"
-                return {
-                    "key": "ror:" + ror["ror_id"].rstrip("/").split("/")[-1],
-                    "name": ror["name"], "kind": ror_kind(ror.get("types") or [], ror["name"]),
-                    "country": ror.get("country"), "region": ror.get("region"),
-                    "city": ror.get("city"), "domain": domain, "ror_id": ror["ror_id"],
-                    "ipeds_unitid": None, "carnegie": None, "sector": None,
-                    "hbcu": None, "tribal": None, "source": "ror",
-                }, "ror"
+            rec = _from_ror(_ror_cached(conn, lookups, name, now_iso, org_cutoff), registry)
+            if rec:
+                return rec, "ror"
     if rdap_org and looks_institutional(rdap_org):
         return {
             "key": "name:" + norm_name(rdap_org), "name": rdap_org.strip(),
@@ -434,6 +465,9 @@ def _run(*, now, lookups, geo, registry) -> dict:
         recent = {(now.date() - _dt.timedelta(days=i)).isoformat() for i in range(REBUILD_DAYS)}
         with conn:
             summary["visitor_days"] = rebuild_days(conn, days_touched | recent)
+            summary["responses_matched"] = match_responses(
+                conn, registry=registry, lookups=lookups, corpus=corpus,
+                now_iso=now_iso, org_cutoff=org_cutoff)
             summary["corpus_flags_changed"] = refresh_corpus_flags(conn, corpus)
             conn.execute("DELETE FROM networks WHERE checked_at < ?",
                          ((now - _dt.timedelta(days=NETWORK_TTL_DAYS * 3)).isoformat(),))
