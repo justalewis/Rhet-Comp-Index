@@ -26,8 +26,10 @@
     reads X-RateLimit-Remaining. If the IPv6 request is charged to the IPv4
     budget, the app cannot tell visitors apart.
 
-    "Forged X-Forwarded-For is ignored" - a request carrying a made-up
-    X-Forwarded-For must be charged to the same budget as an honest one.
+    "Forged X-Forwarded-For / Fly-Client-IP is ignored" - a request carrying
+    a made-up X-Forwarded-For or Fly-Client-IP must be charged to the same
+    budget as an honest one. Fly-Client-IP is only believed on Fly, whose
+    proxy overwrites it; on this chain nothing strips it.
 
     "App reports the visitor IP" - needs the admin token. Calls
     /api/admin/client-ip and compares its answer with what Cloudflare saw. It
@@ -154,8 +156,6 @@ if ($null -ne $ip4) {
     $v6 = $null
     if ($null -ne $ip6) { $v6 = Get-Remaining '6' }
     $c = Get-Remaining '4'
-    $forged = Get-Remaining '4' @('X-Forwarded-For: 198.51.100.7')
-    $d = Get-Remaining '4'
 
     if ($null -eq $a -or $null -eq $b -or $null -eq $c) {
         Test-Result "Separate visitors get separate budgets" 'WARN' "no X-RateLimit-Remaining header on /glossary - cannot tell"
@@ -169,13 +169,26 @@ if ($null -ne $ip4) {
         Test-Result "Separate visitors get separate budgets" 'FAIL' "IPv4 $b -> $c around one IPv6 request ($v6): both are charged to one budget, so the app is not seeing visitor IPs"
     }
 
-    if ($null -ne $forged -and $null -ne $c -and $null -ne $d) {
-        if ($forged -eq ($c - 1) -and $d -eq ($forged - 1)) {
-            Test-Result "Forged X-Forwarded-For is ignored" 'PASS' "charged to the same budget ($c -> $forged -> $d)"
-        } elseif ($d -eq ($c - 1)) {
-            Test-Result "Forged X-Forwarded-For is ignored" 'FAIL' "the forged request got its own budget ($forged); a client can pick its own identity"
+    # Each header a visitor might forge to choose their own identity. On the
+    # Clearinghouse chain nothing strips Fly-Client-IP, so it is the one most
+    # likely to slip through.
+    $forgeries = @(
+        @{ Name = 'X-Forwarded-For'; Value = '198.51.100.7' },
+        @{ Name = 'Fly-Client-IP';   Value = '198.51.100.8' }
+    )
+    foreach ($f in $forgeries) {
+        $before = Get-Remaining '4'
+        $forged = Get-Remaining '4' @("$($f.Name): $($f.Value)")
+        $after  = Get-Remaining '4'
+        $label  = "Forged $($f.Name) is ignored"
+        if ($null -eq $before -or $null -eq $forged -or $null -eq $after) {
+            Test-Result $label 'WARN' "no X-RateLimit-Remaining header - cannot tell"
+        } elseif ($forged -eq ($before - 1) -and $after -eq ($forged - 1)) {
+            Test-Result $label 'PASS' "charged to the same budget ($before -> $forged -> $after)"
+        } elseif ($after -eq ($before - 1)) {
+            Test-Result $label 'FAIL' "the forged request got its own budget ($forged); a client can pick its own identity"
         } else {
-            Test-Result "Forged X-Forwarded-For is ignored" 'WARN' "budgets moved unexpectedly ($c, $forged, $d); rerun"
+            Test-Result $label 'WARN' "budgets moved unexpectedly ($before, $forged, $after); rerun"
         }
     }
 }
