@@ -573,3 +573,113 @@ def test_refresh_downloads_hipo_and_the_newest_ipeds(tmp_path, monkeypatch, fixt
     # Fresh files are left alone on the next run.
     again = refresh_mod.refresh(now=now, session=FakeSession({}), only={"universities.json"})
     assert again["files"]["universities.json"].startswith("current")
+
+
+# ── The optional form at /tell-us ────────────────────────────────────────────
+
+@pytest.fixture
+def survey_on(monkeypatch, client):
+    monkeypatch.setenv("PINAKES_USAGE_SURVEY", "1")
+    monkeypatch.setenv("PINAKES_ADMIN_TOKEN", TOKEN)
+    return client
+
+
+def test_form_is_404_until_switched_on(client, monkeypatch):
+    monkeypatch.delenv("PINAKES_USAGE_SURVEY", raising=False)
+    assert client.get("/tell-us").status_code == 404
+    assert b"/tell-us" not in client.get("/about").data
+
+
+def test_form_renders_and_is_linked(survey_on):
+    page = survey_on.get("/tell-us").get_data(as_text=True)
+    assert "How you use Pinakes" in page and 'name="institution"' in page
+    assert 'href="/tell-us"' in survey_on.get("/about").get_data(as_text=True)
+
+
+def test_form_saves_a_cleaned_response(survey_on):
+    r = survey_on.post("/tell-us", data={
+        "institution": "  Olympic   College ", "role": "faculty", "uses": ["teaching", "bogus", "research"],
+        "course": "ENGL 235", "note": "Used Main Path with my class.", "quote_ok": "1",
+        "email": "Someone@Olympic.EDU", "came_from": "about"})
+    assert r.status_code == 200 and "Thank you" in r.get_data(as_text=True)
+    (row,) = rows("SELECT * FROM responses")
+    assert row["institution_text"] == "Olympic College"
+    assert json.loads(row["uses"]) == ["teaching", "research"]
+    assert row["quote_ok"] == 1 and row["contact_email"] == "someone@olympic.edu"
+    assert row["came_from"] == "about"
+
+
+def test_quote_permission_needs_a_note(survey_on):
+    survey_on.post("/tell-us", data={"role": "grad", "quote_ok": "1"})
+    assert rows("SELECT quote_ok FROM responses") == [{"quote_ok": 0}]
+
+
+def test_form_rejects_empty_and_bad_email(survey_on):
+    r = survey_on.post("/tell-us", data={})
+    assert r.status_code == 400 and "nothing to send" in r.get_data(as_text=True)
+    r = survey_on.post("/tell-us", data={"note": "hi", "email": "not-an-address"})
+    assert r.status_code == 400 and "hi</textarea>" in r.get_data(as_text=True)   # input kept
+    assert rows("SELECT * FROM responses") == []
+
+
+def test_honeypot_stores_nothing(survey_on):
+    r = survey_on.post("/tell-us", data={"note": "buy pills", "website": "spam.example"})
+    assert r.status_code == 200 and "Thank you" in r.get_data(as_text=True)
+    assert rows("SELECT * FROM responses") == []
+
+
+def test_form_posts_are_rate_limited(survey_on):
+    codes = [survey_on.post("/tell-us", data={"note": f"n{i}"}).status_code for i in range(6)]
+    assert codes == [200] * 5 + [429]
+    assert survey_on.get("/tell-us").status_code == 200        # reading the form is not limited
+
+
+def test_form_traffic_is_not_recorded_as_a_visit(survey_on, monkeypatch):
+    monkeypatch.setenv("PINAKES_USAGE_TRACKING", "1")
+    monkeypatch.setenv("PINAKES_USAGE_SYNC", "1")
+    survey_on.get("/tell-us")
+    survey_on.post("/tell-us", data={"note": "x"})
+    assert rows("SELECT endpoint FROM hits") == []
+
+
+def test_resolver_matches_named_institutions(survey_on, data_dir):
+    for inst in ("Olympic College", "washington.edu", "Somewhere Unlisted"):
+        survey_on.post("/tell-us", data={"institution": inst, "role": "faculty"})
+    run_resolver(store.utc_now())
+    got = {r["institution_text"]: r for r in rows(
+        "SELECT r.institution_text, r.matched_at, i.name FROM responses r "
+        "LEFT JOIN institutions i ON i.id = r.institution_id")}
+    assert got["Olympic College"]["name"] == "Olympic College"
+    assert got["washington.edu"]["name"].startswith("University of Washington")
+    assert got["Somewhere Unlisted"]["name"] is None and got["Somewhere Unlisted"]["matched_at"]
+
+
+def test_summary_quotes_only_with_permission_and_never_emails(survey_on, data_dir):
+    survey_on.post("/tell-us", data={"institution": "Olympic College", "role": "faculty",
+                                     "uses": ["teaching"], "note": "Quote me.", "quote_ok": "1",
+                                     "email": "a@olympic.edu"})
+    survey_on.post("/tell-us", data={"institution": "Olympic College", "role": "grad",
+                                     "uses": ["research"], "note": "Private note."})
+    run_resolver(store.utc_now())
+    start, end = report.default_range(7)
+    s = report.build_summary(start, end, public=True)
+    r = s["responses"]
+    assert r["count"] == 2 and r["contacts"] == 1
+    assert r["by_role"] == {"Faculty or instructor": 1, "Graduate student": 1}
+    assert [q["note"] for q in r["quotes"]] == ["Quote me."]
+    assert r["institutions"][0]["name"] == "Olympic College" and r["institutions"][0]["responses"] == 2
+    dumped = json.dumps(s)
+    assert "a@olympic.edu" not in dumped and "Private note." not in dumped
+    page = report.render_html(s)
+    assert "In readers' words" in page and "Quote me." in page and "Private note." not in page
+
+
+def test_admin_can_list_and_delete_responses(survey_on):
+    survey_on.post("/tell-us", data={"note": "delete me", "email": "x@example.edu"})
+    assert survey_on.get("/api/admin/usage/responses").status_code == 401
+    listed = survey_on.get("/api/admin/usage/responses", headers=AUTH).get_json()["responses"]
+    assert listed[0]["contact_email"] == "x@example.edu"
+    rid = listed[0]["id"]
+    assert survey_on.post(f"/api/admin/usage/responses/{rid}/delete", headers=AUTH).status_code == 200
+    assert survey_on.post(f"/api/admin/usage/responses/{rid}/delete", headers=AUTH).status_code == 404
+    assert rows("SELECT * FROM responses") == []

@@ -518,6 +518,17 @@ dashboard fills in.
 To switch recording off, remove the variable and restart the service. Keep
 the resolve task: it is what deletes any addresses still held.
 
+**The optional form** at `/tell-us`, where readers can say how they use
+Pinakes, has its own switch and works with or without recording:
+
+```powershell
+[Environment]::SetEnvironmentVariable('PINAKES_USAGE_SURVEY','1','Machine')
+Restart-Service Pinakes-Web
+```
+
+Responses appear on `/admin/usage`. Nothing else needs scheduling; the
+nightly resolve task matches the institutions people type.
+
 ---
 
 ## Author name-removal requests

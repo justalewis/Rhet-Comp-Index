@@ -80,6 +80,9 @@ LIMITS: dict[str, str] = {
     # Pinakes mail strangers on someone else's behalf. Low cap, and the digest
     # purges never-confirmed rows after a week.
     "alert_signup": "5 per hour",
+    # The optional "how you use Pinakes" form. Responses go to a person who
+    # reads them, so a script should not be able to bury real ones.
+    "usage_survey": "5 per hour",
 }
 
 

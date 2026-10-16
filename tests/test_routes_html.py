@@ -214,8 +214,11 @@ def test_route_count_matches_expected(client):
     #        GET /admin/usage (dashboard shell), and the token-gated
     #        /api/admin/usage/{summary,report,status} GETs plus the
     #        /api/admin/usage/{resolve,refresh-data} POST jobs.
-    assert len(rules) == 166, (
-        f"Expected 166 routes, got {len(rules)}. "
+    #  +  3  usage form (2026-10-16): GET/POST /tell-us (one rule), plus the
+    #        token-gated GET /api/admin/usage/responses and
+    #        POST /api/admin/usage/responses/<id>/delete.
+    assert len(rules) == 169, (
+        f"Expected 169 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

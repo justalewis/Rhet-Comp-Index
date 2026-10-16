@@ -318,6 +318,8 @@
         barTable(dictRows(b.carnegie), ['Classification', 'Institutions'], 'No US institution matched to IPEDS in this range.')) +
       '</div>';
 
+    h += renderResponses(s.responses || {});
+
     h += '<div class="grid2">' +
       panel('Countries', '', barTable(s.countries.slice(0, 25).map(function (c) { return { label: esc(c.name), value: c.visitor_days }; }), ['Country', 'Visitor-days'])) +
       panel('US states', '', barTable(s.us_regions.slice(0, 25).map(function (c) { return { label: esc(c.region), value: c.visitor_days }; }), ['State', 'Visitor-days'])) +
@@ -372,7 +374,89 @@
     wireTip($('daily'), s.daily, labels);
   }
 
+  // ── The optional form at /tell-us ─────────────────────────────────────────
+  var lastStatus = null;
+
+  function renderResponses(r) {
+    var off = lastStatus && !lastStatus.survey_enabled;
+    if (!r.count) {
+      return panel('What readers told us', off
+        ? 'The optional form at /tell-us is off. Set PINAKES_USAGE_SURVEY=1 in the service environment and restart it to turn it on.'
+        : 'No one has used the optional form at <a href="/tell-us">/tell-us</a> in this range.', '');
+    }
+    var quotes = (r.quotes || []).map(function (q) {
+      var who = [q.role, q.institution].filter(Boolean).join(', ');
+      return '<blockquote style="margin:0 0 0.8rem;padding-left:0.8rem;border-left:2px solid var(--rule-strong)">' +
+        esc(q.note) + '<div class="muted" style="font-size:var(--text-xs);margin-top:0.2rem">' +
+        esc(who || 'Unattributed') + ' · ' + esc(q.date) + '</div></blockquote>';
+    }).join('');
+    var note = num(r.count) + (r.count === 1 ? ' response' : ' responses') + ' to the optional form at <a href="/tell-us">/tell-us</a>' +
+      (r.contacts ? ', ' + num(r.contacts) + ' with an email for follow-up' : '') + '.' +
+      (off ? ' The form is currently off.' : '');
+    return panel('What readers told us', note,
+        '<div class="grid2">' +
+          '<div>' + barTable(dictRows(r.by_role), ['Role', 'Responses']) + '</div>' +
+          '<div>' + barTable(dictRows(r.by_use), ['Use', 'Responses']) + '</div>' +
+        '</div>' +
+        '<h3 style="font-size:var(--text-base);margin:1rem 0 0.4rem">Institutions named</h3>' +
+        barTable((r.institutions || []).map(function (i) {
+          return { label: esc(i.name) + (i.matched ? '' : '<span class="tag">not matched</span>'),
+            cells: [esc([i.kind, i.carnegie].filter(Boolean).join(' · ') || '—')], value: i.responses };
+        }), ['Institution', 'Type', 'Responses']) +
+        '<h3 style="font-size:var(--text-base);margin:1rem 0 0.4rem">Notes respondents agreed to have quoted</h3>' +
+        (quotes || '<p class="empty">None in this range.</p>')) +
+      '<section class="panel" id="responses-panel"><h2>All responses</h2>' +
+        '<p class="note">Including the ones not cleared for quoting, and contact addresses. For your eyes only; nothing in this table goes into the downloaded report.</p>' +
+        '<div class="row" style="margin:0 0 0.6rem"><button class="quiet" id="dl-responses" type="button">Download responses (CSV)</button></div>' +
+        '<div id="responses-table"><p class="empty">Loading…</p></div></section>';
+  }
+
+  var responseRows = [];
+  async function loadResponses() {
+    var box = $('responses-table');
+    if (!box) return;
+    var r = await api('/api/admin/usage/responses?from=' + encodeURIComponent($('from').value) + '&to=' + encodeURIComponent($('to').value));
+    if (!r.ok) { box.innerHTML = '<p class="err">Couldn\'t load the responses (' + r.status + ').</p>'; return; }
+    responseRows = (await r.json()).responses || [];
+    if (!responseRows.length) { box.innerHTML = '<p class="empty">None in this range.</p>'; return; }
+    box.innerHTML = '<table><thead><tr><th>Date</th><th>Institution</th><th>Role and use</th><th>Note</th><th>Contact</th><th></th></tr></thead><tbody>' +
+      responseRows.map(function (x) {
+        var inst = x.institution_name && x.institution_name !== x.institution_text
+          ? esc(x.institution_text) + '<div class="muted" style="font-size:var(--text-xs)">matched: ' + esc(x.institution_name) + '</div>'
+          : esc(x.institution_text || '—');
+        return '<tr><td style="white-space:nowrap">' + esc(x.ts.slice(0, 10)) + '</td><td>' + inst + '</td><td>' +
+          esc(x.role_label || '—') + '<div class="muted" style="font-size:var(--text-xs)">' + esc((x.use_labels || []).join(', ')) +
+          (x.course ? ' · ' + esc(x.course) : '') + '</div></td><td>' + esc(x.note || '') +
+          (x.quote_ok ? '<span class="tag">may quote</span>' : '') + '</td><td>' +
+          (x.contact_email ? '<a href="mailto:' + encodeURIComponent(x.contact_email).replace(/%40/g, '@') + '">' + esc(x.contact_email) + '</a>' : '—') +
+          '</td><td><button class="quiet" type="button" data-delete="' + x.id + '">Delete</button></td></tr>';
+      }).join('') + '</tbody></table>';
+    box.querySelectorAll('[data-delete]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        if (!confirm('Delete this response? This can\'t be undone.')) return;
+        var d = await api('/api/admin/usage/responses/' + btn.getAttribute('data-delete') + '/delete', { method: 'POST' });
+        if (d.ok) { load(); } else { msg('The response wasn\'t deleted (' + d.status + ').', true); }
+      });
+    });
+  }
+
+  function downloadResponses() {
+    var cols = ['ts', 'institution_text', 'institution_name', 'role_label', 'use_labels', 'course', 'note', 'quote_ok', 'contact_email', 'came_from'];
+    var cell = function (v) {
+      v = Array.isArray(v) ? v.join('; ') : (v == null ? '' : String(v));
+      return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    };
+    var csv = [cols.join(',')].concat(responseRows.map(function (r) { return cols.map(function (c) { return cell(r[c]); }).join(','); })).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'pinakes-responses-' + $('from').value + '-to-' + $('to').value + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+  }
+
   function renderStatus(st) {
+    lastStatus = st;
     var files = st.data_files || {};
     var fileList = Object.keys(files).map(function (k) {
       return esc(k) + ': ' + (files[k] ? files[k].age_days + ' days old, ' + files[k].mb + ' MB' : '<span class="err">missing</span>');
@@ -403,6 +487,8 @@
       var r = await api('/api/admin/usage/summary?' + query());
       if (!r.ok) { msg('The server could not build the summary (' + r.status + ').', true); return; }
       render(await r.json());
+      if ($('dl-responses')) $('dl-responses').addEventListener('click', downloadResponses);
+      loadResponses().catch(function (e) { msg(e.message, true); });
       msg('');
     } catch (e) { msg(e.message, true); }
   }
@@ -438,8 +524,8 @@
     $('token-bar').style.display = 'none';
     $('app').style.display = 'block';
     applyPreset();
-    loadStatus().catch(function (e) { msg(e.message, true); });
-    load();
+    // Status first: the responses panel needs to know whether the form is on.
+    loadStatus().catch(function (e) { msg(e.message, true); }).then(load);
   }
 
   $('preset').addEventListener('change', applyPreset);

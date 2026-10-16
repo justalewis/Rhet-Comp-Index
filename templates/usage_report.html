@@ -174,6 +174,38 @@
     </section>
   </div>
 
+  {% set rs = s.responses %}
+  {% if rs and rs.count %}
+  <section class="panel">
+    <h2>In readers' words</h2>
+    <p class="note">{{ rs.count | num }} {{ 'reader' if rs.count == 1 else 'readers' }} answered an optional form on the site about how they use Pinakes. These are self-reported and separate from the visit counts above; they reach people the network data can't, such as faculty working from home.</p>
+    <div class="grid2">
+      <div>
+        {% set rows = [] %}{% for k, v in rs.by_role.items() %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+        {{ bars(rows, ['Role', 'Responses']) }}
+      </div>
+      <div>
+        {% set rows = [] %}{% for k, v in rs.by_use.items() %}{% set _ = rows.append({'label': k, 'value': v}) %}{% endfor %}
+        {{ bars(rows, ['Use', 'Responses']) }}
+      </div>
+    </div>
+    {% if rs.institutions %}
+    <h2 style="font-size:1rem;margin-top:1rem">Institutions respondents named</h2>
+    {% set rows = [] %}{% for i in rs.institutions %}{% set _ = rows.append({'label': i.name, 'sub': [i.kind, i.carnegie] | select | join(' · '), 'value': i.responses}) %}{% endfor %}
+    {{ bars(rows, ['Institution', 'Responses']) }}
+    {% endif %}
+    {% if rs.quotes %}
+    <h2 style="font-size:1rem;margin-top:1rem">Quoted with permission</h2>
+    {% for q in rs.quotes %}
+    <blockquote style="margin:0 0 0.9rem;padding-left:0.9rem;border-left:2px solid var(--rule)">
+      <p style="margin:0">{{ q.note }}</p>
+      <p class="sub2" style="margin:0.2rem 0 0">{{ [q.role, q.institution] | select | join(', ') or 'Unattributed' }}</p>
+    </blockquote>
+    {% endfor %}
+    {% endif %}
+  </section>
+  {% endif %}
+
   <div class="grid2">
     <section class="panel">
       <h2>Countries</h2>
