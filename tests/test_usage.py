@@ -683,3 +683,110 @@ def test_admin_can_list_and_delete_responses(survey_on):
     assert survey_on.post(f"/api/admin/usage/responses/{rid}/delete", headers=AUTH).status_code == 200
     assert survey_on.post(f"/api/admin/usage/responses/{rid}/delete", headers=AUTH).status_code == 404
     assert rows("SELECT * FROM responses") == []
+
+
+# ── Privacy fixes from the 2026-10-16 audit ──────────────────────────────────
+
+JANE = "Jane Smith"          # a seeded author, as in tests/test_redaction.py
+
+
+def usage_db_text():
+    conn = sqlite3.connect(store.usage_db_path())
+    try:
+        return "\n".join(conn.iterdump())
+    finally:
+        conn.close()
+
+
+def test_a_removed_authors_name_is_never_stored(tracking):
+    from redaction import redact_author
+    token = redact_author(JANE)["token"]
+    assert visit(tracking, f"/author/{JANE}").status_code == 404     # the old real-name URL
+    visit(tracking, f"/api/author/{JANE}/timeline")
+    visit(tracking, f"/?q={JANE} writing centers")
+    visit(tracking, "/about", Referer=f"https://pinakes.wacclearinghouse.org/author/{JANE}")
+    post_event(tracking, {"t": "view", "p": f"/author/{JANE}"})
+    dump = usage_db_text()
+    assert JANE not in dump and JANE.casefold() not in dump.casefold()
+    hits = rows("SELECT endpoint, object, query, ref_path FROM hits ORDER BY id")
+    assert hits[0]["object"] is None                                   # 404: no object
+    assert hits[1]["object"] in (None, token)
+    assert hits[2]["query"] is None
+    assert hits[3]["ref_path"] == "/author/<path:name>"
+    assert rows("SELECT page FROM events") == [{"page": "/author/<path:name>"}]
+
+
+def test_names_recorded_before_a_removal_are_scrubbed_nightly(tracking, data_dir):
+    visit(tracking, f"/author/{JANE}")
+    visit(tracking, f"/?q={JANE}")
+    assert JANE in usage_db_text()
+    from redaction import redact_author
+    token = redact_author(JANE)["token"]
+    run_resolver(store.utc_now())
+    assert JANE not in usage_db_text()
+    assert rows("SELECT object FROM hits WHERE endpoint = 'authors.author_detail'") == [{"object": token}]
+
+
+def test_gpc_visits_keep_no_city_or_region_from_any_source(tracking, data_dir):
+    cf = {"cf-ipcity": "Seattle", "cf-region": "Washington", "CF-IPCountry": "US"}
+    visit(tracking, "/about", ip="81.2.69.160", **{"Sec-GPC": "1"}, **cf)
+    firefox = "Mozilla/5.0 (Windows NT 10.0; rv:131.0) Gecko/20100101 Firefox/131.0"
+    visit(tracking, "/glossary", ip="81.2.69.160", ua_string=firefox, **cf)   # another browser, same address
+    raw = rows("SELECT gpc, cf_city, cf_region FROM hits ORDER BY id")
+    assert raw == [{"gpc": 1, "cf_city": None, "cf_region": None},
+                   {"gpc": 0, "cf_city": "Seattle", "cf_region": "Washington"}]
+    run_resolver(store.utc_now())
+    gpc, plain = rows("SELECT gpc, country, region, city, as_org, institution_id FROM hits ORDER BY id")
+    assert (gpc["country"], gpc["region"], gpc["city"], gpc["as_org"], gpc["institution_id"]) == (
+        "US", None, None, None, None)
+    assert plain["city"] == "Seattle" and plain["institution_id"] is not None
+    gpc_day = rows("SELECT region, city FROM visitor_days WHERE visitor = "
+                   "(SELECT visitor FROM hits WHERE gpc = 1)")
+    assert gpc_day == [{"region": None, "city": None}]
+    # The same browser sending GPC on one request and not another: the whole
+    # visitor-day is treated as GPC.
+    visit(tracking, "/about", ip="81.2.69.170", **{"Sec-GPC": "1"}, **cf)
+    visit(tracking, "/glossary", ip="81.2.69.170", **cf)
+    run_resolver(store.utc_now() + dt.timedelta(minutes=1))
+    mixed = rows("SELECT region, city, institution_id FROM visitor_days WHERE visitor IN "
+                 "(SELECT visitor FROM hits WHERE ip IS NULL AND gpc = 0 AND city IS NOT NULL "
+                 "AND visitor IN (SELECT visitor FROM hits WHERE gpc = 1))")
+    assert mixed == [{"region": None, "city": None, "institution_id": None}]
+
+
+def test_usage_db_overwrites_deleted_content(tracking):
+    conn = store.connect()
+    try:
+        assert conn.execute("PRAGMA secure_delete").fetchone()[0] == 1
+    finally:
+        conn.close()
+
+
+def test_backup_copies_lose_raw_addresses_and_salts(tracking, tmp_path):
+    import importlib.util
+    import pathlib
+    visit(tracking, "/about", ip="81.2.69.160")
+    store.salt_for(store.utc_now().date().isoformat())
+    copy = tmp_path / "usage-backup.db"
+    src = sqlite3.connect(store.usage_db_path())
+    dst = sqlite3.connect(copy)
+    try:
+        src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+    script = pathlib.Path(__file__).resolve().parents[1] / "deploy" / "windows" / "scrub_usage_backup.py"
+    spec = importlib.util.spec_from_file_location("scrub_usage_backup", script)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.main(["scrub", str(copy)]) == 0
+    conn = sqlite3.connect(copy)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM hits WHERE ip IS NOT NULL").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM salts").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM hits").fetchone()[0] == 1
+    finally:
+        conn.close()
+    assert b"81.2.69.160" not in copy.read_bytes()
+    # The live database still has its address until the resolver runs.
+    assert rows("SELECT ip FROM hits") == [{"ip": "81.2.69.160"}]

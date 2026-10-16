@@ -31,6 +31,15 @@ name-removal token. Query parameters named `code`, `state`, `token`,
 `email`, `password`, `key` or `secret` are dropped. The raw User-Agent
 header is parsed and discarded.
 
+A removed author's name is never kept. An error response stores no object,
+so the 404 that answers a removed author's old real-name URL leaves nothing
+behind. An author page or author API for a name in the removal ledger is
+stored as the removal token, and a search containing the name is not stored
+at all. Referring pages and browser events keep only the route pattern
+(`/author/<path:name>`), never the path itself. The nightly resolver applies
+the ledger again to rows already stored, so a removal granted later reaches
+usage.db too.
+
 ## Privacy design
 
 - **No cookies and no storage in the browser.** The visitor id is
@@ -41,10 +50,19 @@ header is parsed and discarded.
 - **Raw IP addresses are deleted** by the nightly resolver once their
   network is looked up, and in any case after `USAGE_RAW_IP_HOURS` (default
   48). What stays is country, region, city, network owner, network class,
-  and the institution id.
+  and the institution id. `usage.db` runs with `secure_delete`, so a deleted
+  address is overwritten rather than left in free pages, and the resolver
+  empties the write-ahead log when it finishes.
+- **Backups hold no addresses or salts.** The 02:00 backup runs before the
+  05:10 resolver, so the live file still has that day's addresses and the
+  current salts when it is copied. `deploy/windows/scrub_usage_backup.py`
+  clears both from the copy and compacts it; a copy that can't be scrubbed
+  is deleted, not kept.
 - **Global Privacy Control and Do Not Track** are honoured: those visits
-  keep only country and network class, with no city, network owner or
-  institution.
+  keep only country and network class, with no city, region, network owner
+  or institution from any source, Cloudflare's location headers included.
+  A visitor who sends either signal on any request is treated that way for
+  the whole day.
 - **Reports are aggregate.** The public version names an institution,
   search term, referring site or article only when at least three
   visitor-days account for it, and summarises the rest as counts.

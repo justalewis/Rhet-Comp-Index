@@ -308,6 +308,17 @@ function Backup-PinakesUsageDatabase {
     if ($LASTEXITCODE -ne 0) { throw "Usage database backup failed (exit $LASTEXITCODE)." }
     foreach ($line in $helperOutput) { Write-PinakesLog "  $line" }
 
+    # The copy still holds today's unresolved IP addresses and the current
+    # visitor-id salts. Strip both before it is kept for ten nights; a copy
+    # that cannot be scrubbed is deleted rather than kept.
+    $scrubber = Join-Path $PSScriptRoot 'scrub_usage_backup.py'
+    $scrubOutput = & $PinakesPython $scrubber $target
+    if ($LASTEXITCODE -ne 0) {
+        Remove-Item $target -Force -ErrorAction SilentlyContinue
+        throw "Could not scrub the usage backup (exit $LASTEXITCODE); the copy was deleted."
+    }
+    foreach ($line in $scrubOutput) { Write-PinakesLog "  $line" }
+
     $all = @(Get-ChildItem -Path $PinakesBackupDir -Filter 'usage-*.db' | Sort-Object LastWriteTime -Descending)
     if ($all.Count -gt $PinakesBackupKeep) {
         foreach ($f in $all[$PinakesBackupKeep..($all.Count - 1)]) { Remove-Item $f.FullName -Force }
