@@ -505,26 +505,23 @@ agreement before turning it on, because the site sits on its domain.
 first. Without `PINAKES_TRUSTED_IP_HEADER`, every visitor is recorded as the
 proxy and nothing can be resolved.
 
-**1. Stage the reference data** (about 70 MB, no account needed):
-
-```powershell
-& .\deploy\windows\Invoke-PinakesAdmin.ps1 -Endpoint UsageData
-```
-
-The endpoint skips its downloads while recording is off. To stage the data
-first, call it once with `{"force": true}`, or from the console:
-
-```powershell
-cd C:\Pinakes\app
-C:\Pinakes\venv\Scripts\python.exe -m usage refresh-data --force
-```
-
-**2. Turn recording on:**
+**1. Turn recording on:**
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_USAGE_TRACKING','1','Machine')
 Restart-Service Pinakes-Web
 ```
+
+**2. Download the reference data** (about 70 MB, no account needed). Do this
+after step 1: while recording is off the endpoint answers "recording is off;
+nothing downloaded" and the script still logs it as accepted.
+
+```powershell
+& .\deploy\windows\Invoke-PinakesAdmin.ps1 -Endpoint UsageData
+```
+
+It runs in the background for a minute or two. The status panel in step 4
+lists each file once it is in place.
 
 **3. Register the two jobs** (re-running the installer is safe):
 
@@ -535,7 +532,8 @@ Restart-Service Pinakes-Web
 `Pinakes-UsageResolve` (daily 05:10) resolves the day's addresses and then
 deletes them. `Pinakes-UsageData` (Sundays 05:40) refreshes the IP databases
 when they are more than 25 days old. The nightly backup now copies
-`usage.db` too.
+`usage.db` too, and clears raw addresses and visitor-id salts from the copy
+before keeping it.
 
 **4. Check it.** Open `https://pinakes.wacclearinghouse.org/admin/usage`
 and enter the admin token. The status panel says whether recording is on,

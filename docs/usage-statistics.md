@@ -14,22 +14,30 @@ Recording is off until `PINAKES_USAGE_TRACKING=1` is set in the service
 environment. When it is on, two things are written to `usage.db`, a SQLite
 file kept apart from `articles.db` so recording can never block the fetch:
 
-- **Each request** (`usage/capture.py`): time, page or tool, status,
-  response time, the external referring site, the browser's preferred
-  language, browser family, operating system and device type, whitelisted
-  query parameters, the search text if there was one, and a daily visitor
+- **Each request** (`usage/capture.py`): time, the route and its area and
+  tool, the record it was about (`object`: an article, book or institution
+  id, an author name, a feed), status, response time, the external
+  referring site, or for an internal referrer the route pattern only, the
+  browser's preferred language, browser family, operating system and device
+  type, the query parameters (every key except the denylist below, at most
+  20 keys with values cut to 120 characters), the search text if there was
+  one, Cloudflare's country header (and its region and city headers when
+  that feature is on and the visitor sent no GPC/DNT), and a daily visitor
   id. The raw IP address is held until the nightly job resolves it.
 - **Browser events** (`static/usage.js`, posted to `/api/e`): that the page
   loaded with JavaScript running, tool switches inside Explore and
   Datastories, outbound clicks (DOI links counted separately), downloads and
-  exports, and time on page. No IP is stored with events.
+  exports, clicks on elements tagged `data-usage`, and time on page. Each
+  event keeps the page's route pattern, not its path. No IP is stored with
+  events.
 
 Never recorded: static files, health checks, admin pages, the usage
 endpoints themselves, `/robots.txt`, 404s, requests the IP denylist refused,
 OAuth and verification callbacks, and any URL carrying an alert or
 name-removal token. Query parameters named `code`, `state`, `token`,
-`email`, `password`, `key` or `secret` are dropped. The raw User-Agent
-header is parsed and discarded.
+`email`, `password`, `key`, `secret`, `access_token` or `id_token`, and the
+cache-busters `_cb`, `cb` and `_`, are dropped. The raw User-Agent header
+is parsed and discarded.
 
 A removed author's name is never kept. An error response stores no object,
 so the 404 that answers a removed author's old real-name URL leaves nothing
@@ -66,9 +74,14 @@ usage.db too.
 - **Reports are aggregate.** The public version names an institution,
   search term, referring site or article only when at least three
   visitor-days account for it, and summarises the rest as counts.
-- **Network lookups are cached per /24 (IPv4) or /48 (IPv6)**, so the
-  address registries and ROR see network prefixes, a few hundred a night at
-  most, not a stream of visitor addresses.
+- **What the lookups see.** Network facts are cached per /24 (IPv4) or /48
+  (IPv6) for 30 days, so each network is looked up about once a month. The
+  address registries (RDAP, via rdap.org) are asked about the network's
+  base address (`128.95.10.0`), never a visitor's. Reverse DNS can only be
+  answered for a real address, so it looks up one visitor address per new
+  network; that query goes through the server's DNS resolver to the
+  network's own name servers. ROR sees organisation names only. A night's
+  run makes at most 250 RDAP and 120 ROR requests.
 
 The public notice is the "Usage statistics" section of `/about`, which
 appears only while recording is on.
@@ -83,15 +96,19 @@ narrative, not "users."
 
 ## People, bots and the rest
 
-The resolver classes each visitor-day (`usage/resolve.py`, `classify_visitor`):
+The resolver classes each visitor-day (`usage/resolve.py`, `classify_visitor`).
+The rules are tried in this order, and the first that fits wins:
 
-| Class | Rule |
-|---|---|
-| `feed-reader` | User-Agent is a feed reader (Feedly, Inoreader, ...) |
-| `bot` | Declared crawler or script; non-browser User-Agent; over 40 requests in a minute or 400 in a day; or API calls without ever loading a page |
-| `human` | The page's script ran (any browser event) |
-| `datacenter` | Came from a hosting or cloud network and never ran the script |
-| `likely-human` | A normal browser on a normal network that never ran the script |
+1. `feed-reader`: the User-Agent is a feed reader (Feedly, Inoreader, ...).
+2. `bot`: the User-Agent names a crawler or a script.
+3. `human`: the page's script ran (any browser event). This comes before
+   the network and volume rules, so a person on a VPN or a busy library
+   machine still counts as a person.
+4. `datacenter`: a hosting or cloud network, and the script never ran.
+5. `bot`: a non-browser User-Agent, more than 40 requests in a minute or
+   400 in a day, or API calls without ever loading a page.
+6. `likely-human`: everything else, an ordinary browser on an ordinary
+   network that never ran the script.
 
 "People" in the reports means `human` plus `likely-human` by default, or
 `human` only with the "browser-confirmed only" setting. The other classes
@@ -158,9 +175,9 @@ unconsented notes never leave the dashboard.
 
 | File in `usage-data/` | Source | Licence | Refresh |
 |---|---|---|---|
-| `dbip-city-lite.mmdb`, `dbip-asn-lite.mmdb` | [DB-IP Lite](https://db-ip.com/db/lite.php) | CC BY 4.0, attribution required | monthly |
-| `universities.json` | [Hipo world universities and domains](https://github.com/Hipo/university-domains-list) | MIT | monthly |
-| `ipeds_hd.csv` | [IPEDS institutional characteristics](https://nces.ed.gov/ipeds/) | public domain | yearly |
+| `dbip-city-lite.mmdb`, `dbip-asn-lite.mmdb` | [DB-IP Lite](https://db-ip.com/db/lite.php) | CC BY 4.0, attribution required | when older than 25 days |
+| `universities.json` | [Hipo world universities and domains](https://github.com/Hipo/university-domains-list) | MIT | when older than 25 days |
+| `ipeds_hd.csv` | [IPEDS institutional characteristics](https://nces.ed.gov/ipeds/) | public domain | when older than 120 days |
 | (API) | [ROR](https://ror.org) affiliation matching | CC0 | cached 180 days |
 | (API) | RDAP via [rdap.org](https://rdap.org) | registry terms | cached 30 days |
 
@@ -202,11 +219,20 @@ nightly backup copies `usage.db` alongside `articles.db`.
    PDF. **Download tables (CSV)** gives one CSV per table plus the full
    summary as JSON, for building your own charts.
 
-From the server console:
+From the server console, `python -m usage` has to run from the app folder.
+It finds `usage.db` beside `DB_PATH`, which on the Clearinghouse box is set
+on the service rather than machine-wide, so set it for the console too:
 
 ```powershell
+cd C:\Pinakes\app
+$env:DB_PATH = 'C:\Pinakes\data\articles.db'
 C:\Pinakes\venv\Scripts\python.exe -m usage report --from 2026-09-01 --to 2026-12-31 --public --out fall-2026.html
 ```
+
+Without `DB_PATH`, the command reads an empty `usage.db` in the app folder
+and the report comes out blank. The jobs in the table above need the same
+from the console; run through the endpoints or `Invoke-PinakesAdmin.ps1`,
+they use the service's own environment.
 
 ## Limits worth stating in a narrative
 

@@ -31,7 +31,7 @@ from .geo import Geo
 from .institutions import (Registry, corpus_index, domain_of, kind_from_name,
                            looks_institutional, norm_name, refresh_corpus_flags, upsert)
 from .tools import is_auto
-from .netinfo import (RateLimited, is_public, network_class, pause, prefix_of,
+from .netinfo import (RateLimited, is_public, network_address, network_class, pause, prefix_of,
                       rdap_lookup, reverse_dns, ror_kind, ror_match)
 
 log = logging.getLogger(__name__)
@@ -425,7 +425,7 @@ def _run(*, now, lookups, geo, registry) -> dict:
             if not (info.get("as_org") and network_class(
                     as_org=info["as_org"], rdns=None, rdns_verified=False,
                     rdap_org=None, institution_kind=None) == "hosting"):
-                rdap = lookups.rdap(ip)
+                rdap = lookups.rdap(network_address(p))
             with conn:
                 rec, via = identify(conn, registry=registry, lookups=lookups, geo_info=info,
                                     rdns=host, rdns_verified=verified, rdap=rdap,
