@@ -33,6 +33,13 @@ def prefix_of(ip: str) -> str | None:
     return str(ipaddress.ip_network(f"{addr}/{bits}", strict=False))
 
 
+def network_address(prefix: str) -> str:
+    """'128.95.10.0/24' → '128.95.10.0'. What RDAP is asked about, so the
+    registry learns which network was looked up but never a visitor's own
+    address; the record that comes back is the same block either way."""
+    return str(ipaddress.ip_network(prefix, strict=False).network_address)
+
+
 def is_public(ip: str) -> bool:
     try:
         return ipaddress.ip_address(ip).is_global

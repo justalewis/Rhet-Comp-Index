@@ -13,7 +13,7 @@ import re
 from flask import current_app, request
 from werkzeug.exceptions import HTTPException
 
-from .capture import client_context, record_event
+from .capture import client_context, record_event, route_pattern
 from .tools import classify, tool_for_hash
 
 MAX_BODY = 2048
@@ -89,7 +89,9 @@ def build_event(body: dict) -> dict | None:
     ctx = client_context()
     return {
         "ts": ctx["ts"], "day": ctx["day"], "visitor": ctx["visitor"],
-        "type": etype, "page": path[:200], "area": area, "tool": tool,
+        # The route pattern, not the path, for the same reason as capture's
+        # referrer: an /author/<name> path can hold a removed author's name.
+        "type": etype, "page": route_pattern(path), "area": area, "tool": tool,
         "target": target, "value": value, "pv": pv,
     }
 

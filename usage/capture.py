@@ -157,10 +157,28 @@ def _referrer(own_host: str) -> tuple[str | None, str | None]:
     if not host:
         return None, None
     if host == own_host or host in _OWN_HOSTS:
-        return None, (parts.path or "/")[:200]
+        # The route pattern, not the path: a path can carry an author's name
+        # (/author/<name>), including the old real-name URL of an author who
+        # asked to be removed.
+        return None, route_pattern(parts.path or "/")
     if host.startswith("www."):
         host = host[4:]
     return host[:120], None
+
+
+def route_pattern(path: str) -> str | None:
+    """'/author/Jane Doe' → '/author/<path:name>'. None for anything that
+    isn't a Pinakes route."""
+    from flask import current_app
+    from werkzeug.exceptions import HTTPException
+    try:
+        rule, _ = current_app.url_map.bind(request.host or "localhost").match(
+            path, method="GET", return_rule=True)
+        return rule.rule
+    except HTTPException:
+        return None
+    except Exception:  # noqa: BLE001 — a redirect or odd path just isn't mapped
+        return None
 
 
 def _lang() -> str | None:
@@ -194,15 +212,21 @@ def _build_hit(response) -> dict | None:
     return {
         "ts": ctx["ts"], "day": ctx["day"], "host": ctx["host"],
         "method": request.method, "endpoint": endpoint, "rule": rule,
-        "area": area, "tool": tool_key, "object": _object(),
+        # No object for an error: a 404 on /author/<name> is how a removed
+        # author's old real-name URL answers, and the name must not be kept.
+        "area": area, "tool": tool_key,
+        "object": _object() if response.status_code < 400 else None,
         "params": params, "query": q, "status": response.status_code, "ms": ms,
         "is_api": 1 if request.path.startswith("/api/") else 0,
         "ref_host": ref_host, "ref_path": ref_path, "lang": _lang(),
         "ua_family": ua["family"], "ua_os": ua["os"], "ua_device": ua["device"],
         "bot": ua["bot"], "bot_kind": ua["bot_kind"], "feed_subs": ua["feed_subs"],
         "visitor": ctx["visitor"], "gpc": ctx["gpc"], "ip": ctx["ip"],
-        "cf_country": _cf("CF-IPCountry", 2), "cf_region": _cf("cf-region", 80),
-        "cf_city": _cf("cf-ipcity", 80),
+        # Global Privacy Control / Do Not Track: country only, here as in
+        # the resolver.
+        "cf_country": _cf("CF-IPCountry", 2),
+        "cf_region": None if ctx["gpc"] else _cf("cf-region", 80),
+        "cf_city": None if ctx["gpc"] else _cf("cf-ipcity", 80),
     }
 
 
@@ -254,8 +278,42 @@ def flush() -> int:
     return len(batch)
 
 
+def removed_names():
+    """(suppression map, normalise) from the author-removal ledger, or
+    (None, None) when it can't be read. The map is {normalised name: token}."""
+    try:
+        import redaction
+        smap = redaction._suppression_map()
+        return (smap or None), redaction._normalize
+    except Exception:  # noqa: BLE001 — never fail a write over this
+        log.debug("could not read the redaction ledger", exc_info=True)
+        return None, None
+
+
+def scrub_names(row: dict, smap: dict, normalise) -> None:
+    """Keep a removed author's name out of a hit: an author page or author
+    API for the name becomes the removal token, and a search containing the
+    name is not kept at all."""
+    obj = row.get("object")
+    if obj and (row.get("endpoint") or "").startswith("authors."):
+        token = smap.get(normalise(obj))
+        if token:
+            row["object"] = token
+    q = row.get("query")
+    if q:
+        nq = normalise(q)
+        if any(name and name in nq for name in smap):
+            row["query"] = None
+
+
 def _write(batch: list[tuple[str, dict]]) -> None:
-    hits = [tuple(r.get(c) for c in _HIT_COLUMNS) for k, r in batch if k == "hit"]
+    hit_rows = [r for k, r in batch if k == "hit"]
+    if hit_rows:
+        smap, normalise = removed_names()
+        if smap:
+            for r in hit_rows:
+                scrub_names(r, smap, normalise)
+    hits = [tuple(r.get(c) for c in _HIT_COLUMNS) for r in hit_rows]
     events = [r for k, r in batch if k == "event"]
     conn = store.connect()
     try:

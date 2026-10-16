@@ -233,6 +233,11 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     path = path or usage_db_path()
     conn = sqlite3.connect(path, timeout=15)
     conn.row_factory = sqlite3.Row
+    # Overwrite deleted content instead of leaving it in free pages. Without
+    # this, an IP address nulled by the resolver or a salt dropped after two
+    # days can survive in the file, and SQLite's backup API copies free pages
+    # into every backup.
+    conn.execute("PRAGMA secure_delete = ON")
     if path not in _initialised:
         with _init_lock:
             if path not in _initialised:

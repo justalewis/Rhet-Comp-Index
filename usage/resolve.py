@@ -31,7 +31,7 @@ from .geo import Geo
 from .institutions import (Registry, corpus_index, domain_of, kind_from_name,
                            looks_institutional, norm_name, refresh_corpus_flags, upsert)
 from .tools import is_auto
-from .netinfo import (RateLimited, is_public, network_class, pause, prefix_of,
+from .netinfo import (RateLimited, is_public, network_address, network_class, pause, prefix_of,
                       rdap_lookup, reverse_dns, ror_kind, ror_match)
 
 log = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ def rebuild_days(conn, days) -> int:
             if visitor not in agg:
                 agg[visitor] = {
                     "hits": 0, "pages": 0, "tool_runs": 0, "tools": set(), "stamps": [],
-                    "bot": None, "bot_kind": None, "family": None, "device": None,
+                    "bot": None, "bot_kind": None, "family": None, "device": None, "gpc": 0,
                     "lang": None, "ref_host": None, "beacon": 0, "engaged_ms": 0,
                     "country": collections.Counter(), "region": collections.Counter(),
                     "city": collections.Counter(), "net_class": collections.Counter(),
@@ -109,7 +109,7 @@ def rebuild_days(conn, days) -> int:
 
         for r in conn.execute(
                 "SELECT visitor, ts, is_api, tool, bot, bot_kind, ua_family, ua_device, "
-                "lang, ref_host, country, cf_country, region, city, net_class, institution_id "
+                "lang, ref_host, country, cf_country, region, city, net_class, institution_id, gpc "
                 "FROM hits WHERE day = ? ORDER BY ts", (day,)):
             v = slot(r["visitor"])
             v["hits"] += 1
@@ -128,6 +128,7 @@ def rebuild_days(conn, days) -> int:
             v["device"] = v["device"] or r["ua_device"]
             v["lang"] = v["lang"] or r["lang"]
             v["ref_host"] = v["ref_host"] or r["ref_host"]
+            v["gpc"] = v["gpc"] or r["gpc"]
             country = r["country"] or r["cf_country"]
             for key, val in (("country", country), ("region", r["region"]), ("city", r["city"]),
                              ("net_class", r["net_class"]), ("institution_id", r["institution_id"])):
@@ -154,6 +155,11 @@ def rebuild_days(conn, days) -> int:
             if v["hits"] == 0:
                 flat["family"] = "browser"
             cls = classify_visitor(flat)
+            if v["gpc"]:
+                # Sent Global Privacy Control or Do Not Track at any point
+                # that day: the visitor-day keeps country and network only.
+                for key in ("region", "city", "institution_id"):
+                    v[key] = collections.Counter()
             rows.append((
                 day, visitor, cls, v["beacon"], v["hits"], v["pages"], v["tool_runs"],
                 len(v["tools"]), flat["peak_per_min"], v["engaged_ms"],
@@ -240,6 +246,28 @@ def _ror_cached(conn, lookups: Lookups, name: str, now_iso: str, ttl_cutoff: str
             (key, result.get("ror_id") if result else None,
              json.dumps(result) if result else None, now_iso))
     return result
+
+
+def scrub_removed_names(conn) -> int:
+    """Apply the author-removal ledger to rows already stored, so an author
+    who asks to be removed after visitors looked them up disappears from
+    usage.db too. Returns the number of rows changed."""
+    from .capture import removed_names
+    smap, normalise = removed_names()
+    if not smap:
+        return 0
+    changed = 0
+    for (obj,) in conn.execute("SELECT DISTINCT object FROM hits WHERE endpoint LIKE 'authors.%' "
+                               "AND object IS NOT NULL").fetchall():
+        token = smap.get(normalise(obj))
+        if token and token != obj:
+            changed += conn.execute("UPDATE hits SET object = ? WHERE object = ? AND endpoint LIKE 'authors.%'",
+                                    (token, obj)).rowcount
+    for (q,) in conn.execute("SELECT DISTINCT query FROM hits WHERE query IS NOT NULL").fetchall():
+        nq = normalise(q)
+        if any(name and name in nq for name in smap):
+            changed += conn.execute("UPDATE hits SET query = NULL WHERE query = ?", (q,)).rowcount
+    return changed
 
 
 def _from_ror(ror: dict | None, registry: Registry) -> dict | None:
@@ -361,11 +389,11 @@ def _run(*, now, lookups, geo, registry) -> dict:
                                   (now_iso,)).lastrowid
             summary["salts_dropped"] = store.drop_old_salts(conn, today)
 
-        pending: dict[str, int] = {}
+        pending: list[str] = []
         hits_per_ip: collections.Counter = collections.Counter()
-        for r in conn.execute("SELECT ip, MAX(gpc) AS gpc, COUNT(*) AS n FROM hits "
+        for r in conn.execute("SELECT ip, COUNT(*) AS n FROM hits "
                               "WHERE resolved = 0 AND ip IS NOT NULL GROUP BY ip"):
-            pending[r["ip"]] = r["gpc"]
+            pending.append(r["ip"])
             hits_per_ip[r["ip"]] = r["n"]
         summary["addresses"] = len(pending)
 
@@ -397,7 +425,7 @@ def _run(*, now, lookups, geo, registry) -> dict:
             if not (info.get("as_org") and network_class(
                     as_org=info["as_org"], rdns=None, rdns_verified=False,
                     rdap_org=None, institution_kind=None) == "hosting"):
-                rdap = lookups.rdap(ip)
+                rdap = lookups.rdap(network_address(p))
             with conn:
                 rec, via = identify(conn, registry=registry, lookups=lookups, geo_info=info,
                                     rdns=host, rdns_verified=verified, rdap=rdap,
@@ -429,21 +457,17 @@ def _run(*, now, lookups, geo, registry) -> dict:
             if inst_id:
                 summary["networks_identified"] += 1
 
-        # Copy network facts onto the hits and drop the address.
+        # Copy network facts onto the hits and drop the address. GPC and DNT
+        # hits are updated separately, per hit rather than per address, so a
+        # second browser on the same address keeps its own setting. They get
+        # country and network class and nothing else: city and region are
+        # cleared outright, not filled from Cloudflare's headers.
         days_touched = set()
         with conn:
-            for ip, gpc in pending.items():
+            for ip in pending:
                 info = geo.lookup(ip) if is_public(ip) else {}
                 net = cached.get(prefix_of(ip) or "", {}) if is_public(ip) else {}
-                if gpc:
-                    vals = (info.get("country"), None, None, None, None,
-                            net.get("net_class") or "unknown", None)
-                    summary["gpc_addresses"] += 1
-                else:
-                    vals = (info.get("country"), info.get("region"), info.get("city"),
-                            net.get("asn") or info.get("asn"), net.get("as_org") or info.get("as_org"),
-                            net.get("net_class") or ("unknown" if is_public(ip) else "local"),
-                            net.get("institution_id"))
+                net_class = net.get("net_class") or ("unknown" if is_public(ip) else "local")
                 for (d,) in conn.execute("SELECT DISTINCT day FROM hits WHERE ip = ? AND resolved = 0",
                                          (ip,)).fetchall():
                     days_touched.add(d)
@@ -451,12 +475,24 @@ def _run(*, now, lookups, geo, registry) -> dict:
                     "UPDATE hits SET resolved = 1, ip = NULL, "
                     "country = COALESCE(?, cf_country), region = COALESCE(?, cf_region), "
                     "city = COALESCE(?, cf_city), asn = ?, as_org = ?, net_class = ?, "
-                    "institution_id = ? WHERE ip = ? AND resolved = 0",
-                    (*vals, ip))
+                    "institution_id = ? WHERE ip = ? AND resolved = 0 AND gpc = 0",
+                    (info.get("country"), info.get("region"), info.get("city"),
+                     net.get("asn") or info.get("asn"), net.get("as_org") or info.get("as_org"),
+                     net_class, net.get("institution_id"), ip))
                 summary["hits_resolved"] += cur.rowcount
-            cur = conn.execute("UPDATE hits SET resolved = 1, country = cf_country, "
-                               "region = cf_region, city = cf_city "
-                               "WHERE resolved = 0 AND ip IS NULL")
+                cur = conn.execute(
+                    "UPDATE hits SET resolved = 1, ip = NULL, country = COALESCE(?, cf_country), "
+                    "region = NULL, city = NULL, cf_region = NULL, cf_city = NULL, asn = NULL, "
+                    "as_org = NULL, net_class = ?, institution_id = NULL "
+                    "WHERE ip = ? AND resolved = 0 AND gpc = 1",
+                    (info.get("country"), net_class, ip))
+                summary["hits_resolved"] += cur.rowcount
+                summary["gpc_hits"] += cur.rowcount
+            cur = conn.execute(
+                "UPDATE hits SET resolved = 1, country = cf_country, "
+                "region = CASE WHEN gpc = 1 THEN NULL ELSE cf_region END, "
+                "city = CASE WHEN gpc = 1 THEN NULL ELSE cf_city END "
+                "WHERE resolved = 0 AND ip IS NULL")
             summary["hits_resolved"] += cur.rowcount
             cur = conn.execute("UPDATE hits SET ip = NULL WHERE ip IS NOT NULL AND ts < ?",
                                (ip_cutoff,))
@@ -469,6 +505,13 @@ def _run(*, now, lookups, geo, registry) -> dict:
                 conn, registry=registry, lookups=lookups, corpus=corpus,
                 now_iso=now_iso, org_cutoff=org_cutoff)
             summary["corpus_flags_changed"] = refresh_corpus_flags(conn, corpus)
+            summary["removed_names_scrubbed"] = scrub_removed_names(conn)
+        # Fold the write-ahead log back into the file and empty it, so the
+        # page versions that still held raw addresses don't linger in -wal.
+        try:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        except Exception:  # noqa: BLE001 — a busy log is checkpointed next time
+            pass
             conn.execute("DELETE FROM networks WHERE checked_at < ?",
                          ((now - _dt.timedelta(days=NETWORK_TTL_DAYS * 3)).isoformat(),))
             conn.execute("DELETE FROM org_lookups WHERE checked_at < ?",
