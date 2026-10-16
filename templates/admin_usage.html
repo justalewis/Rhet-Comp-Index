@@ -1,0 +1,469 @@
+{% extends "base-alexandrian.html" %}
+
+{% block title %}Usage — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="robots" content="noindex, nofollow">
+<style>
+  .usage { --u-s1: #2a78d6; --u-s2: #eb6834; --u-track: var(--papyrus-deep); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .usage { --u-s1: #3987e5; --u-s2: #d95926; }
+  }
+  :root[data-theme="dark"] .usage { --u-s1: #3987e5; --u-s2: #d95926; }
+
+  .usage { font-family: var(--f-ui); }
+  .usage .lede { color: var(--dilute); max-width: 62ch; }
+  .usage .panel { border: 1px solid var(--rule); background: var(--paper); padding: 1rem 1.1rem; margin: 1rem 0; }
+  .usage .panel h2 { font-size: var(--text-lg); margin: 0 0 0.25rem; }
+  .usage .panel .note { color: var(--dilute); font-size: var(--text-sm); margin: 0 0 0.8rem; max-width: 70ch; }
+  .usage .controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: end; }
+  .usage .controls label { display: flex; flex-direction: column; font-size: var(--text-xs); color: var(--dilute); gap: 0.2rem; }
+  .usage .controls input, .usage .controls select { font: inherit; font-size: var(--text-sm); padding: 0.35rem 0.4rem; border: 1px solid var(--rule-strong); background: var(--paper); color: var(--gloss); }
+  .usage .controls .check { flex-direction: row; align-items: center; gap: 0.35rem; font-size: var(--text-sm); color: var(--gloss); }
+  .usage button { font: inherit; font-size: var(--text-sm); padding: 0.4rem 0.9rem; border: 1px solid var(--terracotta); background: var(--terracotta); color: var(--added-white); cursor: pointer; }
+  .usage button.quiet { background: transparent; color: var(--gloss); border-color: var(--rule-strong); }
+  .usage button:disabled { opacity: 0.55; cursor: default; }
+  .usage .row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+  .usage .msg { color: var(--dilute); font-size: var(--text-sm); margin-top: 0.5rem; min-height: 1.2em; }
+  .usage .err { color: var(--err-fg); }
+
+  .usage .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 0.6rem; }
+  .usage .tile { border: 1px solid var(--rule); background: var(--paper); padding: 0.7rem 0.8rem; }
+  .usage .tile .label { font-size: var(--text-xs); color: var(--dilute); }
+  .usage .tile .value { font-size: 1.6rem; font-weight: 600; line-height: 1.2; margin-top: 0.15rem; }
+  .usage .tile .sub { font-size: var(--text-xs); color: var(--dilute); margin-top: 0.15rem; }
+  .usage .tile.hero { grid-column: span 2; }
+  .usage .tile.hero .value { font-size: 3rem; }
+
+  .usage .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 0 1rem; }
+  .usage table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  .usage th { text-align: left; font-weight: 600; color: var(--dilute); font-size: var(--text-xs); border-bottom: 1px solid var(--rule); padding: 0.3rem 0.4rem; }
+  .usage td { border-bottom: 1px solid var(--rule); padding: 0.32rem 0.4rem; vertical-align: top; }
+  .usage td.n, .usage th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .usage td.n { vertical-align: middle; }
+  .usage td.barcell { width: 32%; min-width: 6rem; vertical-align: middle; }
+  .usage .bar { height: 10px; background: var(--u-s1); border-radius: 0 4px 4px 0; min-width: 2px; }
+  .usage .muted { color: var(--dilute); }
+  .usage .tag { display: inline-block; font-size: var(--text-xs); color: var(--dilute); border: 1px solid var(--rule); padding: 0 0.3rem; margin-left: 0.3rem; }
+  .usage .empty { color: var(--dilute); font-size: var(--text-sm); }
+
+  .usage .chart { position: relative; }
+  .usage .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .usage .chart .axis text { fill: var(--dilute); font-size: 11px; font-family: var(--f-ui); }
+  .usage .chart .grid line { stroke: var(--rule); stroke-width: 1; }
+  .usage .chart .s1 { fill: var(--u-s1); }
+  .usage .chart .s2 { fill: var(--u-s2); }
+  .usage .chart .hit { fill: transparent; cursor: default; }
+  .usage .chart .hit:hover { fill: var(--gloss); fill-opacity: 0.05; }
+  .usage .legend { display: flex; gap: 1rem; font-size: var(--text-sm); margin-bottom: 0.4rem; color: var(--gloss); }
+  .usage .legend .sw { display: inline-block; width: 10px; height: 10px; margin-right: 0.35rem; vertical-align: -1px; }
+  .usage .tip { position: absolute; pointer-events: none; background: var(--paper); border: 1px solid var(--rule-strong); padding: 0.35rem 0.5rem; font-size: var(--text-xs); white-space: nowrap; display: none; box-shadow: var(--shadow-sm); }
+  .usage details summary { cursor: pointer; color: var(--dilute); font-size: var(--text-sm); }
+  .usage pre { font-size: var(--text-xs); white-space: pre-wrap; background: var(--papyrus-deep); padding: 0.6rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="usage">
+  <h1 class="page-title">Usage</h1>
+  <p class="lede">Who uses Pinakes, which tools they use, and where they connect from. Counts are visitor-days: one browser on one network on one day. Visitor ids change every day, so nobody can be followed from one day to the next and the same person on two days counts twice. Bots and feed readers are counted separately and never mixed in.</p>
+
+  <div id="token-bar" class="panel">
+    <label for="token-input" style="font-weight:600;font-size:var(--text-sm);">Admin token</label>
+    <p class="note" style="margin:0.2rem 0 0.5rem;">Your <code>PINAKES_ADMIN_TOKEN</code>. Held only in this tab and cleared when you close it.</p>
+    <div class="row" style="margin-top:0;">
+      <input type="password" id="token-input" autocomplete="off" placeholder="Bearer token" style="flex:1;min-width:16rem;padding:0.45rem;font-family:var(--f-mono);">
+      <button id="connect-btn" type="button">Connect</button>
+    </div>
+    <div id="token-error" class="msg err"></div>
+  </div>
+
+  <div id="app" style="display:none;">
+    <div class="panel">
+      <div class="controls">
+        <label>Range
+          <select id="preset">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last 12 months</option>
+            <option value="ay">This academic year</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label>From <input type="date" id="from"></label>
+        <label>To <input type="date" id="to"></label>
+        <label>Count as people
+          <select id="classes">
+            <option value="human,likely-human" selected>Confirmed and likely</option>
+            <option value="human">Browser-confirmed only</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="public"> Public version (hide anything under 3 visitor-days)</label>
+        <button id="load-btn" type="button">Show usage</button>
+      </div>
+      <div class="row">
+        <button class="quiet" id="dl-html" type="button">Download report (HTML)</button>
+        <button class="quiet" id="dl-zip" type="button">Download tables (CSV)</button>
+        <button class="quiet" id="run-resolve" type="button">Resolve addresses now</button>
+        <button class="quiet" id="run-refresh" type="button">Refresh reference data</button>
+        <button class="quiet" id="lock-btn" type="button">Forget token</button>
+      </div>
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <div id="status-panel" class="panel"></div>
+    <div id="out"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'pinakes-admin-token';
+  var $ = function (id) { return document.getElementById(id); };
+  var tok = function () { try { return sessionStorage.getItem(KEY) || ''; } catch (e) { return ''; } };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var num = function (n) { return n == null ? '—' : Number(n).toLocaleString('en-US'); };
+  var compact = function (n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 1) + 'K';
+    return String(n);
+  };
+  function msg(text, isErr) { $('msg').textContent = text || ''; $('msg').className = 'msg' + (isErr ? ' err' : ''); }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var r = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: Object.assign({ 'Authorization': 'Bearer ' + tok() }, opts.body ? { 'Content-Type': 'application/json' } : {}),
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    if (r.status === 401 || r.status === 403) {
+      try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+      throw new Error('That token was refused. Enter it again.');
+    }
+    return r;
+  }
+
+  // ── Range controls ─────────────────────────────────────────────────────────
+  function iso(d) { return d.toISOString().slice(0, 10); }
+  function applyPreset() {
+    var p = $('preset').value;
+    if (p === 'custom') return;
+    var end = new Date();
+    var start = new Date(end);
+    if (p === 'ay') {
+      var y = end.getUTCMonth() >= 7 ? end.getUTCFullYear() : end.getUTCFullYear() - 1;
+      start = new Date(Date.UTC(y, 7, 1));
+    } else {
+      start.setUTCDate(end.getUTCDate() - (parseInt(p, 10) - 1));
+    }
+    $('from').value = iso(start);
+    $('to').value = iso(end);
+  }
+  function query() {
+    return 'from=' + encodeURIComponent($('from').value) + '&to=' + encodeURIComponent($('to').value) +
+      '&classes=' + encodeURIComponent($('classes').value) + ($('public').checked ? '&public=1' : '');
+  }
+
+  // ── Small builders ─────────────────────────────────────────────────────────
+  function tile(label, value, sub, hero) {
+    return '<div class="tile' + (hero ? ' hero' : '') + '"><div class="label">' + esc(label) +
+      '</div><div class="value">' + value + '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>';
+  }
+  function panel(title, note, body) {
+    return '<section class="panel"><h2>' + esc(title) + '</h2>' + (note ? '<p class="note">' + note + '</p>' : '') + body + '</section>';
+  }
+  // rows: [{label (html), value, cells: [html...]}]; headers: [label, ...extra, value]
+  function barTable(rows, headers, emptyText) {
+    if (!rows.length) return '<p class="empty">' + esc(emptyText || 'Nothing recorded in this range.') + '</p>';
+    var max = Math.max.apply(null, rows.map(function (r) { return r.value; })) || 1;
+    var h = '<table><thead><tr>' + headers.map(function (x, i) {
+      return '<th' + (i === headers.length - 1 ? ' class="n"' : '') + '>' + esc(x) + '</th>';
+    }).join('') + '<th aria-hidden="true"></th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      h += '<tr><td>' + r.label + '</td>' + (r.cells || []).map(function (c) { return '<td>' + c + '</td>'; }).join('') +
+        '<td class="n">' + num(r.value) + '</td><td class="barcell" aria-hidden="true"><div class="bar" style="width:' +
+        Math.max(1, (r.value / max) * 100).toFixed(1) + '%"></div></td></tr>';
+    });
+    return h + '</tbody></table>';
+  }
+  function dictRows(obj) {
+    return Object.keys(obj || {}).map(function (k) { return { label: esc(k), value: obj[k] }; })
+      .sort(function (a, b) { return b.value - a.value; });
+  }
+
+  // ── Daily chart: people per day, confirmed and likely stacked ──────────────
+  function dailyChart(series) {
+    var W = 760, H = 220, L = 38, R = 8, T = 10, B = 26;
+    var days = series.length;
+    var tot = series.map(function (d) { return d.human + d['likely-human']; });
+    var max = Math.max.apply(null, tot.concat([1]));
+    var step = Math.pow(10, Math.floor(Math.log10(max)));
+    var top = Math.ceil(max / step) * step;
+    if (top / step > 6) { step *= 2; top = Math.ceil(max / step) * step; }
+    var bw = (W - L - R) / days;
+    var colW = Math.min(24, Math.max(2, bw * 0.7));
+    var y = function (v) { return T + (H - T - B) * (1 - v / top); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="People per day">';
+    s += '<g class="grid">';
+    for (var v = 0; v <= top; v += step) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>';
+    s += '</g><g class="axis">';
+    for (v = 0; v <= top; v += step) s += '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + compact(v) + '</text>';
+    var every = Math.ceil(days / 8);
+    series.forEach(function (d, i) {
+      if (i % every === 0) s += '<text x="' + (L + bw * i + bw / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.day.slice(5) + '</text>';
+    });
+    s += '</g>';
+    series.forEach(function (d, i) {
+      var x = L + bw * i + (bw - colW) / 2;
+      var a = d.human, b = d['likely-human'];
+      var y0 = y(0), ya = y(a), yb = y(a + b);
+      var r = Math.min(4, colW / 2);
+      // Confirmed sits on the baseline; likely stacks above with a 2px gap.
+      if (a > 0) {
+        // Only the topmost segment gets the rounded data-end.
+        s += b > 0
+          ? '<rect class="s1" x="' + x + '" y="' + ya + '" width="' + colW + '" height="' + Math.max(0, y0 - ya) + '"/>'
+          : '<path class="s1" d="' + roundTop(x, ya, colW, y0 - ya, r) + '"/>';
+      }
+      if (b > 0) {
+        var gap = a > 0 ? 2 : 0;
+        var hgt = Math.max(0, (ya - gap) - yb);
+        s += '<path class="s2" d="' + roundTop(x, yb, colW, hgt, r) + '"/>';
+      }
+      s += '<rect class="hit" data-i="' + i + '" x="' + (L + bw * i) + '" y="' + T + '" width="' + bw + '" height="' + (H - T - B) + '"/>';
+    });
+    s += '</svg>';
+    return s;
+  }
+  function roundTop(x, yTop, w, h, r) {
+    if (h <= 0) return '';
+    r = Math.min(r, h);
+    return 'M' + x + ',' + (yTop + h) + 'V' + (yTop + r) + 'Q' + x + ',' + yTop + ' ' + (x + r) + ',' + yTop +
+      'H' + (x + w - r) + 'Q' + (x + w) + ',' + yTop + ' ' + (x + w) + ',' + (yTop + r) + 'V' + (yTop + h) + 'Z';
+  }
+  function wireTip(root, series, labels) {
+    var tip = root.querySelector('.tip');
+    root.querySelectorAll('.hit').forEach(function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var d = series[+el.getAttribute('data-i')];
+        tip.innerHTML = '<strong>' + esc(d.day) + '</strong><br>' + esc(labels.human) + ': ' + num(d.human) +
+          '<br>' + esc(labels['likely-human']) + ': ' + num(d['likely-human']) +
+          '<br><span class="muted">Bots and other automated: ' + num(d.bot + d.datacenter + d['feed-reader']) + '</span>';
+        var box = root.getBoundingClientRect();
+        tip.style.display = 'block';
+        var left = e.clientX - box.left + 12;
+        if (left + tip.offsetWidth > box.width) left = e.clientX - box.left - tip.offsetWidth - 12;
+        tip.style.left = left + 'px';
+        tip.style.top = (e.clientY - box.top - 10) + 'px';
+      });
+      el.addEventListener('mouseleave', function () { tip.style.display = 'none'; });
+    });
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function render(s) {
+    var t = s.totals, h = '';
+    var bc = t.by_class;
+    var automated = bc.bot + bc.datacenter + bc['feed-reader'];
+    h += '<div class="tiles">' +
+      tile('People, visitor-days', num(t.people_visitor_days),
+        num(bc.human) + ' browser-confirmed · ' + num(bc['likely-human']) + ' likely', true) +
+      tile('Page views', num(t.pageviews), t.pages_per_visitor_day ? t.pages_per_visitor_day + ' per visitor-day' : '') +
+      tile('Used a tool', num(t.tool_users), num(t.tool_runs) + ' tool runs across ' + t.tools_used + ' tools') +
+      tile('Institutions identified', num(t.institutions),
+        Math.round(t.identified_share * 100) + '% of people visitor-days') +
+      tile('Countries', num(t.countries), t.us_regions ? num(t.us_regions) + ' US states' : '') +
+      tile('Sent to the article', num(t.doi_clicks), 'DOI click-throughs') +
+      tile('Median time on page', t.median_engaged_s == null ? '—' : t.median_engaged_s + ' s', 'per visitor-day, when reported') +
+      tile('Bots and automated', num(automated), 'visitor-days, not counted above') +
+      '</div>';
+
+    var labels = s.class_labels;
+    h += panel('People per day', 'Browser-confirmed means the page\'s script ran. Likely means an ordinary browser on an ordinary network that never ran it, usually because JavaScript was blocked.',
+      '<div class="legend"><span><span class="sw" style="background:var(--u-s1)"></span>' + esc(labels.human) + '</span>' +
+      '<span><span class="sw" style="background:var(--u-s2)"></span>' + esc(labels['likely-human']) + '</span></div>' +
+      '<div class="chart" id="daily">' + dailyChart(s.daily) + '<div class="tip"></div></div>');
+
+    h += panel('Tools', 'Visitor-days that opened or ran each tool. Runs count every computation, including re-runs with new settings. Tools marked <em>opens by default</em> load without the reader choosing them, so their counts include everyone who landed on that page.',
+      barTable(s.tools.map(function (x) {
+        return { label: esc(x.label) + (x.auto ? '<span class="tag">opens by default</span>' : ''),
+          cells: [esc(x.area), num(x.runs)], value: x.visitor_days };
+      }), ['Tool', 'Area', 'Runs', 'Visitor-days']));
+
+    var instNote = 'Identified from the network a visit came from: the address registry, reverse DNS, and the IPEDS, ROR and world-universities lists. Only on-campus connections can be identified, so this is a minimum.';
+    if (s.institutions_hidden) instNote += ' ' + num(s.institutions_hidden) + ' more institutions had fewer than ' + s.min_count + ' visitor-days and are left out of this public version.';
+    h += panel('Institutions', instNote, barTable(s.institutions.map(function (i) {
+      var where = [i.city, i.region, i.country_name].filter(Boolean).join(', ');
+      var detail = [i.kind, i.carnegie, i.hbcu ? 'HBCU' : '', i.tribal ? 'Tribal college' : ''].filter(Boolean).join(' · ');
+      return { label: esc(i.name) + (i.in_corpus ? '<span class="tag">publishes in the index</span>' : '') +
+          '<div class="muted" style="font-size:var(--text-xs)">' + esc(detail) + (where ? ' · ' + esc(where) : '') + '</div>',
+        cells: [esc((i.top_tools || []).join(', ') || '—')], value: i.visitor_days };
+    }), ['Institution', 'Most-used tools', 'Visitor-days'], 'No institution identified in this range yet. The resolver identifies them overnight.'));
+
+    var b = s.institution_breakdown, f = s.institution_flags;
+    var plural = function (n, one, many) { return num(n) + ' ' + (n === 1 ? one : many); };
+    var carnegieNote = 'US institutions matched to IPEDS. Includes ' + plural(f.hbcu, 'HBCU', 'HBCUs') +
+      ' and ' + plural(f.tribal, 'tribal college', 'tribal colleges') + '. ' +
+      plural(f.in_corpus, 'institution has', 'institutions have') + ' authors who publish in the indexed journals.';
+    h += '<div class="grid2">' +
+      panel('Institutions by type', 'Counts of institutions, not visits.', barTable(dictRows(b.kind), ['Type', 'Institutions'])) +
+      panel('By Carnegie classification', carnegieNote,
+        barTable(dictRows(b.carnegie), ['Classification', 'Institutions'], 'No US institution matched to IPEDS in this range.')) +
+      '</div>';
+
+    h += '<div class="grid2">' +
+      panel('Countries', '', barTable(s.countries.slice(0, 25).map(function (c) { return { label: esc(c.name), value: c.visitor_days }; }), ['Country', 'Visitor-days'])) +
+      panel('US states', '', barTable(s.us_regions.slice(0, 25).map(function (c) { return { label: esc(c.region), value: c.visitor_days }; }), ['State', 'Visitor-days'])) +
+      '</div>';
+
+    h += '<div class="grid2">' +
+      panel('Networks', 'The kind of network each visitor-day came from.', barTable(dictRows(s.networks), ['Network', 'Visitor-days'])) +
+      panel('How people arrived', 'The first referring site of each visitor-day, grouped.', barTable(dictRows(s.referrer_groups), ['Source', 'Visitor-days'])) +
+      '</div>';
+
+    h += panel('Referring sites', 'Course sites and library guides usually name the institution in the address.' +
+        (s.referrers_hidden ? ' ' + num(s.referrers_hidden) + ' sites under the threshold are left out.' : ''),
+      barTable(s.referrers.map(function (r) { return { label: esc(r.host), cells: [esc(r.group)], value: r.visitor_days }; }), ['Site', 'Group', 'Visitor-days']));
+
+    h += '<div class="grid2">' +
+      panel('Most-viewed articles', num(t.article_views) + ' article page views in all.',
+        barTable(s.articles.slice(0, 12).map(function (a) {
+          return { label: '<a href="/article/' + encodeURIComponent(a.id) + '">' + esc(a.title) + '</a><div class="muted" style="font-size:var(--text-xs)">' + esc([a.journal, a.year].filter(Boolean).join(', ')) + '</div>', value: a.visitor_days };
+        }), ['Article', 'Visitor-days'])) +
+      panel('Searches', num(t.searches) + ' visitor-days searched the index. Terms appear once at least two visitor-days used them.',
+        barTable(s.searches.map(function (q) { return { label: esc(q.query), value: q.visitor_days }; }), ['Search', 'Visitor-days'])) +
+      '</div>';
+
+    var o = s.outbound;
+    h += '<div class="grid2">' +
+      panel('Sent to the publisher', num(o.doi_clicks) + ' DOI click-throughs and ' + num(o.other_clicks) + ' other outbound clicks.',
+        barTable(o.top_dois.map(function (d) {
+          var sub = d.title ? '<div class="muted" style="font-size:var(--text-xs)">' + esc(d.doi) + '</div>' : '';
+          return { label: esc(d.title || d.doi) + sub, value: d.visitor_days };
+        }), ['Article', 'Visitor-days'])) +
+      panel('Downloads and exports', 'Panel exports (CSV, PNG, SVG) and BibTeX/RIS exports.', barTable(dictRows(s.downloads), ['Format', 'Count'])) +
+      '</div>';
+
+    h += '<div class="grid2">' +
+      panel('Languages', 'The browser\'s preferred language.', barTable(dictRows(s.languages).slice(0, 15), ['Language', 'Visitor-days'])) +
+      panel('Devices', '', barTable(dictRows(s.devices), ['Device', 'Visitor-days'])) +
+      '</div>';
+
+    h += '<div class="grid2">' +
+      panel('Feed subscriptions', 'Feed readers report their subscriber counts. A reader subscribed to two feeds counts twice.',
+        barTable(s.feeds.map(function (x) { return { label: esc(x.reader), cells: [num(x.feeds)], value: x.subscriptions }; }), ['Reader', 'Feeds', 'Subscriptions'])) +
+      panel('Bots and automated clients', 'Not counted anywhere above.', barTable(s.bots.map(function (x) { return { label: esc(x.bot), cells: [num(x.visitor_days)], value: x.hits }; }), ['Client', 'Visitor-days', 'Requests'])) +
+      '</div>';
+
+    var d = s.data;
+    h += '<p class="muted" style="font-size:var(--text-xs)">' +
+      (d.unresolved_hits ? (d.unresolved_hits === 1 ? '1 request in this range is' : num(d.unresolved_hits) + ' requests in this range are') +
+        ' waiting for tonight\'s resolver and not counted yet. ' : '') +
+      (d.attribution_html || []).join(' · ') + '</p>';
+
+    $('out').innerHTML = h;
+    wireTip($('daily'), s.daily, labels);
+  }
+
+  function renderStatus(st) {
+    var files = st.data_files || {};
+    var fileList = Object.keys(files).map(function (k) {
+      return esc(k) + ': ' + (files[k] ? files[k].age_days + ' days old, ' + files[k].mb + ' MB' : '<span class="err">missing</span>');
+    }).join('<br>');
+    var warn = [];
+    if (!st.tracking_enabled) warn.push('Recording is off. Set PINAKES_USAGE_TRACKING=1 in the service environment and restart it.');
+    if (!st.trusted_ip_header) warn.push('PINAKES_TRUSTED_IP_HEADER is not set, so every visitor may look like the proxy. See the runbook section on visitor IP addresses.');
+    var last = (st.runs || []).filter(function (r) { return r.job === 'resolve'; })[0];
+    $('status-panel').innerHTML = '<h2 style="font-size:var(--text-lg);margin:0 0 0.4rem;">Status</h2>' +
+      (warn.length ? '<p class="err" style="font-size:var(--text-sm)">' + warn.map(esc).join('<br>') + '</p>' : '') +
+      '<p class="note" style="margin:0">' + num(st.hits) + ' requests recorded since ' + esc(st.first_day || '—') + ' · ' +
+      num(st.unresolved_hits) + ' waiting to be resolved · ' + num(st.raw_addresses_held) + ' raw addresses held' +
+      (st.oldest_raw_address ? ' (oldest ' + esc(st.oldest_raw_address) + ' UTC)' : '') + ' · ' +
+      num(st.institutions) + ' institutions known · usage.db ' + st.usage_db_mb + ' MB</p>' +
+      '<details style="margin-top:0.5rem"><summary>Reference data and recent jobs</summary><p class="note">' + fileList + '</p>' +
+      '<p class="note">Last resolve: ' + (last ? esc(last.started_at) + (last.ok ? ' (ok)' : ' (failed)') : 'never') + '</p>' +
+      '<pre>' + esc(JSON.stringify(st.runs || [], null, 1)) + '</pre></details>';
+  }
+
+  async function loadStatus() {
+    var r = await api('/api/admin/usage/status');
+    if (r.ok) renderStatus(await r.json());
+  }
+
+  async function load() {
+    msg('Loading…');
+    try {
+      var r = await api('/api/admin/usage/summary?' + query());
+      if (!r.ok) { msg('The server could not build the summary (' + r.status + ').', true); return; }
+      render(await r.json());
+      msg('');
+    } catch (e) { msg(e.message, true); }
+  }
+
+  async function download(fmt) {
+    msg('Building the ' + (fmt === 'zip' ? 'tables' : 'report') + '…');
+    try {
+      var r = await api('/api/admin/usage/report?format=' + fmt + '&' + query());
+      if (!r.ok) { msg('The server could not build it (' + r.status + ').', true); return; }
+      var blob = await r.blob();
+      var cd = r.headers.get('Content-Disposition') || '';
+      var m = /filename=([^;]+)/.exec(cd);
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = m ? m[1] : 'pinakes-usage.' + fmt;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+      msg('');
+    } catch (e) { msg(e.message, true); }
+  }
+
+  async function job(path, body, label) {
+    try {
+      var r = await api(path, { method: 'POST', body: body || {} });
+      if (r.status === 409) { msg('A usage job is already running. Try again when it finishes.'); return; }
+      msg(r.ok ? label + ' started. It runs in the background; reload the status in a minute or two.' : label + ' did not start (' + r.status + ').', !r.ok);
+      setTimeout(loadStatus, 3000);
+    } catch (e) { msg(e.message, true); }
+  }
+
+  function start() {
+    $('token-bar').style.display = 'none';
+    $('app').style.display = 'block';
+    applyPreset();
+    loadStatus().catch(function (e) { msg(e.message, true); });
+    load();
+  }
+
+  $('preset').addEventListener('change', applyPreset);
+  ['from', 'to'].forEach(function (id) { $(id).addEventListener('change', function () { $('preset').value = 'custom'; }); });
+  $('load-btn').addEventListener('click', load);
+  $('dl-html').addEventListener('click', function () { download('html'); });
+  $('dl-zip').addEventListener('click', function () { download('zip'); });
+  $('run-resolve').addEventListener('click', function () { job('/api/admin/usage/resolve', null, 'The resolver'); });
+  $('run-refresh').addEventListener('click', function () { job('/api/admin/usage/refresh-data', null, 'The reference-data refresh'); });
+  $('lock-btn').addEventListener('click', function () { try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ } location.reload(); });
+  $('connect-btn').addEventListener('click', async function () {
+    var v = $('token-input').value.trim();
+    if (!v) return;
+    try { sessionStorage.setItem(KEY, v); } catch (e) { /* ignore */ }
+    var r = await fetch('/api/admin/usage/status', { headers: { 'Authorization': 'Bearer ' + v } });
+    if (!r.ok) {
+      try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+      $('token-error').textContent = r.status === 503 ? 'Admin authentication is not configured on this server.' : 'That token was refused.';
+      return;
+    }
+    start();
+  });
+  $('token-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('connect-btn').click(); });
+  if (tok()) start();
+})();
+</script>
+{% endblock %}

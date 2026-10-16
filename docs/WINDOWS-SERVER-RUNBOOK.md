@@ -465,6 +465,61 @@ verification, alert digests) would point at `127.0.0.1`.
 
 ---
 
+## Usage statistics
+
+Pinakes can record which pages and tools are used and identify the
+institutions visits come from. Recording is off until it is switched on
+here. What it records and how it protects visitors is in
+[usage-statistics.md](usage-statistics.md). Get the Clearinghouse's
+agreement before turning it on, because the site sits on its domain.
+
+**Prerequisite:** [Visitor IP addresses](#visitor-ip-addresses) must pass
+first. Without `PINAKES_TRUSTED_IP_HEADER`, every visitor is recorded as the
+proxy and nothing can be resolved.
+
+**1. Stage the reference data** (about 70 MB, no account needed):
+
+```powershell
+& .\deploy\windows\Invoke-PinakesAdmin.ps1 -Endpoint UsageData
+```
+
+The endpoint skips its downloads while recording is off. To stage the data
+first, call it once with `{"force": true}`, or from the console:
+
+```powershell
+cd C:\Pinakes\app
+C:\Pinakes\venv\Scripts\python.exe -m usage refresh-data --force
+```
+
+**2. Turn recording on:**
+
+```powershell
+[Environment]::SetEnvironmentVariable('PINAKES_USAGE_TRACKING','1','Machine')
+Restart-Service Pinakes-Web
+```
+
+**3. Register the two jobs** (re-running the installer is safe):
+
+```powershell
+& .\deploy\windows\Install-PinakesTasks.ps1 -IncludeUpdateCheck
+```
+
+`Pinakes-UsageResolve` (daily 05:10) resolves the day's addresses and then
+deletes them. `Pinakes-UsageData` (Sundays 05:40) refreshes the IP databases
+when they are more than 25 days old. The nightly backup now copies
+`usage.db` too.
+
+**4. Check it.** Open `https://pinakes.wacclearinghouse.org/admin/usage`
+and enter the admin token. The status panel says whether recording is on,
+whether the IP header is set, how many requests are waiting for the
+resolver, and how old each data file is. After the first night, the
+dashboard fills in.
+
+To switch recording off, remove the variable and restart the service. Keep
+the resolve task: it is what deletes any addresses still held.
+
+---
+
 ## Author name-removal requests
 
 The public request form ships **off** (`PINAKES_REDACTION_FORM_ENABLED`). Its

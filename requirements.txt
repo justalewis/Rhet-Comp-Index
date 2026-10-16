@@ -16,6 +16,9 @@ lxml>=5.0.0
 apscheduler>=3.10.0
 gunicorn>=21.2.0
 networkx>=3.2
+# Usage statistics (usage/geo.py): reads the DB-IP / GeoLite2 .mmdb files
+# that turn an IP address into a country, region and network owner.
+maxminddb>=2.6
 sentry-sdk[flask]>=2.0
 # Backup pipeline (D2). pyrage produces standard age binary format so the
 # operator can decrypt with the regular `age` CLI in a disaster.

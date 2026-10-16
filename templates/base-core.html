@@ -22,5 +22,6 @@
 {% block body %}{% endblock %}
 {% block body_scripts %}{% endblock %}
 <script data-goatcounter="https://pinakes.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+{% if usage_tracking %}<script src="/static/usage.js?v={{ version }}" defer></script>{% endif %}
 </body>
 </html>

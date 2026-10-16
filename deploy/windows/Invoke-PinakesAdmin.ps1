@@ -31,6 +31,10 @@
       Maintenance POST /api/admin/run-maintenance   weekly maintenance
       Digests     POST /api/admin/send-digests      saved-search email digests
       Backup      POST /api/admin/run-backup        offsite S3/B2 backup
+      UsageResolve POST /api/admin/usage/resolve    usage statistics: resolve
+                                                    addresses, delete raw IPs
+      UsageData   POST /api/admin/usage/refresh-data   usage statistics:
+                                                    download stale IP databases
 
     Note on Backup: that endpoint needs all six PINAKES_BACKUP_* secrets and
     uploads to S3/Backblaze. On this server the nightly local backup task uses
@@ -55,7 +59,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('Fetch', 'DeepFetch', 'Prewarm', 'Maintenance', 'Digests', 'Backup')]
+    [ValidateSet('Fetch', 'DeepFetch', 'Prewarm', 'Maintenance', 'Digests', 'Backup', 'UsageResolve', 'UsageData')]
     [string]$Endpoint,
 
     [string]$BaseUrl,
@@ -74,6 +78,8 @@ $routes = @{
     'Maintenance' = @{ Path = '/api/admin/run-maintenance'; Body = $null }
     'Digests'     = @{ Path = '/api/admin/send-digests';    Body = $null }
     'Backup'      = @{ Path = '/api/admin/run-backup';      Body = $null }
+    'UsageResolve' = @{ Path = '/api/admin/usage/resolve';  Body = $null }
+    'UsageData'   = @{ Path = '/api/admin/usage/refresh-data'; Body = $null }
 }
 
 $route   = $routes[$Endpoint]
@@ -121,7 +127,7 @@ try {
     # These endpoints hand work to a background thread and answer immediately,
     # so a 200 means "accepted", not "finished". Say so, rather than letting a
     # green scheduled task imply the fetch actually succeeded.
-    if ($Endpoint -in @('Fetch', 'DeepFetch', 'Prewarm', 'Maintenance', 'Digests')) {
+    if ($Endpoint -in @('Fetch', 'DeepFetch', 'Prewarm', 'Maintenance', 'Digests', 'UsageResolve', 'UsageData')) {
         Write-TaskLog "Work runs in the background. Check $($PinakesLogDir)\web-stdout.log for progress and completion."
     }
     exit 0
@@ -140,7 +146,11 @@ try {
     # is the intended guard against two writers on one SQLite file, not a
     # failure - do not let Task Scheduler light up red for it.
     if ($status -eq 409) {
-        Write-TaskLog "A fetch is already in progress; this run was skipped. Not an error." 'Warn'
+        if ($Endpoint -like 'Usage*') {
+            Write-TaskLog "A usage job is already running; this run was skipped. Not an error." 'Warn'
+        } else {
+            Write-TaskLog "A fetch is already in progress; this run was skipped. Not an error." 'Warn'
+        }
         exit 0
     }
 

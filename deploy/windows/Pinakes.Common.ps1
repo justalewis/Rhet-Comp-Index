@@ -48,6 +48,8 @@ $PinakesLogDir    = Join-Path $PinakesRoot 'logs'
 $PinakesBackupDir = Get-PinakesSetting 'PINAKES_BACKUP_DIR'   (Join-Path $PinakesRoot 'backups')
 $PinakesPython    = Join-Path $PinakesVenvDir 'Scripts\python.exe'
 $PinakesDbPath    = Get-PinakesSetting 'DB_PATH'              (Join-Path $PinakesRoot 'data\articles.db')
+# Usage statistics live in their own file beside articles.db (usage/store.py).
+$PinakesUsageDbPath = Get-PinakesSetting 'USAGE_DB_PATH'      (Join-Path (Split-Path $PinakesDbPath -Parent) 'usage.db')
 $PinakesPort      = Get-PinakesSetting 'PORT'                 '8080'
 $PinakesService   = Get-PinakesSetting 'PINAKES_SERVICE_NAME' 'Pinakes-Web'
 $PinakesGitBranch = Get-PinakesSetting 'PINAKES_GIT_BRANCH'   'main'
@@ -281,6 +283,34 @@ function Backup-PinakesDatabase {
             Write-PinakesLog "Pruning old backup $($f.Name)"
             Remove-Item $f.FullName -Force
         }
+    }
+    return $target
+}
+
+
+function Backup-PinakesUsageDatabase {
+    <#  The same online backup for usage.db, which the app writes all day.
+        Pruned on the same retention count. Returns the backup path, or $null
+        when usage statistics have never been switched on. #>
+    param([string]$Label = 'manual')
+
+    if (-not (Test-Path $PinakesUsageDbPath)) { return $null }
+    if (-not (Test-Path $PinakesBackupDir)) {
+        New-Item -ItemType Directory -Path $PinakesBackupDir -Force | Out-Null
+    }
+    $stamp  = (Get-Date).ToString('yyyyMMdd-HHmmss')
+    $safe   = ($Label -replace '[^A-Za-z0-9._-]', '-')
+    $target = Join-Path $PinakesBackupDir "usage-$stamp-$safe.db"
+    $helper = Join-Path $PSScriptRoot 'sqlite_backup.py'
+
+    # Captured, not returned: see the note in Backup-PinakesDatabase.
+    $helperOutput = & $PinakesPython $helper $PinakesUsageDbPath $target
+    if ($LASTEXITCODE -ne 0) { throw "Usage database backup failed (exit $LASTEXITCODE)." }
+    foreach ($line in $helperOutput) { Write-PinakesLog "  $line" }
+
+    $all = @(Get-ChildItem -Path $PinakesBackupDir -Filter 'usage-*.db' | Sort-Object LastWriteTime -Descending)
+    if ($all.Count -gt $PinakesBackupKeep) {
+        foreach ($f in $all[$PinakesBackupKeep..($all.Count - 1)]) { Remove-Item $f.FullName -Force }
     }
     return $target
 }
