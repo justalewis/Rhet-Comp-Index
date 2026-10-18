@@ -24,6 +24,8 @@
                                                  IP databases when stale
       Pinakes-WeeklyDigests      14:17 Fridays   saved-search emails (opt-in)
       Pinakes-UpdateCheck        08:00 daily     report GitHub drift (opt-in)
+      Pinakes-HealthWatchdog     every 5 min     restart the app if it is running
+                                                 but not answering /health
 
     Backup runs before the fetch so there is always a copy of yesterday's good
     database from before the day's writes. Prewarm runs after the fetch so it
@@ -69,6 +71,7 @@ $ErrorActionPreference = 'Stop'
 $adminScript  = Join-Path $PSScriptRoot 'Invoke-PinakesAdmin.ps1'
 $backupScript = Join-Path $PSScriptRoot 'Backup-Pinakes.ps1'
 $updateScript = Join-Path $PSScriptRoot 'Update-Pinakes.ps1'
+$watchScript  = Join-Path $PSScriptRoot 'Watch-PinakesHealth.ps1'
 
 $AllTaskNames = @(
     'Pinakes-NightlyBackup',
@@ -78,7 +81,8 @@ $AllTaskNames = @(
     'Pinakes-UsageResolve',
     'Pinakes-UsageData',
     'Pinakes-WeeklyDigests',
-    'Pinakes-UpdateCheck'
+    'Pinakes-UpdateCheck',
+    'Pinakes-HealthWatchdog'
 )
 
 
@@ -101,6 +105,7 @@ function Show-PinakesTasks {
     }
     Write-Host ""
     Write-Host "  Job log: $(Join-Path $PinakesLogDir 'admin-tasks.log')"
+    Write-Host "  Watchdog log: $(Join-Path $PinakesLogDir 'watchdog.log')"
 }
 
 
@@ -198,6 +203,16 @@ try {
         -ScriptPath $adminScript -ScriptArgs '-Endpoint UsageData' `
         -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '05:40') `
         -Description 'Usage statistics: download the IP databases and institution lists when they are out of date.' `
+        -TimeLimitHours 1
+
+    # NSSM restarts the app only when the process exits; a process that is
+    # alive but stuck stays "Running" forever (the 2026-10-17 outage). The
+    # watchdog covers that case. No -RepetitionDuration: on Server 2016+ that
+    # means "repeat indefinitely".
+    Register-PinakesTask -Name 'Pinakes-HealthWatchdog' `
+        -ScriptPath $watchScript `
+        -Trigger (New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 5)) `
+        -Description 'Restarts the Pinakes service if it is running but /health stops answering. Log: logs\watchdog.log. Pause with <root>\watchdog.pause.' `
         -TimeLimitHours 1
 
     if ($IncludeDigests) {

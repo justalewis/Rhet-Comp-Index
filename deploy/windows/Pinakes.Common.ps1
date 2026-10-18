@@ -193,6 +193,26 @@ function Start-PinakesService {
 }
 
 
+function Get-PinakesServiceProcesses {
+    <#  The python.exe processes under the NSSM service, parent first. The venv
+        launcher (venv\Scripts\python.exe) re-execs the base interpreter as a
+        child, so the process actually serving requests is the LAST entry.
+        Returns an empty array when the service is not running. #>
+    $svc = Get-CimInstance Win32_Service -Filter "Name='$PinakesService'"
+    if ($null -eq $svc -or -not $svc.ProcessId) { return @() }
+    $all = @(Get-CimInstance Win32_Process)
+    $found = @()
+    $parents = @([int]$svc.ProcessId)
+    while ($parents.Count -gt 0) {
+        $children = @($all | Where-Object { $parents -contains [int]$_.ParentProcessId })
+        if ($children.Count -eq 0) { break }
+        $found += $children
+        $parents = @($children | ForEach-Object { [int]$_.ProcessId })
+    }
+    return @($found | Where-Object { $_.Name -eq 'python.exe' })
+}
+
+
 # -- Health ------------------------------------------------------------------
 
 function Get-PinakesHealth {
