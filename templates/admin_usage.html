@@ -95,8 +95,8 @@
         <label>To <input type="date" id="to"></label>
         <label>Count as people
           <select id="classes">
-            <option value="human,likely-human" selected>Confirmed and likely</option>
-            <option value="human">Browser-confirmed only</option>
+            <option value="human" selected>Browser-confirmed only</option>
+            <option value="human,likely-human">Confirmed and likely</option>
           </select>
         </label>
         <label class="check"><input type="checkbox" id="public"> Public version (hide anything under 3 visitor-days)</label>
@@ -199,10 +199,10 @@
   }
 
   // ── Daily chart: people per day, confirmed and likely stacked ──────────────
-  function dailyChart(series) {
+  function dailyChart(series, withLikely) {
     var W = 760, H = 220, L = 38, R = 8, T = 10, B = 26;
     var days = series.length;
-    var tot = series.map(function (d) { return d.human + d['likely-human']; });
+    var tot = series.map(function (d) { return d.human + (withLikely ? d['likely-human'] : 0); });
     var max = Math.max.apply(null, tot.concat([1]));
     var step = Math.pow(10, Math.floor(Math.log10(max)));
     var top = Math.ceil(max / step) * step;
@@ -222,7 +222,7 @@
     s += '</g>';
     series.forEach(function (d, i) {
       var x = L + bw * i + (bw - colW) / 2;
-      var a = d.human, b = d['likely-human'];
+      var a = d.human, b = withLikely ? d['likely-human'] : 0;
       var y0 = y(0), ya = y(a), yb = y(a + b);
       var r = Math.min(4, colW / 2);
       // Confirmed sits on the baseline; likely stacks above with a 2px gap.
@@ -248,14 +248,15 @@
     return 'M' + x + ',' + (yTop + h) + 'V' + (yTop + r) + 'Q' + x + ',' + yTop + ' ' + (x + r) + ',' + yTop +
       'H' + (x + w - r) + 'Q' + (x + w) + ',' + yTop + ' ' + (x + w) + ',' + (yTop + r) + 'V' + (yTop + h) + 'Z';
   }
-  function wireTip(root, series, labels) {
+  function wireTip(root, series, labels, withLikely) {
     var tip = root.querySelector('.tip');
     root.querySelectorAll('.hit').forEach(function (el) {
       el.addEventListener('mousemove', function (e) {
         var d = series[+el.getAttribute('data-i')];
         tip.innerHTML = '<strong>' + esc(d.day) + '</strong><br>' + esc(labels.human) + ': ' + num(d.human) +
-          '<br>' + esc(labels['likely-human']) + ': ' + num(d['likely-human']) +
-          '<br><span class="muted">Bots and other automated: ' + num(d.bot + d.datacenter + d['feed-reader']) + '</span>';
+          (withLikely ? '<br>' + esc(labels['likely-human']) + ': ' + num(d['likely-human']) : '') +
+          '<br><span class="muted">Unverified: ' + num(d.unverified) +
+          ' · bots and other automated: ' + num(d.bot + d.datacenter + d['feed-reader']) + '</span>';
         var box = root.getBoundingClientRect();
         tip.style.display = 'block';
         var left = e.clientX - box.left + 12;
@@ -271,10 +272,12 @@
   function render(s) {
     var t = s.totals, h = '';
     var bc = t.by_class;
+    var withLikely = (s.classes || []).indexOf('likely-human') >= 0;
     var automated = bc.bot + bc.datacenter + bc['feed-reader'];
     h += '<div class="tiles">' +
       tile('People, visitor-days', num(t.people_visitor_days),
-        num(bc.human) + ' browser-confirmed · ' + num(bc['likely-human']) + ' likely', true) +
+        withLikely ? num(bc.human) + ' browser-confirmed · ' + num(bc['likely-human']) + ' likely'
+                   : 'browser-confirmed · ' + num(bc['likely-human']) + ' more likely, not counted', true) +
       tile('Page views', num(t.pageviews), t.pages_per_visitor_day ? t.pages_per_visitor_day + ' per visitor-day' : '') +
       tile('Used a tool', num(t.tool_users), num(t.tool_runs) + ' tool runs across ' + t.tools_used + ' tools') +
       tile('Institutions identified', num(t.institutions),
@@ -282,14 +285,15 @@
       tile('Countries', num(t.countries), t.us_regions ? num(t.us_regions) + ' US states' : '') +
       tile('Sent to the article', num(t.doi_clicks), 'DOI click-throughs') +
       tile('Median time on page', t.median_engaged_s == null ? '—' : t.median_engaged_s + ' s', 'per visitor-day, when reported') +
+      tile('Unverified', num(bc.unverified), 'no script, one or two quick requests, no referrer; not counted above') +
       tile('Bots and automated', num(automated), 'visitor-days, not counted above') +
       '</div>';
 
     var labels = s.class_labels;
-    h += panel('People per day', 'Browser-confirmed means the page\'s script ran. Likely means an ordinary browser on an ordinary network that never ran it, usually because JavaScript was blocked.',
+    h += panel('People per day', 'Browser-confirmed means the page\'s script ran, which crawlers almost never do. Likely means no script, but several pages over at least 30 seconds or a link from another site. Unverified visitor-days, one or two quick requests with no script and no referrer, are what address-rotating crawlers look like and are never counted as people.',
       '<div class="legend"><span><span class="sw" style="background:var(--u-s1)"></span>' + esc(labels.human) + '</span>' +
-      '<span><span class="sw" style="background:var(--u-s2)"></span>' + esc(labels['likely-human']) + '</span></div>' +
-      '<div class="chart" id="daily">' + dailyChart(s.daily) + '<div class="tip"></div></div>');
+      (withLikely ? '<span><span class="sw" style="background:var(--u-s2)"></span>' + esc(labels['likely-human']) + '</span>' : '') + '</div>' +
+      '<div class="chart" id="daily">' + dailyChart(s.daily, withLikely) + '<div class="tip"></div></div>');
 
     h += panel('Tools', 'Visitor-days that opened or ran each tool. Runs count every computation, including re-runs with new settings. Tools marked <em>opens by default</em> load without the reader choosing them, so their counts include everyone who landed on that page.',
       barTable(s.tools.map(function (x) {
@@ -371,7 +375,7 @@
       (d.attribution_html || []).join(' · ') + '</p>';
 
     $('out').innerHTML = h;
-    wireTip($('daily'), s.daily, labels);
+    wireTip($('daily'), s.daily, labels, withLikely);
   }
 
   // ── The optional form at /tell-us ─────────────────────────────────────────
