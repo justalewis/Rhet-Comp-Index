@@ -2,9 +2,9 @@
 
 Every venue indexed by Pinakes, listed in the order it appears in journals.py. Counts are not included here; the live counts at https://pinakes.wacclearinghouse.org/coverage are authoritative and update with the index.
 
-A journal's **path** is the ingestion strategy used to populate it: CrossRef (by ISSN, the bulk of the corpus), RSS / OAI / WordPress feeds (open-access journals without CrossRef coverage), custom HTML scrapers (open-access journals without machine-readable feeds), or manually-curated entries (analog-only journals whose record was hand-compiled and ingested once).
+A journal's **path** is the ingestion strategy used to populate it: CrossRef (by ISSN, or by DOI prefix where the deposits carry no ISSN; the bulk of the corpus), RSS / OAI / WordPress feeds (open-access journals without CrossRef coverage), custom HTML scrapers (journals without machine-readable feeds), or manually indexed entries (journals with no DOIs, feed or scrapeable archive, ingested once from a hand-compiled record or CompPile export).
 
-A journal's **gold OA** mark indicates that every article from this journal is open access without paywalls; tagged at ingestion time without requiring per-article OA verification via OpenAlex.
+A journal's **gold OA** mark means it is listed in `GOLD_OA_JOURNALS` in journals.py: every article from it is open access without paywalls, so its articles are marked gold without a per-article OpenAlex check. The CrossRef fetcher sets the mark when it stores a new article from one of these journals; `backfill_oa_status()` tags the rest at app startup, before each daily fetch, after a deep refresh, and in weekly maintenance (step 8).
 
 ## CrossRef-indexed journals
 
@@ -53,11 +53,11 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 | Rhetoric of Health and Medicine | 2573-5063 | ✓ |  |
 | Business and Professional Communication Quarterly | 2329-4922 |  |  |
 | IEEE Transactions on Professional Communication | 0361-1434 |  |  |
-| Reflections: A Journal of Community-Engaged Writing and Rhetoric | 1541-2075 | ✓ | WordPress. Archive page at /archive/ lists all articles with pipe-separated title/author format. ... |
+| Reflections: A Journal of Community-Engaged Writing and Rhetoric | 1541-2075 | ✓ | Penn State Libraries. 599 articles + references, 2000–2026. Moved from the archive-page scraper to CrossRef in 2026-05, after Penn State Libraries deposited full metadata and references (DOI prefix 10.59236). |
 | Rhetorica | 1533-8541 |  |  |
 | Argumentation | 0920-427X |  |  |
 | Res Rhetorica | 2392-3113 |  |  |
-| Rhetoric, Politics & Culture | 2693-7549 |  |  |
+| Rhetoric, Politics & Culture | 2693-7549 |  | Michigan State UP / Project MUSE. Vol 4.1 (2024) isn't deposited with CrossRef; hand-ingested from MUSE by ingest_rpc_4_1.py. |
 | Journal of Writing Research | 2030-1006 |  |  |
 | Writing and Pedagogy | 1756-5839 |  |  |
 | Journal of Academic Writing | 2225-8973 |  |  |
@@ -66,11 +66,11 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 
 | Journal | ISSN | Gold OA | Notes |
 |---|---|:-:|---|
-| Enculturation | — | ✓ |  |
-| Present Tense: A Journal of Rhetoric in Society | — | ✓ |  |
-| KB Journal: The Journal of the Kenneth Burke Society | — | ✓ |  |
-| Literacy in Composition Studies | — | ✓ |  |
-| Journal of Response to Writing | — | ✓ |  |
+| Enculturation | — | ✓ | Drupal 7; no OAI-PMH or WordPress API. RSS picks up new issues; the full archive is scraped by scraper.py (strategy `enculturation`). |
+| Present Tense: A Journal of Rhetoric in Society | — | ✓ | WordPress REST API: 241 articles available vs. the RSS feed's cap of 10. |
+| KB Journal: The Journal of the Kenneth Burke Society | — | ✓ | RSS returns only ~9 recent items; the full archive is scraped by scraper.py (strategy `kb_journal`). |
+| Literacy in Composition Studies | — | ✓ | OJS. OAI-PMH returns every record, not just the RSS feed's 10, and is used in preference to it. |
+| Journal of Response to Writing | — | ✓ | BYU ScholarsArchive (bepress / Digital Commons). OAI-PMH on BYU's shared endpoint, scoped to the set `publication:journalrw`. ISSN 2575-9809. No DOIs deposited. |
 
 ## Custom-scraped journals
 
@@ -92,13 +92,13 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 
 | Journal | ISSN | Gold OA | Notes |
 |---|---|:-:|---|
-| Computers and Composition Digital Press | — |  | Open-access digital books (monographs + edited collections). 27 books, ~280 chapters. Scraped via scrape_ccdp.py. No Dublin Core metadata; parsed from page content. All CC-licensed (gold OA). |
+| Computers and Composition Digital Press | — |  | Open-access digital books (monographs + edited collections). 27 books, ~280 chapters. Scraped via scrape_ccdp.py, run by hand. No Dublin Core metadata; parsed from page content. All CC-licensed. scrape_ccdp.py stores its records as gold OA itself, but the press is not in `GOLD_OA_JOURNALS`, so it has no mark in this column. |
 
 ## Manually-indexed journals
 
 | Journal | ISSN | Gold OA | Notes |
 |---|---|:-:|---|
-| Pre/Text | — |  | Analog-only journal; never digitized or assigned DOIs. 234 articles indexed from a hand-compiled record across 22 volumes. Ingested via ingest_pretext.py. |
+| Pre/Text | — |  | Analog-only journal; never digitized or assigned DOIs. 234 articles indexed from a hand-compiled record of vols 1–22 (vols 19–20 not indexed). Ingested once by a one-off script; journals.py names it ingest_pretext.py, but that script is not in the repository. |
 | JAC: A Journal of Rhetoric, Culture, and Politics | 0731-6755 |  | 1,221 articles indexed from CompPile records across vols 1–34. No DOIs (subscription journal that ceased active publication c. 2014; never deposited in CrossRef). Three CSV variants of the title ('JAC', 'JAC: Journal of Advanced Composition', 'JAC: A Journal of Rhetoric, Culture, and Politics') all resolve to the canonical post-2013 name. Ingested via ingest_jac.py. |
 
 ## Summary
