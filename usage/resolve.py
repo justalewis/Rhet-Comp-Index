@@ -38,8 +38,57 @@ log = logging.getLogger(__name__)
 
 JOB_LOCK = threading.Lock()          # one resolve or refresh at a time
 NETWORK_TTL_DAYS = 30
+MAX_FULL_LOOKUPS = 1500              # networks given reverse DNS + RDAP per run
+NOISE_CLASSES = ("bot", "unverified", "datacenter")
 ORG_TTL_DAYS = 180
 REBUILD_DAYS = 3
+
+
+def prune_after_days() -> int:
+    try:
+        return max(1, int(os.environ.get("USAGE_PRUNE_DAYS", "7")))
+    except ValueError:
+        return 7
+
+
+def prune_noise(conn, now: _dt.datetime) -> tuple[int, int]:
+    """Delete the raw rows behind bot, unverified and datacenter visitor-days
+    older than USAGE_PRUNE_DAYS (default 7). Their visitor_days rows, with the
+    counts, stay; only the per-request detail goes. Feed readers are kept for
+    their subscriber counts, and people's rows are never pruned.
+
+    Safe because rebuild_days only revisits the last few days and days that
+    still had unresolved rows, and this runs after the rebuild in the same
+    job, so a pruned day is never rebuilt from what is left of it."""
+    cutoff = (now.date() - _dt.timedelta(days=prune_after_days())).isoformat()
+    marks = ",".join("?" * len(NOISE_CLASSES))
+    hits = conn.execute(
+        "DELETE FROM hits WHERE day < ? AND EXISTS (SELECT 1 FROM visitor_days v "
+        f"WHERE v.day = hits.day AND v.visitor = hits.visitor AND v.class IN ({marks}))",
+        (cutoff, *NOISE_CLASSES)).rowcount
+    events = conn.execute(
+        "DELETE FROM events WHERE day < ? AND EXISTS (SELECT 1 FROM visitor_days v "
+        f"WHERE v.day = events.day AND v.visitor = events.visitor AND v.class IN ({marks}))",
+        (cutoff, *NOISE_CLASSES)).rowcount
+    return hits, events
+
+
+def _light_network(info: dict, registry) -> dict:
+    """Network facts from the local databases alone, for an address with no
+    browser-confirmed visitor: owner and class, and no institution. The local
+    lists can still say a network belongs to a university, which keeps the
+    class right without a lookup."""
+    rec = None
+    if info.get("as_domain"):
+        rec = registry.by_domain(info["as_domain"])
+    if rec is None and info.get("as_org"):
+        rec = registry.by_name(info["as_org"], info.get("country"))
+    return {
+        "asn": info.get("asn"), "as_org": info.get("as_org"),
+        "net_class": network_class(as_org=info.get("as_org"), rdns=None, rdns_verified=False,
+                                   rdap_org=None, institution_kind=rec.get("kind") if rec else None),
+        "institution_id": None,
+    }
 
 
 def raw_ip_hours() -> int:
@@ -51,7 +100,17 @@ def raw_ip_hours() -> int:
 
 # ── Visitor classification ───────────────────────────────────────────────────
 
+# A visitor-day with no browser event counts as a likely person only with
+# evidence a crawler doesn't leave: pages spread over at least this long, or
+# arrival from another site. Proxy-rotating crawlers send one or two requests
+# per address within seconds and no referrer (2026-10-17: ~73,000 such
+# visitor-days a day, against ~375 that ran the page's script).
+LIKELY_MIN_PAGES = 2
+LIKELY_MIN_SPAN_SECONDS = 30
+
+
 def classify_visitor(v: dict) -> str:
+    """feed-reader | bot | human | datacenter | likely-human | unverified."""
     if v.get("bot_kind") == "feed":
         return "feed-reader"
     if v.get("bot"):
@@ -66,7 +125,21 @@ def classify_visitor(v: dict) -> str:
         return "bot"
     if v.get("pages", 0) == 0:
         return "bot"            # called the API without ever loading a page
-    return "likely-human"
+    if v.get("ref_host"):
+        return "likely-human"   # followed a link from another site
+    if v.get("pages", 0) >= LIKELY_MIN_PAGES and v.get("span_s", 0) >= LIKELY_MIN_SPAN_SECONDS:
+        return "likely-human"   # browsed several pages over time
+    return "unverified"
+
+
+def _span_seconds(stamps: list[str]) -> float:
+    if len(stamps) < 2:
+        return 0.0
+    try:
+        return (_dt.datetime.fromisoformat(max(stamps)) -
+                _dt.datetime.fromisoformat(min(stamps))).total_seconds()
+    except ValueError:
+        return 0.0
 
 
 def _peak_per_minute(stamps: list[str]) -> int:
@@ -150,6 +223,7 @@ def rebuild_days(conn, days) -> int:
                 "bot": v["bot"], "bot_kind": v["bot_kind"], "family": v["family"],
                 "peak_per_min": _peak_per_minute(v["stamps"]),
                 "net_class": _mode(v["net_class"]),
+                "ref_host": v["ref_host"], "span_s": _span_seconds(v["stamps"]),
             }
             # A visitor seen only through browser events has a real browser.
             if v["hits"] == 0:
@@ -337,11 +411,14 @@ def identify(conn, *, registry: Registry, lookups: Lookups, geo_info: dict,
             rec = registry.by_name(name, country)
             if rec:
                 return rec, via
-    for name in (rdap_org, geo_info.get("as_org")):
-        if name and looks_institutional(name):
-            rec = _from_ror(_ror_cached(conn, lookups, name, now_iso, org_cutoff), registry)
-            if rec:
-                return rec, "ror"
+    # ROR is asked about the address block's registered holder only, never
+    # the network operator's (AS) name: operators include national telecoms
+    # with institutional-sounding names (Instituto Costarricense de
+    # Electricidad came back as a research facility).
+    if rdap_org and looks_institutional(rdap_org):
+        rec = _from_ror(_ror_cached(conn, lookups, rdap_org, now_iso, org_cutoff), registry)
+        if rec:
+            return rec, "ror"
     if rdap_org and looks_institutional(rdap_org):
         return {
             "key": "name:" + norm_name(rdap_org), "name": rdap_org.strip(),
@@ -397,21 +474,31 @@ def _run(*, now, lookups, geo, registry) -> dict:
             hits_per_ip[r["ip"]] = r["n"]
         summary["addresses"] = len(pending)
 
-        # One representative address per uncached public network, busiest first.
+        # Only networks with a browser-confirmed visitor get the full lookups
+        # (reverse DNS, RDAP, ROR) and a row in the networks cache. Everything
+        # else gets the local location database and nothing more: an
+        # address-rotating crawler can bring 200,000 new addresses a day, and
+        # neither the institution count nor anyone's DNS server needs them.
+        confirmed = {r[0] for r in conn.execute(
+            "SELECT DISTINCT h.ip FROM hits h WHERE h.resolved = 0 AND h.ip IS NOT NULL "
+            "AND EXISTS (SELECT 1 FROM events e WHERE e.day = h.day AND e.visitor = h.visitor)")}
+        summary["confirmed_addresses"] = len(confirmed)
         by_prefix: dict[str, list[str]] = collections.defaultdict(list)
-        for ip in pending:
+        for ip in confirmed:
             if is_public(ip):
                 p = prefix_of(ip)
                 if p:
                     by_prefix[p].append(ip)
         cached = {}
-        for p in by_prefix:
+        for p in {prefix_of(ip) for ip in pending if is_public(ip)} - {None}:
             row = conn.execute("SELECT * FROM networks WHERE prefix = ? AND checked_at >= ?",
                                (p, net_cutoff)).fetchone()
             if row:
                 cached[p] = dict(row)
         todo = sorted((p for p in by_prefix if p not in cached),
                       key=lambda p: -sum(hits_per_ip[ip] for ip in by_prefix[p]))
+        summary["networks_skipped_over_cap"] = max(0, len(todo) - MAX_FULL_LOOKUPS)
+        todo = todo[:MAX_FULL_LOOKUPS]
         reps = {p: by_prefix[p][0] for p in todo}
         ptr = lookups.rdns(list(reps.values()))
         summary["networks_cached"] = len(cached)
@@ -462,15 +549,15 @@ def _run(*, now, lookups, geo, registry) -> dict:
         # second browser on the same address keeps its own setting. They get
         # country and network class and nothing else: city and region are
         # cleared outright, not filled from Cloudflare's headers.
-        days_touched = set()
+        days_touched = {r[0] for r in conn.execute(
+            "SELECT DISTINCT day FROM hits WHERE resolved = 0")}
         with conn:
             for ip in pending:
                 info = geo.lookup(ip) if is_public(ip) else {}
                 net = cached.get(prefix_of(ip) or "", {}) if is_public(ip) else {}
+                if is_public(ip) and not net:
+                    net = _light_network(info, registry)
                 net_class = net.get("net_class") or ("unknown" if is_public(ip) else "local")
-                for (d,) in conn.execute("SELECT DISTINCT day FROM hits WHERE ip = ? AND resolved = 0",
-                                         (ip,)).fetchall():
-                    days_touched.add(d)
                 cur = conn.execute(
                     "UPDATE hits SET resolved = 1, ip = NULL, "
                     "country = COALESCE(?, cf_country), region = COALESCE(?, cf_region), "
@@ -506,16 +593,18 @@ def _run(*, now, lookups, geo, registry) -> dict:
                 now_iso=now_iso, org_cutoff=org_cutoff)
             summary["corpus_flags_changed"] = refresh_corpus_flags(conn, corpus)
             summary["removed_names_scrubbed"] = scrub_removed_names(conn)
+            pruned_hits, pruned_events = prune_noise(conn, now)
+            summary["pruned_hits"], summary["pruned_events"] = pruned_hits, pruned_events
+            conn.execute("DELETE FROM networks WHERE checked_at < ?",
+                         ((now - _dt.timedelta(days=NETWORK_TTL_DAYS * 3)).isoformat(),))
+            conn.execute("DELETE FROM org_lookups WHERE checked_at < ?",
+                         ((now - _dt.timedelta(days=ORG_TTL_DAYS * 2)).isoformat(),))
         # Fold the write-ahead log back into the file and empty it, so the
         # page versions that still held raw addresses don't linger in -wal.
         try:
             conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         except Exception:  # noqa: BLE001 — a busy log is checkpointed next time
             pass
-            conn.execute("DELETE FROM networks WHERE checked_at < ?",
-                         ((now - _dt.timedelta(days=NETWORK_TTL_DAYS * 3)).isoformat(),))
-            conn.execute("DELETE FROM org_lookups WHERE checked_at < ?",
-                         ((now - _dt.timedelta(days=ORG_TTL_DAYS * 2)).isoformat(),))
 
         summary["rdap_lookups"] = lookups.rdap_used
         summary["ror_lookups"] = lookups.ror_used

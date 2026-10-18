@@ -33,10 +33,14 @@ from .survey import summarise as summarise_responses
 from .resolve import raw_ip_hours
 from .tools import is_auto, label_for
 
-PEOPLE = ("human", "likely-human")
+# Browser-confirmed only by default. Likely-human is an opt-in: a crawler
+# that rotates its address and never runs the script can still look like an
+# ordinary browser, and on 2026-10-17 one did, 73,000 times a day.
+PEOPLE = ("human",)
 CLASS_LABELS = {
     "human": "People (browser confirmed)",
     "likely-human": "People (likely)",
+    "unverified": "Unverified",
     "bot": "Bots and scripts",
     "feed-reader": "Feed readers",
     "datacenter": "Datacenter clients",

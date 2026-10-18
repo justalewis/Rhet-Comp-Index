@@ -3,7 +3,7 @@
     python -m usage resolve                 resolve addresses, rebuild visitor-days
     python -m usage refresh-data [--force]  download IP databases and institution lists
     python -m usage report --from 2026-09-01 --to 2026-12-31 [--format html|zip|json]
-                           [--public] [--confirmed-only] [--out FILE]
+                           [--public] [--include-likely] [--out FILE]
     python -m usage status                  counts and data-file ages
 
 The same jobs run from /admin/usage and the scheduled tasks; this is for the
@@ -29,8 +29,9 @@ def main(argv: list[str] | None = None) -> int:
     rep.add_argument("--format", choices=("html", "zip", "json"), default="html")
     rep.add_argument("--public", action="store_true", help="hide anything under --min-count")
     rep.add_argument("--min-count", type=int, default=3)
-    rep.add_argument("--confirmed-only", action="store_true",
-                     help="count only browser-confirmed visitor-days as people")
+    rep.add_argument("--include-likely", action="store_true",
+                     help="also count likely-human visitor-days as people "
+                          "(default: browser-confirmed only)")
     rep.add_argument("--out", help="file to write (default: stdout for json, else a named file)")
     sub.add_parser("status", help="counts and data-file ages")
     args = p.parse_args(argv)
@@ -49,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "report":
         from .report import build_summary, render_html, to_zip
-        classes = ("human",) if args.confirmed_only else ("human", "likely-human")
+        classes = ("human", "likely-human") if args.include_likely else ("human",)
         s = build_summary(args.start, args.end, classes=classes, public=args.public,
                           min_count=args.min_count)
         stem = f"pinakes-usage-{s['period']['start']}-to-{s['period']['end']}{'-public' if args.public else ''}"

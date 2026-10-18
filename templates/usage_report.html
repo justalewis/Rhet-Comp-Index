@@ -101,8 +101,12 @@
   <section class="panel">
     <h2>How to read these numbers</h2>
     <p class="note">The unit is the visitor-day: one browser on one network on one day. Pinakes gives each visitor an id that changes every day and cannot be traced back to an address, so nobody can be followed from one day to the next, and someone who returns on three days counts three times.</p>
-    <p class="note">People are counted in two groups. Browser-confirmed visitor-days ran the page's script, which crawlers almost never do. Likely visitor-days used an ordinary browser on an ordinary network but never ran it, usually because JavaScript was blocked. Bots, scripts, feed readers and traffic from hosting companies are counted separately and appear only in the last section.</p>
-    <p class="note">Institutions are identified from the network a visit came from, using the address registries, reverse DNS, IPEDS, ROR and the world-universities list. Only on-campus connections can be identified. Faculty and students reading from home or a phone show up as their internet provider, so the institution count is a minimum, not a census. Raw IP addresses are deleted within {{ s.data.raw_ip_hours }} hours of the visit.</p>
+    {% if 'likely-human' in s.classes %}
+    <p class="note">People are counted in two groups. Browser-confirmed visitor-days ran the page's script, which crawlers almost never do. Likely visitor-days never ran it but browsed several pages over at least half a minute or arrived from another site. Unverified visitor-days, bots, scripts, feed readers and traffic from hosting companies are counted separately and appear only in the last section.</p>
+    {% else %}
+    <p class="note">People are the visitor-days that ran the page's script, which crawlers almost never do. A crawler that sends each request from a different address can otherwise pass for thousands of ordinary browsers. Unverified visitor-days (no script, one or two quick requests, no referrer), bots, scripts, feed readers and traffic from hosting companies are counted separately and appear only in the last section.</p>
+    {% endif %}
+    <p class="note">Institutions are identified from the network a browser-confirmed visit came from, using the address registries, reverse DNS, IPEDS, ROR and the world-universities list. Only on-campus connections can be identified. Faculty and students reading from home or a phone show up as their internet provider, so the institution count is a minimum, not a census. Raw IP addresses are deleted within {{ s.data.raw_ip_hours }} hours of the visit.</p>
   </section>
 
   <section class="panel">
@@ -283,7 +287,7 @@
     </section>
     <section class="panel">
       <h2>Automated traffic</h2>
-      <p class="note">Not counted anywhere above: {{ bc['bot'] | num }} bot and script visitor-days, {{ bc['datacenter'] | num }} from hosting networks, {{ bc['feed-reader'] | num }} from feed readers.</p>
+      <p class="note">Not counted anywhere above: {{ bc['unverified'] | num }} unverified visitor-days, {{ bc['bot'] | num }} bot and script visitor-days, {{ bc['datacenter'] | num }} from hosting networks, {{ bc['feed-reader'] | num }} from feed readers.{% if 'likely-human' not in s.classes %} A further {{ bc['likely-human'] | num }} likely-human visitor-days are left out of this version.{% endif %}</p>
       {% set rows = [] %}{% for b in s.bots[:12] %}{% set _ = rows.append({'label': b.bot, 'value': b.hits}) %}{% endfor %}
       {{ bars(rows, ['Client', 'Requests']) }}
     </section>
