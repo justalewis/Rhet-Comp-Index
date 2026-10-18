@@ -2,7 +2,7 @@
 
 Restore the Pinakes database on the production server, the Windows Server at the WAC Clearinghouse that runs `pinakes.wacclearinghouse.org`. Written for a sleep-deprived operator at 2 AM. Read it twice; do it once.
 
-Every command runs in an elevated PowerShell window on the server. Paths are the defaults from the operations runbook's [Conventions](../WINDOWS-SERVER-RUNBOOK.md#conventions): the database is `C:\Pinakes\data\articles.db`, the app is the service `Pinakes-Web`.
+Every command runs in an elevated PowerShell window on the server. Paths are the defaults from the operations runbook's [Conventions](../WINDOWS-SERVER-RUNBOOK.md#conventions): the database is `C:\Pinakes\data\articles.db`, the app is the service `Pinakes` (on a server installed from the install guide it is `Pinakes-Web`; use that name in the commands instead).
 
 ## What backups exist
 
@@ -46,7 +46,7 @@ This is the restore under [When an update fails](../WINDOWS-SERVER-RUNBOOK.md#wh
 ```powershell
 # A1. Stop the app, and keep the nightly backup from firing mid-restore.
 #     A backup run prunes C:\Pinakes\backups to the newest 10 files.
-Stop-Service Pinakes-Web
+Stop-Service Pinakes
 Disable-ScheduledTask -TaskName Pinakes-NightlyBackup | Out-Null
 
 # A2. List the backups, and copy the one you'll use out of the rotation.
@@ -80,7 +80,7 @@ C:\Pinakes\venv\Scripts\python.exe redaction.py import-ledger <path to your newe
 #     C:\Pinakes\venv\Scripts\python.exe redaction.py resweep
 
 # A7. Start the app, turn the nightly backup back on, and check.
-Start-Service Pinakes-Web
+Start-Service Pinakes
 Enable-ScheduledTask -TaskName Pinakes-NightlyBackup | Out-Null
 Invoke-RestMethod http://127.0.0.1:8080/health/ready
 # Expected: status "ok", db "reachable". If the connection is refused, wait a
@@ -107,7 +107,7 @@ C:\Pinakes\venv\Scripts\python.exe redaction.py import-ledger C:\Pinakes\restore
 
 ## Restore B — from the encrypted offsite backup
 
-On a rebuilt server, follow [WINDOWS-SERVER-INSTALL.md](../WINDOWS-SERVER-INSTALL.md) until the `Pinakes-Web` service exists, then restore here rather than seeding the database with a full fetch. Both restore tools write a new file, run `PRAGMA integrity_check`, and re-apply the redaction ledger to it. Neither touches the live database.
+On a rebuilt server, follow [WINDOWS-SERVER-INSTALL.md](../WINDOWS-SERVER-INSTALL.md) until the web service exists (the guide names it `Pinakes-Web`), then restore here rather than seeding the database with a full fetch. Both restore tools write a new file, run `PRAGMA integrity_check`, and re-apply the redaction ledger to it. Neither touches the live database.
 
 ```powershell
 cd C:\Pinakes\app
@@ -151,7 +151,7 @@ C:\Pinakes\venv\Scripts\python.exe restore.py --latest `
 # and still exits 0. Look for that line.
 
 # B4. Promote it. Same moves as Restore A, steps A1, A4 and A7.
-Stop-Service Pinakes-Web -ErrorAction SilentlyContinue
+Stop-Service Pinakes -ErrorAction SilentlyContinue
 Disable-ScheduledTask -TaskName Pinakes-NightlyBackup | Out-Null
 Get-ChildItem C:\Pinakes\restore\restored.db*      # should list only restored.db
 # If a restored.db-wal is there, fold it into the file first:
@@ -162,7 +162,7 @@ New-Item -ItemType Directory $aside | Out-Null
 Move-Item C:\Pinakes\data\articles.db $aside
 Move-Item C:\Pinakes\data\articles.db-wal, C:\Pinakes\data\articles.db-shm $aside -ErrorAction SilentlyContinue
 Move-Item C:\Pinakes\restore\restored.db C:\Pinakes\data\articles.db
-Start-Service Pinakes-Web
+Start-Service Pinakes
 Enable-ScheduledTask -TaskName Pinakes-NightlyBackup | Out-Null
 Invoke-RestMethod http://127.0.0.1:8080/health/ready
 & C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
@@ -208,7 +208,7 @@ If this sequence fails, something has rotted: rotated bucket credentials, a lost
 | Symptom | Cause | Fix |
 |---|---|---|
 | `restore.py --verify` prints `FAIL` or a SQLite error | That backup is damaged | Pick an older file. `admin-tasks.log` marks nights whose copy failed its check with `ERROR` |
-| `Move-Item` says the file is in use | The service is still running, or something else has the file open | `Get-Service Pinakes-Web` should say `Stopped`. Close any open SQLite browser |
+| `Move-Item` says the file is in use | The service is still running, or something else has the file open | `Get-Service Pinakes` should say `Stopped`. Close any open SQLite browser |
 | `restore.py --list` prints `ERROR: missing env vars` | The six `PINAKES_BACKUP_*` variables aren't set in this shell | Set them, or download the file from the bucket console and use `restore_local.py` |
 | `restore.py --list` prints `No backups in bucket.` | Wrong bucket name, or the bucket was emptied | Check `PINAKES_BACKUP_BUCKET`, then check the bucket directly in the B2 web console |
 | `that file does not look like an age private key` (`restore_local.py`), or `IdentityError: invalid Bech32 encoding` (`restore.py`) | The key file has age-keygen's comment lines, or isn't the key | Put only the `AGE-SECRET-KEY-1...` line in the file |

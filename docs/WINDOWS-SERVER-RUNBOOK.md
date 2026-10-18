@@ -42,11 +42,17 @@ Everything here is scripted. The scripts live in the repository under
 
   Then close and reopen PowerShell.
 
-- The application is one Windows service, **`Pinakes-Web`**, running the Flask
-  app behind waitress on `127.0.0.1:8080`. IIS reverse-proxies the public
-  hostname to it. The address waitress listens on is set in the service's
-  arguments, which `nssm get Pinakes-Web AppParameters` shows. It should be
-  `--host=127.0.0.1`; [Visitor IP addresses](#visitor-ip-addresses) says why.
+- The application is one Windows service running the Flask app behind
+  waitress on port 8080, and IIS reverse-proxies the public hostname to it. On
+  the production box the service is named **`Pinakes`**. A server installed
+  from the install guide names it `Pinakes-Web`. The
+  scripts find it through `PINAKES_SERVICE_NAME` (default `Pinakes-Web`), so on
+  the production box that Machine variable must read `Pinakes`. The commands
+  below use `Pinakes`; substitute the other name on another server.
+- The address waitress listens on is in the service's arguments, which
+  `nssm get Pinakes AppParameters` shows (`--listen=127.0.0.1:8080`, or
+  `--host=127.0.0.1 --port=8080` on an older install). It should be loopback;
+  [Visitor IP addresses](#visitor-ip-addresses) says why.
 - Commands call the scripts by full path,
   `& C:\Pinakes\app\deploy\windows\<script>.ps1`, so they work from any
   directory. A path written `.\deploy\windows\…` is relative to
@@ -142,7 +148,7 @@ Some results are expected to be unhappy at this point and will be fixed below:
 - `API responses not shared-cacheable` — FAIL while the service still runs
   code from before the cache fix (`Cache-Control: public`).
 
-If it reports that the service `Pinakes-Web` does not exist, this machine is
+If it reports that the service `Pinakes` does not exist, this machine is
 not installed the way the guide assumes — go back to
 [WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md). The same applies if
 `Update-Pinakes.ps1` or `Install-PinakesTasks.ps1` later stops because the
@@ -164,7 +170,7 @@ the NSSM service). Set it at Machine scope so the tasks can find it, using the
 
 ```powershell
 [Environment]::SetEnvironmentVariable("PINAKES_ADMIN_TOKEN", "<token>", "Machine")
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 Justin has the token. If nobody has it, generate a new one and set it — nothing
@@ -176,11 +182,11 @@ $bytes = New-Object byte[] 32
 $token = [Convert]::ToBase64String($bytes)
 [Environment]::SetEnvironmentVariable("PINAKES_ADMIN_TOKEN", $token, "Machine")
 Write-Host "New token (send to Justin over a secure channel): $token"
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 Either way, check that the service and the tasks now agree. If the service
-has its own copy of the token (`nssm get Pinakes-Web AppEnvironmentExtra`
+has its own copy of the token (`nssm get Pinakes AppEnvironmentExtra`
 lists `PINAKES_ADMIN_TOKEN=…`), change it there as well, keeping the other
 lines, the way [Visitor IP addresses](#visitor-ip-addresses) shows for
 another variable. A `403` from `Invoke-PinakesAdmin.ps1` means the two still
@@ -308,7 +314,7 @@ $h = @{ Authorization = 'Bearer ' + [Environment]::GetEnvironmentVariable('PINAK
 ```
 
 Errors and warnings go to the service's stderr log, `web-stderr.log` if the
-service was installed per the guide (`nssm get Pinakes-Web AppStderr` shows the
+service was installed per the guide (`nssm get Pinakes AppStderr` shows the
 file):
 
 ```powershell
@@ -408,7 +414,7 @@ In order, the script:
    included, unless you pass `-Force` (see B4).
 3. Takes a hot backup of `articles.db` to `C:\Pinakes\backups`, unless you
    pass `-SkipBackup`.
-4. Stops `Pinakes-Web`.
+4. Stops `Pinakes`.
 5. Moves the working tree to the target commit (`git reset --hard`, then
    `git clean -fd`).
 6. Reinstalls Python dependencies.
@@ -506,14 +512,14 @@ What the script does depends on where it failed:
 After any failure, check where things stand:
 
 ```powershell
-Get-Service Pinakes-Web                          # Running or Stopped?
+Get-Service Pinakes                          # Running or Stopped?
 git -C C:\Pinakes\app rev-parse --short HEAD     # which commit the tree is on
 Invoke-RestMethod http://127.0.0.1:8080/health   # .version: what the service is running
 & C:\Pinakes\app\deploy\windows\Test-PinakesHealth.ps1
 ```
 
 If the service is stopped and the tree is still on the previous commit,
-`Start-Service Pinakes-Web` is enough. If the tree and the running version
+`Start-Service Pinakes` is enough. If the tree and the running version
 disagree, or nothing answers, recover by hand as below.
 
 Each run, except `-Check`, writes a full transcript to
@@ -531,7 +537,7 @@ Set-Location C:\Pinakes\app
 git log --oneline -10                  # find the last known-good commit
 git reset --hard <that-commit>
 C:\Pinakes\venv\Scripts\python.exe -m pip install -r requirements.txt
-Start-Service Pinakes-Web
+Start-Service Pinakes
 Invoke-RestMethod http://127.0.0.1:8080/health
 ```
 
@@ -541,11 +547,11 @@ manual recovery above, up to but not including `Start-Service`), or the
 migration runs again as soon as the service starts. Then:
 
 ```powershell
-Stop-Service Pinakes-Web
+Stop-Service Pinakes
 Get-ChildItem C:\Pinakes\backups | Sort-Object LastWriteTime -Descending | Select-Object -First 5
 Copy-Item C:\Pinakes\backups\articles-<timestamp>-pre-<sha>.db C:\Pinakes\data\articles.db -Force
 Remove-Item C:\Pinakes\data\articles.db-wal, C:\Pinakes\data\articles.db-shm -ErrorAction SilentlyContinue
-Start-Service Pinakes-Web
+Start-Service Pinakes
 ```
 
 In the file name, `<sha>` is the commit that was being deployed, not the one
@@ -579,7 +585,7 @@ header is `PINAKES_TRUSTED_IP_HEADER`, and on this server it must be
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_TRUSTED_IP_HEADER','CF-Connecting-IP','Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 **Not `X-Forwarded-For`.** Waitress 3.x deletes `X-Forwarded-For`,
@@ -596,16 +602,18 @@ forge it is to skip Cloudflare and reach this server directly. Allowing only
 on 443 closes that gap. The app believes the header only when the connection
 reaching Waitress comes from this machine or from a private-network address,
 so keep port 8080 closed to everything but loopback. Better, have Waitress
-listen on loopback only: `nssm get Pinakes-Web AppParameters` should show
-`--host=127.0.0.1`. If it shows `--host=0.0.0.0`, first confirm that IIS
-reaches the app over loopback (the `Socket peer` line from the check below
-reads `127.0.0.1`), then set it again with only the host changed, and
-restart:
+listen on loopback only: `nssm get Pinakes AppParameters` should show
+`--listen=127.0.0.1:8080` (or `--host=127.0.0.1`). If it shows `0.0.0.0`, first
+confirm that IIS reaches the app over loopback (the `Socket peer` line from the
+check below reads `127.0.0.1`), then set the line again with only the address
+changed, keeping `--threads` and `--channel-timeout`, and restart.
+`Set-PinakesService.ps1` keeps whatever address it finds, so the change
+survives it:
 
 ```powershell
-nssm get Pinakes-Web AppParameters
-nssm set Pinakes-Web AppParameters "<the same line, with --host=127.0.0.1>"
-Restart-Service Pinakes-Web
+nssm get Pinakes AppParameters
+nssm set Pinakes AppParameters "<the same line, with the address changed to 127.0.0.1>"
+Restart-Service Pinakes
 ```
 
 **Verify it from outside**, through the public hostname. On the server:
@@ -636,9 +644,9 @@ the machine variable. Set it on the service instead, keeping the variables
 already there:
 
 ```powershell
-nssm get Pinakes-Web AppEnvironmentExtra
-nssm set Pinakes-Web AppEnvironmentExtra <the existing lines> PINAKES_TRUSTED_IP_HEADER=CF-Connecting-IP
-Restart-Service Pinakes-Web
+nssm get Pinakes AppEnvironmentExtra
+nssm set Pinakes AppEnvironmentExtra <the existing lines> PINAKES_TRUSTED_IP_HEADER=CF-Connecting-IP
+Restart-Service Pinakes
 ```
 
 ### Links in emails
@@ -670,7 +678,7 @@ way as `PINAKES_TRUSTED_IP_HEADER` above, and restart:
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_SITE_URL','https://pinakes.wacclearinghouse.org','Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 Use `https://testpinakes.wacclearinghouse.org` on the test host. The deploy
@@ -701,7 +709,7 @@ proxy and nothing can be resolved.
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_USAGE_TRACKING','1','Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 **2. Download the reference data** (about 70 MB, no account needed). Do this
@@ -741,7 +749,7 @@ Pinakes, has its own switch and works with or without recording:
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_USAGE_SURVEY','1','Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 Responses appear on `/admin/usage`. Nothing else needs scheduling; the
@@ -823,7 +831,7 @@ plus a service restart:
 
 ```powershell
 [Environment]::SetEnvironmentVariable('PINAKES_REDACTION_FORM_ENABLED','1','Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes
 ```
 
 If `/redaction-request` still redirects to `/about` after the restart, the
@@ -941,7 +949,7 @@ service, reading logs, and anything to do with IIS.
 ### Troubleshooting
 
 **`/health` reports an old version after an update.** The working tree moved but
-the service did not restart. `Restart-Service Pinakes-Web`. The update script
+the service did not restart. `Restart-Service Pinakes`. The update script
 checks for exactly this and will not report success without it.
 
 **The site shows stale or empty data, but `Test-PinakesHealth.ps1` passes.**
@@ -954,8 +962,8 @@ than this fix — deploy.
 
 **`403` from `Invoke-PinakesAdmin.ps1`.** The machine-scope
 `PINAKES_ADMIN_TOKEN` does not match what the service is running with. Set them
-to the same value and `Restart-Service Pinakes-Web`. If the service has its own
-copy in `nssm get Pinakes-Web AppEnvironmentExtra`, change that one too.
+to the same value and `Restart-Service Pinakes`. If the service has its own
+copy in `nssm get Pinakes AppEnvironmentExtra`, change that one too.
 
 **`429` from `Invoke-PinakesAdmin.ps1 -Endpoint Fetch`.** More than six
 authenticated `/fetch` calls in an hour. Wait and run it again.

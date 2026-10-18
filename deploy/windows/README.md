@@ -32,7 +32,7 @@ Every script except `Pinakes.Common.ps1` supports `Get-Help .\Script.ps1 -Full`.
 ```powershell
 .\Update-Pinakes.ps1 -Check                 # what would change? changes nothing
 .\Update-Pinakes.ps1                        # deploy origin/main
-.\Update-Pinakes.ps1 -Ref e0f82ec           # deploy a specific commit (or roll back)
+.\Update-Pinakes.ps1 -Ref <sha>             # deploy a specific commit (or roll back)
 .\Test-PinakesHealth.ps1                    # full check, on the server
 .\Test-PinakesHealth.ps1 -BaseUrl https://pinakes.wacclearinghouse.org   # same, HTTP checks via the proxy
 .\Test-PinakesHealth.ps1 -Remote            # HTTPS-only check, from anywhere

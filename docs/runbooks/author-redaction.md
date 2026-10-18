@@ -22,7 +22,7 @@ On the Clearinghouse server these are Machine-scope environment variables. Set o
 
 ```powershell
 [Environment]::SetEnvironmentVariable('REDACTION_SALT', '<value>', 'Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes        # Pinakes-Web on a server installed from the guide
 ```
 
 If the running service still doesn't see a variable, set it on the NSSM service instead, keeping the ones already there (the operations runbook shows how under [Visitor IP addresses](../WINDOWS-SERVER-RUNBOOK.md#visitor-ip-addresses)).

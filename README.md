@@ -10,7 +10,7 @@ The index covers nearly 70 journals and more than 65,000 articles, drawn from Cr
 
 ## Architecture
 
-One Flask process serves HTML and a JSON API. [`app.py`](app.py) is an application factory (`create_app()`); the routes live in [`blueprints/`](blueprints/). Production runs on a Windows Server at the WAC Clearinghouse: Cloudflare in front, IIS with Application Request Routing as the reverse proxy, and Waitress serving the app on `127.0.0.1:8080` as the Windows service `Pinakes-Web`. The data is one SQLite file, `C:\Pinakes\data\articles.db` by default.
+One Flask process serves HTML and a JSON API. [`app.py`](app.py) is an application factory (`create_app()`); the routes live in [`blueprints/`](blueprints/). Production runs on a Windows Server at the WAC Clearinghouse: Cloudflare in front, IIS with Application Request Routing as the reverse proxy, and Waitress serving the app on `127.0.0.1:8080` as a Windows service (named `Pinakes` on the production box; the install guide calls it `Pinakes-Web`). The data is one SQLite file, `C:\Pinakes\data\articles.db` by default.
 
 There is no separate scheduler process. Windows scheduled tasks POST to admin endpoints, and each endpoint runs its job on a background thread inside the web process. Citation networks, co-citation graphs, and other analytics are computed on demand by the [`db/`](db/) package using NetworkX.
 
@@ -67,7 +67,7 @@ Production is a Windows Server at the WAC Clearinghouse, serving [pinakes.waccle
 - [`docs/WINDOWS-SERVER-INSTALL.md`](docs/WINDOWS-SERVER-INSTALL.md) — first install: Python, the virtual environment, the NSSM service, IIS, environment variables, scheduled tasks.
 - [`docs/WINDOWS-SERVER-RUNBOOK.md`](docs/WINDOWS-SERVER-RUNBOOK.md) — operations: bringing the server back to healthy, deploying an update, visitor IPs, troubleshooting.
 
-The scripts both documents use are in [`deploy/windows/`](deploy/windows/). The server is updated by hand. The operator runs `Update-Pinakes.ps1` on it, which pulls `main`, backs up the database, reinstalls dependencies, smoke-tests the new code, restarts `Pinakes-Web`, and waits for `/health` to report the new commit; if a step from the checkout onward fails, it puts the previous commit back. A green CI run deploys nothing to the server.
+The scripts both documents use are in [`deploy/windows/`](deploy/windows/). The server is updated by hand. The operator runs `Update-Pinakes.ps1` on it, which pulls `main`, backs up the database, reinstalls dependencies, smoke-tests the new code, restarts the service, and waits for `/health` to report the new commit; if a step from the checkout onward fails, it puts the previous commit back. A green CI run deploys nothing to the server.
 
 The former Fly.io deployment ([`fly.toml`](fly.toml), [`Dockerfile`](Dockerfile), gunicorn) is no longer production. [`.github/workflows/fly-deploy.yml`](.github/workflows/fly-deploy.yml) still deploys it after every green Tests run on `main`, and `pinakes.xyz` now redirects to the Clearinghouse host through the Cloudflare Worker in [`deploy/xyz-redirect/`](deploy/xyz-redirect/). The scheduled workflows that drove the Fly app (`cron.yml`, `maintenance.yml`, `alerts.yml`) have been manual-only since 2026-09-19: they target `pinakes.xyz` and do nothing for the server. (On Fly, an earlier design ran the scheduler as a second process group with its own machine. That didn't work because Fly volumes are single-attach: the scheduler had no way to share `/data` with the app machine. See [`docs/refactor-notes/13-scheduler-architecture-fix.md`](docs/refactor-notes/13-scheduler-architecture-fix.md).)
 
@@ -83,6 +83,7 @@ The former Fly.io deployment ([`fly.toml`](fly.toml), [`Dockerfile`](Dockerfile)
 | `Pinakes-WeeklyMaintenance` | 04:45 Sundays | `POST /api/admin/run-maintenance` — steps 4–9 and 12 of `weekly_maintenance.py` (citations, OpenAlex, LiCS references, retag + FTS, OA backfill, OpenAlex citation counts, book harvest) |
 | `Pinakes-UsageResolve` | 05:10 daily | `POST /api/admin/usage/resolve` — usage statistics; also deletes raw IPs |
 | `Pinakes-UsageData` | 05:40 Sundays | `POST /api/admin/usage/refresh-data` — refresh the IP databases when stale |
+| `Pinakes-HealthWatchdog` | every 5 min | `Watch-PinakesHealth.ps1` — restart the service if it is running but `/health` stops answering |
 | `Pinakes-WeeklyDigests` | 14:17 Fridays | Only with `-IncludeDigests`: `POST /api/admin/send-digests` |
 | `Pinakes-UpdateCheck` | 08:00 daily | Only with `-IncludeUpdateCheck`: `Update-Pinakes.ps1 -Check`. Never deploys; its output goes only to the task's console, so run `-Check` by hand to see whether the server is behind |
 
@@ -90,7 +91,7 @@ The endpoint tasks go through `Invoke-PinakesAdmin.ps1`, which reads `PINAKES_AD
 
 ### Configuration
 
-Settings are environment variables. Set them at Machine scope on the server, where the scheduled tasks read them too, or on the `Pinakes-Web` service through NSSM, and restart the service after a change. [Section 6 of the install guide](docs/WINDOWS-SERVER-INSTALL.md#6-configure-environment-variables) shows how. The ones that matter most:
+Settings are environment variables. Set them at Machine scope on the server, where the scheduled tasks read them too, or on the service through NSSM, and restart the service after a change. [Section 6 of the install guide](docs/WINDOWS-SERVER-INSTALL.md#6-configure-environment-variables) shows how. The ones that matter most:
 
 | Variable | What it does |
 |---|---|
@@ -132,7 +133,7 @@ PUB=$(grep '^# public key:' ~/.pinakes/age.key | cut -d' ' -f4)
 [Environment]::SetEnvironmentVariable('PINAKES_BACKUP_ACCESS_KEY_ID',  '<keyID>', 'Machine')
 [Environment]::SetEnvironmentVariable('PINAKES_BACKUP_SECRET_KEY',     '<applicationKey>', 'Machine')
 [Environment]::SetEnvironmentVariable('PINAKES_BACKUP_AGE_PUBLIC_KEY', '<the age1... public key from step 1>', 'Machine')
-Restart-Service Pinakes-Web
+Restart-Service Pinakes        # Pinakes-Web on a server installed from the guide
 ```
 
 **The age private key is the most important secret in this project.** Store it in a password manager AND a paper backup. If you lose it, every backup becomes unrecoverable.

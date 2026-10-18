@@ -226,7 +226,7 @@ The PowerShell scripts in `deploy/windows/` read these through `Get-PinakesSetti
 | `PINAKES_ROOT` | `C:\Pinakes` | Root for `app`, `venv`, `logs` and `backups`, and for the scripts' default `DB_PATH` |
 | `PINAKES_BACKUP_DIR` | `<root>\backups` | Where `Backup-Pinakes.ps1` and `Update-Pinakes.ps1` write |
 | `PINAKES_BACKUP_KEEP` | `10` | Backups kept per database before the oldest are pruned |
-| `PINAKES_SERVICE_NAME` | `Pinakes-Web` | Service the scripts stop, start and check |
+| `PINAKES_SERVICE_NAME` | `Pinakes-Web` | Service the scripts stop, start and check. `Pinakes` on the production box, whose service has that name |
 | `PINAKES_GIT_BRANCH` | `main` | Branch `Update-Pinakes.ps1` deploys and the health check compares against |
 | `PINAKES_GIT_REMOTE` | `origin` | Remote they fetch from |
 
@@ -311,6 +311,8 @@ Start-Service Pinakes-Web
 Get-Service  Pinakes-Web
 ```
 
+> **Service name.** This guide names the service `Pinakes-Web`, which is also the scripts' default. The production box's service is named `Pinakes`. If yours is named anything other than `Pinakes-Web`, set `PINAKES_SERVICE_NAME` at Machine scope (§6.3), or the scripts will not find it.
+
 Two of the Waitress arguments matter:
 
 - **`--host=127.0.0.1`.** With IIS in front (§9.2), Waitress should listen on loopback only. With `PINAKES_TRUSTED_IP_HEADER` set, `rate_limit.py` treats any loopback or private (RFC 1918) address as a proxy on this machine and believes the visitor IP it forwards, so a host on the LAN that could reach port 8080 could pick its own IP. Use `--host=0.0.0.0` only for the LAN-only setup in §9.1.
@@ -318,11 +320,18 @@ Two of the Waitress arguments matter:
 
 `AppRotateFiles` alone rotates the logs only when the service starts; `AppRotateOnline` also rotates them when they pass `AppRotateBytes` while it runs.
 
-To see what an existing server runs, or to change it:
+On an existing service, [`Set-PinakesService.ps1`](../deploy/windows/Set-PinakesService.ps1) applies the rest of what this section sets up, and a little more, in one go: the two log files, rotation while running (daily or at 10 MB), `--threads=8`, `--channel-timeout=120`, `AppExit Restart`, and `PYTHONUNBUFFERED=1` so the last lines before a crash reach the file. It keeps the listen address and every existing environment line, then restarts the service and waits for `/health`. `-Show` prints the current settings and changes nothing. The production service ran without log files or extra threads until this script was run on 2026-10-17; see the runbook's [A6b](WINDOWS-SERVER-RUNBOOK.md#a6b-service-logging-and-threads).
+
+```powershell
+& C:\Pinakes\app\deploy\windows\Set-PinakesService.ps1 -Show
+& C:\Pinakes\app\deploy\windows\Set-PinakesService.ps1
+```
+
+The script never changes the listen address. To change that by hand, keep the rest of the line:
 
 ```powershell
 nssm get Pinakes-Web AppParameters
-nssm set Pinakes-Web AppParameters "--host=127.0.0.1 --port=8080 --threads=8 app:app"
+nssm set Pinakes-Web AppParameters "--listen=127.0.0.1:8080 --threads=8 --channel-timeout=120 app:app"
 Restart-Service Pinakes-Web
 ```
 
@@ -343,7 +352,7 @@ Then register the tasks:
 & C:\Pinakes\app\deploy\windows\Install-PinakesTasks.ps1 -IncludeUpdateCheck
 ```
 
-That creates seven tasks. Times are the server's local time.
+That creates eight tasks. Times are the server's local time.
 
 | Task | When | What it does |
 |---|---|---|
@@ -353,6 +362,7 @@ That creates seven tasks. Times are the server's local time.
 | `Pinakes-WeeklyMaintenance` | 04:45 Sundays | `POST /api/admin/run-maintenance` |
 | `Pinakes-UsageResolve` | 05:10 daily | Usage statistics: resolves recorded addresses, then deletes them. Registered whether or not recording is on; with nothing recorded it finishes at once. |
 | `Pinakes-UsageData` | 05:40 Sundays | Usage statistics: refreshes the IP databases when they are out of date. Skips its downloads while recording is off. |
+| `Pinakes-HealthWatchdog` | every 5 min | `Watch-PinakesHealth.ps1`: if the service is running but `/health` fails three times 20 s apart, saves a py-spy thread dump and restarts it. NSSM restarts only a process that exits, not one that hangs. Log: `C:\Pinakes\logs\watchdog.log`. |
 | `Pinakes-UpdateCheck` | 08:00 daily | Runs `Update-Pinakes.ps1 -Check`. Registered only with `-IncludeUpdateCheck`; never deploys. |
 
 `Pinakes-UpdateCheck` does not report anywhere you can read. In `-Check` mode
