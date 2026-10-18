@@ -74,14 +74,21 @@ usage.db too.
 - **Reports are aggregate.** The public version names an institution,
   search term, referring site or article only when at least three
   visitor-days account for it, and summarises the rest as counts.
-- **What the lookups see.** Network facts are cached per /24 (IPv4) or /48
-  (IPv6) for 30 days, so each network is looked up about once a month. The
+- **What the lookups see.** Only networks with a browser-confirmed visitor
+  are looked up at all; every other address gets the local location
+  database and nothing more. Network facts are cached per /24 (IPv4) or /48
+  (IPv6) for 30 days, so a network is looked up about once a month. The
   address registries (RDAP, via rdap.org) are asked about the network's
   base address (`128.95.10.0`), never a visitor's. Reverse DNS can only be
-  answered for a real address, so it looks up one visitor address per new
-  network; that query goes through the server's DNS resolver to the
-  network's own name servers. ROR sees organisation names only. A night's
-  run makes at most 250 RDAP and 120 ROR requests.
+  answered for a real address, so it looks up one confirmed visitor's
+  address per new network; that query goes through the server's DNS
+  resolver to the network's own name servers. ROR sees organisation names
+  only. A night's run looks up at most 1,500 networks and makes at most 250
+  RDAP and 120 ROR requests.
+- **Noise is pruned.** The per-request rows behind bot, unverified and
+  datacenter visitor-days are deleted after `USAGE_PRUNE_DAYS` (default 7);
+  their daily counts stay in `visitor_days`. People's rows and feed
+  readers' (for the subscriber counts) are kept.
 
 The public notice is the "Usage statistics" section of `/about`, which
 appears only while recording is on.
@@ -107,16 +114,31 @@ The rules are tried in this order, and the first that fits wins:
 4. `datacenter`: a hosting or cloud network, and the script never ran.
 5. `bot`: a non-browser User-Agent, more than 40 requests in a minute or
    400 in a day, or API calls without ever loading a page.
-6. `likely-human`: everything else, an ordinary browser on an ordinary
-   network that never ran the script.
+6. `likely-human`: no script, but evidence a crawler doesn't leave: two or
+   more pages at least 30 seconds apart, or arrival from another site.
+7. `unverified`: everything else, typically one or two quick requests from
+   an ordinary-looking browser with no script and no referrer.
 
-"People" in the reports means `human` plus `likely-human` by default, or
-`human` only with the "browser-confirmed only" setting. The other classes
-are reported in their own section and never added in.
+"People" in the reports means `human` (browser-confirmed) by default.
+"Confirmed and likely" on the dashboard, or `--include-likely` on the
+command line, adds `likely-human`. Unverified, bot, datacenter and feed
+reader visitor-days are reported in their own section and never added in.
+
+Why so strict: on 2026-10-17, the first full day of recording, a crawler
+sending almost every request from a different address (208,680 addresses in
+a day) produced about 73,000 visitor-days of one page each, no script, no
+referrer, English and desktop throughout, walking article pages and their
+BibTeX/RIS exports. Under the original rule they all counted as likely
+people; about 375 visitor-days that day actually ran the page's script. Per
+address the crawler is indistinguishable from a quiet reader, so only the
+script, real browsing over time, or an outside referrer separates them. The
+browser-confirmed figure tracks GoatCounter, which also counts only browsers
+that run JavaScript.
 
 ## How institutions are identified
 
-For each network not seen in the last 30 days, the resolver tries, in order:
+For each network with a browser-confirmed visitor and not seen in the last
+30 days, the resolver tries, in order:
 
 1. **Verified reverse DNS.** The address's hostname, accepted only if that
    hostname resolves back to the same address, then matched by domain
@@ -128,8 +150,10 @@ For each network not seen in the last 30 days, the resolver tries, in order:
    that own their address space but reach the internet through a state or
    regional network.
 4. **The autonomous-system name** (University of Washington runs its own).
-5. **ROR's affiliation matcher**, for registrant or network names that look
-   institutional but are on neither list. US matches are joined back to
+5. **ROR's affiliation matcher**, for an address-block registrant name that
+   looks institutional but is on neither list. Network operators' (AS)
+   names are never sent to ROR: operators include national telecoms with
+   institutional-sounding names, which ROR matches to themselves. US matches are joined back to
    IPEDS for Carnegie classification, sector, HBCU and tribal status.
 6. **A bare registrant name** that looks institutional ("Example County
    School District") is kept under that name when nothing else matches.
@@ -198,6 +222,7 @@ problem.
 | `USAGE_DB_PATH` | `usage.db` beside `articles.db` | |
 | `USAGE_DATA_DIR` | `usage-data/` beside `articles.db` | IP databases and institution lists |
 | `USAGE_RAW_IP_HOURS` | `48` | Hard limit on keeping a raw address |
+| `USAGE_PRUNE_DAYS` | `7` | Days to keep per-request rows for bot, unverified and datacenter visitor-days |
 | `ROR_CLIENT_ID` | unset | Optional ROR API client id |
 
 ## Jobs

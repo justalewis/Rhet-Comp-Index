@@ -109,8 +109,10 @@ _KIND_PATTERNS = [
     (re.compile(r"college|colegio|faculdade|facultad|polytechnic|politecnic|"
                 r"institute of technology|instituto|seminary|conservatory|academy", re.I), "college"),
     (re.compile(r"library|librar|biblioteca", re.I), "library"),
-    (re.compile(r"\bgovernment\b|\bstate of\b|\bcounty\b|\bcity of\b|department of|ministry|"
-                r"ministerio|\bfederal\b|national laborator", re.I), "government"),
+    # Phrases, not bare words: "White County Video, Inc." is a cable company.
+    (re.compile(r"\bgovernment\b|\bstate of\b|\bcounty of\b|\bcounty government\b|"
+                r"\bcity of\b|department of|ministry|ministerio|\bfederal\b|"
+                r"national laborator", re.I), "government"),
 ]
 
 

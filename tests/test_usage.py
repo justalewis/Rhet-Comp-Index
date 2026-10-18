@@ -130,9 +130,9 @@ def test_old_salts_are_dropped(tracking):
 
 # ── Browser events ───────────────────────────────────────────────────────────
 
-def post_event(client, body, ip="81.2.69.160"):
+def post_event(client, body, ip="81.2.69.160", ua_string=CHROME):
     return client.post("/api/e", data=json.dumps(body), content_type="application/json",
-                       headers={"CF-Connecting-IP": ip, "User-Agent": CHROME})
+                       headers={"CF-Connecting-IP": ip, "User-Agent": ua_string})
 
 
 def test_events_are_validated_and_mapped(tracking):
@@ -290,6 +290,7 @@ def test_network_classes():
 
 def test_rdap_is_asked_about_the_network_not_the_visitor(tracking, data_dir):
     visit(tracking, "/about", ip="81.2.70.10")
+    post_event(tracking, {"t": "view", "p": "/about"}, ip="81.2.70.10")
     lookups = FakeLookups()
     resolve.run(now=store.utc_now(), lookups=lookups, geo=FakeGeo(),
                 registry=institutions.Registry(store.data_dir()))
@@ -356,8 +357,11 @@ class FakeLookups(resolve.Lookups):
     def __init__(self):
         super().__init__(enabled=True)
         self.rdap_calls = []
+        self.rdns_calls = []
+        self.ror_calls = []
 
     def rdns(self, ips):
+        self.rdns_calls.extend(ips)
         return {ip: (("wifi-1.cs.washington.edu", True) if ip == "81.2.69.160" else (None, False))
                 for ip in ips}
 
@@ -368,6 +372,7 @@ class FakeLookups(resolve.Lookups):
         return {"name": "COMCAST", "org": "Comcast Cable Communications, LLC", "domains": [], "country": "US"}
 
     def ror(self, name):
+        self.ror_calls.append(name)
         return None, False
 
 
@@ -381,8 +386,9 @@ def test_resolver_identifies_classifies_and_forgets(tracking, data_dir, monkeypa
     visit(tracking, "/explore", ip="81.2.69.160")
     visit(tracking, "/api/citations/half-life", ip="81.2.69.160")
     post_event(tracking, {"t": "view", "p": "/explore"}, ip="81.2.69.160")
-    # Olympic College, found through the address registry; no script ran.
+    # Olympic College, found through the address registry.
     visit(tracking, "/article/2", ip="81.2.70.10")
+    post_event(tracking, {"t": "view", "p": "/article/2"}, ip="81.2.70.10")
     # A home connection with Global Privacy Control.
     visit(tracking, "/about", ip="73.10.10.10", **{"Sec-GPC": "1"})
     # A scraper on AWS and a declared crawler.
@@ -408,9 +414,9 @@ def test_resolver_identifies_classifies_and_forgets(tracking, data_dir, monkeypa
     assert gpc == [{"city": None, "as_org": None, "institution_id": None, "country": "US"}]
 
     classes = sorted(r["class"] for r in rows("SELECT class FROM visitor_days"))
-    assert classes == ["bot", "bot", "human", "likely-human", "likely-human"]
-    uw = rows("SELECT * FROM visitor_days WHERE class = 'human'")[0]
-    assert uw["institution_id"] == inst["University of Washington-Seattle Campus"]["id"]
+    assert classes == ["bot", "bot", "human", "human", "unverified"]
+    (uw,) = rows("SELECT * FROM visitor_days WHERE class = 'human' AND institution_id = ?",
+                 inst["University of Washington-Seattle Campus"]["id"])
     assert uw["tools"] >= 1 and uw["tool_runs"] == 1
 
     # Networks are cached: a second run does no new lookups.
@@ -426,7 +432,11 @@ def test_classify_visitor_rules():
     assert c({"bot": "Google", "bot_kind": "search", "beacon": 1}) == "bot"
     assert c({"beacon": 1, "net_class": "hosting", "family": "Chrome"}) == "human"
     assert c({"net_class": "hosting", "family": "Chrome", "pages": 2}) == "datacenter"
-    assert c({"family": "Chrome", "pages": 3, "hits": 5, "peak_per_min": 2}) == "likely-human"
+    # Without the script, a person needs evidence a crawler doesn't leave.
+    assert c({"family": "Chrome", "pages": 3, "hits": 5, "span_s": 120}) == "likely-human"
+    assert c({"family": "Chrome", "pages": 1, "hits": 1, "ref_host": "google.com"}) == "likely-human"
+    assert c({"family": "Chrome", "pages": 3, "hits": 5, "span_s": 4}) == "unverified"
+    assert c({"family": "Chrome", "pages": 1, "hits": 1}) == "unverified"
     assert c({"family": "Chrome", "pages": 0, "hits": 5}) == "bot"
     assert c({"family": "Chrome", "pages": 300, "hits": 500, "peak_per_min": 90}) == "bot"
 
@@ -453,6 +463,9 @@ def seeded_usage(tracking):
     post_event(tracking, {"t": "view", "p": "/explore"}, ip="81.2.69.160")
     post_event(tracking, {"t": "out", "p": "/article/1", "x": "doi.org/10.1234/x"}, ip="81.2.69.160")
     visit(tracking, "/article/2", ip="81.2.70.10")
+    post_event(tracking, {"t": "view", "p": "/article/2"}, ip="81.2.70.10")
+    visit(tracking, "/about", ip="73.10.10.10", Referer="https://www.google.com/")     # likely
+    visit(tracking, "/article/3", ip="73.10.10.11")                                    # unverified
     for _ in range(2):
         visit(tracking, "/api/stats/timeline", ip="52.1.1.1", ua_string="python-requests/2.31")
     run_resolver(store.utc_now() + dt.timedelta(minutes=5))
@@ -467,13 +480,14 @@ def test_summary_counts_people_and_keeps_bots_apart(tracking, data_dir):
     assert t["by_class"]["bot"] == 1
     assert t["institutions"] == 2
     assert {x["tool"] for x in s["tools"]} >= {"half-life"}
-    assert t["doi_clicks"] == 1 and t["article_views"] == 2
+    assert t["doi_clicks"] == 1 and t["article_views"] == 2      # people only
+    assert t["by_class"]["unverified"] == 1 and t["by_class"]["likely-human"] == 1
     assert s["articles"][0]["title"]                       # titles come from articles.db
     assert any(c["country"] == "US" for c in s["countries"])
     assert s["data"]["attribution_text"] == ["IP geolocation by DB-IP (db-ip.com), CC BY 4.0"]
 
-    confirmed_only = report.build_summary(start, end, classes=("human",))
-    assert confirmed_only["totals"]["people_visitor_days"] == 1
+    with_likely = report.build_summary(start, end, classes=("human", "likely-human"))
+    assert with_likely["totals"]["people_visitor_days"] == 3
 
     public = report.build_summary(start, end, public=True, min_count=3)
     assert public["institutions"] == [] and public["institutions_hidden"] == 2
@@ -740,6 +754,7 @@ def test_gpc_visits_keep_no_city_or_region_from_any_source(tracking, data_dir):
     visit(tracking, "/about", ip="81.2.69.160", **{"Sec-GPC": "1"}, **cf)
     firefox = "Mozilla/5.0 (Windows NT 10.0; rv:131.0) Gecko/20100101 Firefox/131.0"
     visit(tracking, "/glossary", ip="81.2.69.160", ua_string=firefox, **cf)   # another browser, same address
+    post_event(tracking, {"t": "view", "p": "/glossary"}, ip="81.2.69.160", ua_string=firefox)
     raw = rows("SELECT gpc, cf_city, cf_region FROM hits ORDER BY id")
     assert raw == [{"gpc": 1, "cf_city": None, "cf_region": None},
                    {"gpc": 0, "cf_city": "Seattle", "cf_region": "Washington"}]
@@ -798,3 +813,82 @@ def test_backup_copies_lose_raw_addresses_and_salts(tracking, tmp_path):
     assert b"81.2.69.160" not in copy.read_bytes()
     # The live database still has its address until the resolver runs.
     assert rows("SELECT ip FROM hits") == [{"ip": "81.2.69.160"}]
+
+
+# ── Crawler classification, lookup scope and pruning (2026-10-17) ───────────
+
+def test_one_quick_request_without_the_script_is_not_a_person(tracking, data_dir):
+    visit(tracking, "/article/4", ip="73.10.10.12")
+    run_resolver(store.utc_now())
+    start, end = report.default_range(7)
+    s = report.build_summary(start, end)
+    assert s["totals"]["people_visitor_days"] == 0
+    assert s["totals"]["by_class"]["unverified"] == 1
+
+
+def test_full_lookups_only_for_networks_with_a_confirmed_visitor(tracking, data_dir):
+    visit(tracking, "/about", ip="81.2.69.160")
+    post_event(tracking, {"t": "view", "p": "/about"}, ip="81.2.69.160")
+    visit(tracking, "/article/5", ip="81.2.70.10")                    # no script
+    lookups = FakeLookups()
+    resolve.run(now=store.utc_now(), lookups=lookups, geo=FakeGeo(),
+                registry=institutions.Registry(store.data_dir()))
+    assert lookups.rdns_calls == ["81.2.69.160"]
+    assert lookups.rdap_calls == ["81.2.69.0"]
+    assert [r["prefix"] for r in rows("SELECT prefix FROM networks")] == ["81.2.69.0/24"]
+    # The unconfirmed address still gets its location and network class.
+    other = rows("SELECT city, as_org, net_class, institution_id FROM hits WHERE object = '5'")
+    assert other == [{"city": "Bremerton", "as_org": "K20 Education Network",
+                      "net_class": "isp", "institution_id": None}]
+
+
+def test_ror_is_not_asked_about_network_operators(tracking, data_dir, monkeypatch):
+    monkeypatch.setitem(FakeGeo.TABLE, "81.2.71.5", {
+        "country": "CR", "region": None, "city": "San José", "asn": 11830,
+        "as_org": "Instituto Costarricense de Electricidad y Telecom.", "as_domain": None})
+    visit(tracking, "/about", ip="81.2.71.5")
+    post_event(tracking, {"t": "view", "p": "/about"}, ip="81.2.71.5")
+    lookups = FakeLookups()
+    lookups.rdap = lambda ip: None
+    resolve.run(now=store.utc_now(), lookups=lookups, geo=FakeGeo(),
+                registry=institutions.Registry(store.data_dir()))
+    assert lookups.ror_calls == []
+    assert rows("SELECT COUNT(*) AS n FROM institutions") == [{"n": 0}]
+
+
+def test_county_needs_a_government_phrase():
+    assert institutions.kind_from_name("White County Video, Inc.") is None
+    assert institutions.kind_from_name("County of Kitsap") == "government"
+
+
+def test_old_noise_rows_are_pruned_but_counted(tracking, data_dir, monkeypatch):
+    monkeypatch.setenv("USAGE_PRUNE_DAYS", "7")
+    old = (store.utc_now() - dt.timedelta(days=10)).date().isoformat()
+    conn = store.connect()
+    try:
+        with conn:
+            for visitor, cls in (("botvisitor000001", "unverified"), ("person0000000001", "human")):
+                conn.execute("INSERT INTO hits (ts, day, visitor, endpoint, resolved) "
+                             "VALUES (?, ?, ?, 'main.about', 1)", (old + "T10:00:00", old, visitor))
+                conn.execute("INSERT INTO events (ts, day, visitor, type) VALUES (?, ?, ?, 'view')",
+                             (old + "T10:00:01", old, visitor))
+                conn.execute("INSERT INTO visitor_days (day, visitor, class, hits) VALUES (?, ?, ?, 1)",
+                             (old, visitor, cls))
+            hits, events = resolve.prune_noise(conn, store.utc_now())
+    finally:
+        conn.close()
+    assert (hits, events) == (1, 1)
+    assert [r["visitor"] for r in rows("SELECT visitor FROM hits")] == ["person0000000001"]
+    assert len(rows("SELECT * FROM visitor_days")) == 2      # the counts stay
+
+
+def test_stale_cache_rows_expire(tracking, data_dir):
+    conn = store.connect()
+    try:
+        with conn:
+            conn.execute("INSERT INTO networks (prefix, checked_at) VALUES ('10.0.0.0/24', '2020-01-01T00:00:00')")
+            conn.execute("INSERT INTO org_lookups (name_norm, checked_at) VALUES ('x', '2020-01-01T00:00:00')")
+    finally:
+        conn.close()
+    run_resolver(store.utc_now())
+    assert rows("SELECT * FROM networks") == [] and rows("SELECT * FROM org_lookups") == []
