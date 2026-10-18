@@ -20,6 +20,8 @@ is the step-by-step procedure. This file is just the inventory.
 | `Invoke-PinakesAdmin.ps1` | POST to an admin endpoint with the bearer token: `Fetch`, `DeepFetch`, `Prewarm`, `Maintenance`, `Digests`, `Backup` (offsite), `UsageResolve`, `UsageData`. |
 | `Backup-Pinakes.ps1` | Local backup of `articles.db`, and of `usage.db` when it exists. The nightly task runs it; run it by hand before anything risky. |
 | `Install-PinakesTasks.ps1` | Register / list / remove the scheduled jobs. |
+| `Watch-PinakesHealth.ps1` | Restarts the service when it is running but `/health` has stopped answering. Run every 5 min by `Pinakes-HealthWatchdog`. |
+| `Set-PinakesService.ps1` | NSSM service settings: stdout/stderr logs with rotation, waitress threads, `PYTHONUNBUFFERED`. |
 | `Pinakes.Common.ps1` | Shared config and helpers. Dot-sourced; not run directly. |
 | `sqlite_backup.py` | Hot-copy helper via SQLite's online backup API. |
 
@@ -37,6 +39,8 @@ Every script except `Pinakes.Common.ps1` supports `Get-Help .\Script.ps1 -Full`.
 .\Invoke-PinakesAdmin.ps1 -Endpoint Fetch   # fetch new articles now
 .\Backup-Pinakes.ps1 -Label before-thing    # ad-hoc backup
 .\Install-PinakesTasks.ps1 -List            # scheduled job status
+.\Set-PinakesService.ps1 -Show              # service config (logs, threads)
+.\Watch-PinakesHealth.ps1 -DryRun           # would the watchdog restart right now?
 ```
 
 ## Design notes
@@ -72,6 +76,14 @@ long-running writer against the same file; a plain copy can capture a torn page
 mid-transaction, and the result looks fine until the day you try to restore it.
 `sqlite_backup.py` also runs `PRAGMA quick_check` on the copy before reporting
 success.
+
+**NSSM restarts a process that exits, not one that hangs.** A waitress process
+with every worker thread stuck still reports Running, so on 2026-10-17 the site
+returned 502 for most of a day while Windows saw nothing wrong.
+`Watch-PinakesHealth.ps1` asks `/health` (no database work, sub-millisecond when
+healthy) three times 20 s apart, and only then dumps the threads with py-spy and
+restarts. It stands aside while the service is Stopped, during a deploy, inside
+five minutes of a start, and whenever `<root>\watchdog.pause` exists.
 
 **The scheduled tasks replace a service that no longer works.** Older copies of
 the install guide built a `Pinakes-Scheduler` service around `scheduler.py`,

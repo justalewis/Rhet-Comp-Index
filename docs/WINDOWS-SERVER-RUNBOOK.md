@@ -235,7 +235,7 @@ nssm remove Pinakes-Scheduler confirm
 & C:\Pinakes\app\deploy\windows\Install-PinakesTasks.ps1 -IncludeUpdateCheck
 ```
 
-This creates seven scheduled tasks, all running as SYSTEM. Times are the
+This creates eight scheduled tasks, all running as SYSTEM. Times are the
 server's local time.
 
 | Task | When | What |
@@ -246,6 +246,7 @@ server's local time.
 | `Pinakes-WeeklyMaintenance` | 04:45 Sundays | Weekly maintenance pass |
 | `Pinakes-UsageResolve` | 05:10 daily | Usage statistics: resolve recorded addresses, then delete them. Registered whether or not recording is on; see [Usage statistics](#usage-statistics). |
 | `Pinakes-UsageData` | 05:40 Sundays | Usage statistics: refresh the IP databases when stale. Skips its downloads while recording is off. |
+| `Pinakes-HealthWatchdog` | every 5 min | Restarts the app if it is running but `/health` stops answering. See [When the site is down](#when-the-site-is-down-502). |
 | `Pinakes-UpdateCheck` | 08:00 daily | Runs `Update-Pinakes.ps1 -Check`. Never deploys. Registered only with `-IncludeUpdateCheck`. |
 
 Backup runs before the fetch, so there is always a copy from before the day's
@@ -265,12 +266,26 @@ Confirm:
 & C:\Pinakes\app\deploy\windows\Install-PinakesTasks.ps1 -List
 ```
 
-The list names eight tasks. `Pinakes-WeeklyDigests` reads `not registered`
+The list names nine tasks. `Pinakes-WeeklyDigests` reads `not registered`
 unless you added `-IncludeDigests`.
 
 > The weekly saved-search email digest is **not** registered by default. Add
 > `-IncludeDigests` only once `PINAKES_ALERTS_ENABLED=1` and the sending domain
 > is verified in Resend; until then the endpoint is a no-op.
+
+### A6b. Service logging and threads
+
+```powershell
+& C:\Pinakes\app\deploy\windows\Set-PinakesService.ps1 -Show   # look first; changes nothing
+& C:\Pinakes\app\deploy\windows\Set-PinakesService.ps1         # apply, restart, wait for /health
+```
+
+Points NSSM's stdout/stderr at `C:\Pinakes\logs\web-stdout.log` and
+`web-stderr.log` with daily/10 MB rotation, runs waitress with 8 threads
+instead of its default 4, and adds `PYTHONUNBUFFERED=1` so the last lines
+before a crash or hang actually reach the file. The listen address and every
+existing environment line (DB_PATH, the admin token) are kept. It restarts the
+service, so run it outside the 02:00–06:00 job window.
 
 ### A7. Run the initial fetch
 
@@ -840,6 +855,8 @@ All in `C:\Pinakes\app\deploy\windows\`. Every `.ps1` except
 | `Invoke-PinakesAdmin.ps1` | Call one admin endpoint: `Fetch`, `DeepFetch` (full revalidation, slow), `Prewarm`, `Maintenance`, `Digests`, `Backup` (offsite S3/B2; needs the `PINAKES_BACKUP_*` secrets), `UsageResolve`, `UsageData`. |
 | `Backup-Pinakes.ps1` | Take a database backup on demand. |
 | `Install-PinakesTasks.ps1` | Register, list, or remove the scheduled jobs. |
+| `Watch-PinakesHealth.ps1` | Health watchdog, run every 5 min by `Pinakes-HealthWatchdog`. `-DryRun` to try it. |
+| `Set-PinakesService.ps1` | NSSM service settings: log files, rotation, waitress threads. `-Show` to inspect. |
 | `Pinakes.Common.ps1` | Shared config and helpers. Dot-sourced by the others; not run directly. |
 | `sqlite_backup.py` | Hot-copy helper used by the backup path. |
 
@@ -861,8 +878,8 @@ Invoke-RestMethod http://127.0.0.1:8080/health
 # Back up before doing something risky
 & C:\Pinakes\app\deploy\windows\Backup-Pinakes.ps1 -Label before-<whatever>
 
-# Restart the app
-Restart-Service Pinakes-Web
+# Restart the app (the service is `Pinakes` on the Clearinghouse box; see PINAKES_SERVICE_NAME)
+Restart-Service Pinakes -Force
 
 # Job history
 Get-Content C:\Pinakes\logs\admin-tasks.log -Tail 40
@@ -881,13 +898,18 @@ Get-Content C:\Pinakes\logs\web-stderr.log -Wait -Tail 30
 | `C:\Pinakes\logs\web-stderr.log` | Application log: warnings, errors, tracebacks, startup and migration failures. INFO-level progress lines most likely don't appear under Waitress (see [A7](#a7-run-the-initial-fetch)) |
 | `C:\Pinakes\logs\web-stdout.log` | Anything the app prints rather than logs; usually little |
 | `C:\Pinakes\logs\admin-tasks.log` | Two or three lines per `Invoke-PinakesAdmin.ps1` call, scheduled or by hand, and one or two per `Backup-Pinakes.ps1` run. The update check writes nothing here. |
+| `C:\Pinakes\logs\watchdog.log` | Every time the watchdog had to retry or restart |
+| `C:\Pinakes\logs\hang-<timestamp>.txt` | Thread dump taken just before a watchdog restart |
 | `C:\Pinakes\logs\update-<timestamp>.log` | Full transcript of each `Update-Pinakes.ps1` run, except `-Check` |
 
-The two `web-*` names are the ones the install guide gives the service. To see
-what this service actually writes to, run `nssm get Pinakes-Web AppStdout` and
-`nssm get Pinakes-Web AppStderr`. `Invoke-PinakesAdmin.ps1` says to check
-`web-stdout.log` for progress; look in `web-stderr.log` for errors, and at the
-article count in `/health/deep` for progress.
+The two `web-*` files exist only once the service is told to write them.
+Until 2026-10-17 the production service had no `AppStdout` or `AppStderr`, so
+neither file existed; `Set-PinakesService.ps1` ([A6b](#a6b-service-logging-and-threads))
+sets both. To see what the service actually writes to, run
+`nssm get Pinakes AppStdout` and `nssm get Pinakes AppStderr`.
+`Invoke-PinakesAdmin.ps1` says to check `web-stdout.log` for progress; look in
+`web-stderr.log` for errors, and at the article count in `/health/deep` for
+progress.
 
 ### What Justin can do without server access
 
@@ -955,10 +977,45 @@ network share, and that no leftover `Pinakes-Scheduler` process is running as a
 second writer. More in
 [WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md#troubleshooting).
 
+### When the site is down (502)
+
+Cloudflare's plain `error code: 502` (or IIS's "Web server received an invalid
+response while acting as a gateway") means IIS is up but waitress on 8080 did
+not answer. On 2026-10-17 the waitress process was **alive and listening but
+hung**: the service said Running, `Start-Service` did nothing, and NSSM never
+restarted it because the process never exited. `Pinakes-HealthWatchdog` now
+catches that within about 8 minutes. To handle it by hand:
+
+```powershell
+# 1. Is it dead or hung? Dead = nothing on 8080. Hung = listening but this times out.
+Get-Service Pinakes; netstat -ano | findstr LISTENING | findstr ":8080"
+Invoke-WebRequest http://127.0.0.1:8080/health -UseBasicParsing -TimeoutSec 30
+
+# 2. If hung, take a thread dump BEFORE restarting - the restart destroys the evidence.
+#    The PID is the python.exe running waitress-serve whose parent is also python.exe.
+C:\Pinakes\venv\Scripts\py-spy.exe dump --pid <PID> > C:\Pinakes\logs\hang-manual.txt
+
+# 3. Restart. -Force matters.
+Restart-Service Pinakes -Force
+```
+
+Install py-spy once (`C:\Pinakes\venv\Scripts\pip.exe install py-spy`) and the
+watchdog takes the dump for you. Send any `hang-*.txt` to Justin.
+
+To keep the watchdog from restarting the app during planned work, create
+`C:\Pinakes\watchdog.pause` and delete it afterwards. It also stands aside
+during `Update-Pinakes.ps1` and while the service is Stopped.
+
+For an alert that does not depend on the server itself, point an external
+uptime monitor (UptimeRobot, Better Stack) at
+`https://pinakes.wacclearinghouse.org/health`. The watchdog also writes event
+1001 (restarted) / 1002 (restart failed) from source `Pinakes` to the Windows
+Application log.
+
 **502 Bad Gateway from IIS, but `http://127.0.0.1:8080` works.** The app is
 fine; the reverse proxy is not. See the ARR section of the install guide.
 
 ---
 
-*Runbook version 2026-10-15. Companion to
+*Runbook version 2026-10-17. Companion to
 [WINDOWS-SERVER-INSTALL.md](WINDOWS-SERVER-INSTALL.md). Scripts in `deploy/windows/`.*
