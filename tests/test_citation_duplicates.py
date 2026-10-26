@@ -532,27 +532,102 @@ def test_process_article_skips_crossref_supplied_article(lics_db, monkeypatch):
     assert [tuple(r) for r in _rows_for(1)] == [("10.5555/t1", 2)]
 
 
-# ── dedupe_reflections.py repoint under the guards ───────────────────────────
+# ── dedupe_journal.py repoint under the guards ───────────────────────────
 
 
 def test_reflections_merge_repoints_without_duplicating(fixture_db):
-    import dedupe_reflections
+    import dedupe_journal
     for url, title in [("https://r/c", "Canon"), ("https://r/d", "Dupe"),
                        ("https://r/x", "Citer")]:
         db.upsert_article(url, None, title, None, None, "2020-01-01",
-                          dedupe_reflections.JOURNAL, "crossref")
+                          dedupe_journal.JOURNAL, "crossref")
     c_id, d_id, x_id = 1, 2, 3
     db.upsert_citation(x_id, None, c_id, None)
     db.upsert_citation(x_id, None, d_id, None)       # X cited both copies
     db.upsert_citation(d_id, None, x_id, None)       # the dupe's own reference
     with db.get_conn() as conn:
-        cols, rows = dedupe_reflections.fetch_rows(conn)
+        cols, rows = dedupe_journal.fetch_rows(conn)
         by_id = {r["id"]: r for r in rows}
-        dedupe_reflections.apply_merge(conn, by_id[c_id], by_id[d_id], cols)
+        dedupe_journal.apply_merge(conn, by_id[c_id], by_id[d_id], cols)
         conn.commit()
         pairs = conn.execute("SELECT source_article_id, target_article_id "
                              "FROM citations ORDER BY 1, 2").fetchall()
     assert [tuple(p) for p in pairs] == [(c_id, x_id), (x_id, c_id)]
+
+
+def test_journal_merge_moves_tag_votes_and_suggestions(fixture_db):
+    import dedupe_journal
+    db.upsert_article("https://doi.org/10.1/c", "10.1/c", "Canon", None, None,
+                      "2020-01-01", "Peitho", "crossref")
+    db.upsert_article("https://w/d", None, "Canon", None, "scraped abstract",
+                      "2020-01-01", "Peitho", "scrape")
+    c_id, d_id = 1, 2
+    with db.get_conn() as conn:
+        conn.execute("INSERT INTO user_tags (article_id, tag) VALUES (?, 'archives')", (d_id,))
+        conn.execute("INSERT INTO tag_feedback (article_id, tag, vote, client_ip) "
+                     "VALUES (?, 'feminism', 1, '1.2.3.4')", (d_id,))
+        cols, rows = dedupe_journal.fetch_rows(conn, "Peitho")
+        merges, _ = dedupe_journal.build_matches(rows)
+        assert [(c["id"], d["id"]) for c, d in merges] == [(c_id, d_id)]
+        dedupe_journal.apply_merge(conn, *merges[0], cols)
+        conn.commit()
+        assert conn.execute("SELECT article_id FROM user_tags").fetchall()[0][0] == c_id
+        assert conn.execute("SELECT article_id FROM tag_feedback").fetchall()[0][0] == c_id
+        row = conn.execute("SELECT abstract FROM articles WHERE id=?", (c_id,)).fetchone()
+        assert row[0] == "scraped abstract"            # fill-only copy
+        assert conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0] == 1
+
+
+def test_journal_match_uses_authors_spacing_and_diacritics():
+    import dedupe_journal as d
+    def row(i, src, title, authors, year="2022"):
+        return {"id": i, "source": src, "title": title, "authors": authors,
+                "pub_date": f"{year}-01-01"}
+    rows = [
+        row(1, "crossref", "bell hooks Memorial", "Mikala Jones"),
+        row(2, "crossref", "bell hooks Memorial", "Meredith McKinnie"),
+        row(3, "crossref", "Women and Their Bodies 1", "Sarah Singer", "2019"),
+        row(4, "crossref", "the Feminist Ethe", "Elizabeth J. Fleitz", "2020"),
+        row(11, "scrape", "bell hooks Memorial", "Meredith McKinnie"),
+        row(12, "scrape", "bell hooks Memorial", "Mikala Jones"),
+        row(13, "scrape", "Women and Their Bodies1", "Sarah Singer", "2019"),
+        row(14, "scrape", "the Feminist Ethē", "Elizabeth J. Fleitz", "2020"),
+        row(15, "scrape", "In Memoriam", "A. One"),     # no twin, and not a
+        row(16, "scrape", "In Memoriam", "B. Two"),     # duplicate of each other
+    ]
+    merges, leftovers = d.build_matches(rows)
+    assert sorted((dup["id"], c["id"]) for c, dup in merges) == [
+        (11, 2), (12, 1), (13, 3), (14, 4)]
+    assert sorted(r["id"] for r in leftovers if r["source"] == "scrape") == [15, 16]
+
+
+def test_requeue_journals_clears_only_that_journal(fixture_db):
+    import cite_fetcher
+    db.upsert_article("https://doi.org/10.1/a", "10.1/a", "A", None, None,
+                      "2020-01-01", "Peitho", "crossref")
+    db.upsert_article("https://doi.org/10.1/b", "10.1/b", "B", None, None,
+                      "2020-01-01", "Other", "crossref")
+    with db.get_conn() as conn:
+        conn.execute("UPDATE articles SET references_fetched_at = '2026-05-12'")
+        conn.commit()
+    assert cite_fetcher.requeue_journals(["Peitho"]) == 1
+    with db.get_conn() as conn:
+        got = dict(conn.execute("SELECT journal, references_fetched_at FROM articles").fetchall())
+    assert got == {"Peitho": None, "Other": "2026-05-12"}
+
+
+def test_run_fetch_with_journals_processes_only_those(fixture_db, monkeypatch):
+    import cite_fetcher
+    db.upsert_article("https://doi.org/10.1/a", "10.1/a", "A", None, None,
+                      "2020-01-01", "Peitho", "crossref")
+    db.upsert_article("https://doi.org/10.1/b", "10.1/b", "B", None, None,
+                      "2020-01-01", "Other", "crossref")
+    seen = []
+    monkeypatch.setattr(cite_fetcher, "_process_article",
+                        lambda art, doi_map: (seen.append(art["doi"]), (0, 0))[1])
+    monkeypatch.setattr(cite_fetcher.time, "sleep", lambda s: None)
+    cite_fetcher.run_fetch(journals=["Peitho"])
+    assert seen == ["10.1/a"]
 
 
 # ── Query plans with the guards in place ─────────────────────────────────────

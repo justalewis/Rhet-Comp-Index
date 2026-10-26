@@ -30,7 +30,7 @@ def get_articles_needing_citation_fetch(limit=None):
     """Articles with DOIs where references_fetched_at IS NULL, newest-first."""
     with get_conn() as conn:
         q = (
-            "SELECT id, doi, title FROM articles "
+            "SELECT id, doi, title, journal FROM articles "
             "WHERE doi IS NOT NULL AND references_fetched_at IS NULL "
             "ORDER BY pub_date DESC"
         )

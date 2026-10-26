@@ -22,6 +22,8 @@ History before 2026-04 is not reconstructed here. The Git log is authoritative f
 - `tests/test_registry_surfaces.py`: fails when a registry journal lacks a chord-diagram abbreviation or a sidebar group lacks an Atlas orientation.
 - Schema v17: two partial unique indexes on `citations` (one row per citing article and indexed article; one per citing article and DOI or synthetic key). References with neither stay unconstrained. `init_db` builds them on a clean table and only warns while duplicates remain.
 - `citation_duplicates_report.py`: read-only report on duplicate citation rows (totals, by citing journal, most inflated articles, when the surplus rows were written).
+- `dedupe_journal.py` (was `dedupe_reflections.py`): `--journal NAME` merges any journal's scrape/RSS-era rows into its CrossRef rows. Written for Peitho, whose back catalogue gained DOIs in October 2026 alongside 304 scraped rows. Matching now folds diacritics, ignores spacing (footnote markers glued to the last word), and uses author surnames to separate same-titled pieces ("bell hooks Memorial" is three articles); tag votes and suggestions move with the merge, and citation counts are recomputed. Refuses a journal that is still scraped.
+- `cite_fetcher.py --journal NAME`: re-queue and fetch the reference lists of one journal, for references deposited after Pinakes first asked (Peitho, Academic Labor: Research and Artistry).
 - `dedupe_citations.py`: dry run by default; `--yes` backs up the database, deletes duplicate rows (keeping the lowest id), builds the v17 indexes, recomputes the internal counts and clears the Datastories cache.
 
 ### Fixed (October 2026)

@@ -149,8 +149,33 @@ def _process_article(article: dict, doi_map: dict) -> tuple[int, int]:
 
 # ── Main entry points ──────────────────────────────────────────────────────────
 
-def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
-    """Fetch CrossRef references for all un-processed articles."""
+def requeue_journals(journals: list[str]) -> int:
+    """Clear references_fetched_at for the DOI-bearing rows of these journals
+    (exact names), so the next run re-asks CrossRef for their reference lists.
+
+    For a journal whose references were deposited after Pinakes first asked:
+    the early fetch found none, stamped the rows done, and they are never
+    asked again. Cheaper than --rebuild, which re-queues every article.
+    Returns the number of rows re-queued."""
+    init_db()
+    with get_conn() as conn:
+        n = 0
+        for name in journals:
+            cur = conn.execute(
+                "UPDATE articles SET references_fetched_at = NULL "
+                "WHERE journal = ? AND doi IS NOT NULL", (name,))
+            log.info("Re-queued %d articles from %s", cur.rowcount, name)
+            if cur.rowcount == 0:
+                log.warning("No DOI-bearing rows for journal %r (exact name?)", name)
+            n += cur.rowcount
+        conn.commit()
+    return n
+
+
+def run_fetch(limit: int | None = None, rebuild: bool = False,
+              journals: list[str] | None = None) -> None:
+    """Fetch CrossRef references for all un-processed articles, or only those
+    in `journals` (exact names) when given."""
     init_db()
 
     if rebuild:
@@ -161,7 +186,14 @@ def run_fetch(limit: int | None = None, rebuild: bool = False) -> None:
             )
             conn.commit()
 
-    articles = get_articles_needing_citation_fetch(limit=limit)
+    if journals:
+        wanted = set(journals)
+        articles = [a for a in get_articles_needing_citation_fetch()
+                    if a.get("journal") in wanted]
+        if limit:
+            articles = articles[:limit]
+    else:
+        articles = get_articles_needing_citation_fetch(limit=limit)
     total    = len(articles)
     log.info("Articles to process: %d", total)
 
@@ -252,6 +284,11 @@ if __name__ == "__main__":
         help="Clear all references_fetched_at stamps and re-fetch from scratch",
     )
     parser.add_argument(
+        "--journal", action="append", default=[], metavar="NAME",
+        help="Re-queue this journal's articles and fetch only them (exact name; "
+             "repeatable). For references deposited after the first fetch.",
+    )
+    parser.add_argument(
         "--counts-only", action="store_true",
         help="Skip API calls; only recompute internal_cited_by_count / internal_cites_count",
     )
@@ -261,4 +298,6 @@ if __name__ == "__main__":
         init_db()
         _recompute_counts()
     else:
-        run_fetch(limit=args.limit, rebuild=args.rebuild)
+        if args.journal:
+            requeue_journals(args.journal)
+        run_fetch(limit=args.limit, rebuild=args.rebuild, journals=args.journal or None)
