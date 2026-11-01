@@ -89,6 +89,7 @@ JOURNAL_GROUPS = {
     "Language and Learning Across the Disciplines":             "OTHER",
     "Academic.Writing":                                         "OTHER",
     "Academic Labor: Research and Artistry":                    "OTHER",
+    "WLN: A Journal of Writing Center Scholarship":     "OTHER",
 }
 
 
