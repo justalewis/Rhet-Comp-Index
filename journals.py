@@ -110,6 +110,8 @@ CROSSREF_SELECTORS = {
         "registrant": "10.37514",
         "container_title": "WLN: A Journal of Writing Center Scholarship",
         "doi_prefix": "10.37514/wln-j.",
+        # Mis-registered duplicate: 2092.50.3.02 (year typo) is the same article as 2026.50.3.02.
+        "exclude_dois": {"10.37514/wln-j.2092.50.3.02"},
     },
 }
 

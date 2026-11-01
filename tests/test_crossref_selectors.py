@@ -89,6 +89,7 @@ def test_wln_selected_by_doi_stem():
     assert crossref_doi_ok("no-issn:wln-j", "10.37514/WLN-J.1977.1.2.01")
     assert crossref_doi_ok("no-issn:wln-j", "10.37514/wln-j.2023.48.1.01")
     assert not crossref_doi_ok("no-issn:wln-j", "10.37514/alr-j.2024.8.1.01")
+    assert not crossref_doi_ok("no-issn:wln-j", "10.37514/wln-j.2092.50.3.02")   # year-typo duplicate of 2026.50.3.02
 
 
 def test_open_access_flags():
