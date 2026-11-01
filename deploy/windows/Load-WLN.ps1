@@ -48,12 +48,23 @@ $env:PYTHONPATH = $PinakesAppDir
 $env:PYTHONIOENCODING = 'utf-8'
 Write-PinakesLog "Loading WLN (log: $log). This takes a while."
 Push-Location $PinakesAppDir
+# Windows PowerShell 5.1 wraps every line a native program writes to stderr in an ErrorRecord, and Python's logging writes
+# its INFO lines to stderr. With $ErrorActionPreference = 'Stop' the very first log line aborts the script, so relax it
+# for this one call, flatten the records back to text, and judge success by the exit code instead.
+$prevEap = $ErrorActionPreference
+$prevEnc = [Console]::OutputEncoding
+$ErrorActionPreference = 'Continue'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$loaderExit = 0
 try {
-    & $PinakesPython $loader *>&1 | Tee-Object -FilePath $log
-    if ($LASTEXITCODE -ne 0) { throw "Loader exited with code $LASTEXITCODE (see $log)" }
+    & $PinakesPython $loader 2>&1 | ForEach-Object { "$_" } | Tee-Object -FilePath $log
+    $loaderExit = $LASTEXITCODE
 } finally {
+    $ErrorActionPreference = $prevEap
+    [Console]::OutputEncoding = $prevEnc
     Pop-Location
 }
+if ($loaderExit -ne 0) { throw "Loader exited with code $loaderExit (see $log)" }
 
 if (-not $NoRestart) {
     Write-PinakesLog "Restarting $PinakesService so cached sidebar / coverage numbers refresh..."
