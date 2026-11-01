@@ -43,6 +43,7 @@ NEW_JOURNALS = {
     "Academic.Writing": "1552-325X",
     "RhetNet": "2768-251X",
     "Academic Labor: Research and Artistry": "no-issn:alr-j",
+    "WLN: A Journal of Writing Center Scholarship": "no-issn:wln-j",
     "Journal of Second Language Writing": "1060-3743",
     "Quarterly Journal of Speech": "0033-5630",
     "Argumentation and Advocacy": "1051-1431",
@@ -79,6 +80,15 @@ def test_academic_labor_selected_by_doi_stem():
     assert p["query.container-title"] == "Academic Labor: Research and Artistry"
     assert crossref_doi_ok("no-issn:alr-j", "10.37514/alr-j.2024.8.1.01")
     assert not crossref_doi_ok("no-issn:alr-j", "10.37514/rle-j.2025.2.4.02")
+
+
+def test_wln_selected_by_doi_stem():
+    p = crossref_query_params("no-issn:wln-j")
+    assert p["filter"] == "prefix:10.37514,type:journal-article"
+    assert p["query.container-title"] == "WLN: A Journal of Writing Center Scholarship"
+    assert crossref_doi_ok("no-issn:wln-j", "10.37514/WLN-J.1977.1.2.01")
+    assert crossref_doi_ok("no-issn:wln-j", "10.37514/wln-j.2023.48.1.01")
+    assert not crossref_doi_ok("no-issn:wln-j", "10.37514/alr-j.2024.8.1.01")
 
 
 def test_open_access_flags():

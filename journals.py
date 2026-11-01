@@ -47,6 +47,8 @@ CROSSREF_JOURNALS = [
     {"name": "RhetNet",                                        "issn": "2768-251X"},  # WAC Clearinghouse — 32 DOIs, 1994–1997 (historical); "RhetNet: A Dialogic Publishing (Ad)Venture"
     # Academic Labor has no ISSN in its CrossRef deposits; selected by DOI stem via CROSSREF_SELECTORS.
     {"name": "Academic Labor: Research and Artistry",          "issn": "no-issn:alr-j"},  # WAC Clearinghouse — 81 DOIs, 2017–present
+    # WLN has no ISSN either; selected by DOI stem. v40+ (2015 on) DOIs plus the 1977–2015 back catalog (v1–39) registered 2026-11.
+    {"name": "WLN: A Journal of Writing Center Scholarship",   "issn": "no-issn:wln-j"},  # WAC Clearinghouse — article-level DOIs, 1977–present
     # Field journals missing from the index (writing studies, rhetorical studies):
     {"name": "Journal of Second Language Writing",             "issn": "1060-3743"},  # Elsevier — 1,441 DOIs, 1992–present; no abstracts deposited
     {"name": "Quarterly Journal of Speech",                    "issn": "0033-5630"},  # Taylor & Francis — 6,580 DOIs, 1915–present (print ISSN; online 1479-5779 = 6,567)
@@ -76,9 +78,9 @@ CROSSREF_JOURNALS = [
     # Composition Studies: not in CrossRef (0 DOIs); scraped from compstudiesjournal.com
     # {"name": "Composition Studies",                          "issn": "1534-9322"},
     # English Journal (NCTE): not indexed in CrossRef
-    # WLN: A Journal of Writing Center Scholarship: DOIs since vol. 40 (2015) under 10.37514,
-    # deposited with no ISSN (so this ISSN harvest can't find them) and no reference lists.
-    # The older Writing Lab Newsletter volumes are scraped separately (strategy "wln").
+    # WLN: A Journal of Writing Center Scholarship: article DOIs under 10.37514/wln-j., deposited with no ISSN, so it is
+    # registered above as "no-issn:wln-j" (see CROSSREF_SELECTORS). The older issue-level Writing Lab Newsletter rows are
+    # scraped separately (strategy "wln") and kept under their own name.
 ]
 
 # Journals whose CrossRef deposits don't carry an ISSN, so `issn:` matches nothing.
@@ -102,6 +104,12 @@ CROSSREF_SELECTORS = {
         "registrant": "10.37514",
         "container_title": "Academic Labor: Research and Artistry",
         "doi_prefix": "10.37514/alr-j.",
+    },
+    # WLN: no ISSN in the deposits; every article DOI is 10.37514/wln-j.<year>.<vol>.<issue>.<nn>.
+    "no-issn:wln-j": {
+        "registrant": "10.37514",
+        "container_title": "WLN: A Journal of Writing Center Scholarship",
+        "doi_prefix": "10.37514/wln-j.",
     },
 }
 
@@ -346,6 +354,7 @@ GOLD_OA_JOURNALS = {
     "Academic.Writing",
     "RhetNet",
     "Academic Labor: Research and Artistry",
+    "WLN: A Journal of Writing Center Scholarship",
     # Other fully OA
     "Discourse and Writing / Rédactologie",
     "Journal of Writing Assessment",
@@ -459,6 +468,7 @@ JOURNAL_GROUPS = [
         "Writing Center Journal",
         "Praxis: A Writing Center Journal",
         "Writing Lab Newsletter",
+        "WLN: A Journal of Writing Center Scholarship",
         "The Peer Review",
     ]),
     ("WAC / Writing Across the Curriculum", [

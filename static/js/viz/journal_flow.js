@@ -90,6 +90,7 @@ const JFLOW_ABBREV = {
   'Academic.Writing': 'Acad.Writing',
   'RhetNet': 'RhetNet',
   'Academic Labor: Research and Artistry': 'ALRA',
+  'WLN: A Journal of Writing Center Scholarship': 'WLN-J',
   'Journal of Second Language Writing': 'JSLW',
   'Quarterly Journal of Speech': 'QJS',
   'Argumentation and Advocacy': 'A&A',
