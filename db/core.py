@@ -785,6 +785,27 @@ def _migrate_v15_to_v16(conn):
     log.info("v15→v16 migration complete (saved-search email alerts ready).")
 
 
+def _migrate_v16_to_v17(conn):
+    """Add citations.target_ra (v16 → v17).
+
+    Records which DOI registration agency (Crossref, DataCite, mEDRA, ...)
+    minted each cited DOI, lower-cased ("crossref", "datacite", ...), or
+    "unknown" for a prefix doi.org could not resolve. NULL means "not yet
+    classified". Populated by classify_citation_ra.py. First step of the
+    DataCite integration (Phase 0): it sizes how much of what the corpus cites
+    lives outside Crossref, and later phases reuse it.
+
+    Idempotent via column-existence check.
+    """
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(citations)").fetchall()}
+    if "target_ra" not in cols:
+        conn.execute("ALTER TABLE citations ADD COLUMN target_ra TEXT")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_citations_target_ra ON citations(target_ra)"
+    )
+    log.info("v16→v17 migration complete (citations.target_ra ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -838,6 +859,9 @@ def init_db():
 
         # Always run v16 migration — idempotent via IF NOT EXISTS.
         _migrate_v15_to_v16(conn)
+
+        # Always run v17 migration — idempotent via column existence check.
+        _migrate_v16_to_v17(conn)
 
         conn.commit()
 
