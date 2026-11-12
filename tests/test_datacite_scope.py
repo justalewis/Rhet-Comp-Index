@@ -13,6 +13,8 @@ import ingest_datacite as ing
 from db import datacite as dc
 
 PHRASE = scope.discovery_terms()[0]          # a real multi-word tagger trigger
+# Seven distinct vocabulary tags as subjects: scores 21, above every tier threshold.
+STRONG = [next(p for p in pats if " " in p) for pats in scope.VOCAB.values() if any(" " in p for p in pats)][:7]
 ORCID = "0000-0002-1825-0097"
 TOKEN = "test-admin-secret"
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
@@ -72,6 +74,7 @@ def test_score_ignores_html_and_unrelated_text():
     (["author_in_corpus"], scope.TIER_B_MIN, "B"),
     (["seed"], scope.TIER_B_MIN, "B"),
     (["author_in_corpus"], scope.TIER_B_MIN - 1, "C"),
+    (["author_in_corpus"], scope.AUTHOR_MIN - 1, None),
     (["topical"], scope.DISCOVERY_MIN, "C"),
     (["topical"], scope.DISCOVERY_MIN - 1, None),
     (["topical", "author_in_corpus"], scope.TIER_B_MIN, "B"),
@@ -122,7 +125,7 @@ def test_method3_queries_both_orcid_forms_and_records_evidence(with_author):
 
 @responses.activate
 def test_method5_keeps_only_records_above_threshold(fixture_db):
-    good = _rec("10.5281/good", subjects=[PHRASE])
+    good = _rec("10.5281/good", subjects=STRONG)
     bad = _rec("10.5281/bad", title="Perovskite cells")
     responses.add(responses.GET, dcf.API, json={"data": [good, bad], "links": {}})
     with db.get_conn() as conn:
@@ -151,9 +154,9 @@ def _tiers(conn):
 
 def test_ingest_assigns_b_c_and_drops_weak_topical(with_author, tmp_path):
     entries = [
-        _entry(_rec("10.5/b", subjects=[PHRASE]), {"method": "author_in_corpus", "matched_on": ORCID}),
-        _entry(_rec("10.5/c", title="Unrelated photos"), {"method": "author_in_corpus", "matched_on": ORCID}),
-        _entry(_rec("10.5/t", subjects=[PHRASE]), {"method": "topical", "matched_on": PHRASE, "score": 3}),
+        _entry(_rec("10.5/b", subjects=STRONG), {"method": "author_in_corpus", "matched_on": ORCID}),
+        _entry(_rec("10.5/c", title="Unrelated photos", subjects=STRONG[:1]), {"method": "author_in_corpus", "matched_on": ORCID}),
+        _entry(_rec("10.5/t", subjects=STRONG), {"method": "topical", "matched_on": PHRASE, "score": 21}),
         _entry(_rec("10.5/drop", title="Chemistry"), {"method": "topical", "matched_on": PHRASE, "score": 1}),
     ]
     ing.ingest(_dump(tmp_path, entries))
@@ -168,8 +171,8 @@ def test_ingest_assigns_b_c_and_drops_weak_topical(with_author, tmp_path):
 
 def test_curation_survives_reingest_and_gates_visibility(with_author, tmp_path):
     p = _dump(tmp_path, [
-        _entry(_rec("10.5/c1", title="Photos"), {"method": "author_in_corpus", "matched_on": ORCID}),
-        _entry(_rec("10.5/c2", title="Scans"), {"method": "author_in_corpus", "matched_on": ORCID}),
+        _entry(_rec("10.5/c1", title="Photos", subjects=STRONG[:1]), {"method": "author_in_corpus", "matched_on": ORCID}),
+        _entry(_rec("10.5/c2", title="Scans", subjects=STRONG[:1]), {"method": "author_in_corpus", "matched_on": ORCID}),
     ])
     ing.ingest(p)
     assert {r["doi"] for r in dc.get_curation_queue()} == {"10.5/c1", "10.5/c2"}
@@ -187,7 +190,7 @@ def test_curation_survives_reingest_and_gates_visibility(with_author, tmp_path):
 
 
 def test_rejected_never_appears_on_public_queries(with_author, tmp_path):
-    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/x", title="Photos"),
+    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/x", title="Photos", subjects=STRONG[:1]),
                                        {"method": "author_in_corpus", "matched_on": ORCID})]))
     dc.decide_curation("10.5/x", "rejected")
     assert dc.get_datacite_for_author(1) == []
@@ -204,7 +207,7 @@ def test_admin_queue_requires_token(empty_client, monkeypatch):
 
 def test_admin_decide_flow(with_author, empty_client, tmp_path, monkeypatch):
     monkeypatch.setenv("PINAKES_ADMIN_TOKEN", TOKEN)
-    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/q", title="Photos"),
+    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/q", title="Photos", subjects=STRONG[:1]),
                                        {"method": "author_in_corpus", "matched_on": ORCID})]))
     r = empty_client.get("/api/admin/datacite/queue", headers=AUTH).get_json()
     assert r["pending"] == 1 and r["items"][0]["doi"] == "10.5/q" and r["items"][0]["evidence"]
@@ -238,9 +241,9 @@ def test_dashboard_and_api_render_on_empty_and_populated(with_author, empty_clie
 
 
 def test_author_page_shows_research_objects(with_author, empty_client, tmp_path):
-    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/s", title="Corpus tool", rtype="Software"),
+    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/s", title="Corpus tool", rtype="Software", subjects=STRONG[:1]),
                                        {"method": "author_in_corpus", "matched_on": ORCID},
-                                       {"method": "topical", "matched_on": PHRASE, "score": 3})]))
+                                       {"method": "topical", "matched_on": PHRASE, "score": 21})]))
     # no topical text -> candidate, so hidden...
     assert b"Research objects" not in empty_client.get("/author/Jane%20Doe").data
     dc.decide_curation("10.5/s", "approved")
@@ -318,7 +321,7 @@ def test_weak_relation_only_record_is_dropped_unless_topical(fixture_db, tmp_pat
     weak = {"method": "relation_to_corpus", "matched_on": "10.1/a", "relation": "References"}
     # A bibliography-style supplement: "References" the article, nothing topical.
     junk = _entry(_rec("10.5/junk", title="Additional file 1 of a trial"), weak)
-    on_topic = _entry(_rec("10.5/topic", subjects=[PHRASE]), weak)
+    on_topic = _entry(_rec("10.5/topic", subjects=STRONG), weak)
     ing.ingest(_dump(tmp_path, [junk, on_topic]))
     with db.get_conn() as conn:
         assert _tiers(conn) == {"10.5/topic": "B"}
@@ -332,7 +335,7 @@ def test_article_panel_excludes_weak_relations_but_keeps_strong(fixture_db, tmp_
         conn.commit()
     strong = _entry(_rec("10.5/s", title="Real supplement", related=[("10.1/a", "IsSupplementTo")]),
                     {"method": "relation_to_corpus", "matched_on": "10.1/a", "relation": "IsSupplementTo"})
-    weak_topical = _entry(_rec("10.5/w", subjects=[PHRASE], related=[("10.1/a", "Cites")]),
+    weak_topical = _entry(_rec("10.5/w", subjects=STRONG, related=[("10.1/a", "Cites")]),
                           {"method": "relation_to_corpus", "matched_on": "10.1/a", "relation": "Cites"})
     ing.ingest(_dump(tmp_path, [strong, weak_topical]))
     # both published (A and B) ...
@@ -364,7 +367,7 @@ def test_orcid_batch_query_fits_in_a_url():
 
 @responses.activate
 def test_failed_method_keeps_other_methods_results_and_reports_error(with_author):
-    ok = _rec("10.5281/ok", subjects=[PHRASE])
+    ok = _rec("10.5281/ok", subjects=STRONG)
     # method 3 (ORCID query) fails with a non-retryable 400; method 5 succeeds
     responses.add(responses.GET, dcf.API, status=400, match=[
         responses.matchers.query_param_matcher({"page[size]": "1000", "page[cursor]": "1",

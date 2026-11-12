@@ -24,7 +24,8 @@ Tiers
              relation
     B        found by Method 3 (ORCID of an indexed author) or Method 4 (seed)
              AND topical score >= TIER_B_MIN
-    C        Method 3/4 without topical support, or Method 5 (topical
+    C        Method 4 without topical support; Method 3 at AUTHOR_MIN..B-1
+             (below AUTHOR_MIN it is dropped); Method 5 (topical
              discovery) alone at >= DISCOVERY_MIN — goes to the curation queue
     curated  a curator approved a Tier C record (applied in ingest)
     rejected a curator rejected it; stored with a reason, never re-suggested
@@ -41,8 +42,14 @@ W_SUBJECT = 3
 W_TITLE = 2
 W_DESC = 1
 
-TIER_B_MIN = 3
-DISCOVERY_MIN = 3
+# Calibrated on the 2026-11 live harvest: the tagger vocabulary also fires on
+# general education / applied-linguistics / NLP work, so low scores are mostly
+# out-of-field. B needs a real topical match; author-only deposits with almost no
+# match are dropped (an indexed author's rTMS dataset is not Writing Studies);
+# Method 5 alone is a weak signal and only the strongest ~1% reach the queue.
+TIER_B_MIN = 8
+AUTHOR_MIN = 3
+DISCOVERY_MIN = 20
 
 PUBLISHED_TIERS = ("A", "B", "curated")
 
@@ -145,8 +152,12 @@ def tier_for(methods, score):
     methods = set(methods)
     if methods & {"cited_by_corpus", "relation_to_corpus"}:
         return "A"
-    if methods & {"author_in_corpus", "seed"}:
+    if "seed" in methods:
         return "B" if score >= TIER_B_MIN else "C"
+    if "author_in_corpus" in methods:
+        if score >= TIER_B_MIN:
+            return "B"
+        return "C" if score >= AUTHOR_MIN else None
     if "weak_relation" in methods:
         return "B" if score >= TIER_B_MIN else None
     if "topical" in methods and score >= DISCOVERY_MIN:
