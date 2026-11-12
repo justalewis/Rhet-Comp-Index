@@ -54,7 +54,9 @@ API = "https://api.datacite.org/dois"
 DUMP_DEFAULT = "data/datacite_dump.jsonl"
 REL_BATCH = 75          # corpus DOIs per relatedIdentifier query
 IDS_BATCH = 50          # DOIs per ?ids= lookup
-ORCID_BATCH = 25        # ORCIDs per query (each expands to 2 forms x creators/contributors)
+ORCID_BATCH = 8         # ORCIDs per query. Each expands to 4 terms (2 forms x creators/
+                        # contributors); 25 per query overflowed the URL limit (HTTP 414).
+MAX_QUERY_URL = 7000    # sanity ceiling on an encoded query string
 PAGE_SIZE = 1000
 MAX_PER_QUERY = 500     # cap on records pulled by one discovery/seed query
 REQUEST_DELAY = 0.3
@@ -257,21 +259,32 @@ def method5(seeds, s, found, delay, limit=None):
 
 
 def harvest(conn, session=None, methods=(1, 2, 3, 4, 5), limit=None, delay=REQUEST_DELAY,
-            seeds=None):
-    """Run the chosen methods; return {doi: {"record":…, "evidence":[…]}}."""
+            seeds=None, errors=None):
+    """Run the chosen methods; return {doi: {"record":…, "evidence":[…]}}.
+
+    A method that raises does not discard the others' results: the failure is
+    logged and appended to `errors` (a list the caller can pass in), and the
+    harvest carries on. Callers must treat a non-empty `errors` as an
+    INCOMPLETE harvest and not rebuild the tables from it."""
     s = session or requests.Session()
     seeds = scope.load_seeds() if seeds is None else seeds
+    errors = errors if errors is not None else []
     found = {}
-    if 1 in methods:
-        method1(conn, s, found, delay)
-    if 2 in methods:
-        method2(conn, s, found, delay, limit)
-    if 3 in methods:
-        method3(conn, s, found, delay, limit)
-    if 4 in methods:
-        method4(seeds, s, found, delay)
-    if 5 in methods:
-        method5(seeds, s, found, delay, limit)
+    plan = [
+        (1, lambda: method1(conn, s, found, delay)),
+        (2, lambda: method2(conn, s, found, delay, limit)),
+        (3, lambda: method3(conn, s, found, delay, limit)),
+        (4, lambda: method4(seeds, s, found, delay)),
+        (5, lambda: method5(seeds, s, found, delay, limit)),
+    ]
+    for n, run in plan:
+        if n not in methods:
+            continue
+        try:
+            run()
+        except Exception as exc:  # noqa: BLE001 — keep the other methods' results
+            log.exception("Method %d failed", n)
+            errors.append(f"method {n}: {exc.__class__.__name__}: {str(exc)[:200]}")
     return found
 
 
@@ -291,9 +304,13 @@ def main():
     args = ap.parse_args()
     methods = tuple(int(m) for m in args.methods.split(",") if m.strip())
     init_db()
+    errors = []
     with get_conn() as conn:
-        found = harvest(conn, methods=methods, limit=args.limit)
+        found = harvest(conn, methods=methods, limit=args.limit, errors=errors)
     write_dump(found, args.out)
+    if errors:
+        log.error("INCOMPLETE harvest, do not ingest: %s", "; ".join(errors))
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

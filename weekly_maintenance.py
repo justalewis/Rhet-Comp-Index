@@ -149,8 +149,12 @@ def step_13_datacite():
     try:
         with get_conn() as conn:
             log.info("DataCite: classified %d new citations", classify(conn))
-            found = harvest(conn)
+            errors = []
+            found = harvest(conn, errors=errors)
         write_dump(found, DUMP_DEFAULT)
+        if errors:
+            # Never rebuild the tables from a partial harvest: ingest replaces them wholesale.
+            raise RuntimeError("DataCite harvest incomplete, not ingested: " + "; ".join(errors))
         log.info("DataCite: ingested %d works", ingest(DUMP_DEFAULT))
     except Exception as exc:
         from monitoring import capture_fetcher_error

@@ -351,3 +351,27 @@ def test_overview_separates_cited_only_records(fixture_db, tmp_path):
     ing.ingest(_dump(tmp_path, [cited, linked, both]))
     ov = dc.overview()
     assert ov["published"] == 3 and ov["cited_only"] == 1
+
+
+def test_orcid_batch_query_fits_in_a_url():
+    """Regression: 25 ORCIDs per query overflowed DataCite's URL limit (HTTP 414)."""
+    import requests
+    orcids = [f"0000-0001-{i:04d}-{i:03d}X" for i in range(dcf.ORCID_BATCH)]
+    req = requests.Request("GET", dcf.API, params={"query": dcf.orcid_query(orcids),
+                                                    "page[size]": 1000, "page[cursor]": 1}).prepare()
+    assert len(req.url) < dcf.MAX_QUERY_URL
+
+
+@responses.activate
+def test_failed_method_keeps_other_methods_results_and_reports_error(with_author):
+    ok = _rec("10.5281/ok", subjects=[PHRASE])
+    # method 3 (ORCID query) fails with a non-retryable 400; method 5 succeeds
+    responses.add(responses.GET, dcf.API, status=400, match=[
+        responses.matchers.query_param_matcher({"page[size]": "1000", "page[cursor]": "1",
+                                                "query": dcf.orcid_query([ORCID])})])
+    responses.add(responses.GET, dcf.API, json={"data": [ok], "links": {}})
+    errors = []
+    with db.get_conn() as conn:
+        found = dcf.harvest(conn, methods=(3, 5), seeds={}, limit=1, delay=0, errors=errors)
+    assert list(found) == ["10.5281/ok"]
+    assert len(errors) == 1 and errors[0].startswith("method 3")
