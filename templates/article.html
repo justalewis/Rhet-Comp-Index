@@ -373,6 +373,31 @@
       {% endif %}
     </div><!-- /citation-context -->
 
+    {% if datacite_objects %}
+    <div class="related-section" id="datacite-objects">
+      <h3 class="detail-section-head">Data, software &amp; related objects</h3>
+      <ol class="related-list">
+        {% for o in datacite_objects %}
+        <li class="related-item">
+          <div class="article-meta-top">
+            <span class="article-journal">{{ o.resource_type or o.resource_type_gen or "Other" }}</span>
+            {% if o.publisher %}<span class="article-date">{{ o.publisher }}</span>{% endif %}
+            {% if o.year %}<span class="article-date">{{ o.year }}</span>{% endif %}
+          </div>
+          <div class="article-title-row">
+            <a class="article-title" href="https://doi.org/{{ o.doi }}" target="_blank" rel="noopener">{{ o.title or o.doi }}</a>
+          </div>
+          {% if o.creators %}
+          <div class="article-authors">{{ o.creators | join("; ") }}</div>
+          {% endif %}
+          <div class="article-authors" style="font-style:italic;">{{ o.links | join(" · ") }}</div>
+        </li>
+        {% endfor %}
+      </ol>
+      <p class="citation-coverage-note">Registered with DataCite. A lower bound: much scholarly data and software in this field has no DOI.</p>
+    </div>
+    {% endif %}
+
     {% if related %}
     <div class="related-section">
       <h3 class="detail-section-head">Related articles</h3>

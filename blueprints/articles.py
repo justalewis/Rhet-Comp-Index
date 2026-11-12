@@ -14,6 +14,7 @@ from db import (
     search_articles_autocomplete,
     get_approved_user_tags,
 )
+from db.datacite import get_datacite_for_article
 from journals import UNAVAILABLE_JOURNALS
 from tagger import TAG_NAMES
 from rate_limit import limiter, LIMITS
@@ -74,6 +75,11 @@ def article_detail(article_id):
     in_index_count      = sum(1 for r in all_refs if r["in_index"])
     author_affiliations = get_article_affiliations(article_id)
     approved_user_tags  = get_approved_user_tags(article_id)
+    try:
+        datacite_objects = get_datacite_for_article(article_id)
+    except Exception:  # never let a supplementary panel break the article page
+        log.exception("datacite panel failed for article %s", article_id)
+        datacite_objects = []
     print_journals, web_journals, all_journals, journal_groups = _get_sidebar()
     new_count = get_new_article_count(days=7)
     coverage_stats = get_coverage_stats()
@@ -85,6 +91,7 @@ def article_detail(article_id):
         "article.html",
         article=article,
         related=related,
+        datacite_objects=datacite_objects,
         cited_by=cited_by,
         all_refs=all_refs,
         in_index_count=in_index_count,

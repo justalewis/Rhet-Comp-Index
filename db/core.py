@@ -806,6 +806,78 @@ def _migrate_v16_to_v17(conn):
     log.info("v16→v17 migration complete (citations.target_ra ready).")
 
 
+def _migrate_v17_to_v18(conn):
+    """DataCite tables (v17 → v18).
+
+    Denormalized, read-only to the web app and rebuilt wholesale by
+    ingest_datacite.py (same pattern as the v13 WAC tables). DataCite records
+    never enter `articles`: they have no reference lists, and mixing them in
+    would distort the citation-network tools. `datacite_scope_evidence` keeps
+    one row per reason a record is in the index, so any record can explain
+    itself. Idempotent via IF NOT EXISTS.
+    """
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS datacite_works (
+            doi               TEXT PRIMARY KEY,
+            resource_type_gen TEXT,
+            resource_type     TEXT,
+            title             TEXT,
+            description       TEXT,
+            publisher         TEXT,
+            client_id         TEXT,
+            year              INTEGER,
+            version           TEXT,
+            rights            TEXT,
+            subjects          TEXT,
+            tags              TEXT,
+            tier              TEXT,
+            view_count        INTEGER,
+            download_count    INTEGER,
+            citation_count    INTEGER,
+            url               TEXT,
+            fetched_at        TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_dcw_tier ON datacite_works(tier);
+        CREATE INDEX IF NOT EXISTS idx_dcw_type ON datacite_works(resource_type_gen);
+
+        CREATE TABLE IF NOT EXISTS datacite_creators (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            work_doi    TEXT NOT NULL,
+            seq         INTEGER,
+            name        TEXT NOT NULL,
+            orcid       TEXT,
+            role        TEXT,
+            affiliation TEXT,
+            ror         TEXT,
+            author_id   INTEGER REFERENCES authors(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_dcc_work ON datacite_creators(work_doi);
+        CREATE INDEX IF NOT EXISTS idx_dcc_author ON datacite_creators(author_id);
+
+        CREATE TABLE IF NOT EXISTS datacite_relations (
+            work_doi        TEXT NOT NULL,
+            relation_type   TEXT NOT NULL,
+            related_id      TEXT NOT NULL,
+            related_id_type TEXT,
+            article_id      INTEGER REFERENCES articles(id),
+            book_id         INTEGER REFERENCES books(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_dcr_work ON datacite_relations(work_doi);
+        CREATE INDEX IF NOT EXISTS idx_dcr_article ON datacite_relations(article_id);
+        CREATE INDEX IF NOT EXISTS idx_dcr_book ON datacite_relations(book_id);
+
+        CREATE TABLE IF NOT EXISTS datacite_scope_evidence (
+            work_doi   TEXT NOT NULL,
+            method     TEXT NOT NULL,
+            matched_on TEXT,
+            score      REAL,
+            found_at   TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_dcse_work ON datacite_scope_evidence(work_doi);
+    """)
+    log.info("v17→v18 migration complete (DataCite tables ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -862,6 +934,9 @@ def init_db():
 
         # Always run v17 migration — idempotent via column existence check.
         _migrate_v16_to_v17(conn)
+
+        # Always run v18 migration — idempotent via IF NOT EXISTS.
+        _migrate_v17_to_v18(conn)
 
         conn.commit()
 
