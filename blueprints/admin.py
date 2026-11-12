@@ -151,7 +151,7 @@ def _run_maintenance_in_background():
         return
     try:
         from weekly_maintenance import run_pipeline
-        rc = run_pipeline(steps=(4, 5, 6, 7, 8, 9, 12))
+        rc = run_pipeline(steps=(4, 5, 6, 7, 8, 9, 12, 13))
         log.info("Maintenance pipeline finished (exit status %s).", rc)
     except Exception:  # noqa: BLE001
         log.exception("Maintenance pipeline raised unhandled exception")

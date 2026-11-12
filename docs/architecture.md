@@ -33,6 +33,20 @@ flowchart LR
     WEB --> USER[/explore, /coverage, /article, ...]
 ```
 
+DataCite records take a separate path (below) and never enter `articles`:
+
+```mermaid
+flowchart LR
+    DB[(articles.db<br/>articles, books,<br/>citations, authors)] -->|classify_citation_ra.py| RA[citations.target_ra]
+    DB -->|datacite_fetcher.py<br/>methods 1-5| DUMP[data/datacite_dump.jsonl]
+    SEEDS[data/datacite_seeds.tsv] --> DUMP
+    DC[api.datacite.org] --> DUMP
+    DUMP -->|ingest_datacite.py<br/>tiers + redaction| DCT[(datacite_works / creators /<br/>relations / scope_evidence)]
+    CUR[(datacite_curation)] --> DCT
+    DCT --> PAGES[/datacite, /article, /author, /coverage/]
+    QUEUE[/admin/datacite/] --> CUR
+```
+
 Ingestion writes through `db.articles.upsert_article`, which is idempotent on URL: re-running an ingester never produces duplicates. Enrichment passes (OpenAlex, CrossRef references) read from and write to the same SQLite file as the live web app, in WAL mode, with one writer at a time enforced architecturally rather than via locks.
 
 ## Storage layer
@@ -81,6 +95,18 @@ Two enrichment passes run on top of the ingested base records:
 **OpenAlex** ([`enrich_openalex.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/enrich_openalex.py#L134)). For each article with a DOI, OpenAlex returns abstracts (decoded from the inverted-index format), open-access status (`gold`/`green`/`hybrid`/`bronze`/`closed`), the canonical OpenAlex work ID, and author affiliations with institution ROR IDs. Invoked from the daily fetch path, processes only articles whose `openalex_enriched_at` is null, polite-pool rate-limited at 10 req/s.
 
 **CrossRef references** ([`cite_fetcher.py`](https://github.com/justalewis/Rhet-Comp-Index/blob/0698720def2f376d4442d6c1627c65eb93cd21b9/cite_fetcher.py#L139)). For each article with a DOI, CrossRef returns its reference list. References that carry a DOI are stored in the `citations` table; the `target_article_id` is set when the cited DOI matches an in-corpus article. References without DOIs are recorded with a synthetic key derived from the SHA-256 of the raw reference string, which preserves the citation count without inflating the in-corpus citation graph.
+
+## DataCite
+
+Crossref scopes by journal ISSN. DataCite has no such boundary: it holds tens of millions of DOIs for datasets, software, talks, theses and grey literature, with sparse and inconsistent subject metadata. Pinakes therefore scopes it by *evidence*, and records why each record is in. DataCite records live in their own tables, in the same shape as the WAC dashboard (`ingest_wac.py` → `wac_works`): denormalised, rebuilt wholesale from a dump, read-only to the web app. They are kept out of `articles` because they carry no reference lists and would distort every citation-network tool.
+
+- `datacite_fetcher.py` runs five scoping methods and writes `data/datacite_dump.jsonl`. It is network-bound (~20 min) and writes nothing to the database, so it can run offline.
+- `ingest_datacite.py` rebuilds `datacite_works`, `datacite_creators`, `datacite_relations` and `datacite_scope_evidence`, scores each record against the tagger vocabulary (`datacite_scope.py`), assigns a tier, and applies the author-redaction ledger to creator names.
+- `datacite_curation` is the one table the rebuild does not touch. It holds curator approvals and rejections, so a rejected record is never suggested again.
+- `citations.target_ra` records each cited DOI's registration agency, filled by `classify_citation_ra.py` one prefix at a time via `doi.org/doiRA`.
+- Weekly maintenance step 13 runs the classifier, the harvest and the ingest, before the redaction resweeps. Failures report to Sentry with `source=datacite`.
+
+Public surfaces show only published tiers (A, B, curator-approved): a panel on `/article`, a "Research objects" section on `/author`, a section on `/coverage`, and the `/datacite` dashboard (public but unlinked). Candidates (tier C) are visible only through the token-gated review page at `/admin/datacite`. The scoping rules and their limits are in [methodology.md](methodology.md#datacite-scope).
 
 ## Tagging
 

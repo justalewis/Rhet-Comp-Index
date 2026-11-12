@@ -374,8 +374,20 @@ def coverage():
     if full and full.get("per_journal"):
         from coverage_report import tier_journals
         tiers = tier_journals(full["per_journal"])
+    try:
+        from db import datacite as _dc
+        datacite_cov = {
+            "overview": _dc.overview(),
+            "types": _dc.type_composition()["totals"][:8],
+            "repositories": _dc.repositories(limit=8),
+            "precision": _dc.precision_report(),
+        }
+    except Exception:  # supplementary section must never break /coverage
+        log.exception("datacite coverage section failed")
+        datacite_cov = None
     return render_template(
         "coverage.html",
+        datacite_cov=datacite_cov,
         detailed=detailed,
         tiers=tiers,
         since=since,

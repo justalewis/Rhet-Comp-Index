@@ -156,7 +156,7 @@ def capture_fetcher_error(source: str, journal: str | None, exc: Exception) -> N
     Callers always log the exception themselves — this is supplementary
     structured reporting, not a replacement for log.error.
 
-    `source`  — one of "crossref", "rss", "scrape", "openalex", "citations".
+    `source`  — one of "crossref", "rss", "scrape", "openalex", "citations", "datacite".
     `journal` — the journal name where known, else None (e.g., for the
                 citation backfill which iterates articles, not journals).
     """

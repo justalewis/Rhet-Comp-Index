@@ -878,6 +878,32 @@ def _migrate_v17_to_v18(conn):
     log.info("v17→v18 migration complete (DataCite tables ready).")
 
 
+def _migrate_v18_to_v19(conn):
+    """DataCite scoring + curation (v18 → v19).
+
+    `datacite_works.topic_score` is the tagger-vocabulary score used for tiering;
+    `funders` is a JSON list of funder names from fundingReferences.
+    `datacite_curation` holds curator decisions on candidate (Tier C) records.
+    It is deliberately NOT one of the tables ingest_datacite.py wipes: a
+    rejection must survive every rebuild so a record is never re-suggested, and
+    an approval must survive too. Idempotent.
+    """
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(datacite_works)").fetchall()}
+    for col, typedef in (("topic_score", "REAL"), ("funders", "TEXT")):
+        if col not in cols:
+            conn.execute(f"ALTER TABLE datacite_works ADD COLUMN {col} {typedef}")
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS datacite_curation (
+            doi        TEXT PRIMARY KEY,
+            decision   TEXT NOT NULL CHECK (decision IN ('approved', 'rejected')),
+            reason     TEXT,
+            decided_by TEXT,
+            decided_at TEXT DEFAULT (datetime('now'))
+        );
+    """)
+    log.info("v18→v19 migration complete (DataCite scoring + curation ready).")
+
+
 def init_db():
     with get_conn() as conn:
         cols = [r[1] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
@@ -937,6 +963,9 @@ def init_db():
 
         # Always run v18 migration — idempotent via IF NOT EXISTS.
         _migrate_v17_to_v18(conn)
+
+        # Always run v19 migration — idempotent via column existence check.
+        _migrate_v18_to_v19(conn)
 
         conn.commit()
 

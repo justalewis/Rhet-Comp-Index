@@ -1,0 +1,149 @@
+{% extends "base-alexandrian.html" %}
+
+{% block title %}DataCite Candidates — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block column_class %}column-inner--read{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">DataCite candidates</h1>
+    <p style="color:#6a655c;">Records that surfaced through an indexed author, a seed, or a topical search but lack a citation or relation tying them to the index, and so are not public. Approving publishes a record on author pages, article pages and the dashboard. Rejecting hides it, and the reason you give is kept: a rejected record is never suggested again, even after a rebuild. Nothing loads without your admin token.</p>
+
+    <div id="token-bar" style="margin:1.4rem 0;padding:1rem;border:1px solid var(--border,#e0dccf);border-radius:6px;background:#faf8f3;">
+      <label style="font-weight:600;font-size:0.9rem;">Admin token</label>
+      <div style="font-size:0.84rem;color:#6a655c;margin:0.2rem 0 0.5rem;">Your <code>PINAKES_ADMIN_TOKEN</code>. Held only in this tab (sessionStorage); cleared when you close it.</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <input type="password" id="token-input" autocomplete="off" placeholder="Bearer token"
+               style="flex:1;min-width:16rem;padding:0.5rem;font-family:var(--font-mono,monospace);">
+        <button id="connect-btn" class="fetch-btn" style="padding:0.5rem 1.2rem;">Connect</button>
+      </div>
+      <div id="token-error" style="color:#9a2a2a;font-size:0.85rem;margin-top:0.5rem;display:none;"></div>
+    </div>
+
+    <div id="toolbar" style="display:none;margin:0.6rem 0 1rem;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+      <button id="refresh-btn" class="fetch-btn" style="padding:0.4rem 1rem;">Refresh</button>
+      <button id="lock-btn" class="fetch-btn" style="padding:0.4rem 1rem;background:#7a7268;">Forget token</button>
+      <span id="status-msg" style="color:#6a655c;font-size:0.85rem;"></span>
+    </div>
+
+    <div id="queue"></div>
+
+  <footer class="column-foot">
+    <a href="/">Index</a> &middot; <a href="/datacite">Dashboard</a> &middot; <a href="/admin/user-tags">Tag suggestions</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
+  </footer>
+</div>
+
+<style>
+  .req-card { border:1px solid var(--border,#e0dccf); border-radius:6px; padding:0.9rem 1.1rem; margin-bottom:0.8rem; background:#fff; }
+  .req-name { font-size:1.02rem; font-weight:700; }
+  .req-meta { font-size:0.84rem; color:#6a655c; margin-top:0.25rem; line-height:1.6; }
+  .req-meta a { color:#2a3a55; }
+  .badge { display:inline-block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:0.12rem 0.5rem; border-radius:10px; background:#e3e9f0; color:#2a3a55; margin-right:0.3rem; }
+  .badge-score { background:#f6efda; color:#8a6d1a; }
+  .req-actions { margin-top:0.7rem; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .btn-approve { background:#2c4a3a; color:#fff; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .btn-deny { background:none; color:#5a544c; border:1px solid var(--border,#cfc9bb); padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+  .reason { flex:1; min-width:14rem; padding:0.35rem; font-size:0.85rem; }
+  .desc { font-size:0.84rem; color:#4a453d; margin-top:0.4rem; line-height:1.5; }
+</style>
+
+<script>
+(function () {
+  const KEY = 'pinakes-admin-token';
+  const $ = (id) => document.getElementById(id);
+  const tok = () => sessionStorage.getItem(KEY) || '';
+  const headers = (extra) => Object.assign({ 'Authorization': 'Bearer ' + tok() }, extra || {});
+
+  async function api(path, method, body) {
+    const opts = { method: method || 'GET', headers: headers() };
+    if (body !== undefined) {
+      opts.headers = headers({ 'Content-Type': 'application/json' });
+      opts.body = JSON.stringify(body);
+    }
+    const resp = await fetch(path, opts);
+    if (resp.status === 401 || resp.status === 403) { gateError('Token rejected (' + resp.status + ').'); throw new Error('auth'); }
+    if (resp.status === 503) { gateError('Server has no admin token configured.'); throw new Error('503'); }
+    return resp;
+  }
+
+  function gateError(msg) {
+    sessionStorage.removeItem(KEY);
+    $('token-bar').style.display = 'block';
+    $('toolbar').style.display = 'none';
+    const e = $('token-error'); e.textContent = msg; e.style.display = 'block';
+  }
+
+  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function card(r) {
+    const why = (r.evidence || []).map(e => `<span class="badge">${esc(e.method.replace(/_/g, ' '))}</span>${esc(e.matched_on)}`).join(' &nbsp; ');
+    const by = (r.creators || []).join('; ');
+    const desc = r.description ? `<div class="desc">${esc(r.description.slice(0, 360))}${r.description.length > 360 ? '…' : ''}</div>` : '';
+    return `<div class="req-card" id="card-${esc(r.doi)}">
+      <div><span class="req-name"><a href="https://doi.org/${esc(r.doi)}" target="_blank" rel="noopener">${esc(r.title || r.doi)}</a></span>
+        <span class="badge badge-score">score ${r.topic_score == null ? '–' : r.topic_score}</span></div>
+      <div class="req-meta">
+        ${esc(r.resource_type_gen || '')}${r.year ? ' · ' + r.year : ''} · ${esc(r.publisher || '')}<br>
+        ${by ? esc(by) + '<br>' : ''}
+        Why it surfaced: ${why || '—'}
+      </div>
+      ${desc}
+      <div class="req-actions">
+        <button class="btn-approve" data-doi="${esc(r.doi)}" data-act="approved">Approve</button>
+        <input class="reason" placeholder="Reason (kept with a rejection)" data-reason-for="${esc(r.doi)}">
+        <button class="btn-deny" data-doi="${esc(r.doi)}" data-act="rejected">Reject</button>
+      </div>
+    </div>`;
+  }
+
+  async function load() {
+    setStatus('Loading…');
+    const resp = await api('/api/admin/datacite/queue?limit=50');
+    const data = await resp.json();
+    const rows = data.items || [];
+    $('queue').innerHTML = rows.length ? rows.map(card).join('') : '<p style="color:#6a655c;">No candidates awaiting review.</p>';
+    $('token-bar').style.display = 'none';
+    $('toolbar').style.display = 'flex';
+    document.querySelectorAll('.btn-approve, .btn-deny').forEach(b => {
+      b.onclick = () => decide(b.getAttribute('data-doi'), b.getAttribute('data-act'));
+    });
+    setStatus(data.pending + ' pending (showing ' + rows.length + '), strongest topical score first. ' + new Date().toLocaleTimeString());
+  }
+
+  async function decide(doi, decision) {
+    const reasonEl = document.querySelector('[data-reason-for="' + CSS.escape(doi) + '"]');
+    const reason = reasonEl ? reasonEl.value.trim() : '';
+    if (decision === 'rejected' && !reason && !confirm('Reject without a reason?')) return;
+    setStatus((decision === 'approved' ? 'Approving ' : 'Rejecting ') + doi + '…');
+    try {
+      const resp = await api('/api/admin/datacite/decide', 'POST', { doi, decision, reason });
+      const data = await resp.json();
+      if (!resp.ok) { setStatus('Error: ' + (data.error || resp.status)); return; }
+      await load();
+    } catch (e) { /* gateError already shown */ }
+  }
+
+  function setStatus(m) { $('status-msg').textContent = m; }
+
+  function connect() {
+    const v = $('token-input').value.trim();
+    if (!v) return;
+    sessionStorage.setItem(KEY, v);
+    $('token-input').value = '';
+    $('token-error').style.display = 'none';
+    load().catch(() => {});
+  }
+
+  $('connect-btn').onclick = connect;
+  $('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+  $('refresh-btn').onclick = () => load().catch(() => {});
+  $('lock-btn').onclick = () => { sessionStorage.removeItem(KEY); location.reload(); };
+
+  if (tok()) load().catch(() => {});
+})();
+</script>
+{% endblock %}

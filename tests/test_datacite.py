@@ -56,7 +56,7 @@ def test_harvest_method2_matches_case_insensitively_and_records_evidence(corpus)
     rec = _record("10.5281/zenodo.1")
     responses.add(responses.GET, dcf.API, json={"data": [rec], "links": {}})
     with db.get_conn() as conn:
-        found = dcf.harvest(conn, delay=0)
+        found = dcf.harvest(conn, methods=(2,), seeds={}, delay=0)
     ev = found["10.5281/zenodo.1"]["evidence"]
     assert ev == [{"method": "relation_to_corpus", "matched_on": ART_DOI,
                    "relation": "IsSupplementTo"}]
@@ -72,7 +72,7 @@ def test_harvest_method1_cited_datacite_doi(corpus):
                       json={"data": [_record("10.5281/zenodo.9", related=[{
                           "relatedIdentifier": "10.1/none", "relationType": "Cites"}])],
                           "links": {}})
-        found = dcf.harvest(conn, delay=0)
+        found = dcf.harvest(conn, methods=(1,), seeds={}, delay=0)
     assert found["10.5281/zenodo.9"]["evidence"][0]["method"] == "cited_by_corpus"
 
 

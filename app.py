@@ -321,6 +321,10 @@ def create_app() -> Flask:
     # WAC Clearinghouse publisher dashboard — public but intentionally NOT in
     # the nav (reachable only by URL at /wac).
     flask_app.register_blueprint(wac_bp)
+    # DataCite research-objects dashboard (/datacite, public but unlinked) and
+    # its token-gated curation queue (/admin/datacite).
+    from blueprints.datacite import bp as datacite_bp
+    flask_app.register_blueprint(datacite_bp)
     # Gated JWA webtext companion at /jwa — Basic Auth (PINAKES_JWA_USER/PASSWORD),
     # serves the static bundle in jwa-webtext/ for the journal editors' review.
     flask_app.register_blueprint(jwa_bp)

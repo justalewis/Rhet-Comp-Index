@@ -18,7 +18,7 @@ block the rest. Logs to stdout (captured by cron to /tmp/weekly.log).
 
 Usage:
     python weekly_maintenance.py          # run full pipeline
-    python weekly_maintenance.py --step N # run only step N (1-12)
+    python weekly_maintenance.py --step N # run only step N (1-13)
 """
 
 import argparse
@@ -133,6 +133,31 @@ def step_12_books():
         raise RuntimeError(f"book harvest failed for: {', '.join(failed)}")
 
 
+def step_13_datacite():
+    """DataCite research objects: classify any newly cited DOIs by registration
+    agency, harvest DataCite records for the five scoping methods, then rebuild
+    the datacite_* tables from the dump.
+
+    The harvest is network-bound (~20 min) and writes nothing to the database;
+    only the ingest at the end writes, and it is a fast local rebuild. Runs
+    before the redaction resweeps (10, 11) so DataCite creators are covered.
+    Curator decisions live in datacite_curation, which the rebuild keeps."""
+    from classify_citation_ra import classify
+    from datacite_fetcher import DUMP_DEFAULT, harvest, write_dump
+    from ingest_datacite import ingest
+    from db import get_conn
+    try:
+        with get_conn() as conn:
+            log.info("DataCite: classified %d new citations", classify(conn))
+            found = harvest(conn)
+        write_dump(found, DUMP_DEFAULT)
+        log.info("DataCite: ingested %d works", ingest(DUMP_DEFAULT))
+    except Exception as exc:
+        from monitoring import capture_fetcher_error
+        capture_fetcher_error("datacite", None, exc)
+        raise
+
+
 def step_10_redaction_resweep():
     """Re-apply the author-redaction ledger across every table.
 
@@ -172,6 +197,7 @@ STEPS = [
     (8, "OA status backfill",             step_8_oa_backfill),
     (9, "OpenAlex citation counts",       step_9_openalex_citations),
     (12, "Book harvest + title repair",   step_12_books),
+    (13, "DataCite research objects",     step_13_datacite),
     (10, "Author-redaction resweep",      step_10_redaction_resweep),
     (11, "Article-suppression resweep",   step_11_article_suppression_resweep),
 ]
@@ -226,7 +252,7 @@ def run_pipeline(only_step=None, steps=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Weekly data maintenance pipeline for Pinakes.")
     parser.add_argument("--step", type=int, default=None,
-                        help="Run only step N (1-12). Omit to run all steps.")
+                        help="Run only step N (1-13). Omit to run all steps.")
     args = parser.parse_args()
 
     sys.exit(run_pipeline(only_step=args.step))

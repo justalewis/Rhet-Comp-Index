@@ -259,6 +259,25 @@
     </section>
     {% endif %}
 
+    {% if research_objects %}
+    <section class="author-books-section" id="research-objects">
+      <h3 class="author-books-heading">Research objects ({{ research_objects | length }})</h3>
+      <ul class="author-books-list">
+        {% for o in research_objects %}
+        <li class="author-book-item">
+          <div class="author-book-title"><a href="https://doi.org/{{ o.doi }}" target="_blank" rel="noopener">{{ o.title or o.doi }}</a></div>
+          <div class="author-book-meta">
+            <span class="author-book-role">{{ o.resource_type or o.resource_type_gen or "Other" }}</span>
+            {% if o.publisher %} · {{ o.publisher }}{% endif %}{% if o.year %}, {{ o.year }}{% endif %}
+            {% if o.creators | length > 1 %} · with {{ o.creators | reject("equalto", author_name) | list | join("; ") | truncate(120) }}{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="citation-coverage-note">Registered with DataCite and matched to this author by ORCID. Work without an ORCID or a DOI does not appear.</p>
+    </section>
+    {% endif %}
+
 {% endblock %}
 
 {% block body_scripts %}

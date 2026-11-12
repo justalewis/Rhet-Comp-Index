@@ -207,8 +207,8 @@ def test_route_count_matches_expected(client):
     #  +  1  GET /design/icons (2026-09-19): reference sheet for the Alexandrian
     #        icon set, and the end-to-end check that tokens.css, the self-hosted
     #        faces and the CSP agree. Unlinked, noindex, Disallow: /design/.
-    assert len(rules) == 158, (
-        f"Expected 158 routes, got {len(rules)}. "
+    assert len(rules) == 163, (
+        f"Expected 163 routes, got {len(rules)}. "
         "If you intentionally added/removed a route, update this test."
     )
 

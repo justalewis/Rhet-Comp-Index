@@ -1,0 +1,14 @@
+# DataCite scope seeds. One row per seed; tab-separated; lines starting with # are ignored.
+# kind: orcid | client | doi | term
+#   orcid   an ORCID outside the `authors` table (tool/corpus builders etc.)
+#   client  a DataCite repository id; `query` narrows it (REQUIRED for large
+#           repositories such as cos.osf or cern.zenodo, or you will pull millions)
+#   doi     a single hand-picked DOI to include
+#   term    an extra phrase for Method 5 topical discovery
+# Everything found through a seed enters as method "seed" and is tiered B (if the
+# tagger finds topical support) or C (curation queue). Reviewed in version control.
+kind	value	query	note
+term	writing across the curriculum		extra discovery phrase beyond the tagger triggers
+term	writing in the disciplines		extra discovery phrase beyond the tagger triggers
+term	automated writing evaluation		extra discovery phrase beyond the tagger triggers
+client	cos.osf	titles.title:"writing center" OR titles.title:"first-year composition" OR titles.title:"writing assessment"	OSF projects from writing research; narrowed by title phrase

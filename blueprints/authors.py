@@ -14,6 +14,7 @@ from db import (
     get_author_citing_venues,
     get_new_article_count,
 )
+from db.datacite import get_datacite_for_author
 from journals import UNAVAILABLE_JOURNALS
 from rate_limit import limiter, LIMITS
 from web_helpers import _safe_int, cache_response
@@ -81,6 +82,11 @@ def author_detail(name):
     institution_summary = get_author_institution_summary(name)
     author_books = get_author_books(name)
     citing_venues = get_author_citing_venues(name, top_journals=10)
+    try:
+        research_objects = get_datacite_for_author(author_record["id"]) if author_record else []
+    except Exception:  # supplementary section must never break the author page
+        log.exception("datacite section failed for author %s", name)
+        research_objects = []
 
     return render_template(
         "author.html",
@@ -88,6 +94,7 @@ def author_detail(name):
         is_redacted=is_redacted,
         articles=articles,
         author_books=author_books,
+        research_objects=research_objects,
         author_record=author_record,
         affiliations_by_article=affiliations_by_article,
         institution_summary=institution_summary,

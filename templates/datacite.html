@@ -1,0 +1,180 @@
+{% extends "base-alexandrian.html" %}
+
+{% block title %}Research Objects on DataCite — Pinakes{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="Datasets, software, talks, and other research objects registered with DataCite that connect to the Pinakes corpus.">
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block column_class %}column-inner--read{% endblock %}
+
+{% macro bars(rows, label, value, fmt='{:,}') %}
+  {% set top = (rows | map(attribute=value) | max) if rows else 0 %}
+  <table class="dc-bars">
+    {% for r in rows %}
+    <tr>
+      <td class="dc-lab">{{ r[label] }}</td>
+      <td class="dc-bar"><span style="width:{{ (100 * r[value] / top) if top else 0 }}%"></span></td>
+      <td class="dc-val">{{ fmt.format(r[value]) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endmacro %}
+
+{% block content %}
+<h1 class="page-title">Research objects on DataCite</h1>
+
+<p class="dc-lede">
+  Pinakes indexes what Crossref knows about. A great deal of the field's other work is
+  registered with DataCite instead: datasets and corpora, software, conference talks,
+  some theses, and articles from journals that never joined Crossref. This page counts
+  the DataCite records that connect to the index.
+</p>
+
+<div class="dc-note">
+  <strong>Read these numbers as a lower bound.</strong>
+  A record is here only if it cites, is cited by, or declares a relation to something already in
+  Pinakes, was deposited by an indexed author under an ORCID, or came through a hand-kept seed list
+  or a topical search. Most scholarly data and software in the humanities has no DOI at all, and
+  none of that is counted.
+</div>
+
+<div class="dc-kpis">
+  <div><b>{{ "{:,}".format(overview.published) }}</b><span>published records</span></div>
+  <div><b>{{ "{:,}".format(overview.linked_articles) }}</b><span>indexed articles with a linked object</span></div>
+  <div><b>{{ "{:,}".format(overview.orcid_authors) }}</b><span>indexed authors with deposits</span></div>
+  <div><b>{{ overview.by_tier.get('A', 0) }} / {{ overview.by_tier.get('B', 0) }} / {{ overview.by_tier.get('curated', 0) }}</b><span>linked / corroborated / curated</span></div>
+</div>
+
+<p class="dc-small">
+  Every record carries the reason it is here. <em>Linked</em> (A) records have a citation or relation
+  tying them to the index. <em>Corroborated</em> (B) records came from an indexed author or a seed and
+  also match the field's topic vocabulary. <em>Curated</em> records were candidates a person approved.
+  Candidates without that support wait in a review queue and are not shown anywhere on the site.
+  {% if overview.queue %}<span>({{ overview.queue }} awaiting review.)</span>{% endif %}
+</p>
+{% if overview.cited_only %}
+<p class="dc-small">
+  <strong>{{ overview.cited_only }}</strong> of the published records are here only because an indexed article cites them.
+  They are things the field relies on, such as a corpus or a report from another discipline, and are not necessarily
+  Writing Studies work.
+</p>
+{% endif %}
+
+{% if precision %}
+<h2>How well the scope holds</h2>
+<p class="dc-small">Hand-coded samples, {{ precision.coded_on or '' }}. Precision is the share of sampled records a reviewer judged to be Writing Studies work or a research object the field uses.</p>
+<table class="dc-table">
+  <tr><th>Tier</th><th>Sampled</th><th>In field</th><th>Precision</th></tr>
+  {% for t in precision.tiers %}
+  <tr><td>{{ t.tier }}</td><td>{{ t.n }}</td><td>{{ t.in_field }}</td><td>{{ '%.0f' % (100 * t.precision) }}%</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>What gets deposited</h2>
+{{ bars(types.totals, 'type', 'n') }}
+<p class="dc-small">DataCite's own resource type. Several repositories register journal articles and preprints here, so the mix is wider than datasets and software.</p>
+
+<h2>Where it is deposited</h2>
+{{ bars(repositories, 'repository', 'n') }}
+
+<h2>Which articles have something behind them</h2>
+<p class="dc-small">Share of articles with a DOI that have at least one linked object, for journals with at least 30 such articles and at least one link.</p>
+{% if supplement_by_journal %}
+<table class="dc-table">
+  <tr><th>Journal</th><th>Articles</th><th>With object</th><th>Share</th></tr>
+  {% for r in supplement_by_journal %}
+  <tr><td>{{ r.label }}</td><td>{{ "{:,}".format(r.articles) }}</td><td>{{ r.linked }}</td><td>{{ r.rate }}%</td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="dc-small">No journal has reached the threshold yet.</p>{% endif %}
+
+<h3>By publication year</h3>
+{{ bars(supplement_by_year, 'label', 'rate', '{}%') }}
+
+<h2>What the field cites beyond articles</h2>
+{% if cited_beyond_articles.by_ra %}
+<p class="dc-small">Registration agency of every reference with a DOI, across the corpus.</p>
+{{ bars(cited_beyond_articles.by_ra, 'ra', 'n') }}
+{% if cited_beyond_articles.by_year %}
+<h3>Share of references registered with DataCite, by citing year</h3>
+{{ bars(cited_beyond_articles.by_year, 'year', 'datacite_pct', '{}%') }}
+{% endif %}
+{% else %}<p class="dc-small">References have not been classified yet. Run <code>classify_citation_ra.py</code>.</p>{% endif %}
+
+<h2>Who builds the infrastructure</h2>
+<p class="dc-small">Indexed authors, matched by ORCID, with deposited software, datasets, or other non-text objects.</p>
+{% if builders %}
+<table class="dc-table">
+  <tr><th>Author</th><th>Objects</th><th>Kinds</th></tr>
+  {% for b in builders %}
+  <tr><td><a href="/author/{{ b.name | urlencode }}">{{ b.name | redact_authors }}</a></td><td>{{ b.objects }}</td><td>{{ b.types }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="dc-small">None matched yet.</p>{% endif %}
+
+<h2>Tool lifecycles</h2>
+<p class="dc-small">Software and interactive tools, by number of registered versions. A last year long past can mean a tool that stopped being maintained, or stopped being deposited.</p>
+{% if tool_lifecycles %}
+<table class="dc-table">
+  <tr><th>Tool</th><th>Repository</th><th>Versions</th><th>First</th><th>Last</th></tr>
+  {% for t in tool_lifecycles %}
+  <tr><td><a href="https://doi.org/{{ t.doi }}" rel="noopener">{{ t.title }}</a></td><td>{{ t.publisher }}</td><td>{{ t.versions }}</td><td>{{ t.first_year }}</td><td>{{ t.last_year }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="dc-small">No software records yet.</p>{% endif %}
+
+<h2>Shared objects</h2>
+<p class="dc-small">Objects linked to more than one indexed article.</p>
+{% if shared_objects %}
+<table class="dc-table">
+  <tr><th>Object</th><th>Type</th><th>Articles</th></tr>
+  {% for o in shared_objects %}
+  <tr><td><a href="https://doi.org/{{ o.doi }}" rel="noopener">{{ o.title or o.doi }}</a></td><td>{{ o.resource_type_gen }}</td><td>{{ o.articles }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="dc-small">None yet.</p>{% endif %}
+
+<h2>Usage and citation</h2>
+<p class="dc-small">Downloads and views come from repositories that report them; many do not. Cited counts are references inside the Pinakes corpus only.</p>
+{% if usage_vs_citation %}
+<table class="dc-table">
+  <tr><th>Object</th><th>Downloads</th><th>Views</th><th>Cited in corpus</th></tr>
+  {% for u in usage_vs_citation %}
+  <tr><td><a href="https://doi.org/{{ u.doi }}" rel="noopener">{{ u.title or u.doi }}</a></td><td>{{ u.download_count }}</td><td>{{ u.view_count }}</td><td>{{ u.cited_by_corpus }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}<p class="dc-small">No usage counts reported.</p>{% endif %}
+
+<h2>Licenses and funders</h2>
+<div class="dc-two">
+  <div>{{ bars(licenses, 'license', 'n') }}</div>
+  <div>{% if funders %}{{ bars(funders, 'funder', 'n') }}{% else %}<p class="dc-small">No funding references on published records.</p>{% endif %}</div>
+</div>
+
+<footer class="column-foot">
+  <a href="/">Index</a> &middot; <a href="/coverage">Coverage</a> &middot; <a href="/about">About</a>
+  &nbsp;&nbsp;|&nbsp;&nbsp; &copy; 2026 Justin Lewis
+</footer>
+
+<style>
+  .dc-lede { font-size:1.05rem; line-height:1.6; }
+  .dc-note { border-left:3px solid #b79b4a; background:#faf6e9; padding:0.7rem 1rem; margin:1rem 0; font-size:0.92rem; line-height:1.55; }
+  .dc-small { color:#6a655c; font-size:0.88rem; line-height:1.55; }
+  .dc-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:0.8rem; margin:1.2rem 0; }
+  .dc-kpis div { border:1px solid var(--border,#e0dccf); border-radius:6px; padding:0.7rem 0.9rem; background:#fff; }
+  .dc-kpis b { display:block; font-size:1.5rem; }
+  .dc-kpis span { font-size:0.8rem; color:#6a655c; }
+  .dc-bars { width:100%; border-collapse:collapse; font-size:0.88rem; }
+  .dc-bars td { padding:0.18rem 0.4rem; vertical-align:middle; }
+  .dc-lab { width:34%; }
+  .dc-bar { width:50%; }
+  .dc-bar span { display:block; height:0.7rem; background:#2c4a3a; border-radius:2px; min-width:1px; }
+  .dc-val { width:16%; text-align:right; font-variant-numeric:tabular-nums; color:#5a544c; }
+  .dc-table { width:100%; border-collapse:collapse; font-size:0.88rem; margin:0.6rem 0 1.2rem; }
+  .dc-table th, .dc-table td { text-align:left; padding:0.3rem 0.5rem; border-bottom:1px solid #ece8dc; }
+  .dc-two { display:grid; grid-template-columns:repeat(auto-fit,minmax(18rem,1fr)); gap:1.4rem; }
+</style>
+{% endblock %}

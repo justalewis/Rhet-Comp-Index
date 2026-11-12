@@ -5,8 +5,10 @@ datacite_works / datacite_creators / datacite_relations /
 datacite_scope_evidence. Idempotent full rebuild: the four tables are wiped and
 repopulated, and are read-only to the web app (same pattern as ingest_wac.py).
 
-Tiering (Phase 1): everything found by Method 1 or 2 is tier "A" (linked).
-Tiers B/C arrive with Methods 3-5.
+Tiering: see datacite_scope.tier_for. Method 1/2 records are tier A; Method
+3/4 records are B (topical support) or C; Method 5 alone is C. Curator
+decisions in `datacite_curation` (which survives rebuilds) override: approved ->
+"curated", rejected -> "rejected". Records that earn no tier are dropped.
 
 Usage:
     python ingest_datacite.py             # data/datacite_dump.jsonl
@@ -21,6 +23,7 @@ import sys
 from db import get_conn
 from db.core import init_db
 from redaction import apply_suppression, is_redaction_token
+import datacite_scope as scope
 from tagger import auto_tag
 
 logging.basicConfig(
@@ -31,7 +34,6 @@ logging.basicConfig(
 log = logging.getLogger("ingest_datacite")
 
 DUMP_DEFAULT = "data/datacite_dump.jsonl"
-TIER_BY_METHOD = {"cited_by_corpus": "A", "relation_to_corpus": "A"}
 
 _ORCID_RE = re.compile(r"\d{4}-\d{4}-\d{4}-\d{3}[\dXx]")
 
@@ -107,23 +109,34 @@ def _redact(person, orcid, author_id, author_names, smap):
 
 
 def build_rows(entry, doi_to_article, doi_to_book, orcid_to_author,
-               author_names=None, smap=None):
+               author_names=None, smap=None, decisions=None):
     """Turn one dump entry into (work, creators, relations, evidence) rows."""
     author_names = author_names or {}
     smap = smap or {}
+    decisions = decisions or {}
     rec = entry["record"]
     a = rec["attributes"]
     doi = rec["id"].lower()
     types = a.get("types") or {}
-    title = _title(a)
-    desc = _description(a)
+    title = scope.clean_text(_title(a))
+    desc = scope.clean_text(_description(a))
     subjects = [
         {"subject": s.get("subject"), "scheme": s.get("subjectScheme")}
         for s in a.get("subjects") or [] if s.get("subject")
     ]
     subject_text = " ; ".join(s["subject"] for s in subjects)
-    methods = [e["method"] for e in entry["evidence"]]
-    tier = "A" if any(TIER_BY_METHOD.get(m) == "A" for m in methods) else "C"
+    methods = scope.effective_methods(entry["evidence"])
+    score, _tags = scope.score_attrs(a)
+    tier = scope.tier_for(methods, score)
+    decision = decisions.get(doi)
+    if decision == "approved":
+        tier = "curated"
+    elif decision == "rejected":
+        tier = "rejected"
+    if tier is None:
+        return None
+    funders = sorted({f.get("funderName") for f in a.get("fundingReferences") or []
+                      if f.get("funderName")})
     pub = a.get("publisher")
     if isinstance(pub, dict):
         pub = pub.get("name")
@@ -135,6 +148,8 @@ def build_rows(entry, doi_to_article, doi_to_book, orcid_to_author,
         json.dumps(subjects, ensure_ascii=False) if subjects else None,
         auto_tag(title, (desc or "") + " " + subject_text),
         tier, a.get("viewCount"), a.get("downloadCount"), a.get("citationCount"), a.get("url"),
+        score,
+        json.dumps(funders, ensure_ascii=False) if funders else None,
     )
 
     creators = []
@@ -163,7 +178,8 @@ def build_rows(entry, doi_to_article, doi_to_book, orcid_to_author,
                           doi_to_book.get(norm) if norm else None))
 
     evidence = [(doi, e["method"],
-                 e["matched_on"] + (f" ({e['relation']})" if e.get("relation") else ""), None)
+                 e["matched_on"] + (f" ({e['relation']})" if e.get("relation") else ""),
+                 e.get("score"))
                 for e in entry["evidence"]]
     return work, creators, relations, evidence
 
@@ -188,13 +204,18 @@ def ingest(path=DUMP_DEFAULT, conn=None):
             if m:
                 orcid_to_author.setdefault(m.group(0).upper(), r["id"])
 
+        decisions = {r["doi"]: r["decision"] for r in conn.execute(
+            "SELECT doi, decision FROM datacite_curation")}
         works, creators, relations, evidence = [], [], [], []
         with open(path, encoding="utf-8") as f:
             for line in f:
                 if not line.strip():
                     continue
-                w, c, r, e = build_rows(json.loads(line), doi_to_article, doi_to_book, orcid_to_author,
-                                   author_names, smap)
+                built = build_rows(json.loads(line), doi_to_article, doi_to_book, orcid_to_author,
+                                   author_names, smap, decisions)
+                if built is None:
+                    continue
+                w, c, r, e = built
                 works.append(w); creators += c; relations += r; evidence += e
 
         for t in ("datacite_works", "datacite_creators", "datacite_relations", "datacite_scope_evidence"):
@@ -202,7 +223,7 @@ def ingest(path=DUMP_DEFAULT, conn=None):
         conn.executemany(
             "INSERT INTO datacite_works (doi, resource_type_gen, resource_type, title, description, "
             "publisher, client_id, year, version, rights, subjects, tags, tier, view_count, "
-            "download_count, citation_count, url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", works)
+            "download_count, citation_count, url, topic_score, funders) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", works)
         conn.executemany(
             "INSERT INTO datacite_creators (work_doi, seq, name, orcid, role, affiliation, ror, author_id) "
             "VALUES (?,?,?,?,?,?,?,?)", creators)
