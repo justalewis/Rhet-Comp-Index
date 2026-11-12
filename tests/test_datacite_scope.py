@@ -327,7 +327,7 @@ def test_weak_relation_only_record_is_dropped_unless_topical(fixture_db, tmp_pat
         assert _tiers(conn) == {"10.5/topic": "B"}
 
 
-def test_article_panel_excludes_weak_relations_but_keeps_strong(fixture_db, tmp_path):
+def test_article_panel_excludes_weak_relations_but_keeps_strong(fixture_db, tmp_path, monkeypatch):
     with db.get_conn() as conn:
         conn.execute("INSERT INTO articles (url, title, journal, source, doi) "
                      "VALUES ('http://x/1','T','J','crossref','10.1/a')")
@@ -338,11 +338,16 @@ def test_article_panel_excludes_weak_relations_but_keeps_strong(fixture_db, tmp_
     weak_topical = _entry(_rec("10.5/w", subjects=STRONG, related=[("10.1/a", "Cites")]),
                           {"method": "relation_to_corpus", "matched_on": "10.1/a", "relation": "Cites"})
     ing.ingest(_dump(tmp_path, [strong, weak_topical]))
-    # both published (A and B) ...
-    assert dc.overview()["published"] == 2
-    # ... but only the strong one is presented as something behind the article
+    # B is held for review by default, so only the strong (A) record is public ...
+    assert dc.overview()["published"] == 1
+    # ... and it is the one presented as something behind the article
     assert [o["doi"] for o in dc.get_datacite_for_article(aid)] == ["10.5/s"]
     assert dc.overview()["linked_articles"] == 1
+    # with B publishing on, the weak-relation topical record is public too but
+    # still not presented as something behind the article
+    monkeypatch.setattr(dc, "_PUB", "('A','B','curated')")
+    assert dc.overview()["published"] == 2
+    assert [o["doi"] for o in dc.get_datacite_for_article(aid)] == ["10.5/s"]
 
 
 def test_overview_separates_cited_only_records(fixture_db, tmp_path):
@@ -378,3 +383,16 @@ def test_failed_method_keeps_other_methods_results_and_reports_error(with_author
         found = dcf.harvest(conn, methods=(3, 5), seeds={}, limit=1, delay=0, errors=errors)
     assert list(found) == ["10.5281/ok"]
     assert len(errors) == 1 and errors[0].startswith("method 3")
+
+
+def test_tier_b_is_held_for_review_until_published_or_approved(with_author, tmp_path, monkeypatch):
+    assert "B" not in scope.PUBLISHED_TIERS and "B" in scope.REVIEW_TIERS
+    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/b", subjects=STRONG),
+                                       {"method": "author_in_corpus", "matched_on": ORCID})]))
+    assert dc.overview()["published"] == 0 and dc.queue_size() == 1
+    assert [q["doi"] for q in dc.get_curation_queue()] == ["10.5/b"]
+    assert dc.get_datacite_for_author(1) == []
+    dc.decide_curation("10.5/b", "approved")           # approval publishes it as curated
+    ing.ingest(_dump(tmp_path, [_entry(_rec("10.5/b", subjects=STRONG),
+                                       {"method": "author_in_corpus", "matched_on": ORCID})]))
+    assert dc.queue_size() == 0 and [o["doi"] for o in dc.get_datacite_for_author(1)] == ["10.5/b"]

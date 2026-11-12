@@ -12,9 +12,10 @@ Kept out of db/__init__.py on purpose: import directly with
 import json
 import os
 
-from datacite_scope import PUBLISHED_TIERS, WEAK_RELATIONS
+from datacite_scope import PUBLISHED_TIERS, REVIEW_TIERS, WEAK_RELATIONS
 from .core import get_conn
 
+_REV = "(" + ",".join(f"'{t}'" for t in REVIEW_TIERS) + ")"
 _PUB = "(" + ",".join(f"'{t}'" for t in PUBLISHED_TIERS) + ")"
 # Relations that mean "the record's reference list mentions the article", not
 # "the record sits behind the article". Left off article-facing views.
@@ -135,15 +136,15 @@ def get_datacite_for_author(author_id, conn=None):
 # ── curation queue ───────────────────────────────────────────────────────────
 
 def get_curation_queue(limit=100, offset=0, conn=None):
-    """Pending Tier C candidates, strongest topical score first, each with its
+    """Pending review candidates (tier C, plus B while B is held), strongest topical score first, each with its
     evidence so the curator can see *why* it surfaced."""
     own = conn is None
     conn = conn or get_conn()
     try:
         rows = _rows(
             conn,
-            """SELECT w.* FROM datacite_works w
-                WHERE w.tier = 'C'
+            f"""SELECT w.* FROM datacite_works w
+                WHERE w.tier IN {_REV}
                   AND NOT EXISTS (SELECT 1 FROM datacite_curation k WHERE k.doi = w.doi)
                 ORDER BY w.topic_score DESC, w.year DESC, w.doi
                 LIMIT ? OFFSET ?""",
@@ -166,7 +167,7 @@ def queue_size(conn=None):
     conn = conn or get_conn()
     try:
         return conn.execute(
-            "SELECT COUNT(*) FROM datacite_works w WHERE w.tier = 'C' AND NOT EXISTS "
+            f"SELECT COUNT(*) FROM datacite_works w WHERE w.tier IN {_REV} AND NOT EXISTS "
             "(SELECT 1 FROM datacite_curation k WHERE k.doi = w.doi)").fetchone()[0]
     finally:
         if own:
@@ -229,7 +230,7 @@ def overview(conn=None):
         return {
             "published": pub["n"], "year_min": pub["y0"], "year_max": pub["y1"],
             "cited_only": cited_only,
-            "by_tier": by_tier, "queue": by_tier.get("C", 0),
+            "by_tier": by_tier, "queue": sum(by_tier.get(t, 0) for t in REVIEW_TIERS),
             "linked_articles": linked_articles, "orcid_authors": authors,
         }
     finally:

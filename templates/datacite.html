@@ -44,14 +44,14 @@
   <div><b>{{ "{:,}".format(overview.published) }}</b><span>published records</span></div>
   <div><b>{{ "{:,}".format(overview.linked_articles) }}</b><span>indexed articles with a linked object</span></div>
   <div><b>{{ "{:,}".format(overview.orcid_authors) }}</b><span>indexed authors with deposits</span></div>
-  <div><b>{{ overview.by_tier.get('A', 0) }} / {{ overview.by_tier.get('B', 0) }} / {{ overview.by_tier.get('curated', 0) }}</b><span>linked / corroborated / curated</span></div>
+  <div><b>{{ overview.by_tier.get('A', 0) }} / {{ overview.by_tier.get('curated', 0) }}</b><span>linked / curated</span></div>
 </div>
 
 <p class="dc-small">
-  Every record carries the reason it is here. <em>Linked</em> (A) records have a citation or relation
-  tying them to the index. <em>Corroborated</em> (B) records came from an indexed author or a seed and
-  also match the field's topic vocabulary. <em>Curated</em> records were candidates a person approved.
-  Candidates without that support wait in a review queue and are not shown anywhere on the site.
+  Every record carries the reason it is here. <em>Linked</em> records have a citation or relation
+  tying them to the index. <em>Curated</em> records were candidates a person approved.
+  Records that came from an indexed author, a seed or a topical search wait in a review queue and are
+  not shown anywhere on the site until someone has judged them.
   {% if overview.queue %}<span>({{ overview.queue }} awaiting review.)</span>{% endif %}
 </p>
 {% if overview.cited_only %}

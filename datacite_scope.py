@@ -51,7 +51,14 @@ TIER_B_MIN = 8
 AUTHOR_MIN = 3
 DISCOVERY_MIN = 20
 
-PUBLISHED_TIERS = ("A", "B", "curated")
+# Tier B is held for review until a hand-coded precision sample says it can
+# publish on its own (see datacite_precision.py). Set PINAKES_DATACITE_PUBLISH_B=1
+# to publish it automatically. B records are still tiered "B" in the database so
+# the precision sample can measure them; they just join the review queue, and a
+# curator's approval publishes one as "curated".
+PUBLISH_TIER_B = os.environ.get("PINAKES_DATACITE_PUBLISH_B", "").strip().lower() in ("1", "true", "yes")
+PUBLISHED_TIERS = ("A", "B", "curated") if PUBLISH_TIER_B else ("A", "curated")
+REVIEW_TIERS = ("C",) if PUBLISH_TIER_B else ("B", "C")
 
 # Relation types (from the DataCite record's point of view) that only mean the
 # record's reference list mentions the corpus work. See the module docstring.
