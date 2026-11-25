@@ -7,6 +7,7 @@ so per-test monkeypatch of `db.DB_PATH` continues to work after the split.
 
 import json
 import os
+import re
 import sqlite3
 import logging
 
@@ -35,35 +36,6 @@ def get_conn():
     conn.execute("PRAGMA synchronous = NORMAL")      # safe with WAL, avoids extra fsync
     conn.execute("PRAGMA temp_store = MEMORY")       # temp tables in memory
     return conn
-
-
-def year_range_sql(col, year_from=None, year_to=None):
-    """(clauses, params) limiting SUBSTR(col, 1, 4) to [year_from, year_to].
-
-    Blank, non-numeric or out-of-range (outside 1000-2999) bounds are ignored
-    rather than rejected, and a reversed range is swapped, so a stray query
-    string can never turn into an error or an empty chart. A row with a NULL
-    date is excluded once either bound is active, which is the behaviour the
-    existing citation filters already have.
-    """
-    def _y(v):
-        try:
-            n = int(v)
-        except (TypeError, ValueError):
-            return None
-        return n if 1000 <= n <= 2999 else None
-
-    yf, yt = _y(year_from), _y(year_to)
-    if yf and yt and yf > yt:
-        yf, yt = yt, yf
-    clauses, params = [], []
-    if yf:
-        clauses.append(f"SUBSTR({col}, 1, 4) >= ?")
-        params.append(f"{yf:04d}")
-    if yt:
-        clauses.append(f"SUBSTR({col}, 1, 4) <= ?")
-        params.append(f"{yt:04d}")
-    return clauses, params
 
 
 def _create_tables(conn):
@@ -902,6 +874,78 @@ def init_db():
         _migrate_v16_to_v17(conn)
 
         conn.commit()
+
+
+# --- Link hygiene -----------------------------------------------------------
+_SAFE_URL_SCHEMES = ("http://", "https://")
+
+# Synthetic identifiers, not links. Two manually-indexed journals have no web
+# page per article -- JAC was transcribed from CompPile records and Pre/Text
+# from print -- so the NOT NULL `url` column carries a stable synthetic id
+# ("jac:...", "pretext:...") instead. They must survive the scheme guard on
+# re-ingest. They are inert as hrefs: an unrecognised scheme is a dead link,
+# not a script.
+_SYNTHETIC_URL_SCHEMES = ("jac:", "pretext:")
+
+
+def is_synthetic_id(url):
+    """True if `url` is one of the internal synthetic article identifiers."""
+    if not url:
+        return False
+    return str(url).strip().lower().startswith(_SYNTHETIC_URL_SCHEMES)
+
+
+def year_range_sql(col, year_from=None, year_to=None):
+    """(clauses, params) limiting SUBSTR(col, 1, 4) to [year_from, year_to].
+
+    Blank, non-numeric or out-of-range (outside 1000-2999) bounds are ignored
+    rather than rejected, and a reversed range is swapped, so a stray query
+    string can never turn into an error or an empty chart. A row with a NULL
+    date is excluded once either bound is active, which is the behaviour the
+    existing citation filters already have.
+    """
+    def _y(v):
+        try:
+            n = int(v)
+        except (TypeError, ValueError):
+            return None
+        return n if 1000 <= n <= 2999 else None
+
+    yf, yt = _y(year_from), _y(year_to)
+    if yf and yt and yf > yt:
+        yf, yt = yt, yf
+    clauses, params = [], []
+    if yf:
+        clauses.append(f"SUBSTR({col}, 1, 4) >= ?")
+        params.append(f"{yf:04d}")
+    if yt:
+        clauses.append(f"SUBSTR({col}, 1, 4) <= ?")
+        params.append(f"{yt:04d}")
+    return clauses, params
+
+
+def safe_link(url):
+    """Return `url` if it is a plain http(s) link, else None.
+
+    Article and open-access links come from upstream -- scraped journal HTML,
+    OpenAlex, Unpaywall -- and are rendered straight into href attributes.
+    Jinja escapes the attribute *value* but does not police the *scheme*, so a
+    "javascript:" or "data:text/html" URL would render as a live, clickable
+    link. Rejecting at the storage boundary means every render and export path
+    inherits the guarantee, the same reasoning as the suppression and
+    author-redaction choke-points in db.articles.
+
+    Control characters are stripped before the scheme test because browsers
+    ignore them when resolving one -- a tab inside "java<TAB>script:" still
+    resolves to the javascript: scheme.
+    """
+    if not url:
+        return None
+    cleaned = str(url).strip()
+    probe = "".join(ch for ch in cleaned if ch > " ").lower()
+    if probe.startswith(_SAFE_URL_SCHEMES):
+        return cleaned
+    return None
 
 
 def _sanitize_fts(q: str) -> str:

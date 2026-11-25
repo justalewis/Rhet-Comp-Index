@@ -75,10 +75,21 @@ def _parse_authors(entry):
 
 
 def _strip_html(text):
+    """Plain text from a feed's HTML body.
+
+    Unescape before stripping, not after: stripping first leaves an encoded
+    tag ("&lt;img src=x onerror=...&gt;") intact, and the unescape then turns
+    it back into live markup. Loop the unescape because some feeds are doubly
+    encoded.
+    """
     if not text:
         return None
+    for _ in range(5):
+        decoded = html.unescape(text)
+        if decoded == text:
+            break
+        text = decoded
     clean = re.sub(r"<[^>]+>", " ", text)
-    clean = html.unescape(clean)
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean or None
 

@@ -114,17 +114,32 @@ def _parse_authors(item):
         given = a.get("given", "")
         family = a.get("family", "")
         name = f"{given} {family}".strip() if given else family
+        # Some depositors (RLEE) ship entity-encoded names: "Ar&aacute;nguiz".
+        name = _clean_title_part(name)
         if name:
             authors.append(name)
     return "; ".join(authors) if authors else None
 
 
 def _parse_abstract(item):
-    """Strip JATS XML tags and decode HTML entities from abstract."""
+    """Strip JATS XML tags and decode HTML entities from abstract.
+
+    Order matters, and it is the reverse of what reads naturally: unescape
+    first (looping until idempotent, since some deposits are doubly encoded),
+    then strip tags. Stripping first lets an *encoded* tag — "&lt;i&gt;", or
+    "&lt;img src=x onerror=...&gt;" — survive the strip untouched, and the
+    unescape then decodes it back into live markup. Same order as
+    _clean_title_part, for the same reason.
+    """
     raw = item.get("abstract", "")
     if not raw:
         return None
-    cleaned = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+    for _ in range(5):
+        decoded = html.unescape(raw)
+        if decoded == raw:
+            break
+        raw = decoded
+    cleaned = re.sub(r"<[^>]+>", "", raw).strip()
     return cleaned or None
 
 

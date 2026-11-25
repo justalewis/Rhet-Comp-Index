@@ -31,7 +31,7 @@ import urllib.error
 import json
 from datetime import datetime
 
-from db import get_conn, init_db
+from db import get_conn, init_db, safe_link
 from monitoring import capture_fetcher_error
 
 SOURCE_NAME = "openalex"
@@ -230,9 +230,9 @@ def enrich_openalex():
                 params.append(oa_status)
                 stats["oa_status_set"] += 1
 
-            if new_oa_url:
+            if new_oa_url and safe_link(new_oa_url):
                 updates.append("oa_url = ?")
-                params.append(new_oa_url)
+                params.append(safe_link(new_oa_url))
 
             updates.append("openalex_enriched_at = ?")
             params.append(datetime.utcnow().isoformat())

@@ -5,7 +5,7 @@ import os
 import sqlite3
 import logging
 
-from .core import get_conn
+from .core import get_conn, safe_link
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def backfill_oa_status():
 
                 conn.execute(
                     "UPDATE articles SET oa_status = 'gold', oa_url = ? WHERE id = ?",
-                    (oa_url, r["id"]),
+                    (safe_link(oa_url), r["id"]),
                 )
                 tagged += 1
 

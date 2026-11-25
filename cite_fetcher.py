@@ -21,7 +21,9 @@ Usage:
 
 import argparse
 import logging
+import re
 import time
+from urllib.parse import quote
 
 import requests
 
@@ -67,6 +69,29 @@ class RateLimitError(Exception):
 
 # ── CrossRef API ───────────────────────────────────────────────────────────────
 
+# A DOI is "10.<registrant>/<suffix>". Anything else in the doi column came
+# from a scrape rather than CrossRef and is not a resolvable DOI.
+_DOI_RE = re.compile(r"^10\.\d{4,9}/\S+$")
+
+
+def _encode_doi(doi: str) -> str | None:
+    """URL-safe DOI for the CrossRef path segment, or None if malformed.
+
+    The DOI is interpolated into a request URL, and DOIs in the index do not
+    all come from CrossRef -- some are scraped out of journal HTML. An
+    unencoded "?" or "&" in one would silently rewrite the query string
+    (CROSSREF_BASE/<doi>?mailto=...), so percent-encode everything except the
+    "/" that separates registrant from suffix, and reject anything that is not
+    DOI-shaped before it reaches the wire.
+    """
+    if not doi:
+        return None
+    doi = str(doi).strip()
+    if not _DOI_RE.match(doi):
+        return None
+    return quote(doi, safe="/")
+
+
 def _fetch_crossref_work(doi: str) -> dict | None:
     """
     Retrieve a single CrossRef work by DOI.
@@ -75,7 +100,11 @@ def _fetch_crossref_work(doi: str) -> dict | None:
     Raises RateLimitError on 429 so the caller can back off without stamping the
     article as fetched (it should stay in the queue for the next run).
     """
-    url = f"{CROSSREF_BASE}/{doi}?mailto={CONTACT_EMAIL}"
+    safe_doi = _encode_doi(doi)
+    if safe_doi is None:
+        log.warning("  Skipping malformed DOI: %r", doi)
+        return None
+    url = f"{CROSSREF_BASE}/{safe_doi}?mailto={CONTACT_EMAIL}"
     try:
         resp = requests.get(url, headers=HEADERS, timeout=20)
         if resp.status_code == 404:

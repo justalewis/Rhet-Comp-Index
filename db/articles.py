@@ -7,7 +7,7 @@ import logging
 from collections import Counter, defaultdict
 from itertools import combinations
 
-from .core import get_conn, year_range_sql
+from .core import get_conn, safe_link, is_synthetic_id, year_range_sql
 
 log = logging.getLogger(__name__)
 from .core import _build_where, _sanitize_fts
@@ -32,6 +32,15 @@ def upsert_article(url, doi, title, authors, abstract, pub_date, journal, source
         # blocklist is tiny and cached by version.
         if _is_suppressed(conn, doi, url):
             return 0
+        # Link-scheme choke-point: `url` is rendered as an href on every list
+        # and article page. A non-http(s) scheme from a scraper is never a real
+        # article link, and `url` is NOT NULL, so drop the row rather than
+        # store something no render path should emit. oa_url is optional, so a
+        # bad one is simply discarded.
+        if safe_link(url) is None and not is_synthetic_id(url):
+            log.warning("Refusing article with non-http(s) url: %r (%s)", url, journal)
+            return 0
+        oa_url = safe_link(oa_url)
         # Author-redaction choke-point: a redacted author's newly-published
         # work must come in already suppressed, or the next fetch resurrects
         # the name. apply_suppression is exact-match and exception-safe.
@@ -272,6 +281,7 @@ def update_article(article_id, fields: dict) -> bool:
 
 def update_oa_url(article_id, oa_url):
     """Store the open-access URL (or empty string if none found) for an article."""
+    oa_url = safe_link(oa_url) or ""
     with get_conn() as conn:
         conn.execute(
             "UPDATE articles SET oa_url = ? WHERE id = ?",

@@ -1,7 +1,7 @@
 """
 tagger.py — Automatic subject-tag assignment for Pinakes (Rhet-Comp Index).
 
-Tags are drawn from a 61-term controlled vocabulary grounded in:
+Tags are drawn from a 62-term controlled vocabulary grounded in:
   - CompPile's disciplinary glossary (~6,000 terms, validated via keyword
     mapping and lemmatization across both passes, April 2026)
   - The Bedford Bibliography subject taxonomy
@@ -14,7 +14,7 @@ Organized into 13 families:
   4. Assessment                          (3 tags)
   5. Writing Centers                     (2 tags)
   6. Institutional & Professional        (4 tags)
-  7. Research Methods                    (4 tags)
+  7. Research Methods                    (5 tags)
   8. Digital & Multimodal                (5 tags)
   9. Language & Linguistics              (5 tags)
   10. Identity, Equity & Justice          (5 tags)
@@ -585,6 +585,19 @@ VOCAB = {
         "statistical analysis of writing",
     ],
 
+    # Scope: Data-driven and computational study of writing. Includes writing
+    # analytics, automated writing evaluation, and natural-language-processing
+    # methods applied to student and scholarly text. Overlaps quantitative
+    # research but names the subfield (and journal) by its own term.
+    "writing analytics": [
+        "writing analytics", "learning analytics", "text analytics",
+        "automated writing evaluation", "automated essay scoring",
+        "automated essay evaluation", "automated feedback",
+        "natural language processing", "nlp",
+        "educational data mining", "keystroke logging",
+        "computational text analysis", "text mining", "sentiment analysis",
+    ],
+
 
     # ══════════════════════════════════════════════════════════════════════
     # Family 8: Digital & Multimodal
@@ -979,5 +992,5 @@ _TAG_NAME_SET = frozenset(TAG_NAMES)
 
 
 def is_vocab_tag(tag: str | None) -> bool:
-    """True iff `tag` (case-insensitively) is one of the 61 classifier tags."""
+    """True iff `tag` (case-insensitively) is one of the 62 classifier tags."""
     return bool(tag) and tag.strip().lower() in _TAG_NAME_SET

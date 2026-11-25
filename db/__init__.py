@@ -22,6 +22,8 @@ from .core import (
     _sanitize_fts,
     get_conn,
     init_db,
+    is_synthetic_id,
+    safe_link,
 )
 
 from .fetch_log import (
@@ -232,6 +234,8 @@ __all__ = [
     "get_user_tag_counts",
     "get_year_range",
     "init_db",
+    "is_synthetic_id",
+    "safe_link",
     "insert_article_author_institution",
     "list_user_tag_queue",
     "log_openalex_fetch",
