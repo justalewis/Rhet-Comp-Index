@@ -42,6 +42,7 @@ A journal's **gold OA** mark indicates that every article from this journal is o
 | RhetNet | 2768-251X | ✓ | WAC Clearinghouse. Historical (1994 to 1997). |
 | Academic Labor: Research and Artistry | — (no ISSN) | ✓ | No ISSN in its CrossRef deposits; selected by DOI stem 10.37514/alr-j. and container title. |
 | WLN: A Journal of Writing Center Scholarship | — (no ISSN) | ✓ | No ISSN in its CrossRef deposits; selected by DOI stem 10.37514/wln-j. and container title. Article-level DOIs for v40+ (2015 on) and, from 2026-11, the 1977–2015 back catalog. The older issue-level "Writing Lab Newsletter" rows are separate. |
+| Writing Spaces: Readings on Writing | — (book series, no ISSN) | ✓ | WAC Clearinghouse / Parlor Press. Edited volumes 1–6 (109 chapters, incl. the vol 1 introduction) and the Assignment and Activity Archive (112 items, Subjects = "Assignment and Activity Archive"), with deposited reference lists (1,619). DOIs registered 2026-11-25 and loaded from the deposit (`ingest_writing_spaces.py`, `data/writing_spaces.json`); the daily fetch selects new items by DOI stem 10.37514/wsp-b. with type book-chapter/other. The six volume DOIs are edited books (/books), not articles. |
 | Journal of Second Language Writing | 1060-3743 |  | Elsevier. No abstracts in CrossRef. |
 | Quarterly Journal of Speech | 0033-5630 |  | Taylor & Francis. Print ISSN returns 6,580 records, online ISSN 6,567. Runs from 1915. |
 | Argumentation and Advocacy | 1051-1431 |  | Taylor & Francis. Print ISSN returns 1,256 records, online ISSN 811. |

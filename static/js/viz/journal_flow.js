@@ -92,6 +92,7 @@ const JFLOW_ABBREV = {
   'RhetNet': 'RhetNet',
   'Academic Labor: Research and Artistry': 'ALRA',
   'WLN: A Journal of Writing Center Scholarship': 'WLN-J',
+  'Writing Spaces: Readings on Writing': 'WSpaces',
   'Journal of Second Language Writing': 'JSLW',
   'Quarterly Journal of Speech': 'QJS',
   'Argumentation and Advocacy': 'A&A',

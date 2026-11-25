@@ -90,6 +90,7 @@ JOURNAL_GROUPS = {
     "Academic.Writing":                                         "OTHER",
     "Academic Labor: Research and Artistry":                    "OTHER",
     "WLN: A Journal of Writing Center Scholarship":     "OTHER",
+    "Writing Spaces: Readings on Writing":                      "RHET_COMP",
 }
 
 

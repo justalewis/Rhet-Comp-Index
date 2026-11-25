@@ -49,6 +49,10 @@ CROSSREF_JOURNALS = [
     {"name": "Academic Labor: Research and Artistry",          "issn": "no-issn:alr-j"},  # WAC Clearinghouse — 81 DOIs, 2017–present
     # WLN has no ISSN either; selected by DOI stem. v40+ (2015 on) DOIs plus the 1977–2015 back catalog (v1–39) registered 2026-11.
     {"name": "WLN: A Journal of Writing Center Scholarship",   "issn": "no-issn:wln-j"},  # WAC Clearinghouse — article-level DOIs, 1977–present
+    # Writing Spaces is a book series (edited volumes 1–6 + the Assignment and Activity Archive), indexed as a journal so
+    # its chapters list with the composition journals. Book chapters, so the selector overrides the journal-article type.
+    # DOIs registered 2026-11-25 (221 items); first loaded from the deposit by ingest_writing_spaces.py.
+    {"name": "Writing Spaces: Readings on Writing",            "issn": "no-issn:wsp-b"},  # WAC Clearinghouse / Parlor Press — 2010–present, OA
     # Field journals missing from the index (writing studies, rhetorical studies):
     {"name": "Journal of Second Language Writing",             "issn": "1060-3743"},  # Elsevier — 1,441 DOIs, 1992–present; no abstracts deposited
     {"name": "Quarterly Journal of Speech",                    "issn": "0033-5630"},  # Taylor & Francis — 6,580 DOIs, 1915–present (print ISSN; online 1479-5779 = 6,567)
@@ -113,7 +117,21 @@ CROSSREF_SELECTORS = {
         # Mis-registered duplicate: 2092.50.3.02 (year typo) is the same article as 2026.50.3.02.
         "exclude_dois": {"10.37514/wln-j.2092.50.3.02"},
     },
+    # Writing Spaces: edited books, so the items are Crossref "book-chapter" (chapters, the vol 1 introduction) and
+    # "other" (archive items, deposited as component_type="other"). container-title is the volume title
+    # ("Writing Spaces: Readings on Writing, Volume 3"), which the fuzzy query matches. Item DOIs are
+    # 10.37514/wsp-b.<year>.<catalog>.<part>.<nn>; the volume DOI (<year>.<catalog>) is an edited-book and is
+    # excluded by both the type filter and doi_pattern.
+    "no-issn:wsp-b": {
+        "registrant": "10.37514",
+        "container_title": "Writing Spaces: Readings on Writing",
+        "doi_prefix": "10.37514/wsp-b.",
+        "doi_pattern": r"10\.37514/wsp-b\.\d{4}\.\d+\.\d+\.\d+",
+        "types": ("book-chapter", "other"),
+    },
 }
+
+import re as _re  # noqa: E402  (also imported below for slugs; needed here by crossref_doi_ok)
 
 
 def crossref_query_params(issn):
@@ -122,8 +140,9 @@ def crossref_query_params(issn):
     sel = CROSSREF_SELECTORS.get(issn)
     if not sel:
         return {"filter": f"issn:{issn},type:journal-article"}
+    types = ",".join(f"type:{t}" for t in sel.get("types", ("journal-article",)))
     return {
-        "filter": f"prefix:{sel['registrant']},type:journal-article",
+        "filter": f"prefix:{sel['registrant']},{types}",
         "query.container-title": sel["container_title"],
     }
 
@@ -135,6 +154,8 @@ def crossref_doi_ok(issn, doi):
     if not sel:
         return True
     d = (doi or "").lower()
+    if "doi_pattern" in sel and not _re.fullmatch(sel["doi_pattern"], d):
+        return False
     return d.startswith(sel["doi_prefix"]) and d not in sel.get("exclude_dois", ())
 
 
@@ -357,6 +378,7 @@ GOLD_OA_JOURNALS = {
     "RhetNet",
     "Academic Labor: Research and Artistry",
     "WLN: A Journal of Writing Center Scholarship",
+    "Writing Spaces: Readings on Writing",  # every chapter and archive item CC-licensed
     # Other fully OA
     "Discourse and Writing / Rédactologie",
     "Journal of Writing Assessment",
@@ -424,6 +446,7 @@ JOURNAL_GROUPS = [
         "Discourse and Writing / Rédactologie",
         "Written Language & Literacy",
         "Academic Labor: Research and Artistry",
+        "Writing Spaces: Readings on Writing",
     ]),
     ("Writing Research & Assessment", [
         "Assessing Writing",

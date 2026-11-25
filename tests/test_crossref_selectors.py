@@ -44,6 +44,7 @@ NEW_JOURNALS = {
     "RhetNet": "2768-251X",
     "Academic Labor: Research and Artistry": "no-issn:alr-j",
     "WLN: A Journal of Writing Center Scholarship": "no-issn:wln-j",
+    "Writing Spaces: Readings on Writing": "no-issn:wsp-b",
     "Journal of Second Language Writing": "1060-3743",
     "Quarterly Journal of Speech": "0033-5630",
     "Argumentation and Advocacy": "1051-1431",
@@ -91,6 +92,27 @@ def test_wln_selected_by_doi_stem():
     assert not crossref_doi_ok("no-issn:wln-j", "10.37514/alr-j.2024.8.1.01")
     assert not crossref_doi_ok("no-issn:wln-j", "10.37514/wln-j.2092.50.3.02")   # year-typo duplicate of 2026.50.3.02
 
+
+
+def test_writing_spaces_selected_as_book_chapters():
+    p = crossref_query_params("no-issn:wsp-b")
+    assert p["filter"] == "prefix:10.37514,type:book-chapter,type:other"
+    assert p["query.container-title"] == "Writing Spaces: Readings on Writing"
+    assert crossref_doi_ok("no-issn:wsp-b", "10.37514/WSP-B.2010.1851.1.3")       # vol 1 introduction
+    assert crossref_doi_ok("no-issn:wsp-b", "10.37514/wsp-b.2020.1289.2.07")      # chapter
+    assert crossref_doi_ok("no-issn:wsp-b", "10.37514/wsp-b.2024.4310.4.048")     # archive item
+    assert not crossref_doi_ok("no-issn:wsp-b", "10.37514/wsp-b.2024.4310")       # the volume is a book, not an item
+    assert not crossref_doi_ok("no-issn:wsp-b", "10.37514/per-b.2022.1824.2.01")  # another WAC book
+
+
+def test_writing_spaces_registered_under_composition():
+    name = "Writing Spaces: Readings on Writing"
+    assert journals.ISSN_TO_NAME["no-issn:wsp-b"] == name
+    assert name in journals.GOLD_OA_JOURNALS
+    comp = dict(journals.JOURNAL_GROUPS)["Composition & Writing Studies"]
+    assert name in comp
+    from journal_groups import get_journal_group
+    assert get_journal_group(name) == "RHET_COMP"
 
 def test_open_access_flags():
     for n in ("Journal of Basic Writing", "RhetNet", "Academic.Writing",
