@@ -23,7 +23,7 @@ Each redacted author gets a deterministic, unique token of the form:
 Redacted Author 7f3a2c
 ```
 
-where the suffix is the first 6 hex of `sha256(normalize(name) || salt)`. The token **replaces the name in place** everywhere the name is stored. Because identity *is* the string, swapping it for a stable token preserves every metric for free — the token simply becomes the new identity key, and all the `LIKE`-based machinery (timeline, co-authors, citing venues, co-citation) keeps resolving through it unchanged.
+where the suffix is the first 6 hex of `sha256(normalize(name) + "|" + salt)`, lengthened two characters at a time if that prefix already belongs to another redacted author. The token **replaces the name in place** everywhere the name is stored. Because identity *is* the string, swapping it for a stable token preserves every metric for free — the token simply becomes the new identity key, and all the `LIKE`-based machinery (timeline, co-authors, citing venues, co-citation) keeps resolving through it unchanged.
 
 Properties that matter:
 
@@ -40,18 +40,18 @@ Four tables, added by migrations v11 (`redaction_ledger`, `redaction_meta`) and 
 
 | Table | Purpose |
 |---|---|
-| `redaction_ledger` | **The locked table.** One row per redacted author: `token`, `name` (plaintext, retained), `name_hash`, `name_variants` (JSON), `redacted_at`, `request_id`. No render/API/export path reads it — only the suppression re-applier and admin review do. |
+| `redaction_ledger` | **The locked table.** One row per redacted author: `id`, `token`, `name` (plaintext, retained), `name_hash`, `name_variants` (JSON), `redacted_at`, `request_id`, `created_by`. No render/API/export path reads it — only the suppression re-applier and admin review do. |
 | `redaction_meta` | Key/value store; holds the per-install `salt` when `REDACTION_SALT` isn't set. |
 | `redaction_requests` | Opt-out requests: `author_name_claimed`, `name_variants`, `requester_email`, `requester_orcid`, `verification_method`, `verification_token_hash`, `verification_status` (`pending`/`verified`/`approved`/`denied`), and the decision/timestamp columns. |
 | `redaction_audit` | Append-only trail: `(request_id, event, actor, detail, at)`. Written *before* a redaction fires. |
 
 The name itself lives, denormalized, across these existing tables — all of which the redaction has to touch:
 
-`articles.authors` (a `;`-delimited string) · `articles_fts` (the search index) · `authors.name` (+ `orcid`, `openalex_id`, `institution_name`) · `author_article_affiliations.author_name` · `article_author_institutions.author_name` · `books.authors` / `books.editors` · and, as free text, `citations.raw_reference` (other articles' bibliographies).
+`articles.authors` (a `;`-delimited string) · `articles_fts` (the search index) · `authors.name` (+ `orcid`, `openalex_id`, `institution_name`, `institution_ror`, all nulled) · `author_article_affiliations.author_name` and `article_author_institutions.author_name` (+ `openalex_author_id`, nulled; their institution columns are kept so institution metrics still count the work) · `books.authors` / `books.editors` · and, as free text, `citations.raw_reference` (other articles' bibliographies).
 
 ### Retain-name vs hash-only
 
-The ledger keeps the **plaintext name** (not just a hash). This is a deliberate trade: it allows robust matching when an upstream re-fetch hands the name back, human-auditable review, and — importantly — **reversibility** (un-redaction restores the exact name). The cost is that the name persists in the locked ledger and therefore in encrypted backups; that bound is disclosed on the About page.
+The ledger keeps the **plaintext name** (not just a hash). This is a deliberate trade: it allows robust matching when an upstream re-fetch hands the name back, human-auditable review, and — importantly — **reversibility** (un-redaction restores the exact name). The cost is that the name persists in the locked ledger and therefore in every backup of the database: the unencrypted local copies on the server and any encrypted offsite copies (see [Backups](#scope-boundaries-v1) below). The About page says a removed name stays in the site's backups.
 
 ## The suppression spine (the resurrection problem)
 
@@ -61,7 +61,7 @@ Rather than guard ~20 write sites, suppression lives at the two real bottlenecks
 
 1. **[`db.articles.upsert_article`](../db/articles.py)** and **[`db.books.upsert_book`](../db/books.py)** call `redaction.apply_suppression(authors, conn=conn)` before the `INSERT`. Every ingested name funnels through these two. `apply_suppression` is exact-element match on the normalized name (never a substring — "Jane Smith" can't catch "Jane Smithson"), runs only *reads* on the connection already in hand, and is exception-safe (ingestion never breaks because suppression hiccuped).
 2. **[`enrich_openalex.py`](../enrich_openalex.py)** writes the normalized author tables directly, bypassing `upsert_article`, so it carries its own guard.
-3. **`redaction.resweep_all()`** re-applies the entire ledger across all tables and is wired into [`weekly_maintenance.py`](../weekly_maintenance.py) (step 10) and [`deep_refresh.py`](../deep_refresh.py), so any name an ingest path slipped past the choke-points is swept back out after every refresh. This makes redaction idempotent and self-healing.
+3. **`redaction.resweep_all()`** re-applies the entire ledger across all tables, sweeping out any name an ingest path slipped past the choke-points. It runs at the end of every deep refresh ([`deep_refresh.py`](../deep_refresh.py)) and as step 10 of [`weekly_maintenance.py`](../weekly_maintenance.py) when that script runs in full. The scheduled paths don't call it: the daily incremental fetch relies on the choke-points alone, and `/api/admin/run-maintenance` (what the `Pinakes-WeeklyMaintenance` task calls) runs steps 4–9 and 12 and skips 10. `python redaction.py resweep` runs it by hand. It is idempotent, so running it extra is harmless.
 
 `apply_suppression` is backed by a cached `{normalized_name → token}` map keyed by `(db_path, ledger_count, max_id)`, so it refreshes the instant a redaction lands and never bleeds across the per-test databases the harness swaps in.
 
@@ -81,16 +81,18 @@ The data-layer swap is the authoritative redaction; the template layer is displa
 `redact_author` and `resweep_all` each finish with:
 
 - **FTS rebuild** — `INSERT INTO articles_fts(articles_fts) VALUES('rebuild')`, so searching the old name returns nothing.
-- **Datastories cache bust** — `datastories_cache.clear_all()`. This is **load-bearing**: the cache's freshness fingerprint is `MAX(id)-COUNT(*)`, which a name swap does *not* move, so without an explicit bust the on-disk cache would serve the real name indefinitely.
+- **Datastories cache bust** — `datastories_cache.clear_all()`. This is **load-bearing**: the cache's freshness fingerprint is `MAX(id)` and `COUNT(*)` of `articles` and `citations`, which a name swap does *not* move, so without an explicit bust the on-disk cache would serve the real name indefinitely.
 
 Two more durability hooks:
 
-- **Restore** — [`restore.py`](../restore.py) re-applies the ledger to a restored DB before it goes live, so a restore can't resurrect a name. For a backup taken *before* a redaction (whose ledger predates it), `--redaction-ledger ledger.json` merges an off-box export first.
+- **Restore** — [`restore.py`](../restore.py) (downloads from the bucket) and [`restore_local.py`](../restore_local.py) (a backup file already on disk) both re-apply the ledger to the restored file before it goes live, so a restore can't resurrect a name. For a backup taken *before* a redaction (whose ledger predates it), `--redaction-ledger ledger.json` merges an off-box export first. Copying one of the Windows server's local backups into place re-applies nothing; `python redaction.py import-ledger ledger.json` (merge, then resweep) does that step by hand. See the [disaster-recovery runbook](runbooks/disaster-recovery.md).
 - **Sentry** — `include_local_variables=False` ([`monitoring.py`](../monitoring.py)) so a name sitting in a local variable when a view raises isn't shipped to Sentry.
 
 ## The request → verify → review → decide flow
 
 Implemented in [`blueprints/redaction.py`](../blueprints/redaction.py).
+
+**The public form ships off.** `PINAKES_REDACTION_FORM_ENABLED` defaults to `0`; with it off, `GET /redaction-request` redirects (302) to `/about#author-privacy` and `POST` returns 404. The form's value is the email round-trip, and without working SMTP it accepted requests and dropped them (`send_email` logs and returns `False`). So the live path today is the one `/about` describes: authors email the operator, who applies the request with the `redaction.py` CLI on the server ([WINDOWS-SERVER-RUNBOOK.md](WINDOWS-SERVER-RUNBOOK.md#author-name-removal-requests)). A CLI redaction goes straight to `redact_author` with no request or audit row (the ledger's `created_by` records its `--by`), so the review queue below stays empty. The flow below is what runs once the form is switched on.
 
 ```
 public form ──▶ create_request ──▶ verify (email link OR ORCID OAuth)
@@ -105,14 +107,14 @@ public form ──▶ create_request ──▶ verify (email link OR ORCID OAuth
                        audit row, THEN redact_author(name)
 ```
 
-1. **Submit** — `GET/POST /redaction-request` (public form, linked from `/about` and the nav's About submenu, rate-limited 5/hour). The requester gives the byline, optional variants, an email, and optionally an ORCID.
+1. **Submit** — `GET/POST /redaction-request` (public form; `POST` rate-limited 5/hour). Nothing on the site links to it: the nav's About submenu, the footer, and `/about` itself point to `/about#author-privacy`, whose text asks authors to email. The requester gives the byline, optional variants, an email, and optionally an ORCID.
 2. **Verify identity** — one of:
    - **Email** — a one-time link is emailed; only its `sha256` hash is stored, and it's burned on use.
    - **ORCID OAuth** — three-legged flow; the `state` is signed with the app secret (`PINAKES_SECRET_KEY`) so the callback can't be forged. The redirect URI is `https://pinakes.wacclearinghouse.org/redaction-request/orcid/callback` and must be registered in the ORCID developer app. ([`orcid_oauth.py`](../orcid_oauth.py).)
 3. **Notify** — on verification, `_notify_admin_of_verified` emails the operator (`REDACTION_NOTIFY_EMAIL`, falling back to `SMTP_REPLY_TO`) with the claimed name and a link to the review page. Fired on *verification*, not raw submission, so unverified/abandoned/spam attempts don't reach the inbox.
 4. **Review** — the operator decides. Two equivalent surfaces:
    - **Admin page** `/admin/redactions` ([`templates/admin_redactions.html`](../templates/admin_redactions.html)) — a token-gated web UI. The page shell is public; the operator pastes `PINAKES_ADMIN_TOKEN` (held in `sessionStorage`, never embedded in the HTML), and all data/actions go through the token-gated API via `fetch`. Verified requests show with **Approve & redact** / **Deny** / **audit trail**.
-   - **API** — `GET /api/admin/redaction-requests`, `POST .../<id>/approve`, `POST .../<id>/deny`, `GET .../<id>/audit`. All `require_admin_token`.
+   - **API** — `GET /api/admin/redaction-requests` (the queue; pending and verified by default, `?status=` filters), then per request, under the singular `/api/admin/redaction-request/<id>/`: `POST .../approve`, `POST .../deny`, `GET .../audit`. All `require_admin_token`.
 5. **Decide** — `decide_request` writes the audit row **before** the redaction fires (proof-of-review survives even if the request is later purged). Only `verified` requests can be approved. Approve → `redact_author`; deny → audited, no change.
 
 This is **admin-gated by design**: verification proves the requester controls the contact; a human still decides whether the request is legitimate and weighs the public-interest tension (an opt-out shouldn't become a way to scrub accountability — the governance posture mirrors the CJEU's *GC v CNIL* balancing rather than an absolute veto).
@@ -125,7 +127,7 @@ This is **admin-gated by design**: verification proves the requester controls th
 
 - **`citations.raw_reference`** — names inside *other* articles' bibliographies are scrubbed **best-effort**: exact, word-boundary replacement of the ledger's name forms only. Variant coverage is incomplete (these are arbitrary upstream citation strings), and the About page discloses this.
 - **Co-authors** — a redacted author's co-authors on a shared paper are untouched. A co-author can't force-redact a byline they don't own.
-- **Encrypted backups** — a redacted name persists in cold backups until they age out of the retention window (30 daily / 26 weekly / 12 monthly). The live index always re-applies the redaction; cold storage is the one bounded place, disclosed on About. The runbook covers a manual B2 purge for a hard-forget request.
+- **Backups** — every backup holds the name: one taken before the redaction has it throughout the data, and one taken after still has it in the ledger, by design. On the Windows server the nightly and pre-deploy copies in `C:\Pinakes\backups` are unencrypted, and the newest 10 are kept. The encrypted offsite copies follow `backup.py`'s 30 daily / 26 weekly / 12 monthly policy, but that prune runs only inside `run_backup()`, and no offsite backup has been scheduled since 2026-09-19; old objects stay until someone runs a backup or deletes them, unless the bucket has its own lifecycle rule (check the bucket). If the former Fly app's volume (`/data/articles.db`) still exists, it is a separate copy that never received redactions made on the Clearinghouse server. The live index is where the redaction is maintained; About says a removed name stays in the site's backups. The runbook covers purging old copies for a hard-forget request.
 
 ## Configuration
 
@@ -133,15 +135,16 @@ Summarized here; the operational detail is in [the runbook](runbooks/author-reda
 
 | Var | Purpose |
 |---|---|
+| `PINAKES_REDACTION_FORM_ENABLED` | `1` turns the public request form on. Default `0`: `GET /redaction-request` redirects to `/about#author-privacy` and `POST` returns 404. |
 | `REDACTION_SALT` | Salts the token hash. Set it explicitly in production so tokens are stable; otherwise a random salt is generated once and stored in `redaction_meta`. |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` | Outbound email for the verification link. When unset, the link is logged instead of sent. |
 | `SMTP_REPLY_TO` | Reply-To for a no-reply sender; also the fallback recipient for admin notifications. |
 | `REDACTION_NOTIFY_EMAIL` | Where to email the operator when a request is verified. Falls back to `SMTP_REPLY_TO`. |
 | `ORCID_CLIENT_ID` / `ORCID_CLIENT_SECRET` | ORCID OAuth (the "Verify with ORCID" button appears only when both are set). `ORCID_ENV=sandbox` to test. |
-| `PINAKES_ADMIN_TOKEN` | Gates the review queue/page (same token as the cron endpoints). |
-| `PINAKES_SECRET_KEY` | Signs the ORCID OAuth `state`. Required in production regardless. |
+| `PINAKES_ADMIN_TOKEN` | Gates the review queue/page (same token as the admin endpoints the scheduled tasks call). |
+| `PINAKES_SECRET_KEY` | Signs the ORCID OAuth `state`. Set it in production; the app only refuses to start without it on Fly (`FLY_APP_NAME` set). Anywhere else an unset key becomes a random per-process key, so an ORCID verification in progress across a service restart fails its signature check. |
 
-Note: external URLs (the email verify link, the admin review notice, the ORCID `redirect_uri`) are built by `web_helpers.public_url_for`. With `PINAKES_SITE_URL` set they come from it, which the Clearinghouse box requires: Waitress strips `X-Forwarded-Host` and `-Proto`, so a request-built URL there reads `http://127.0.0.1:8080/...`. With it unset (Fly) they come from the request, and `ProxyFix` makes them `https://` behind Fly's TLS-terminating proxy. Either way they must come out `https://`, or ORCID rejects the callback.
+Note: external URLs (the email verify link, the admin review notice, the ORCID `redirect_uri`) are built by `web_helpers.public_url_for`. With `PINAKES_SITE_URL` set they come from it, which the Clearinghouse box requires: Waitress strips `X-Forwarded-Host` and `-Proto`, so a request-built URL there reads `http://127.0.0.1:8080/...`. With it unset (how the former Fly app runs) they come from the request, and `ProxyFix` makes them `https://` behind Fly's TLS-terminating proxy. Either way they must come out `https://`, or ORCID rejects the callback.
 
 ## Code map
 
@@ -151,7 +154,7 @@ Note: external URLs (the email verify link, the admin review notice, the ORCID `
 | [`blueprints/redaction.py`](../blueprints/redaction.py) | Routes: the public form + verify, ORCID OAuth, the admin review page, and the admin API. |
 | [`notifications.py`](../notifications.py) | Minimal SMTP send helper (swappable for a transactional provider). |
 | [`orcid_oauth.py`](../orcid_oauth.py) | ORCID three-legged OAuth. |
-| [`templates/redaction_request.html`](../templates/redaction_request.html) | The public request form. |
+| [`templates/redaction_request.html`](../templates/redaction_request.html) | The public request form (rendered only with `PINAKES_REDACTION_FORM_ENABLED=1`; its verify and ORCID-callback pages render either way). |
 | [`templates/admin_redactions.html`](../templates/admin_redactions.html) | The admin review page. |
 | `db/core.py`, `db/articles.py`, `db/books.py` | Migrations + the ingest choke-points. |
 | `web_helpers.py`, `app.py` | The `redact_authors` filter + registration; `ProxyFix`. |

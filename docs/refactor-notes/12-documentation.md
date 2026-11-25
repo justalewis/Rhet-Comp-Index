@@ -35,7 +35,7 @@ GitHub renders Mermaid diagrams natively from fenced code blocks. The data-flow 
 
 Every source-code reference in both docs uses a GitHub blob URL pinned to the current `main` SHA (`0698720def2f376d4442d6c1627c65eb93cd21b9`) rather than a `main`-tracking URL. SHA-pinned links survive future refactors and renames. When a reader follows a link from `methodology.md`'s citation centrality section, the line they land on is the implementation as it stood when the doc was written, not whatever happens to live there now. The trade-off is that the links rot when files are deleted (a deleted file's blob URL 404s), but the rot is loud and easy to fix in a documentation update; silent drift to a wrong implementation is the worse failure mode.
 
-When the next major refactor lands, both docs should have their permalinks regenerated against the new `main` SHA. A line in [`CONTRIBUTING.md`](../CONTRIBUTING.md) names this as the maintenance task.
+When the next major refactor lands, both docs should have their permalinks regenerated against the new `main` SHA. A line in [`CONTRIBUTING.md`](../../CONTRIBUTING.md) names this as the maintenance task.
 
 ### What is not in scope for this prompt
 
@@ -43,8 +43,9 @@ The prompt is explicit about what *not* to do: no marketing voice, no duplicatio
 
 ## Bibliography (full, for verification)
 
-Every citation in `methodology.md`, with full bibliographic detail. Listed in alphabetical order by first author.
+Every citation in `methodology.md`, with full bibliographic detail. Listed in alphabetical order by first author. `methodology.md` links here for its references, so this list is kept current with it (last revised 2026-10-15).
 
+- Batagelj, V. (2003). Efficient algorithms for citation network analysis. arXiv:cs/0309023. https://arxiv.org/abs/cs/0309023
 - Blondel, V. D., Guillaume, J.-L., Lambiotte, R., & Lefebvre, E. (2008). Fast unfolding of communities in large networks. *Journal of Statistical Mechanics: Theory and Experiment*, 2008(10), P10008. https://doi.org/10.1088/1742-5468/2008/10/P10008
 - Bonacich, P. (1972). Factoring and weighting approaches to status scores and clique identification. *Journal of Mathematical Sociology*, 2(1), 113–120. https://doi.org/10.1080/0022250X.1972.9989806
 - Boyack, K. W., & Klavans, R. (2014). Creation of a highly detailed, dynamic, global model and map of science. *Journal of the Association for Information Science and Technology*, 65(4), 670–685. https://doi.org/10.1002/asi.22990
@@ -52,11 +53,10 @@ Every citation in `methodology.md`, with full bibliographic detail. Listed in al
 - Callon, M., Courtial, J. P., & Laville, F. (1991). Co-word analysis as a tool for describing the network of interactions between basic and technological research: The case of polymer chemistry. *Scientometrics*, 22(1), 155–205. https://doi.org/10.1007/BF02019280
 - Freeman, L. C. (1977). A set of measures of centrality based on betweenness. *Sociometry*, 40(1), 35–41. https://doi.org/10.2307/3033543
 - Garfield, E. (1979). *Citation Indexing: Its Theory and Application in Science, Technology, and Humanities*. Wiley.
-- Glänzel, W. (1996). The need for standards in bibliometric research and technology. *Scientometrics*, 35(2), 167–176. https://doi.org/10.1007/BF02018475
 - Hummon, N. P., & Doreian, P. (1989). Connectivity in a citation network: The development of DNA theory. *Social Networks*, 11(1), 39–63. https://doi.org/10.1016/0378-8733(89)90017-8
 - Ke, Q., Ferrara, E., Radicchi, F., & Flammini, A. (2015). Defining and identifying sleeping beauties in science. *Proceedings of the National Academy of Sciences*, 112(24), 7426–7431. https://doi.org/10.1073/pnas.1424329112
 - Kessler, M. M. (1963). Bibliographic coupling between scientific papers. *American Documentation*, 14(1), 10–25. https://doi.org/10.1002/asi.5090140103
-- Leicht, E. A., Holme, P., & Newman, M. E. J. (2007). Vertex similarity in networks. *Physical Review E*, 73(2), 026120. https://doi.org/10.1103/PhysRevE.73.026120
+- Leicht, E. A., Clarkson, G., Shedden, K., & Newman, M. E. J. (2007). Large-scale structure of time evolving citation networks. *European Physical Journal B*, 59(1), 75–83. https://doi.org/10.1140/epjb/e2007-00271-7
 - McCain, K. W. (1990). Mapping authors in intellectual space: A technical overview. *Journal of the American Society for Information Science*, 41(6), 433–443. https://doi.org/10.1002/(SICI)1097-4571(199009)41:6<433::AID-ASI11>3.0.CO;2-Q
 - Newman, M. E. J. (2001). The structure of scientific collaboration networks. *Proceedings of the National Academy of Sciences*, 98(2), 404–409. https://doi.org/10.1073/pnas.98.2.404
 - Newman, M. E. J., & Girvan, M. (2004). Finding and evaluating community structure in networks. *Physical Review E*, 69(2), 026113. https://doi.org/10.1103/PhysRevE.69.026113
@@ -64,12 +64,12 @@ Every citation in `methodology.md`, with full bibliographic detail. Listed in al
 - Wasserman, S., & Faust, K. (1994). *Social Network Analysis: Methods and Applications*. Cambridge University Press.
 - White, H. D., & Griffith, B. C. (1981). Author cocitation: A literature measure of intellectual structure. *Journal of the American Society for Information Science*, 32(3), 163–171. https://doi.org/10.1002/asi.4630320302
 
-Eighteen primary sources across the eighteen Explore tools (some sources cover multiple tools; centrality cites Bonacich and Freeman together, half-life cites Burton & Kebler with Glänzel). Each DOI was checked manually before inclusion.
+Eighteen primary sources (some cover more than one tool; centrality cites Bonacich and Freeman together, main path cites Hummon & Doreian with Batagelj). Each DOI was checked manually before inclusion. The 2026-10-15 revision replaced a wrongly cited Leicht, Holme & Newman (2006) vertex-similarity paper with the Leicht et al. (2007) temporal-network paper the text describes, added Batagelj (2003) for the search path count, and dropped Glänzel (1996), which is about bibliometric standards rather than half-life.
 
 ## Maintenance notes
 
-- **When `main` is rebased or rewritten,** the SHA-pinned permalinks in both docs become 404. A grep for the pinned SHA finds every link to update: `grep -rn "blob/0698720" docs/`. The replacement is a single sed-style substitution.
-- **When a new Explore tool ships,** add a new section to `methodology.md` following the established structure. The viz inventory in [`refactor-notes/11-explore-js-split-inventory.md`](11-explore-js-split-inventory.md) lists the current set of eighteen.
+- **When `main` is rebased or rewritten,** the SHA-pinned permalinks in `methodology.md` become 404. (They were re-pinned to `05caca7dd95c9f43e786fdbea2f0d391bd321b53` on 2026-10-15; `architecture.md` now uses relative links.) A grep for the pinned SHA finds every link to update: `grep -rn "blob/05caca7" docs/`. Line numbers move with the code, so re-check each anchor when re-pinning.
+- **When a new Explore tool ships,** add a new section to `methodology.md` following the established structure. The viz inventory in [`refactor-notes/11-explore-js-split-inventory.md`](11-explore-js-split-inventory.md) lists the original eighteen modules; Explore has grown since, so check `templates/explore.html` for the current tabs.
 - **When the journal list changes,** regenerate `docs/journal-coverage.md`. The generation script is short enough to live inline in this audit note rather than as a tool:
 
 ```python
@@ -83,4 +83,4 @@ from journals import (
 # ...write the table per-section as in the existing journal-coverage.md.
 ```
 
-The current generated table reflects `journals.py` as of this commit. Live counts per journal are at https://pinakes.xyz/coverage rather than baked into the doc.
+The current generated table reflects `journals.py` as of this commit. Live counts per journal are at https://pinakes.wacclearinghouse.org/coverage rather than baked into the doc. (As of 2026-10 the table is maintained by hand from `journals.py`; the snippet above was never completed.)

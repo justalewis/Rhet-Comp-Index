@@ -1,13 +1,15 @@
 # `static/` — the Alexandrian Suite
 
-Every page loads three stylesheets, in this order, via
-[`templates/_alexandrian_head.html`](../templates/_alexandrian_head.html):
+Every page built on `base-core.html` loads three stylesheets, in this order, via
+[`templates/_alexandrian_head.html`](../templates/_alexandrian_head.html). The
+one template that does not is `usage_report.html`, the printable usage report,
+which carries its own inline styles.
 
 | File | Lines | Role |
 |---|---:|---|
 | `tokens.css` | 229 | The palette, type scale and spacing, plus the element baseline. |
 | `fonts.css` | 226 | 23 `@font-face` rules over `fonts/`, subset by `unicode-range`. |
-| `pinakes.css` | 2493 | Every component on the site. |
+| `pinakes.css` | 2546 | Every component on the site. |
 | `style-wac.css` | 193 | Loaded only by `/wac`, on top of the three above. |
 
 Order matters: `tokens.css` declares the palette, `fonts.css` maps the faces it
@@ -26,8 +28,11 @@ Greek and polytonic characters in titles and author names, and a 50,000-row
 catalogue needs Literata 600 for table headers and result emphasis. All four
 families are SIL OFL 1.1 — see `fonts/README.txt`.
 
-Nothing loads from a third party. That is what lets the CSP in
-[`web_helpers.py`](../web_helpers.py) read `style-src 'self'; font-src 'self'`.
+No style or font loads from a third party. That is what lets the CSP in
+[`web_helpers.py`](../web_helpers.py) keep `style-src 'self' 'unsafe-inline'`
+and `font-src 'self'`. Scripts are another matter: `script-src` still allows
+`cdn.jsdelivr.net` (D3 and Chart.js) and `gc.zgo.at` (the GoatCounter tag), and
+`connect-src` allows `pinakes.goatcounter.com` for its beacon.
 
 ## Red-figure and black-figure
 
@@ -51,9 +56,9 @@ through the wrong palette.
 
 | Partial | Symbols | Loaded |
 |---|---:|---|
-| `_icons_core.html` | 12 | Every page, by `base-core.html`. |
-| `_icons_tools.html` | 19 | `/tools` and `/explore`. |
-| `_icons_datastories.html` | 26 | The Datastories pages only. |
+| `_icons_core.html` | 12 | Every page built on `base-core.html`. |
+| `_icons_tools.html` | 19 | `/tools` (`tools.html`) and `/design/icons`. |
+| `_icons_datastories.html` | 26 | `/design/icons` only. No Datastories template includes it. |
 
 Drawing rules are at the top of each partial and in the icon section of
 `pinakes.css`. The short version: a 24×24 grid, `currentColor` at 1.6, and
@@ -90,10 +95,21 @@ encoding. So on any chart that can show both at once, a legend is not optional.
 **Do not reorder these**: adjacency is what was validated, and madder next to
 verdigris in particular is invisible to a deutan reader.
 
-The order is fixed and never cycled. Past eight series the tail folds into
-`--cat-other` rather than reusing a hue — see `CATEGORICAL_LIMIT` in
-`js/utils/colors.js`. Repeating a hue does not say "ninth series", it says "the
-same series".
+The order is fixed and never cycled. Repeating a hue does not say "ninth
+series", it says "the same series". How a chart gets past eight depends on what
+it draws (all of it in `js/utils/colors.js`):
+
+- **Charts that can sum a tail**, like the stacked timeline, keep
+  `CATEGORICAL_LIMIT` (8) series and fold the rest into one `--cat-other` band.
+- **Journal-coloured networks** have one mark per journal and nothing to sum,
+  so they colour by sub-field: each sub-field group in `journals.py` takes one
+  step as its hue, and lightness carries a journal's rank within the group, the
+  darkest going to the journal with the most work in the index. Only ungrouped
+  journals take the neutral. `js/utils/legend.js` groups the legend the same
+  way. There are eight sub-fields, one per step; `assignByGroup` in
+  `utils/theme.js` would wrap round to reuse a hue if a ninth were added.
+- **Other ranked series** (institutions, work types) take the steps in order
+  and the neutral past the eighth; `journalColor(i)` does not wrap.
 
 ### Redrawing when the figure changes
 
@@ -108,8 +124,11 @@ Two different mechanisms, because the two chart libraries differ:
   `datastories-loader.js` ask the *visible* tool to draw itself again. Only the
   visible one — the rest are drawn fresh when next shown.
 
-A page that builds charts outside those loaders has to do both itself;
-`templates/author.html` is the one that does, and says so.
+A page that builds charts outside those loaders has to handle this itself.
+`templates/author.html` is the one such page: it sets the Chart.js defaults in
+its own script and imports `utils/chartjs-theme.js` for the recolouring, but its
+D3 co-citation graph reads the palette once at load and keeps those colours
+until the page is reloaded.
 
 ## JavaScript layout
 
@@ -117,15 +136,24 @@ A page that builds charts outside those loaders has to do both itself;
 js/
 ├── explore-loader.js      entry point for /explore
 ├── datastories-loader.js  entry point for the Datastories tools
+├── tag-feedback.js        tag votes and topic suggestions on the article page
 ├── utils/
-│   ├── theme.js           the token bridge; categorical(), chrome(), onFigureChange()
+│   ├── theme.js           the token bridge; categorical(), chrome(), assignByGroup(), onFigureChange()
 │   ├── chartjs-theme.js   Chart.js defaults and recolouring
-│   ├── colors.js          journal colour, by identity, folding past eight
+│   ├── colors.js          journal colour by sub-field and rank; CATEGORICAL_LIMIT for foldable charts
+│   ├── legend.js          the sub-field journal legend for the networks
 │   ├── tooltips.js, highlight.js
 ├── viz/                   one file per visualisation (18 + 26 Datastories)
 ├── wac/                   the /wac dashboard
-└── shared/                common, filters, export
+└── shared/                common, filters, export, load (JSON fetch with error text), year_range
 ```
+
+Beside `js/`, the `static/` root holds three plain (non-module) scripts and an
+XSL stylesheet: `feed-copy.js` (the "Copy address" buttons on `/feeds` and each
+feed's page), `feed-select.js` (the feed builder on `/feeds`), `usage.js` (the
+browser half of usage statistics, loaded only when recording is on), and
+`feed.xsl`, which browsers apply to the Atom feeds so a clicked feed link shows
+a readable page.
 
 `explore-loader.js` eagerly imports every viz module at page load — see
 [`../docs/refactor-notes/11-explore-js-split-inventory.md`](../docs/refactor-notes/11-explore-js-split-inventory.md)
